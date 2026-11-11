@@ -11,7 +11,7 @@
  const refresh=()=>{
   button.hidden=!secure||installed()||accepted||(!mobile&&!pending);
   button.disabled=busy;
-  button.textContent=busy?'AGUARDE...':'INSTALAR PIXELCITY';
+  button.textContent=busy?'AGUARDE...':'INSTALAR COASTAL CHAOS';
  };
  window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();pending=event;refresh();console.info('[PixelCity PWA] Instalação nativa disponível')});
  window.addEventListener('appinstalled',()=>{pending=null;accepted=true;refresh()});
@@ -20,7 +20,7 @@
   if(busy||installed())return;
   if(!pending){
    const ios=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-   const msg=ios?'No Safari, toque em Compartilhar e depois Adicionar à Tela de Início.':'No menu do navegador (⋮ ou ⋯), escolha Instalar app / Instalar PixelCity.';
+   const msg=ios?'No Safari, toque em Compartilhar e depois Adicionar à Tela de Início.':'No menu do navegador (⋮ ou ⋯), escolha Instalar app / Instalar Coastal Chaos.';
    alert(msg);return;
   }
   const event=pending;pending=null;busy=true;refresh();

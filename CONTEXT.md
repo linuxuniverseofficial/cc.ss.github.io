@@ -4068,3 +4068,37 @@ Projeto desenvolvido por iteração e vibe coding: base criada com auxílio do C
 - `GAME_VER=241` (saves de outras versões continuam incompatíveis).
 
 <!-- END LEGACY README VERBATIM -->
+
+## v77 — UX/UI dos menus e controles touch (sessão "Coastal Chaos")
+- Legenda do mapa voltou para PT-BR (OFICINA, CONCESSIONÁRIA, CASSINO, … CASA SEGURA); placas/fachadas continuam em inglês.
+- CONFIGURAÇÕES reestruturado (JS `cfgRestructure` + bloco CSS próprio):
+  - Abas verticais com ícone: GERAL ⚙ (inclui Idioma, Interface e "Comandos e atalhos"), GRÁFICOS, ÁUDIO, CONTROLES. Abas antigas 1 e 4 ficam `data-merged` (ocultas); `selectCfgCategory('1'|'4')` redireciona para '6'.
+  - Busca `#cfgSearch`: compara só o texto do rótulo (não a ajuda); esconde blocos/containers sem resultado (função `walk`), mostra título da categoria (`.cfg-stitle`) só durante a busca; "Nada encontrado." quando vazio. Limpar a busca remove todos os `.cfg-miss` (testado: 0 restantes).
+  - Textos explicativos longos viram `.cfg-help`, ocultos até marcar "Mostrar explicações" no rodapé.
+  - Rodapé fixo: Mostrar explicações · RESTAURAR PADRÕES · PRONTO (`#cfgDone`, fecha). ✕ no topo.
+  - Mobile (≤760px largura ou ≤520px altura): tela cheia; ≤520px largura mostra só ícones nas abas.
+- MENU INICIAL (seed): duas colunas — esquerda: tamanho (controle segmentado `#sizeSeg`, o `<select id=size>` segue como fonte da verdade e é sincronizado em `syncMenu` via `sizeSegSync`), seed + SORTEAR + GERAR COM ESTA SEED, hora; direita: CTA principal ▶ GERAR NOVA CIDADE, CARREGAR SAVE, ⚙ Configurações / 📊 Monitor. Coluna única em telas estreitas em retrato; modo compacto para altura ≤520px (cabe em 844×390).
+- MENU PAUSA: ▶ CONTINUAR (verde, foco inicial) em destaque; 2x2 Salvar jogo / Configurações / Registros / Monitor; VOLTAR AO MENU INICIAL separado, estilo destrutivo, exige 2º toque em até 3,2s ("TOQUE DE NOVO PARA CONFIRMAR"). ✕ oculto no menu pausa (CONTINUAR e Esc substituem). Cutscene pausada: Continuar / Monitor / Registros / Voltar.
+- `#areaHud` (distrito/veículo) oculto enquanto menu ou configurações estão abertos.
+- Touch: botões em arco no polegar direito (fire maior no canto), INTERAGIR contextual (só com prompt/porta/loja visível). LANG_EN: PRONTO→DONE, INTERAGIR→INTERACT.
+- Testado (Playwright/swiftshader): screenshots do menu inicial 1280×720 e 844×390 (touch), pausa mobile real em jogo, configurações desktop/mobile em todas as abas, busca "som/volume/mapa", ajuda ligada, HUD touch; clique no segmentado altera S.size 7↔14; CONTINUAR visível; confirmação dupla do Voltar arma e desarma. Sem erros de página. Não testado em aparelho físico.
+
+## v77 — objetos flutuando nos lotes especiais (marcos, cassino, concessionária, helipontos)
+- Causa: desde a v286 o interior dos lotes especiais usa o asfalto global (y=0, registrado em `parkingGroundAdd`), mas o detalhamento continuou desenhado sobre a antiga laje de .2–.26 m. Só `F.box` com y0 exatamente .26 era rebaixado; árvores, túmulos, gramado do cemitério (.26–.31), canteiros, pedestais, colunas (`geo`), heliponto (.2–.3) etc. ficavam flutuando.
+- Correção genérica: `MB_DROP` (+ `mbDropIn`/`mbDropY`) envolve `MB.box/cbox/flat/rslab/qdisc/geo`. Ativo só durante `landmark()` (exceto 'gas', que já desce o grupo inteiro .24) com off .26 e durante `dealLotShell()` com off .24, restrito ao retângulo interno do lote. Regra: pé entre .15 e 3.2 m desce `off`; topo ≤3.2 desce junto (peça baixa), topo >3.2 fica (peça alta só estica a base) — pilhas continuam encaixadas. `geo` usa a bbox da geometria (translada ou estica no eixo Y mantendo o topo). Planos (`flat`) ficam no mínimo em .045 (acima do concreto .03). `tree()` virou wrapper de `treeRaw()` que rebaixa só o y0 e suspende o drop internamente (copa não deforma). O atalho antigo do `F.box` (.26→0) só vale fora da área de drop.
+- Cassino: porta, colunas, vasos (de .24 → 0), faixas (.25 → .042) e árvores (.2 → 0) corrigidos direto.
+- Helipontos (delegacia/hospital/arranha-céu): laje 0–.08 (antes .2–.3 sobre o asfalto), faixas .086; `heliAddPad(...,y)` grava `pad.y` e `heliSpawnAt` usa `pad.y` em vez de `groundY` (antes dependia de o chunk ser gerado antes/depois de `parkingFloorReady`).
+- Testado: varredura por raycast das faces voltadas para baixo (seed 12345 7×7 e 4242 14×14, sem erros de página), rastreio das chamadas com pé .15–.4 sobre chão 0, e capturas antes/depois em todos os marcos, cassino, concessionária e helipontos (árvore da delegacia agora toca o chão; heliponto rente ao asfalto; marcas da concessionária a .045 confirmadas). Posto/borracharia não alterados (pilhas de pneus já começam em .03).
+
+## v77 — MODO FOTO (botão no menu de pausa)
+- Botão "📷 MODO FOTO" (`#photoBtn`) na pausa, linha inteira abaixo de Registros/Monitor; oculto no menu inicial e na pausa de cutscene. Sem atalho de teclado para entrar (pedido do usuário: menos invasivo).
+- Funcionamento (`PHOTO`, `photoEnter/photoExit/photoCam/photoShot`): o jogo continua pausado (`menuOpen=true`), o menu é ocultado, `body.photo-mode` esconde toda a interface menos `#gl` e `#photoUI`. `updateCamera` é envolvido: com `PHOTO.on` a câmera orbita o alvo (heli/carro/jogador). Alvo pode ser deslocado até 30 m; câmera nunca abaixo de `groundY+.3`.
+- Controles: arrastar = girar; roda/pinça = distância (2–40 m); WASD/setas movem o alvo, R/V sobem/descem, Q/E zoom; F filtro; H oculta a barra (toque na tela volta); Espaço/Enter foto; Esc volta ao menu (ou reexibe a barra). Start do controle também sai. Listeners em captura bloqueiam os controles do jogo enquanto ativo.
+- Barra: VOLTAR · FILTRO (Normal, P&B, Sépia, Vintage, Sunset, Neon, Noir — CSS filter na prévia e `ctx.filter` na foto) · LENTE (FOV 20–90) · OCULTAR · TIRAR FOTO.
+- Foto: `render()` + cópia imediata do canvas para um canvas 2D (sem `preserveDrawingBuffer`), marca d'água "Coastal Chaos · Sunset Shores", PNG `coastal-chaos-AAAAMMDD-HHMMSS.png`. No celular usa `navigator.share` com arquivo quando disponível; senão download.
+- Ao sair restaura FOV/near da câmera e remove o filtro do canvas.
+- Testado (Playwright, 1280×720 e 844×390 touch): entrar pelo botão, arrastar, zoom, trocar filtro, download do PNG (P&B confirmado no arquivo, marca d'água sem sobreposição), Esc volta ao menu com estado restaurado, CONTINUAR retoma o jogo. Sem erros de página. Não testado em aparelho físico (compartilhamento nativo do iOS/Android).
+
+## v77 — alinhamento do menu inicial
+- Coluna de ações ganhou o rótulo "JOGAR" (`.mfoot-label`, mesmo estilo de TAMANHO) — o topo de GERAR NOVA CIDADE agora coincide com o topo do seletor de tamanho (medido: diferença 0 px em 1280×720, 900×470 e 844×390).
+- `#installApp` saiu do campo TAMANHO e foi para a coluna de ações (abaixo de CARREGAR SAVE). Texto do botão em pwa.js corrigido para "INSTALAR COASTAL CHAOS" (estava "INSTALAR PIXELCITY"), e a dica de instalação também.
