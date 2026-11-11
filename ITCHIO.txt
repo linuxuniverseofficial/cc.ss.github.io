@@ -1,0 +1,56 @@
+<h1>Coastal Chaos: Sunset Shores</h1>
+<h3>A whole city to discover. Plenty of ways to get into trouble.</h3>
+<p>Sunset Shores is a 3D open-world sandbox that runs right in your browser. It has neon streets, sunburnt beaches, canals under the bridges and alleys you probably shouldn't walk down at night. Earn a living, cause a scene, chase a rumor or just drive until the sun goes down. The city doesn't care how you spend the day. It only remembers what you did.</p>
+<p>And no two cities are the same. <strong>Every map grows from a seed</strong>: new neighborhoods, new shortcuts, new places to find. Share a seed with a friend or roll a fresh one and get lost again.</p>
+<h2>A new beginning</h2>
+<p>Nathan lands in Sunset Shores from an Atlantic island with money in his pocket, a dream about a convertible and one person on his mind: Claire. She's on the other side of town, on the wrong side of a cell door.</p>
+<p>The opening chapter follows <strong>both of them, each on their own side of the city</strong>: a purchase, an escape, a police checkpoint, a phone call. It ends with an ending worth watching at sunset. Then the whole city is yours.</p>
+<h2>Two lives, one city</h2>
+<p>Switch between <strong>Nathan and Claire</strong> (Nate and Clary to each other) at any moment. The camera lifts into the sky, crosses the skyline and drops you into the other's life, wherever they are and whatever they're doing. Each has their own wallet, wardrobe and phone. Better still, they can team up and hit the streets together.</p>
+<h2>What's the plan today?</h2>
+<p>Start on foot. Grab a car. Head across town.</p>
+<ul>
+    <li><strong>Cars, motorcycles, buses, trucks, speedboats, jet skis, helicopters</strong>, from a humble Kipwell Zip to a Veycross Slipstream R, and a few rides you'll have to find for yourself.</li>
+    <li><strong>Buy your dream car</strong> at the dealership, pick your plate, then make it yours at the workshop: paint, nitro, turbo, neon.</li>
+    <li><strong>Fill up at the gas station</strong>, grab a snack at the convenience store, and try not to get too close to the tire shop's scrapyard next door.</li>
+    <li><strong>Hit a dirt jump</strong> out in the countryside, launch from a back-alley ramp, or BASE-jump from a rooftop and aim for the target on the sand.</li>
+</ul>
+<h2>Make money. Make trouble.</h2>
+<p>Pick up taxi fares, take on vigilante work, race at night, or survive a rampage. Spend the cash on clothes, weapons, fuel and upgrades.</p>
+<p>Try your luck at the <strong>casino</strong>. Dance until sunrise at the <strong>nightclub</strong>. Shop across two floors of the <strong>mall</strong>. Some businesses in town have a less respectable side, and the people running them won't hand over the keys without a fight. <strong>Build an empire</strong> if you can hold it.</p>
+<p>And there's a bank. With a vault. Just saying.</p>
+<p>Don't expect the police to look the other way. Patrol cars, checkpoints, helicopters and local word-of-mouth can turn a quiet afternoon into a five-alarm chase.</p>
+<h2>A world that lives without you</h2>
+<ul>
+    <li><strong>Day turns to night</strong>, the Moon changes phase, and the skyline lights up in neon.</li>
+    <li><strong>Rain forms far away and drifts across the map.</strong> When a storm rolls in, the sky closes, the wind picks up, and the streets change with it.</li>
+    <li><strong>Beaches full of life</strong>: sunbathers, umbrellas, gulls over the shore, a lighthouse at the end of the sand.</li>
+    <li><strong>From the towers of DOWNTOWN to the beachfront of Saltwater Drive</strong>, the quiet streets of Almond Grove, the canals of Cedar Reach, the warehouses of Iron Yard and the dirt roads of Heron Acres, and places that seem to be hiding something. Cross a district line and its name rolls onto the screen, old-school style.</li>
+</ul>
+<p>Slow down once in a while. Some discoveries don't come with an announcement.</p>
+<h2>A place to come home to</h2>
+<p>Your safe house is where you rest, change clothes, save your progress and <strong>watch TV</strong>. The local channels follow what's really happening out there: police operations, storms, chases, departures from the airport, and the occasional strange report from the woods.</p>
+<h2>Secrets in every corner</h2>
+<p>There are records to collect, stunts to land, and dangerous opponents waiting in places you wouldn't expect. Some secrets take patience. Others take nerve.</p>
+<p>And some might leave you wondering whether you're still in the same city at all.</p>
+<h2>See the city your way</h2>
+<ul>
+    <li><strong>First person, third person, top-down or isometric</strong>: switch any time.</li>
+    <li><strong>Map + GPS</strong> with route guidance, and a marker on your last vehicle so you can always find it again.</li>
+    <li><strong>Keyboard &amp; mouse, controllers and touch</strong>, with full mobile support in landscape.</li>
+    <li><strong>DualSense extras</strong> where supported: adaptive triggers, light bar that reacts to your health or a police chase, phone notifications through the controller, and optional <strong>tilt steering</strong> (controller or phone).</li>
+    <li><strong>Graphics presets</strong> to balance looks and performance on any device.</li>
+</ul>
+<h2>Before you hit the road</h2>
+<ul>
+    <li><strong>On a computer:</strong> WASD or arrow keys to move, F to enter or leave vehicles, the mouse to look around, V to switch cameras, M to open the map.</li>
+    <li><strong>Weapons:</strong> hold TAB to open the weapon wheel. Click to attack.</li>
+    <li><strong>On a controller or touchscreen:</strong> follow the on-screen prompts and check <strong>CONTROLS</strong> in the menu.</li>
+    <li><strong>To keep your progress:</strong> choose <strong>SAVE GAME</strong> in the menu and keep the save file. Use <strong>LOAD</strong> to continue later. Progress isn't saved automatically.</li>
+</ul>
+<p><strong>Cheats</strong> are part of the fun: bend the rules, unleash wild effects, turn the city into your playground. Using cheats disables saving and activity rewards for that session.</p>
+<h2>About the project</h2>
+<p>Coastal Chaos: Sunset Shores is in active development. It mixes pixel-art characters, simple 3D worlds and city lights with a love for classic open-world games. The campaign is just getting started; free roam already lets the city speak for itself.</p>
+<p>Developed through iteration with assistance from Claude and ChatGPT/Codex. Inspirations include classic GTA games, <a href="https://uniday.studio/games/247-clt-early-access?cur=brl&amp;lang=pt-BR" target="_blank" rel="noopener noreferrer">24/7 CLT by Uniday Studio</a> and <a href="https://patkerr.co.uk/2d-vehicles/" target="_blank" rel="noopener noreferrer">Pat Kerr's vehicle prototype</a>. José's contribution to the police emergency-light controls is also part of the project's history.</p>
+<hr>
+<p><strong>Open the map. Pick a direction. See what happens.</strong></p>

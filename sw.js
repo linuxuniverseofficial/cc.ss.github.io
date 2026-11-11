@@ -1,0 +1,8 @@
+'use strict';
+// Network only: always retrieve the current game; never cache saves, login or radio.
+self.addEventListener('install',event=>event.waitUntil(self.skipWaiting()));
+self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));
+self.addEventListener('fetch',event=>{
+ if(event.request.method!=='GET'||new URL(event.request.url).origin!==self.location.origin)return;
+ event.respondWith(fetch(event.request));
+});
