@@ -2,7 +2,7 @@
 
 ### A whole city to discover. Plenty of ways to get into trouble.
 
-**[▶ Play now in your browser]([https://gta.linuxuniverse.com.br](https://linuxuniverseofficial.github.io/cc.ss.github.io/]))** · no install · keyboard & mouse, controller or touch
+**[▶ Play now in your browser]([https://linuxuniverseofficial.github.io/cc.ss.github.io/])** · no install · keyboard & mouse, controller or touch
 
 Sunset Shores is a 3D open-world sandbox that runs right in your browser. It has neon streets, sunburnt beaches, canals under the bridges and alleys you probably shouldn't walk down at night. Earn a living, cause a scene, chase a rumor or just drive until the sun goes down. The city doesn't care how you spend the day. It only remembers what you did.
 
