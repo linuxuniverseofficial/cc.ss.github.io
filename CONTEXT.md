@@ -4410,3 +4410,59 @@ Projeto desenvolvido por iteração e vibe coding: base criada com auxílio do C
     - loja de discos → KRFM (ou ROCK) sem efeito;
     - sai → pausa.
   - A trilha não é posicional: toca igual no shopping todo, porta incluída.
+- Áudio do shopping (2):
+  - Novo slider "MÚSICA NOS INTERIORES" (`VOL.interior`, padrão 40%, salvo no cfg; valor inválido ou ausente vira 0,4).
+    - Nível da trilha do shopping = 0,8·VOL.interior/0,7: o nível antigo equivale a 70%, e o padrão ficou cerca de 43% mais baixo.
+    - Atenção: o comentário depois de `const VOL` comentava `let musicBus` na mesma linha e quebrava o script; o comentário foi para a linha de cima.
+  - Filtro mais abafado:
+    - passa-alta 260 Hz;
+    - pico 850 Hz +3,5 dB;
+    - passa-baixas 1250/1700/2400 Hz em série;
+    - eco filtrado em 900 Hz; ganho do sinal filtrado 1,7.
+  - Teste:
+    - slider aparece com 40%; ganho dentro do shopping 0,777 (1,7 × 0,457); loja de discos e saída continuam ok.
+    - Prévia renderizada offline com `mallFxChain` (30 s de mall1 a partir de 0:40): energia acima de 2 kHz 0,2% → ~0%, abaixo de 250 Hz 33,6% → 2,1%.
+- Volume padrão de MÚSICA NOS INTERIORES = 20%, também no CFG_DEF. Migração: um cfg salvo sem `iv2` volta para 20% uma vez, porque a build de 40% pode ter salvo 0,4; cfgObj e o preset passam a gravar `iv2:1`.
+  - Teste: slider 20%, ganho no shopping 0,389.
+- Prédios especiais, desgaste da cidade e luz dos interiores (12/11):
+  - `dressWall`/`dressBox`/`dressPal` (no escopo de buildChunk; passados ao `mallBuild` pelo K). Vestem laterais e fundos:
+    - rodapé, pilastras a cada ~6,4 m, janela baixa com grade e janela alta, friso, cornija;
+    - guarda-corpo na laje, canteiros com arbustos (ico), porta de serviço com pingadeira nos fundos e condensadoras no teto.
+    - Tudo em det, sem neon.
+  - Aplicado em: cassino, danceteria (antes da rotação, que leva junto), shopping (laterais das alas e fundos) e mercado (laterais e fundos, sem canteiro na doca).
+  - Fachadas mais leves:
+    - shopping: sem as aletas a cada 1,5 m, sem as 2 fileiras de painéis com filete e sem as 3 luminárias da marquise;
+    - cassino: 7 → 4 frisos de neon;
+    - danceteria: faixa rosa e contorno neon só na frente (antes davam a volta em 2 alturas) e sem os 2 vasos soltos.
+  - Coesão cassino × danceteria:
+    - mesma linguagem — reboco claro, laje cinza (#77727a) com cornija fina na cor da casa (dourado / rosa), cor só no letreiro/marquise;
+    - o cassino deixou o roxo com teto amarelo.
+  - Desgaste externo (`cityAgeMat` + `CITY_AGE_GLSL`) em M.wall, M.abWall e M.solid, sem textura nem geometria:
+    - escorridos de chuva por pavimento (3,2 m), base úmida com borda irregular (marrom ou musgo), manchas grandes, lajes encardidas;
+    - tom quente/frio por região; some entre 160 e 260 m (cedo-retorno > 260 m);
+    - força 1 (mundos night 0,55; `CITY_AGE.k`);
+    - hash sem seno para não cintilar em coordenada grande.
+  - Interiores (`roomLitMat`, MeshBasic + cor de vértice), no clima das lojas do shopping: ambiente baixo, poças quentes nas luminárias, penumbra nos cantos/rodapé/teto.
+    - Aplicado em banco, casa segura, cassino, danceteria (luzes nos pendentes existentes) e cela (`JAIL_ROOM`, com umidade e manchas, grime 1).
+    - Um programa compartilhado ('roomLit1'), uniforms por material.
+    - Corrigido: um comentário engoliu `g.add(m)` da casa segura.
+  - Testes:
+    - capturas aéreas e no nível da rua (sp1/sp2), interiores (room.js); sem erros de página;
+    - os pontinhos brancos no poste/árvore em swiftshader já existiam (aparecem também na árvore, que não usa o shader novo).
+- Otimização e ajustes (12/11, 15h):
+  - Laterais dos especiais refeitas para pesar pouco:
+    - as janelas viram 1 quad no builder `walls`, com a textura de janelas da cidade (acende à noite), em vez de caixas de vidro/grade;
+    - por face só rodapé, friso, cornija e mureta (o guarda-corpo de montantes saiu); pilastras internas; canteiro em 1 de cada 3 vãos; condensadoras sem tampa;
+    - tudo no `lodNear`: some com a distância e não projeta sombra, a menos que "sombras detalhadas" esteja ligada;
+    - a rotação da danceteria inclui `lodNear` e `walls`.
+  - Estilo de janela por prédio (`winStyle` = metros por 8 janelas na horizontal/vertical + `win` = deslocamento no atlas):
+    - cassino [44,25.6] largas/baixas; danceteria [17,34] estreitas/altas; shopping [60,19] faixas largas; mercado [22,30].
+  - Escorridos só no topo de cada face:
+    - atributo `aTop` = y máximo do triângulo (`ageTopAttr`, calculado no `add` do buildChunk para materiais com cityAge);
+    - o escorrido nasce no topo e desce 1,4–4 m (antes era um por pavimento, no meio da parede).
+  - Desgaste mais barato: alcance 120–190 m (antes 160–260) e menos consultas de ruído.
+  - Indústria: fuligem das chaminés (`CITY_AGE.soot`, até 8, preenchido em `cityAgeSootAdd` quando a chaminé é criada; zera com city.chimneys):
+    - topo das chaminés preto, de 1 até 10–18 m abaixo do topo;
+    - depósito escuro em lajes e paredes até ~45 m.
+  - Teste: capturas do cassino, da danceteria, do shopping e do mercado no nível da rua, e das chaminés; sem erro de shader.
+    - Comparação de draw calls e triângulos com e sem as laterais (swiftshader, seed do usuário): diferença desprezível.
