@@ -4466,3 +4466,4 @@ Projeto desenvolvido por iteração e vibe coding: base criada com auxílio do C
     - depósito escuro em lajes e paredes até ~45 m.
   - Teste: capturas do cassino, da danceteria, do shopping e do mercado no nível da rua, e das chaminés; sem erro de shader.
     - Comparação de draw calls e triângulos com e sem as laterais (swiftshader, seed do usuário): diferença desprezível.
+- Menu GRÁFICOS: LIMITE DE FPS subiu para logo abaixo dos presets; os sliders (trânsito, pedestres, distâncias, resolução) ficam juntos embaixo. Conferido por captura; o select mantém id e evento.
