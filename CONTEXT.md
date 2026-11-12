@@ -4143,3 +4143,249 @@ Projeto desenvolvido por iteração e vibe coding: base criada com auxílio do C
 - Testado: seed 828452518 → garagem abre para a rua (−x); seed 4242 continua usando a garagem normal da casa.
 - (rev. 3, desenho do usuário) Faixas do DeLorean viraram UM contorno contínuo por cor: nascem no ombro atrás da cabine (lado A), descem pela coluna traseira, correm na horizontal até o canto, atravessam a traseira (raios por trás, eixo +x) e voltam pelo lado B. Ciano por baixo, magenta por cima (deslocamento pela normal 2D nas laterais, em y na traseira). Pontos de raio que pegam outra peça (venezianas) são descartados e a curva é suavizada (3 passes). `timeContourPoints(shell,L,W,lane)` sem `side`; 2 tubos por cor (núcleo + halo).
 - Prisão: removido o texto flutuante "E PAGAR FIANÇA · $… / OPCIONAL · SEM PRESSA" (`#jailBailTag` fica sempre oculto).
+
+## v77 — coqueiros novos (leves)
+- `palmBuild(mb,x,y0,z,s,night,rnd,opt)` + `PALM_GEO` (geometrias criadas uma vez): tronco curvo de 6 anéis afunilados (cilindro aberto de 7 lados, cores alternadas), base + 3 cocos (icosaedros), 10 folhas em 2 níveis (4 erguidas, 6 caídas) com folíolos serrilhados e dobra em V, dupla face por geometria (sem material DoubleSide). ~600 triângulos por coqueiro contra ~1000 do antigo (10 icosaedros achatados + 5 cilindros soltos que não se encaixavam).
+- Usado em `treeRaw` (todos os coqueiros da cidade/praia; também as árvores no estilo noturno) e nas palmeiras dos vasos do shopping. Triângulos totais da cena de teste: 933.704 → 929.646.
+- Testado: capturas na praia (lado, de baixo, de cima) e no shopping; sem erros de página.
+
+## v77 — eventos aleatórios de pedestres, expositor da concessionária, saia de folhas no coqueiro
+- Novo módulo `PEDEV` (antes de "TV da casa segura"), chamado em `update` logo após `npcMingleTick` (`pedevTick(dt)`).
+  - Sorteio a cada 40–70 s, um evento por vez, só fora de missão/procurado/interior/TV/prólogo:
+    - `P.shoot=.07`: um ped atira em outro (`pedevShoot`) e foge; os peds num raio de 28 m entram em `panicPedFlee`.
+    - `P.witness=.15`: um ped corre até um carro do trânsito a 16–55 m (`pedevWitness`), tira o motorista (`SAY.jack`) e foge com IA de fugitivo (`crim`).
+      - 35% de chance de a polícia entrar atrás, reaproveitando o `EVT` (`pedevPoliceAfter`).
+  - Roubo do carro do jogador: carro de luxo (sports/super/conv/roadster) parado ≥6 s na rua → 50% (`P.playerJack`), recarga de 90 s entre sorteios.
+    - Fora: carro da garagem (`SAFE.cars`), DeLorean (`timeGlow`), `special`, `vinylCar`, carro da dupla.
+    - O ladrão vem de 10–17 m; se o jogador sair andando, ele desiste.
+    - Ao chegar, `pedevEject`: o jogador cai sem dano e o carro foge.
+  - Reação quando o JOGADOR rouba um carro (`pedevReact`, chamada no `enterExit`; picape continua com a lógica antiga):
+    - foge 55%;
+    - dono corre atrás 25%: se alcançar o carro parado/lento (<2,6 m/s), tira o jogador e vai embora; desiste após 14 s ou 48 m;
+    - saca arma 20% (reaproveita `robberyGun`/`copShoot`).
+  - `pedevDrive`: se o carro não está numa faixa, sai acelerando reto (`pedevGo`, até 7 s) até `reacquire` achar uma faixa.
+  - Retomar o carro roubado limpa `crim`/`pedevThief` e encerra o `EVT` se ele era o fugitivo.
+  - Falas novas com tradução em `LANG_EN`.
+- Concessionária: `dealTick` ganhou um pedestal novo.
+  - Saia grafite de 0,62 m (`DEAL_PLINTH`), prato giratório cinza metálico com cruz, aro claro.
+  - Faixa de LED ciano pulsando e cortina de luz aditiva subindo do prato.
+  - O carro sobe via `c.dealLift`, somado em `syncCar`.
+- Coqueiro: `PALM_GEO.frondS` (5 segmentos, 40 tri); `palmBuild` adiciona 5 folhas menores e mais amarelado-escuras penduradas abaixo da copa (`opt.lowN`).
+  - Atlas com alpha: avaliado e não adotado. A copa faz parte do mesh mesclado de plantas com vertex color, e `breakTree` copia esse intervalo de vértices.
+- Testado (swiftshader, seed 777, simulando `update(.05)` direto):
+  - tiro: vítima `dead`, atirador foge a 6,4 m/s, outros peds fogem;
+  - roubo testemunhado: carro `crim` com IA a ~10 m/s;
+  - roubo do jogador parado num sports: ejetado, hp 100, carro sai reto e pega faixa;
+  - dono retomando: tirou o jogador do sedan e saiu dirigindo;
+  - expositor de dia e de noite; coqueiro com a saia de folhas. Sem erros de página.
+
+## v77 — cela/delegacia: coerência e colisão (`buildJail`)
+- Vãos entre o fim da grade (x ±4,12) e as paredes externas (±5,85) fechados com parede.
+  - Do corredor se via um vazio e o verso da parede de fuga (face única, voltada pra -x), o que dava visão de dentro da cela.
+- Placa "SAÍDA / DELEGACIA" girada 180° (lia espelhada do corredor) e afastada da parede (z 6,95).
+- Rodapé duplicado no fundo da cela removido.
+  - O rodapé do corredor flutuava 11 cm da parede: agora encosta (z 6,96–7,0), é dividido na porta e foi acrescentado nos novos fechamentos.
+- Vaso: a caixa acoplada flutuava, agora vai do pé ao topo e ganhou tampa e botão. Pia ganhou coluna e base, antes flutuava.
+- Armário do corredor encostado na parede (flutuava 9 cm).
+- Batentes e verga da porta do fundo saltam 3 cm da parede (antes: z-fight com a parede). Lintel da grade 1 cm à frente dos postes.
+- Colisão nova via `addCol` (com `curChunk=null`; `JAIL.cols` marcados `dead` ao reconstruir) para:
+  - beliche, vaso, pia,
+  - mesa, cadeira, armário e banco do corredor.
+- Testado andando com `update(.05)`:
+  - o jogador para em cada móvel na distância do raio;
+  - o ponto de cavar (x+3,55; z-2,4) continua alcançável;
+  - capturas antes/depois sem erros de página.
+
+## v77 — interior do banco (`bankBuild` / `bankEnter`)
+- BUG: `bankEnter` usava `PED_PAL` (inexistente) → ReferenceError logo após o teletransporte.
+  - Os clientes da fila nunca apareciam e o toast de entrada não saía. Agora usa variações de `PED_PALS`.
+- Porta de entrada: antes era coplanar com o rodapé (z-fight). Ganhou moldura dourada, fica 12 cm à frente e tem maçaneta.
+- Cadeiras: estavam uma atrás da outra ao lado de uma mesinha solta. Agora são um par ladeando a mesinha (x ±6,1 ±0,85; z 0,85), voltadas para os caixas.
+- Vasos atravessavam as colunas: z 2,1 → 1,55, com colisor ajustado.
+- Fila: fitas vermelhas ligam os postes (antes pareciam banquinhos soltos), com colisão.
+- Paredes laterais ganharam rodapé (o lambri começava a 18 cm sem nada embaixo).
+- Bebedouro: o painel claro ficava escondido dentro da caixa, agora aparece na frente com visor. Removido o miolo escondido do caixa eletrônico.
+- Blocos dos cantos da entrada ganharam colisão.
+- Testado andando com `update(.05)`: cadeira, fita, vaso, banco e balcão bloqueiam no raio do jogador; capturas antes/depois sem erros.
+
+## v77 — interior do cassino (`casinoBuild`, parte do cassino; boate não mexida)
+- Letreiros das slots ("777/BAR/GOLD/PIXEL/LUCK") ficavam DENTRO da caixa da tela, invisíveis. Movidos para z0+1,075, à frente da tela.
+- Placa "BAR" ficava atrás das prateleiras de garrafas (só aparecia "AR"). Subiu para y 3,62.
+- Bar e caixa: frisos de latão e ripas estavam na ponta estreita do balcão (z+1,08). Foram para a face voltada ao salão (x ±7,4); a ponta ganhou só um friso.
+- Caixa de fichas: a grade cortava o meio do balcão e as bandejas de fichas atravessavam as barras.
+  - Agora a grade fica na borda do balcão (x+7,47), com guichê aberto entre z 2,45 e 3,5 e travessa de madeira.
+- Porta de saída: antes era coplanar com o rodapé (z-fight). Agora tem moldura dourada e fica 12 cm à frente.
+- Colisão conferida andando com `update(.05)`: slots/banquinhos, bar, caixa, mesas, roleta, sofá e pedestais da entrada já estavam corretos; o jogador para no raio em todos.
+
+## v77 — mundo SYNTHWAVE mais "outrun"
+- `STYLES.synthwave`:
+  - fachadas mais escuras (roxo/índigo/petróleo); o neon dos prédios passa a dar a cor;
+  - grama azul-noite;
+  - faixa central magenta (`center '#ff4fb0'`) e marcações branco-frio;
+  - neons um pouco mais saturados;
+  - poste rosa (`lamp '#ff6fcf'`, antes laranja de sódio);
+  - mapa/radar acompanhando.
+- `SKYK_S`:
+  - o "dia" deixou de ser azul-pastel/rosa-claro: agora é índigo `#3b3aa8`–`#4a52c0` sobre horizonte rosa `#ff8fb8` (hora mágica contínua);
+  - pôr do sol magenta/laranja um pouco mais escuro;
+  - noite mais funda (`#07031a`) com horizonte magenta apagado (`#b0205e`, antes `#ff3d7f` estourado).
+- Sol synth (shader do céu):
+  - cor ×0,84 e menos saturada: amarelo-pêssego → rosa;
+  - halo 0,35 → 0,18;
+  - antes estourava em branco com o bloom, agora mostra o degradê.
+- Luz: sol diurno synth `#ffd9ec`/`#ff6aa0` e hemisférica `#c8b8ff` (menos lavado de rosa).
+- Neon do shopping não mexido.
+- Testado com `generateCity()` em synthwave às 12h, 18h36 e 21h30 (swiftshader), sem erros de página.
+
+## v77 — grade neon outrun (só SYNTHWAVE, fora do Point Haze)
+- `synthGrid(grp)`, chamada na criação do mar:
+  - plano `seaSurfaceGeo(.05)` com `synthGridMat(false)`: MeshBasic aditivo magenta `#ff2fae`;
+  - linhas procedurais pela posição no mundo (célula 9 m, `fwidth` antisserrilhado, some ao longe sem moiré);
+  - pulso leve (`SYNTH_GRID_T` = `simT` via `onBeforeRender`);
+  - a névoa ESCURECE as linhas, em vez de somar cor no horizonte.
+- `synthGroundGrid(mat,E)` encadeia no material do chão (depois de `bridgeVisualMaterial`, usa a varying `deckWorld`):
+  - além do anel de prédios (fora de [-(RW/2+34), E+RW/2+34], com transição de 8 m) o asfalto escurece para 22% e ganha a grade como emissivo;
+  - nada que fica em cima do chão é coberto.
+- `customProgramCacheKey` próprio nas duas.
+  - Bug achado no teste: dois materiais com o mesmo `onBeforeCompile` reaproveitavam o programa um do outro.
+  - `synthGridMat` ainda aceita `land=true`, mas não é usado.
+- Testado em synthwave às 18h36 e 21h30: grade no mar e no chão além da cidade, sem erros de página.
+
+## v77 — casa segura (`worldSafeFurn` + `buildSafehouse`)
+- Mudanças em `worldSafeFurn` valem também para a outra casa que reaproveita os móveis (chamada com `noTv`).
+- Cozinha:
+  - armário superior tinha 1,25 m de profundidade (bloco flutuando sobre o balcão): agora 0,39 m, encostado na parede, com puxadores;
+  - coifa redimensionada (0,67 m) sobre o fogão, com chaminé até o teto; o filtro e a grelha flutuavam 25 cm abaixo dela e agora ficam na base;
+  - banquetas: assento a 0,58 m ao lado de balcão de 0,98 m. Agora assento a 0,75 m, haste inteira e apoio de pés. As hastes extras do acabamento foram removidas, os colisores ficaram.
+- Geladeira: puxadores estavam na lateral (x-1,93). Foram para a frente. Os puxadores duplicados do acabamento foram removidos (iam dar z-fight).
+- Cama: estrado flutuava 10 cm sem pés. Ganhou 4 pés; cabeceira e peseira descem até o chão.
+- Colisão conferida andando com `update(.05)`: sofá, mesa de centro, rack/TV, cama, criado-mudo, guarda-roupa, balcão, geladeira, banquetas, vaso e porta param no raio do jogador; a saída continua funcionando.
+
+## v77 — desempenho no synthwave + rodas sumindo depois da viagem do DeLorean
+- Em estilos noturnos (synthwave), `treeRaw` transformava TODA árvore em coqueiro, inclusive mata (`forestOnly`) e zona rural.
+  - Agora: `palmy = palm || (night && !forestOnly && !isRural(x,z))`; mata e zona rural voltam a ter árvores comuns, com copa em tons de verde-azulado noturno.
+  - Seed 1937270955 (tam. 14), synthwave: coqueiros 2338 → 452; triângulos de vegetação 2,37 M → 0,75 M.
+  - JS do `update` igual (~1,2 ms); o peso era geometria.
+  - Corrigida no caminho uma linha quebrada de outra edição (`let crown` ficou dentro do comentário → "crown is not defined" e a cidade não gerava).
+- Coqueiro mais leve: folha principal com 6 segmentos (antes 8), folha baixa com 4 (antes 5) e 4 folhas baixas (antes 5).
+- Rodas:
+  - `disposeGroup` (troca de cidade) e `city.mats.forEach(dispose)` descartavam `wheelGeo`/`wheelMat`/`hubGeo`/`hubMat`, compartilhados por TODOS os carros. Confirmado com listener de `dispose` durante `timeJump`.
+  - No swiftshader o three recria; na GPU real as rodas sumiam.
+  - Novo `disposeShared(x)` protege esses recursos, `carBodyMat`/`carLightMat`/`burntMat`, `WHEEL_FULL`/`WHEEL_NI` e tudo com `userData.cached`/`carBody`.
+  - Retestado: nenhum descarte na viagem.
+- A grade do mar não foi alterada: um único plano com shader barato. No print do usuário a GPU estava em 23%; o gargalo era a contagem de triângulos dos coqueiros.
+- Saia de folhas baixas do coqueiro REMOVIDA a pedido (`opt.lowN` padrão 0; código mantido). Coqueiro: 772 → 644 triângulos (árvore comum: 200).
+- Testado e NÃO aplicado: folhas com 4 segmentos (`mk(4)`) deixariam o coqueiro com 484 triângulos. Comparação em imagem enviada ao usuário.
+- APLICADO a pedido: folhas do coqueiro com 4 segmentos (`PALM_GEO.frond=mk(4)`, 32 triângulos cada). Coqueiro final: 484 triângulos (era 772 com a saia e 6 segmentos).
+
+## v77 — SHOPPING EM CRUZ (+), "liminal mall"
+- Substituiu `mallRoom`, `buildMall`, `mallNeon`, `mallCorridorDecor`, `mallGalleryFit`, `mallPillars`, `mallCZ`, a GLSL e a luz antiga.
+  - Backup do arquivo anterior: /home/claude/index_precross.html.
+- Planta (`MALL_LAYOUT`):
+  - Cada andar tem um átrio central (meia-largura `MALL_A`: 12 no térreo, 16 no 1º andar; vão `MALL_V`=7) e quatro braços.
+  - Braço w=0 vai para +x, 1 para −z, 2 para −x, 3 para +z (`MALL_WDIR`).
+  - Térreo:
+    - leste: praça de alimentação (L 40);
+    - norte/sul: lojas (L 37; café, discos, moda, farmácia / cinema, games, sapatos, brinquedos);
+    - oeste: entrada (L 49,4), com 6 lojas fechadas.
+  - 1º andar: quatro braços (L 41) com 2 lojas reais + 2 fechadas cada.
+    - Eletrônicos (Lucia) no braço leste; também ótica, malas, joias, conveniência, esportes, perfumes e pizza.
+  - Continuam 16 lojas, mais 14 fechadas.
+- Construção:
+  - cada braço é montado no quadro canônico (corredor ao longo de +x, lojas em ±v como antes);
+  - depois é girado 90°·w: `mallMergeRot` para os MB, quaternion nas placas, `mallColRot` nas colisões, pontos `MALL[key]` girados;
+  - `MALL[key].fr` guarda o quadro da loja (`mallL2W`/`mallW2L`: clientes, loja de discos).
+  - `mallStoreShell` = antigo corpo do laço de lojas. `mallStoreFit`/`mallStoreDecor`/`mallFacade` reaproveitados sem mudança.
+- Lojas fechadas (`mallFakeStore`):
+  - `'g'`: grade de enrolar com lâminas, placa "ALUGA-SE"/"PASSO O PONTO";
+  - `'b'`: tapume "EM BREVE / UMA NOVA EXPERIÊNCIA / PARA VOCÊ".
+- Praça de alimentação (`mallFoodCourt`):
+  - 6 lanchonetes (`MALL_FOOD`: nome, cor, preço, vida), chaves `fc0..fc5` + `G`;
+  - balcão, cardápio, atendente; `CTX`/`mallAct` dão vida diferente em cada uma;
+  - 20 mesas com 4 cadeiras (colisão por conjunto).
+- Corredores (referência Interior Worlds):
+  - caminho central mais claro;
+  - canteiros compridos com arbustos e bancos de ripa entre as portas;
+  - mural e máquinas no fundo de cada braço;
+  - teto plano + sancas neon (o usuário prefere o teto antigo às abóbadas).
+- Átrio:
+  - térreo: escada rolante (pé em x−4, `mallGo(1,…)`), laje com vão, guarda-corpo, "galeria de cima" falsa e claraboia;
+  - 1º andar: vão com corrimão e o térreo falso a −4,8 m; o topo da escada em x=V desce.
+  - Cantos com canteiro + palmeira; totem de informações menor (pedido) e diretório na boca da entrada.
+- Luz (`MALL_GLSL`): dobra o ponto para o quadro do braço (o mesmo cálculo serve aos 4 braços).
+  - Lojas: luz própria quente e baixa em todas (`uSlot` 48 → índice da loja, `uSC`/`uSK` de `mallStoreLight`, valores no clima de café/discos).
+    - Cada loja ganhou 2 pendentes (menos café/discos/cinema/games) e teto escuro.
+  - Corredores: ambiente baixo, poças de luz no eixo, penumbra junto às paredes e escurecendo para o fundo dos braços.
+    - A entrada recebe a luz do dia da porta; vitrines derramam a cor da loja no piso.
+  - `mAge`: envelhecimento leve procedural (umidade no rodapé, infiltração sob o teto, cantos encardidos).
+  - `mallLightAt` (sprites) replica a dobra. `mallLightsTick` virou no-op: a luz das lojas não depende mais de slots dinâmicos.
+- Prólogo: Lucia entra pela porta (sem teleporte para a loja), recebe toast e segue a seta `MALL.arrGd`: pé da escada → eletrônicos no 1º andar.
+- Ótica virou loja funcional (`optic`):
+  - `openWard('optic')` só com óculos; óculos saíram do provador da Moda Pixel;
+  - atendente com óculos.
+- Radar: dentro de qualquer interior mostra a planta (`interiorMiniMap`), feita uma vez por interior/andar com flood fill de 0,5 m na grade de colisão.
+  - No shopping: pontos coloridos nas lojas e lanchonetes, a escada e a saída.
+- Testado (swiftshader):
+  - flood fill dos dois andares: sem vazamento; todas as lojas, lanchonetes, escada e saída alcançáveis;
+  - `CTX` + `mallAct` da lanchonete (+45 de vida, −$18);
+  - subir/descer pela escada e sair pela porta;
+  - `CTX` da eletrônicos;
+  - ótica abre só óculos e a Moda Pixel não mostra óculos;
+  - seta guia do prólogo;
+  - radar interior;
+  - vistas modern 14h e synthwave 20h;
+  - sem erros de página.
+- Ajustes pós-retorno:
+  - Tapume "EM BREVE": fundo cinza/marrom (4 paletas apagadas), arte 5,6×1,7 (antes 8,8×2,9, branca e estourando no bloom), letreiro de cima menor.
+  - Átrio: paredes entre as bocas começam 3 cm à frente (estavam coplanares com os blocos de parede dos braços).
+  - Halos aditivos do shopping com `renderOrder=-1`: desenhados antes das sombras-blob dos peds, então a ordem não alterna mais (piscava).
+  - Halos dos pendentes subiram para y .056 (empatavam com o piso temático das lojas em .03).
+- Neon mais equilibrado (pedido: liminal sem cansar):
+  - removidos o neon da borda do vão (térreo), do corrimão do vão (1º andar), da moldura da claraboia e as duas linhas coloridas de cada faixa do teto dos braços;
+  - a sanca de cada lado ficou a 80% com halo de 0,28 → 0,14;
+  - continuam os letreiros/molduras das lojas e os corrimãos da escada.
+- Rodada seguinte:
+  - Sombra-blob de peds/jogador sobe para +0,075 dentro de interiores (o piso de madeira da cafeteria fica em .045 e empatava com a sombra).
+  - Sanca neon dos braços encostada no teto (Hc−.07..−.015, a 14 cm da parede; antes ficava 30 cm abaixo e 35 cm para dentro).
+  - Ilha sob a parte alta da escada rolante: canteiro 3,8×4,8 com coqueiro baixo e arbustos, mais 3 bancos de ripa (colisão; flood fill ok, escada e saída alcançáveis).
+- Pedestres andando no shopping:
+  - ~75% dos pedestres de corredor nascem com o estado `mwalk` (`mallWalkStep`, velocidade 1,05–1,55 m/s).
+  - Destino aleatório em corredor/átrio (`mallRandSpot`). Para trocar de braço, `mallNewPath` passa pela boca do braço e contorna o átrio por 4 pontos de canto (térreo ±5,5; 1º andar ±11,5), sem cruzar escada, ilha ou vão.
+  - Ao chegar, para 1,5–6,5 s virado para a vitrine mais próxima. Se ficar preso, pula o ponto ou refaz o trajeto.
+  - O interior roda em `roomStageLocalTick`, que não usa a IA de pedestres da cidade: o passo e a animação de caminhada foram ligados lá; `updatePeds` também conhece o estado.
+  - Teste de 60 s: térreo 7 andando (média 28 m, nenhum preso), 1º andar 10 (média 33 m), todos dentro do shopping e passando por todos os braços.
+- Cafeteria: a lâmpada da frente do balcão flutuava e ganhou fio e cúpula iguais às das mesas.
+- Lojas, máquinas e rádio do shopping (rodada de 12/11):
+  - Loja de discos:
+    - saiu a torre de CDs vermelha da frente do balcão;
+    - saiu a cuba da parede oposta ao balcão, abrindo o corredor do fundo entre a ilha e a estante;
+    - as duas ilhas centrais ficaram.
+  - Moda Pixel: prateleiras do fundo começam em 4,1 e a vendedora fica em c=10,9, fora das prateleiras. Calçados saíram do guarda-roupa da loja (WARD_ALLOW.store = camisa/calça/boné/fone/mochila).
+  - SAPATOS (slot 3, 'shoes'):
+    - vendedor de camisa vermelha;
+    - E abre o guarda-roupa só com CALÇADO;
+    - bancos de prova em a 4,4/6,8.
+  - Games:
+    - os 3 fliperamas da porta foram encostados na parede da direita de quem entra;
+    - pôster na parede da esquerda com o logo da cena final da 1ª missão: `mallLogoTex` copia `#prologueTitle` depois de `prologueTitleDraw()`; o plano fica 3,5 cm à frente do fundo para não sumir dentro dele.
+  - Esportes virou MODA PRAIA (slot 11, 'beach'):
+    - piso de areia, pranchas e textura `beach` (biquínis/sungas/toalhas);
+    - 2 araras e guarda-sol (mesmo modelo da praia: haste 2,3 m + cone r1,7) sobre banco;
+    - toldo azul/branco;
+    - guarda-roupa com SUNGA/SEM CAMISA/DESCALÇO (Jason) e BIQUÍNI parte de cima + baixo/SEM BLUSA/DESCALÇO (Lucia). Nova peça `bikini` em WEAR_PAL, já desenhada em drawCharFrame.
+  - Refrigerante: as máquinas do fim dos braços são interagíveis (`vdN`+G/U, contador zera por andar), custam $1 e dão +1 de vida (com vida cheia ou sem dinheiro só avisa).
+  - 1º andar: removidos os 2 fliperamas e a máquina de refrigerante na chegada da escada.
+  - Sol da porta (lado de dentro):
+    - poça do shader 0,55 → 0,22 (raio 5 → 4);
+    - halo do piso 0,22 → 0,08;
+    - vidro #f4f8ff → #b8bcc4.
+  - Rádio do shopping (radios/Mall, mall1–3.mp3 + radios/lista.txt):
+    - `radioWorldOf('Mall')`='mall'. Usa a mesma mecânica das OSTs de mundo: `radioWorld()` devolve 'mall' com PL.inside==='mall' (exceto com o fone de cortesia da loja de discos).
+    - Toca a pé em sequência (ordem do nome do arquivo), a 0,8; KRFM ao vivo fica desligada lá dentro.
+    - Não entra na roda nem nos fallbacks/cutscenes.
+    - Efeito (`mallFxChain`, dry/wet na cadeia do RADIO.el): passa-alta 240 Hz, pico 1,15 kHz +4 dB, tanh leve, passa-baixas 2,3/3,4 kHz, "wow" de fita (LFO 0,55 Hz) e eco de 110 ms filtrado. Desliga sozinho fora do shopping e em cutscene.
+  - Testes:
+    - flood fill sem vazamento nos 2 andares, com todos os pontos alcançáveis (incluindo vd1–8, shoesG, beachU, opticU);
+    - interações: refri 50→51 de vida e $10→$9, sem dinheiro não compra; guarda-roupas de sapatos/praia com as seções certas para Jason e Lucia;
+    - rádio: no shopping MALL toca mall1 → `ended` → mall2 com efeito ligado; na loja de discos vai para ROCK sem efeito; fora do shopping pausa; ao voltar, retoma mall2. A roda fora do shopping não mostra MALL.
+    - Capturas no swiftshader.
