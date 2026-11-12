@@ -2978,7 +2978,7 @@ function mallAtrium(g,mb,nb,hb,X,Z,lv,cols,C){const up=lv===1,A=MALL_A[lv],CZ=MA
  {const y0=up?0:0,y1=up?-4.8:4.8,xa=up?6:-4,xb=up?-4:6,n=18;for(let k=0;k<n;k++){const xs=xa+(xb-xa)*k/n,xe=xa+(xb-xa)*(k+1)/n,ys=y0+(y1-y0)*k/n,ye=y0+(y1-y0)*(k+1)/n,lo=Math.min(ys,ye);B(Math.min(xs,xe),lo-.25,-1,Math.max(xs,xe),Math.max(ys,ye),1,k%2?'#5a5a62':'#6a6a72')}
   for(const s of [-1,1])for(let k=0;k<n;k++){const xs=xa+(xb-xa)*k/n,xe=xa+(xb-xa)*(k+1)/n,ys=y0+(y1-y0)*k/n,ye=y0+(y1-y0)*(k+1)/n;B(Math.min(xs,xe),Math.min(ys,ye)-.3,s*1.05-.06,Math.max(xs,xe),Math.max(ys,ye)+.95,s*1.05+.06,'#bfe6f4');B(Math.min(xs,xe),Math.max(ys,ye)+.95,s*1.05-.09,Math.max(xs,xe),Math.max(ys,ye)+1.05,s*1.05+.09,'#1a1a20')}
   {const L=Math.hypot(xb-xa,y1-y0),ang=Math.atan2(y1-y0,xb-xa);for(const s of [-1,1])nb.geo(GEO.cyl16,mtx(X+(xa+xb)/2,(y0+y1)/2+1.07,Z+s*1.05,.035,L,.035,0,0,ang-Math.PI/2),s<0?ca:cb)}
-  if(!up)col(-3.4,-1.2,6.6,1.2);else{B(V,0,-1.3,V+.6,.02,1.3,'#8a8a92')}}
+  if(!up)col(-3.4,-1.2,6.6,1.2);else{B(V,0,-1.3,V+.6,.02,1.3,'#8a8a92');col(V-.6,-1.3,V-.15,1.3)}} // v77: trava a boca do vão (pedestres entravam por ela); o gatilho da escada continua alcançável
  // cantos do átrio: canteiro com palmeira e bancos virados para o centro
  const cw=up?A-10:A-CZ,cm=(A+(up?10:CZ))/2;for(const sx of [-1,1])for(const sz of [-1,1]){const x=sx*cm,z=sz*cm;if(!up&&sx<0&&false)continue;
   B(x-.75,0,z-.75,x+.75,.66,z+.75,'#6e6470');B(x-.68,.66,z-.68,x+.68,.7,z+.68,'#4a3a36');col(x-.75,z-.75,x+.75,z+.75);palmBuild(mb,X+x,.66,Z+z,.5,false,mulberry32((sx+2)*7+(sz+2)*31+lv*101),{h:4.2,lean:.06});
@@ -3029,9 +3029,9 @@ float mH(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float mN(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mH(i),mH(i+vec2(1.,0.)),f.x),mix(mH(i+vec2(0.,1.)),mH(i+vec2(1.,1.)),f.x),f.y);}
 // v77: envelhecimento leve — umidade subindo do rodapé, manchas de infiltração sob o teto e cantos encardidos (só em alguns trechos)
 vec3 mAge(vec2 l,float y,vec3 n,float Hc,float dw){float s=l.x+l.y*1.37;vec3 tint=vec3(1.);
- if(abs(n.y)<.5){float a=mN(vec2(s*.45,y*.9))*.65+mN(vec2(s*1.7,y*2.3))*.35;float damp=smoothstep(.46,.76,a)*(1.-smoothstep(.1,1.6+mN(vec2(s*.3,7.))*1.2,y));
+ if(abs(n.y)<.5){float pit=y<-.05?1.:0.;y=pit>.5?y+4.8:y;float a=mN(vec2(s*.45,y*.9))*.65+mN(vec2(s*1.7,y*2.3))*.35;float damp=smoothstep(.46,.76,a)*(1.-smoothstep(.1,1.6+mN(vec2(s*.3,7.))*1.2,y));
   float leak=smoothstep(.55,.82,mN(vec2(s*.6,3.1)))*smoothstep(Hc-2.2+mN(vec2(s*2.,1.))*1.2,Hc,y)*(.6+.4*mN(vec2(s*3.,y*4.)));
-  tint*=mix(vec3(1.),vec3(.6,.52,.4),clamp(damp*.8+leak*.85,0.,1.));}
+  tint*=mix(vec3(1.),vec3(.6,.52,.4),clamp(damp*.8+leak*.85,0.,1.)*(pit>.5?.35:1.));}
  else if(n.y<-.5){float st=smoothstep(.62,.9,mN(l*.22))*(.5+.5*mN(l*1.3));tint*=mix(vec3(1.),vec3(.78,.72,.62),st*.55);}
  else{float g=(1.-smoothstep(0.,1.4,dw))*smoothstep(.45,.8,mN(l*.5));tint*=mix(vec3(1.),vec3(.84,.8,.74),g*.5);}
  return tint;}
@@ -3093,7 +3093,7 @@ function mallLightAt(p,out){const U=MALL_LU,G=U.uG.value,Uu=U.uU.value,up=Math.a
 function mallSmooth(a,b,x){const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t)}
 /* ---------- entrar / sair / andares ---------- */
 function mallRandSpot(lv,rr){for(let t=0;t<20;t++){const w=Math.floor(rr()*5),A=MALL_A[lv],CZ=MALL_CZL[lv];let x,z;
-  if(w===4){x=(rr()*2-1)*(A-1.5);z=(rr()*2-1)*(A-1.5);if(Math.abs(x)<MALL_V+.6&&Math.abs(z)<MALL_V+.6&&(lv||Math.abs(z)<1.6))continue}
+  if(w===4){x=(rr()*2-1)*(A-1.5);z=(rr()*2-1)*(A-1.5);if(Math.abs(x)<MALL_V+.6&&Math.abs(z)<MALL_V+.6&&(lv||Math.abs(z)<3.4))continue}
   else{const cfg=MALL_LAYOUT[lv][w];if(cfg.type==='food')continue;const u=A+2+rr()*(cfg.L-A-5),v=(rr()*2-1)*(CZ-1.6);const R=lv?MALL.U:MALL.G,p=mallRot({x:0,z:0},w,u,v);x=p[0];z=p[1]}
   const R=lv?MALL.U:MALL.G,X=R.x+x,Z=R.z+z;if(query(X,Z,.6).some(b=>!b.dead&&X>b.x0-.5&&X<b.x1+.5&&Z>b.z0-.5&&Z<b.z1+.5))continue;return[X,Z]}return null}
 const MALL_CLERK_KEYS=['wear','food','tech','bag','cafe','jewel','music','pharm','optic','shoes','beach'];
@@ -3106,7 +3106,7 @@ function mallSpawnPeds(R,up){for(const q of MALL.peds)if(peds.includes(q))remove
  if(!up){for(let n=0;n<MALL_FOOD.length;n++){const sp=MALL['fc'+n+'G'];if(!sp)continue;const q=spawnPed(null,{x:sp.clerk.x,z:sp.clerk.z,vx:0,vz:0,pal:{...CLERK_PAL,shirt:MALL_FOOD[n][1],cap:null}});if(!q)continue;q.state='clerk';q.fixed=true;q.at=sp.clerk;q.mallClerk='fc'+n;MALL.peds.push(q)}
   const A=MALL_A[0],u0=A+MALL_FC_NECK;for(let k=0;k<7;k++){const u=u0+4.2+4.4*Math.floor(rr()*4),v=[-5.4,-1.8,1.8,5.4][Math.floor(rr()*4)],du=rr()<.5?-.95:.95,p=mallRot({x:0,z:0},0,u+du,v);const q=spawnPed(null,{x:R.x+p[0],z:R.z+p[1],vx:0,vz:0,pal:pick2(PED_PALS)});if(!q)continue;q.state='clerk';q.fixed=true;q.at={x:q.x,z:q.z};q.mx=-Math.sign(du);q.mz=0;MALL.peds.push(q)}}
  // clientes: na loja de discos ouvindo com fone, na cafeteria tomando café
- for(const key of ['music','cafe']){const sp=MALL[key+(up?'U':'G')];if(!sp||!sp.fr||sp.fr.none)continue;for(let k=0;k<2;k++){const [x,z]=mallL2W(sp.fr,5+k*2.4,7.4+k*1.1);const pal={...pick2(PED_PALS)};if(key==='music')pal.headphone=['#1b1b1b','#ff4fa3','#2a6ad6'][k%3];const q=spawnPed(null,{x,z,vx:0,vz:0,pal});if(!q)continue;q.state='clerk';q.fixed=true;q.at={x,z};const d=MALL_WDIR[sp.fr.w];q.mx=d[0]*(k?-1:1);q.mz=d[1]*(k?-1:1);MALL.peds.push(q)}}}
+ for(const key of ['music','cafe']){const sp=MALL[key+(up?'U':'G')];if(!sp||!sp.fr||sp.fr.none)continue;for(let k=0;k<2;k++){const [x,z]=key==='music'?mallL2W(sp.fr,k?7.0:4.8,k?10.2:7.75):mallL2W(sp.fr,5+k*2.4,7.4+k*1.1);const pal={...pick2(PED_PALS)};if(key==='music')pal.headphone=['#1b1b1b','#ff4fa3','#2a6ad6'][k%3];const q=spawnPed(null,{x,z,vx:0,vz:0,pal});if(!q)continue;q.state='clerk';q.fixed=true;q.at={x,z};const d=MALL_WDIR[sp.fr.w];if(key==='music'){q.mx=d[2]*sp.fr.s;q.mz=d[3]*sp.fr.s}else{q.mx=d[0]*(k?-1:1);q.mz=d[1]*(k?-1:1)}MALL.peds.push(q)}}}
 /* v77: pedestres andando no shopping. Destino aleatório (corredor ou átrio); para trocar de braço
    passam pela boca do braço e contornam o átrio por 4 pontos nos cantos (sem cruzar escada/ilha/vão). */
 function mallWingOf(lv,x,z){const R=lv?MALL.U:MALL.G,lx=x-R.x,lz=z-R.z,ax=Math.abs(lx),az=Math.abs(lz);if(Math.max(ax,az)<=MALL_A[lv])return -1;return ax>=az?(lx>0?0:2):(lz<0?1:3)}
@@ -3115,7 +3115,7 @@ function mallNewPath(p){const lv=p.mlv,R=lv?MALL.U:MALL.G,t=mallRandSpot(lv,Math
  const pts=[],mouth=w=>{const q=mallRot({x:0,z:0},w,A-1,(Math.random()-.5)*2);return[R.x+q[0],R.z+q[1]]};
  if(cw>=0)pts.push(mouth(cw));const a0=Math.atan2((cw>=0?pts[0][1]:p.z)-R.z,(cw>=0?pts[0][0]:p.x)-R.x),endP=tw>=0?mouth(tw):t,a1=Math.atan2(endP[1]-R.z,endP[0]-R.x);
  const q=a=>Math.round((a-Math.PI/4)/(Math.PI/2)),i0=q(a0),i1=q(a1);let d=((i1-i0)%4+4)%4;const step=d>2?-1:1;if(d>2)d=4-d;
- if(!(cw<0&&tw<0&&d===0))for(let k=0;k<=d;k++){const a=Math.PI/4+(i0+k*step)*Math.PI/2;pts.push([R.x+Math.cos(a)*ring*Math.SQRT2,R.z+Math.sin(a)*ring*Math.SQRT2])}
+ if(!(cw<0&&tw<0&&d===0))for(let k=0;k<=d;k++){const a=Math.PI/4+(i0+k*step)*Math.PI/2;pts.push(lv?[R.x+Math.cos(a)*ring*Math.SQRT2,R.z+Math.sin(a)*ring*Math.SQRT2]:[R.x+Math.sign(Math.cos(a))*7.9,R.z+Math.sign(Math.sin(a))*7.0])}
  if(tw>=0)pts.push(endP);pts.push(t);return pts}
 function mallWalkStep(p,dt){if(PL.inside!=='mall'||p.mlv!==MALL.lvl){p.vx=p.vz=0;return}
  if(p.wait>0){p.wait-=dt;p.mwIdle=true;p.vx=p.vz=0;return}
@@ -3125,12 +3125,12 @@ function mallWalkStep(p,dt){if(PL.inside!=='mall'||p.mlv!==MALL.lvl){p.vx=p.vz=0
    // às vezes para virado para a vitrine mais próxima
    const sp=Object.keys(MALL).filter(k=>k.endsWith(p.mlv?'U':'G')&&MALL[k]&&MALL[k].clerk).map(k=>MALL[k]).sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z))[0];if(sp&&Math.hypot(sp.x-p.x,sp.z-p.z)<9){const l=Math.hypot(sp.x-p.x,sp.z-p.z)||1;p.mx=(sp.x-p.x)/l;p.mz=(sp.z-p.z)/l}}return}
  p.mwIdle=false;p.vx=dx/d*p.spd;p.vz=dz/d*p.spd;p.mx=dx/d;p.mz=dz/d;p.x+=p.vx*dt;p.z+=p.vz*dt;circleVsWorld(p,.3);
- // preso num canteiro/banco: pula o ponto ou refaz o trajeto
- p.mst=(p.mst||0)+dt;if(p.mst>1.4){const moved=Math.hypot(p.x-p.mlx,p.z-p.mlz);if(moved<.5){if(p.path.length>1)p.path.shift();else p.path=null}p.mst=0;p.mlx=p.x;p.mlz=p.z}}
+ // preso num canteiro/banco: refaz o trajeto a partir de onde está (pular um canto do anel cortava o vão)
+ p.mst=(p.mst||0)+dt;if(p.mst>1.4){const moved=Math.hypot(p.x-p.mlx,p.z-p.mlz);if(moved<.5)p.path=null;p.mst=0;p.mlx=p.x;p.mlz=p.z}}
 function mallGo(lvl,x,z,face){fadeFlash();const R=lvl?MALL.U:MALL.G;MALL.lvl=lvl;PL.x=R.x+x;PL.z=R.z+z;PL.vx=PL.vz=0;PL.face=face;PL.yaw=Math.atan2(-face[0],-face[1]);MALL.lock=1;camT.x=PL.x;camT.z=PL.z;if(camMode==='fps')chasePos.set(PL.x-face[0]*3,2.6,PL.z-face[1]*3);mallSpawnPeds(R,!!lvl)}
 function mallEntryL(){return MALL_LAYOUT[0][2].L}
 function enterMall(){if(!MALL.G)buildMall();for(const p of peds.slice())if(!p.fixed)removePed(p);PL.inside='mall';if(MALL.out)doorEnter('mall','mall',MALL.out,MALL.nrm||[0,1]);mallGo(0,-mallEntryL()+2.5,0,[1,0])}
-function exitMall(){fadeFlash();for(const q of MALL.peds)if(peds.includes(q))removePed(q);MALL.peds=[];PL.inside=false;const o=MALL.out,n=MALL.nrm;doorExit({x:o.x,z:o.z,nx:n[0],nz:n[1]});MALL.lock=1.2;camT.x=PL.x;camT.z=PL.z;if(camMode==='fps')chasePos.set(PL.x-n[0]*4,2.6,PL.z-n[1]*4);}
+function exitMall(){fadeFlash();if(MUSIC.tmp){MUSIC.tmp=false;if(PLAYER_PAL.headphone!==MUSIC.prev){PLAYER_PAL.headphone=MUSIC.prev;applyPlayerLook()}}for(const q of MALL.peds)if(peds.includes(q))removePed(q);MALL.peds=[];PL.inside=false;const o=MALL.out,n=MALL.nrm;doorExit({x:o.x,z:o.z,nx:n[0],nz:n[1]});MALL.lock=1.2;camT.x=PL.x;camT.z=PL.z;if(camMode==='fps')chasePos.set(PL.x-n[0]*4,2.6,PL.z-n[1]*4);}
 const MUSIC={tmp:false,prev:null};
 // Loja de discos: perto das prateleiras você ganha um fone de cortesia (aparece no visual) e as rádios tocam; ao sair, devolve.
 function musicTick(){const sp=MALL.G&&MALL['music'+(MALL.lvl?'U':'G')];let inS=false;if(PL.inside==='mall'&&sp&&sp.fr&&!sp.fr.none&&!PL.dead){const [a,c]=mallW2L(sp.fr,PL.x,PL.z);inS=c>6.6&&c<11.6&&a>-.2&&a<9.6}
@@ -9239,12 +9239,13 @@ function eventLock(){if(PL.dead||(PL.hp||0)<=0)return'MORTO';if(PARA.active&&!PA
  if(TIMEJUMP.busy||TIMEJUMP.loading)return'VIAGEM NO TEMPO';if(PL.car&&PL.car.type==='super'&&PL.car.special&&S.style!=='inverted'&&Math.abs(PL.car.fwd||0)*3.6>=70)return'PORTAL DO DELOREAN ABERTO';
  if(HAZE.switching||INVERT.switching||SWITCH.on||CAMHOP.on)return'TRANSIÇÃO';if(LH.up||LH.fall)return'FAROL';if(JUMP.active)return'SALTO';
  if(PL.heli)return PL.heli.phase==='fly'||PL.heli.phase==='ground'?'HELICÓPTERO':'HELICÓPTERO EM MANOBRA';if(PL.inside)return'INTERIOR';if(PL.down>0)return'NOCAUTE';if(PL.taxi)return'TÁXI';return''}
+function charLockWhy(){return PL.inside==='mall'?'SAIA DO SHOPPING PARA TROCAR DE PERSONAGEM':PL.inside&&PL.inside!==true?'SAIA DO LOCAL PARA TROCAR DE PERSONAGEM':WARD.open?'FECHE O GUARDA-ROUPA PARA TROCAR DE PERSONAGEM':'FECHE O MENU PARA TROCAR DE PERSONAGEM'}
 function charLock(){if(prologueLocked())return true;if(!storyOK('safe'))return true;if(DEAL.open||PHONE.open||TECH.open||AMMO.uiOpen||PL.inside==='ammo'||PL.inside==='heist'||PL.inside==='pawn')return true;const ev=eventLock();return(ev&&ev!=='TERRAÇO'&&ev!=='HELICÓPTERO'&&!(ev==='INTERIOR'&&PL.inside===true))||!!POL.wanted||PL.inside==='jail'||PL.inside==='shop'||PL.inside==='mall'||menuOpen||cmdsOpen||cfgOpen||TUNE.open||WARD.open||NAV.open||!!WHL.open}
 function charCan(){return played&&running&&!charLock()&&!PL.dead&&(!PL.inside||PL.inside===true)&&!(PARA.active&&!PARA.active.roof)&&!TVM.on&&!SWITCH.on&&!CAMHOP.on&&!HAZE.switching&&!INVERT.switching&&!TIMEJUMP.busy&&!menuOpen&&!(PL.heli&&PL.heli.phase!=='fly'&&PL.heli.phase!=='ground')}
 function charFaces(){const box=$('#chsel');if(!box)return;const looks=[CHAR.cur===0?PLAYER_PAL:CHAR.list[0].look||PLAYER_PAL,CHAR.cur===1?PLAYER_PAL:CHAR.list[1].look];
  box.querySelectorAll('.half').forEach((d,i)=>{const c=d.querySelector('canvas'),g=c.getContext('2d');g.clearRect(0,0,40,40);g.imageSmoothingEnabled=false;const at=makeAtlas({...looks[i],pack:false});g.drawImage(at,4,0,24,24,2,4,36,36);d.classList.toggle('cur',CHAR.cur===i)});charSelPaint()}
 function charSelPaint(){const box=$('#chsel');if(!box)return;box.hidden=prologueLocked();const storyBlocked=!storyOK('safe'),locked=charLock();box.classList.toggle('vehicle',!!PL.car);box.classList.toggle('locked',locked);box.classList.toggle('story-locked',storyBlocked);box.setAttribute('aria-disabled',locked?'true':'false');box.tabIndex=locked?-1:0;box.classList.toggle('open',CHAR.open);box.querySelectorAll('.half').forEach((d,i)=>{d.classList.toggle('cur',CHAR.cur===i);d.classList.toggle('sel',CHAR.open&&CHAR.sel===i)});box.querySelector('.nm').textContent=CHAR.open?CHAR.list[CHAR.sel].name:CHAR.list[CHAR.cur].name}
-function charOpen(src){if(prologueLocked())return;if(!storyOK('safe'))return;if((DUO.on&&PL.car===DUO.car)||(DUO.follow&&DUO.ped&&peds.includes(DUO.ped)&&!PL.car)){if(!PL.dead&&!menuOpen&&!PHONE.open&&!CAMHOP.on)duoSwap();return}if(charLock()&&played){toast(PL.inside==='jail'?'PRESO · NÃO DÁ PARA TROCAR DE PERSONAGEM':POL.wanted?'PROCURADO · NÃO DÁ PARA TROCAR DE PERSONAGEM':eventLock()&&eventLock()!=='INTERIOR'?'AGORA NÃO DÁ PARA TROCAR · '+eventLock():'FECHE O MENU PARA TROCAR DE PERSONAGEM');return}if(!charCan())return;CHAR.open=true;CHAR.src=src;CHAR.sel=1-CHAR.cur;charSelPaint()}
+function charOpen(src){if(prologueLocked())return;if(!storyOK('safe'))return;if((DUO.on&&PL.car===DUO.car)||(DUO.follow&&DUO.ped&&peds.includes(DUO.ped)&&!PL.car)){if(!PL.dead&&!menuOpen&&!PHONE.open&&!CAMHOP.on)duoSwap();return}if(charLock()&&played){toast(PL.inside==='jail'?'PRESO · NÃO DÁ PARA TROCAR DE PERSONAGEM':POL.wanted?'PROCURADO · NÃO DÁ PARA TROCAR DE PERSONAGEM':eventLock()&&eventLock()!=='INTERIOR'?'AGORA NÃO DÁ PARA TROCAR · '+eventLock():charLockWhy());return}if(!charCan())return;CHAR.open=true;CHAR.src=src;CHAR.sel=1-CHAR.cur;charSelPaint()}
 function charClose(go){if(!CHAR.open)return;CHAR.open=false;charSelPaint();if(go&&CHAR.sel!==CHAR.cur)charSwitch(CHAR.sel)}
 /* Persistência: quem sai fica onde estava (a pé, no carro, no helicóptero, na casa segura) por 5 h de jogo (5 min).
    Depois disso volta para a calçada da cidade inicial. Se o outro estiver em outro mundo, o jogo recarrega aquele mundo.
@@ -9323,7 +9324,7 @@ function charEnter(to,tgt,p){PL.car=null;PL.heli=null;wearSwap(to);Object.assign
  // Restore room visibility first, then materialize the destination car before camera descent.
  roomStageSync();transitionPromptClear();if(PL.car){ensureDetail(PL.car);if(PL.car.g)PL.car.g.visible=true;syncCar(PL.car,0);convRiderTick();}
  camT.x=PL.x;camT.z=PL.z;chasePos.set(PL.x,PL.gy+30,PL.z+1);charFaces()}
-function charSwitch(to){if(prologueLocked())return;if(!storyOK('safe'))return;if(charLock()&&played){toast(PL.inside==='jail'?'PRESO · NÃO DÁ PARA TROCAR DE PERSONAGEM':POL.wanted?'PROCURADO · NÃO DÁ PARA TROCAR DE PERSONAGEM':eventLock()&&eventLock()!=='INTERIOR'?'AGORA NÃO DÁ PARA TROCAR · '+eventLock():'FECHE O MENU PARA TROCAR DE PERSONAGEM');return}if(to===CHAR.cur||!charCan())return;duoWorldClear();if(SPEC.on)specSet(false);
+function charSwitch(to){if(prologueLocked())return;if(!storyOK('safe'))return;if(charLock()&&played){toast(PL.inside==='jail'?'PRESO · NÃO DÁ PARA TROCAR DE PERSONAGEM':POL.wanted?'PROCURADO · NÃO DÁ PARA TROCAR DE PERSONAGEM':eventLock()&&eventLock()!=='INTERIOR'?'AGORA NÃO DÁ PARA TROCAR · '+eventLock():charLockWhy());return}if(to===CHAR.cur||!charCan())return;duoWorldClear();if(SPEC.on)specSet(false);
  const o=CHAR.list[to],fresh=charFresh(o),tgt=fresh?o.st:null;
  // Troca feita DENTRO da safehouse deve continuar dentro dela, mesmo que o
  // personagem de destino tenha uma posição exterior guardada (st.fresh).
@@ -11459,6 +11460,9 @@ function probePlaylist(){const base=new URL('radios/lista.txt',location.href);
   for(const[n,u] of groups)radioAddStation(n,u);RADIO.srv.sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));RADIO.probeDone=true;updateRadioInfo()}).catch(()=>{RADIO.probeDone=true;updateRadioInfo()})}
 
 // Música atual da estação selecionada (cada estação tem a sua ordem embaralhada pela seed).
+function probeMallOst(){if(RADIO.mallProbe||RADIO.srv.some(s=>s.world==='mall'&&s.songs.length))return;RADIO.mallProbe=true;const base=new URL('radios/Mall/',location.href).href,found=[];
+ const nx=i=>{if(i>20){if(found.length){radioAddStation('Mall',found);updateRadioInfo()}return}const u=base+'mall'+i+'.mp3';
+  fetch(u,{method:'HEAD',cache:'no-store'}).then(r=>{const t=(r.headers.get('content-type')||'').toLowerCase();if(r.ok&&!/html/.test(t)){found.push(u);nx(i+1)}else nx(21)}).catch(()=>nx(21))};nx(1)}
 function radioSong(st=RADIO.sceneStation||RADIO.list[RADIO.idx]){return st&&st.songs.length?st.songs[st.order[st.pos%st.order.length]]:null}
 function rebuildRadio(){const cur=RADIO.list[RADIO.idx],world=radioWorld();
  if(!RADIO.mine)RADIO.mine={name:'MINHAS MÚSICAS',songs:RADIO.custom,pos:0,order:null,world:null};
@@ -11472,7 +11476,7 @@ function rebuildRadio(){const cur=RADIO.list[RADIO.idx],world=radioWorld();
  if(ni>=0)RADIO.idx=ni;else{const back=RADIO.beforeOst?list.indexOf(RADIO.beforeOst):-1;RADIO.beforeOst=null;if(back>=0){RADIO.idx=back;RADIO.autoDone=true;RADIO.err='';loadStation();if(!RADIO.userOff)radioPlay()}else{RADIO.idx=-1;RADIO.autoDone=false;RADIO.el.pause();RADIO.el.dataset.url=''}}
  // Entrou num mundo que tem trilha própria: sintoniza nela.
  if(RADIO.worldSeen!==world){RADIO.worldSeen=world;const ost=list.findIndex(s=>s.world===world);if(ost>=0&&!radioLive()){if(RADIO.idx>=0&&!list[RADIO.idx].world)RADIO.beforeOst=list[RADIO.idx];RADIO.idx=ost;RADIO.autoDone=true;RADIO.err='';loadStation();if(!RADIO.userOff)radioPlay()}}}
-function updateRadioInfo(){rebuildRadio();if(RADIO.mode==='live'&&RADIO.liveDown&&(RADIO.fallbackPending||(!RADIO.fallbackActive&&RADIO.custom.length)))radioFallbackNext();if(typeof AUDIO_TEST!=='undefined'&&AUDIO_TEST.pending&&RADIO.probeDone)audioPreviewStartMusic(false,AUDIO_TEST.localFallback)}
+function updateRadioInfo(){if(RADIO.probeDone)probeMallOst();rebuildRadio();if(RADIO.mode==='live'&&RADIO.liveDown&&(RADIO.fallbackPending||(!RADIO.fallbackActive&&RADIO.custom.length)))radioFallbackNext();if(typeof AUDIO_TEST!=='undefined'&&AUDIO_TEST.pending&&RADIO.probeDone)audioPreviewStartMusic(false,AUDIO_TEST.localFallback)}
 $('#radioSrc').addEventListener('change',e=>{setRadioMode(e.target.value)});
 function setRadioMode(m){if(AUDIO_TEST.mode)audioPreviewStop();RADIO.mode=m;RADIO.onlyCustom=m==='custom';$('#radioSrc').value=m;
  RADIO.liveDown=false;RADIO.livePending=false;RADIO.liveTryAt=0;RADIO.liveConfirmed=false;RADIO.liveStalledAt=0;RADIO.fallbackPending=false;RADIO.fallbackActive=false;RADIO.fallbackBad.clear();
@@ -11548,7 +11552,7 @@ function radioKick(){if(RADIO.sceneActive){if(SCENE_RADIO.active&&SCENE_RADIO.bl
  RADIO.blocked=false;if((!radioLive())&&(PL.car||RADIO.preview))radioPlay()}
 function radioLabel(show,h){const L=RADIO.label;if(!show){L.hidden=true;RADIO.lastLbl=null;return}const now=performance.now();if(h!==RADIO.lastLbl){RADIO.lastLbl=h;L.innerHTML=h;RADIO.lblT=now}L.hidden=false;L.style.opacity=now-RADIO.lblT>5000?0:1}
 function updateRadio(){if(STORYFAIL.active){RADIO.el.pause();stopLive();RADIO.label.hidden=true;return}if(RADIO.sceneActive){mallFxSet(false);return}if(musicBus)musicBus.gain.value=S.sound?1.1*VOL.master*VOL.music*MUS_K*musicTravelFactor():0;if(RADIO.worldSeen!==radioWorld()&&(RADIO.srv.length||RADIO.custom.length))rebuildRadio();const el=RADIO.el,inCar=radioVeh()&&!menuOpen&&running;
- if(radioLive()){if(!el.paused)el.pause();const L=RADIO.live,want=(inCar||RADIO.preview)&&!RADIO.userOff,now=performance.now();L.volume=S.sound?Math.min(1,.8*musVol()*1.25*musicTravelFactor()):0;
+ if(radioLive()){mallFxSet(false);if(!el.paused)el.pause();const L=RADIO.live,want=(inCar||RADIO.preview)&&!RADIO.userOff,now=performance.now();L.volume=S.sound?Math.min(1,.8*musVol()*1.25*musicTravelFactor()):0;
   if(want&&RADIO.livePending&&RADIO.liveTryAt&&now-RADIO.liveTryAt>12000){if(AUDIO_TEST.mode&&AUDIO_TEST.source==='online')audioPreviewLocalFallback();else radioLiveFallback();return}
   if(want&&RADIO.liveStalledAt&&now-RADIO.liveStalledAt>12000){if(AUDIO_TEST.mode&&AUDIO_TEST.source==='online')audioPreviewLocalFallback();else radioLiveFallback();return}
   if(want&&L.paused&&!RADIO.livePending&&!RADIO.blocked&&now-RADIO.liveErrT>8000&&now-(RADIO.tryT||0)>1500){
@@ -17447,7 +17451,7 @@ function loop(now){requestAnimationFrame(loop);
  if(NAV.open)drawBigmap();
  if(running&&!ROOM_STAGE.mode&&!TIMEJUMP.busy&&!TIMEJUMP.hide)updateHeadlights();
  if(!ROOM_STAGE.mode)updateNearbyLampLights(dt);
- if(running){if(BENCH.active){if(BENCH.running){benchCamera(dt);updateAudio(dt)}}else if(!STORYFAIL.active&&!STORYINTRO.active&&!STORYEND.active&&!PROLOGUE.cut){updateCamera(menuOpen?0:dt);if(!ROOM_STAGE.mode){updateAudio(dt);updateWeather(menuOpen?0:dt);updateLightning(menuOpen?0:dt)}}}
+ if(running){if(BENCH.active){if(BENCH.running){benchCamera(dt);updateAudio(dt)}}else if(!STORYFAIL.active&&!STORYINTRO.active&&!STORYEND.active&&!PROLOGUE.cut){updateCamera(menuOpen?0:dt);if(!ROOM_STAGE.mode){updateAudio(dt);updateWeather(menuOpen?0:dt);updateLightning(menuOpen?0:dt)}else if(PL.inside==='mall'){try{updateRadio()}catch(e){}}}} // v77: o palco do interior não rodava o rádio — a trilha do shopping (e o fone da loja de discos) nunca começava
  else{const t=now/1000;camera.up.set(0,1,0);camera.position.set(Math.cos(t*.1)*40,30,Math.sin(t*.1)*40);camera.lookAt(0,0,0)}
  // Atualiza tambem durante cutscenes (updateAudio normal nao roda nelas).
  if(running&&!ROOM_STAGE.mode)airSoundTick();

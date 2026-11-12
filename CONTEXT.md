@@ -4389,3 +4389,24 @@ Projeto desenvolvido por iteração e vibe coding: base criada com auxílio do C
     - interações: refri 50→51 de vida e $10→$9, sem dinheiro não compra; guarda-roupas de sapatos/praia com as seções certas para Jason e Lucia;
     - rádio: no shopping MALL toca mall1 → `ended` → mall2 com efeito ligado; na loja de discos vai para ROCK sem efeito; fora do shopping pausa; ao voltar, retoma mall2. A roda fora do shopping não mostra MALL.
     - Capturas no swiftshader.
+- Correções (12/11, tarde):
+  - Rádio do shopping não tocava no site (o resto ok). Causa provável: a listagem ou o lista.txt do servidor não incluía Mall. `probeMallOst()` roda depois da sondagem normal: se não achou a estação 'mall', testa `radios/Mall/mall1.mp3…mall20.mp3` com HEAD (para no primeiro que faltar ou vier como HTML).
+    - Testado num servidor sem listagem e sem lista.txt: acha mall1–3 e toca com efeito.
+    - O efeito é desligado também no ramo da KRFM ao vivo.
+  - Toast "FECHE O MENU PARA TROCAR DE PERSONAGEM" aparecia no shopping (Alt). Agora `charLockWhy()` dá o motivo real: SAIA DO SHOPPING / SAIA DO LOCAL / FECHE O GUARDA-ROUPA / FECHE O MENU.
+  - Paredes do vão do 1º andar (térreo falso): a mancha de umidade usava y<0 e cobria tudo. Agora a altura conta a partir do térreo falso (+4,8) e a intensidade cai para 35%, parecido com as paredes comuns.
+  - Pedestres:
+    - entravam no vão pela boca da escada do 1º andar: `col(V-.6,-1.3,V-.15,1.3)`, com o gatilho da escada ainda alcançável (flood fill ok);
+    - pular um canto do anel ao travar cortava o vão: agora travar sempre refaz o trajeto;
+    - no térreo o contorno do átrio usa cantos (±7,9; ±7,0), por fora da ilha, dos bancos e da escada; destino no átrio fora da faixa |z|<3,4.
+    - Teste de 300 s com o jogador no átrio: ninguém no vão, ninguém parado andando por mais de 6,5 s.
+  - Loja de discos: o 2º cliente nascia dentro da ilha 2. Agora os clientes ficam em (4,8; 7,75) e (7,0; 10,2), no corredor do fundo, virados para as ilhas e a estante.
+- Causa real da trilha do shopping muda:
+  - Com o interior ativo (ROOM_STAGE.mode) o loop principal não chamava `updateAudio`, então `updateRadio` nunca rodava dentro do shopping. Os testes anteriores chamavam `updateAudio` na mão e por isso passavam.
+  - Agora o loop chama `updateRadio()` quando PL.inside==='mall'. Isso também faz funcionar o fone de cortesia da loja de discos, que antes não trocava a rádio lá dentro.
+  - `exitMall` devolve o fone se o jogador sair com MUSIC.tmp ligado.
+  - Teste só com o loop real (sem chamar update/updateAudio), com a KRFM simulada no ar e também no modo local:
+    - entra → MALL/mall1 tocando com efeito;
+    - loja de discos → KRFM (ou ROCK) sem efeito;
+    - sai → pausa.
+  - A trilha não é posicional: toca igual no shopping todo, porta incluída.
