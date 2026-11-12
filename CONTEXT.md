@@ -4467,3 +4467,117 @@ Projeto desenvolvido por iteração e vibe coding: base criada com auxílio do C
   - Teste: capturas do cassino, da danceteria, do shopping e do mercado no nível da rua, e das chaminés; sem erro de shader.
     - Comparação de draw calls e triângulos com e sem as laterais (swiftshader, seed do usuário): diferença desprezível.
 - Menu GRÁFICOS: LIMITE DE FPS subiu para logo abaixo dos presets; os sliders (trânsito, pedestres, distâncias, resolução) ficam juntos embaixo. Conferido por captura; o select mantém id e evento.
+- Cassino e portas (12/11, 15h30):
+  - Cadeiras das mesas: as faces de cada caixa (assento, encosto, pés) agora se orientam pelo centro da própria caixa; antes usavam o centro da cadeira e o encosto ficava com faces invertidas.
+  - Caça-níqueis:
+    - visor 5 cm à frente da tela (antes 1,5 cm, cintilava);
+    - saiu uma peça enterrada no topo;
+    - botão central com folga.
+  - Mesas:
+    - cartas, marcadores e bandeja 1 cm acima do feltro (antes 5 mm e 1 mm);
+    - fichas do crupiê apoiadas no feltro;
+    - roleta: base da roda 1,5 cm acima da mesa (antes coplanar).
+  - Colisão: varredura por raio (grade de 20 cm, geometria entre 0,18 e 1,9 m sem colisor) — cassino 4 pontos isolados e danceteria 8, ou seja, nada relevante. Os colisores já cobrem todo o mobiliário.
+  - Propaganda do tigre (desenho procedural próprio: cabeça, listras, coroa, moedas):
+    - 2 banners pendurados (TIGRÃO DA SORTE / GIRE O TIGRE) a 1,8 m do chão, acima da cabeça;
+    - 1 pôster (NOITE DO TIGRE · jogue com responsabilidade) na parede leste, perto da porta;
+    - textos com ajuste automático de largura; traduções no LANG_EN.
+  - Danceteria (fachada):
+    - a porta escura e a marquise antiga estavam do lado de dentro da parede, com a face coplanar à fachada (as listras de z-fight);
+    - a porta agora fica 8 cm para fora, entre os pilares (±2,42), e a marquise interna, invisível, saiu.
+  - Capturas das portas de banco, cassino, danceteria, shopping e delegacia sem z-fight visível no swiftshader.
+- Configurações gráficas:
+  - Os valores salvos já persistiam (localStorage ps_cfg), mas no boot OBJECT e SHADOW DISTANCE não eram sincronizados na tela: o slider mostrava 50 com o valor salvo ativo.
+    - Agora o boot chama objectDistanceUI/shadowDistanceUI/graphicsPresetUI, e `openCfg` chama `cfgUI()`.
+  - Carregar um save não aplica mais os gráficos guardados no save (sombras, densidades, distâncias, resolução, FPS, postes): o aparelho mantém os seus.
+  - Presets:
+    - ALTO usa DRAW DISTANCE 200 (5 chunks; antes 100, o meio do slider);
+    - BAIXO usa RESOLUÇÃO INTERNA 40% (PSOne) e o resto zero.
+    - Os perfis do benchmark não mudaram.
+  - Teste (cfgpersist.js): 83/71/90 sobrevivem a new game, reload, reload + new game e à abertura do menu; ALTO → 100/100/200; BAIXO → 0/0/0 com resolução 40 e "LOW active".
+- Preset MÉDIO:
+  - carros/pedestres 50, DRAW 150 (4 chunks), OBJECT 25, SHADOW 0, resolução 90%;
+  - sombras 1x ligadas, sombra detalhada ON, bloom e reflexos ligados; postes como antes (desligados no celular).
+  - Os textos de ajuda e status deixaram de dizer "padrão provisório".
+  - O padrão de fábrica (CFG_DEF) não mudou.
+  - Testado clicando no MÉDIO: valores e localStorage conferem, e a tela mostra "150 · 4.00 chunks".
+- Roleta jogável (cassino):
+  - mesa redonda em (X+4,5, Z+2,7) entra em CAS.tables como 'roul'; E/F perto abre a mesma janela das mesas (#tableGame);
+  - roleta europeia 0–36; apostas: vermelho, preto, par, ímpar, 1–18, 19–36 (pagam 2×) ou número exato (36×); no zero só o número 0 ganha;
+  - a aposta é presa no início do giro; a bola anima 18 números desacelerando;
+  - SAIR e ESC ficam bloqueados durante o giro.
+  - Teste: perto da mesa abre ROLETA; vermelho/11 preto perde; número 17 perde; ímpar/7 ganha +$200; blackjack e pôquer continuam normais.
+- Otimização dos exteriores (medida com polyprobe.js na seed 999156065, tamanho 14, nos 4 pontos do usuário):
+  - Postes:
+    - haste e base em cilindro de 6 lados, curva em 3 segmentos (antes 8, cyl16), sem a esfera da ponta;
+    - luminária semiesférica 8×3 com bulbo 8×2 (antes 16×10);
+    - 1340 → ~200 triângulos por poste; a sombra foi mantida.
+  - Lâmpada de semáforo: 4 lentes planas de 8 triângulos, uma em cada face da caixa (offset .185 × escala .85), M.tl DoubleSide; antes era uma esfera de 288.
+  - Reflexo de chão molhado: chunks até 80 m (antes 150); postes e semáforos próximos continuam no reflexo.
+  - Desgaste pela metade:
+    - máscara regional suave (`reg`, ruído em xz*.011, smoothstep .44–.6), com transição gradual e sem emenda; fora dela o desgaste nem é calculado;
+    - a fuligem das chaminés vale em qualquer região. Cela e shopping não mudaram.
+  - Resultado (triângulos na tela / na sombra):
+    - 302,12: 2,74 mi / 1,30 mi → 0,71 mi / 0,29 mi;
+    - 0,681: 2,12 / 0,90 → 0,59 / 0,24;
+    - -2,1061: 1,49 / 0,88 → 0,54 / 0,22;
+    - 393,1066: 0,75 / 0,40 → 0,36 / 0,17.
+    - Desenhos quase iguais (~500–600).
+- Roleta 2D e videopôquer (12/11, 16h):
+  - Roleta: canvas 240 px (`rlWheelDraw`) com as 37 casas na ordem europeia real, números e roda central.
+    - O giro (`roulSpin`, 4,6 s): roda num sentido e bola no outro, em easeOut cúbico; aos 62% a bola desce da pista para as casas com quiques, faz clique a cada casa e para exatamente na casa sorteada (ângulo final = roda + índice×passo).
+    - O número vencedor fica em amarelo.
+  - Cartas:
+    - índice nos 2 cantos (o de baixo invertido) e naipe grande no centro; verso com estampa;
+    - carta nova entra virando, com 80 ms de atraso por posição (`TABLE_GAME.seen` evita reanimar as que não mudaram).
+  - Videopôquer: tabela de prêmios em grade com a mão atual destacada (`tgPayTable`).
+- Fachadas:
+  - Banco: o "$" do telhado tinha a barra vertical 2 m à frente das outras peças, flutuando, e o conjunto ficava 20 cm acima da cornija. Agora é uma peça só, num plano, sobre uma base apoiada na cornija.
+  - Heliponto (delegacia, hospital, arranha-céu):
+    - 1ª tentativa fora dos estacionamentos do lote;
+    - se não couber, as vagas debaixo do H são retiradas de lot.slots e de city.empParkingSlots, e nenhum carro nasce no heliponto;
+    - as vagas novas do perímetro (v288) evitam `city.heliRects`.
+  - Revisão por capturas aéreas: delegacia, hospital, banco, prefeitura, shopping, mercado, posto/concessionária/borracharia, oficina e danceteria, sem outras sobreposições visíveis.
+- Motel Miragem + missão 1 reescrita (12/11, 17h):
+  - Terreno: o L com 6 quartos + piscina NÃO cabe no lote do posto (7×7: meia quadra de ~22 m; 14×14: a sobra do 2º posto tem ~17×42 m).
+    - Agora o motel fica sempre num quarteirão VIZINHO ao posto: em 14×14, ao 2º posto (o afastado); em 7×7, ao posto da concessionária.
+    - Vizinho lateral é o preferido; diagonal é a reserva. Aceita o corredor aéreo se o limite for ≥6 m (o letreiro abaixa até 4,6 m).
+    - Ficam `city.motelRi` e `info.motelLot`, e o gasCompact voltou ao original.
+  - Prédio (`motelBuild`):
+    - escala automática até 1,75× (quartos 7,35 × 8,75 m, pé-direito 4,3);
+    - perna longa com 4 quartos encostada na perna curta (2 quartos), sem parede cega;
+    - neon vermelho, recepção, letreiro Miragem/MOTEL/VAGAS com seta, coqueiros, cerca velha e estacionamento.
+  - Piscina abandonada:
+    - água verde-oleosa com lodo, espuma e brilho de óleo, pneu, tábua e galão boiando;
+    - borda quebrada, pisos manchados, escada enferrujada, guarda-sol tombado, espreguiçadeira virada e tambor com faixa de risco.
+  - Quarto 6 (`motelRoomBuild`, em SAFE.IN +110/−70):
+    - carpete xadrez marrom, lambri, papel caramelo com mancha;
+    - cama de casal com colcha bordô, criados-mudos com abajures, cômoda com TV de tubo (pisca), mesinha com cadeiras;
+    - janela com cortinas vinho e ar-condicionado, porta do banheiro, quadro de praia, ventilador de teto girando;
+    - roomLitMat quente (amb .36, rad 3.6, grime .45); o teto é de uma face só, para a câmera de topo funcionar.
+  - Entrada e saída (`motelEnter`/`motelExit`/`motelTick`):
+    - seta na porta do 6; dentro, a seta de saída;
+    - 'motel' entrou em roomStageKind, roomStageRoot, roomStageArrows, inRoom e no switch do tick local;
+    - a câmera fica presa ao quarto (`interiorCameraHeight`);
+    - fica em STORY_LOCKED até a missão.
+  - Balão de pensamento: `think()` / `say(...,thought)` desenha uma nuvem arredondada com bolinhas e texto em itálico.
+  - Missão 1 (estágios em MISSION_STAGES.pier):
+    - dealer: a culpa de Nathan;
+    - driveFirst: pensamento "10 anos… 3 que ela tá lá";
+    - prison: legenda ANO 3 DE 10 e o plano de Claire com a colega;
+    - escape → steal: qualquer carro;
+    - driveMall: GPS na porta; ao entrar no shopping, pensamento sobre a confiança;
+    - phoneBuy → sms: agenda/770 → Claire digita o SMS → troca aérea para Nathan → "SMS · NÚMERO DESCONHECIDO" + mensagem na caixa do celular → reação;
+    - ammo: GPS na AMOnições; qualquer compra arma Nathan (gancho em ammoBuy);
+    - motelDrive: após 8–14 s ao volante e a >60 m do motel, fade → blitz perto do meio do caminho (`blitzRandomSite(near)`), com falas do policial sobre a fugitiva;
+    - motelGo;
+    - porta do 6 → corte 'motelDoor': por trás de Nathan de arma em punho → Claire de costas na janela → contracampo, ela se vira → plano lateral, ele baixa a arma, os dois se aproximam e se beijam;
+    - corte 'motelTalk': diálogo com a câmera do casal;
+    - fade → cena da orla existente → casa/créditos. A fala final na safe também mudou.
+    - Os balões da cena usam `cineSay` (balão reduzido) e `cineDir` (direção do sprite em relação à câmera da cena).
+  - LANG_EN: todas as falas e objetivos novos. F9 (missionDebugSkip) cobre cada estágio novo; F10 sai do quarto.
+  - Testado (Playwright/swiftshader):
+    - motel nas seeds 777/7 (quadra 17) e 999156065/14 (quadra 83), com vistas aérea/frente/piscina;
+    - entrar e sair no modo livre, na câmera TP e de topo;
+    - missão completa com F9 nas seeds 4242/7 e 999156065/14: todos os estágios, a blitz forçada e o fim (STORYEND), 0 erros de página.
+    - Não testado com controle real: dirigir até o motel sem pular, e o roubo de carro com motorista.
