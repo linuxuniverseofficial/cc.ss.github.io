@@ -4693,3 +4693,27 @@ Projeto desenvolvido por iteração e vibe coding: base criada com auxílio do C
     - borracharia nas seeds 777/7 e 999156065/14 (entra na loja);
     - vistas de safe, conveniência, penhores e impérios;
     - missão 1 completa sem erros.
+
+## 21h50 · Motel em L maior + quarto com banheiro + ícone no radar + posto anos 70
+- README: o link "play now in your browser" agora aponta para https://linuxuniverseofficial.github.io/cc.ss.github.io/.
+- motelBuild refeito (prédio em L, 2 andares quando o limite de altura do aeroporto permite):
+  - circulação, escadas, sacada com guarda-corpo, AC e caixa d'água no teto;
+  - faixa de asfalto em L com vagas de bico e carros estacionados; a vaga do quarto 6 fica livre;
+  - recepção ao lado da entrada e da placa Miragem (o carro entra pela faixa, não cai na piscina);
+  - pátio da piscina cercado, com canteiros de coqueiros junto às cercas;
+  - piscina azulejada com água transparente esverdeada (opacidade .26) e sujeira boiando.
+- motelRoomBuild: quarto 9,2×7,2 com banheiro separado (chuveiro com cortina, vaso, pia, espelho) e objetos detalhados.
+- Radar: ícone de cama do motel (cor #ff8a6a) e entrada na legenda, só quando storyOK('motel').
+- Posto anos 70 (st.retro, 2º posto landmark): marquise larga em balanço, pilares curvos vermelhos, globos nas bombas, pilone com pneu gigante.
+- Dev: Ctrl+Shift+F8 percorre motel → quarto 6 (pisa na seta e entra) → posto 70 → borracharia.
+- Testado:
+  - seeds 777/7 e 999156065/14;
+  - missão 1 completa com ERR 0;
+  - vistas do quarto, do banheiro e do posto;
+  - tour pelo Chrome do usuário.
+- 21h58 · Reaproveitamento das peças da praia:
+  - beachUmbrella, beachUmbrellaPole e beachLounger viraram funções globais;
+  - a praia usa as mesmas funções, com geometria idêntica;
+  - a piscina do motel usa dois guarda-sóis de praia (cores desbotadas) e as espreguiçadeiras da praia;
+  - o guarda-sol caído e o barril continuam como estavam;
+  - testado na seed 999156065/14 (vista da piscina, ERR 0).
