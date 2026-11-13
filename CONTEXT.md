@@ -4581,3 +4581,115 @@ Projeto desenvolvido por iteração e vibe coding: base criada com auxílio do C
     - entrar e sair no modo livre, na câmera TP e de topo;
     - missão completa com F9 nas seeds 4242/7 e 999156065/14: todos os estágios, a blitz forçada e o fim (STORYEND), 0 erros de página.
     - Não testado com controle real: dirigir até o motel sem pular, e o roubo de carro com motorista.
+- Lote de ajustes da missão 1 e do jogo (12/11, 18h):
+  - Abertura: Nathan chega das Bahamas. A legenda do aeroporto é "voo de Nassau, Bahamas"; as primeiras falas falam da farra que não o distraiu e da culpa.
+  - Ctrl+Shift+F9: na concessionária ficava preso abrindo e fechando a loja. Agora compra o conversível. Na loja de eletrônicos compra o celular direto, e o F9 fecha a AMOnições aberta. Testado com tecla real no Playwright, do começo ao fim.
+  - Troca aérea da missão: partia de `camT`, que só anda na câmera de topo (por isso ia à concessionária). Agora parte do carro/personagem atual.
+  - Legendas de troca viraram cartela em tela preta (`prologueCard`): "PENITENCIÁRIA DE SUNSET SHORES / Claire · ano 3 de 10" e "ENQUANTO ISSO, NATHAN…". O exitMall acontece no preto. Não se sobrepõem mais aos diálogos.
+  - Personagem inativo na missão: o carro dele sai de `vehicles` (`charStashCar`, sem malha, colisão, sombra, ícone nem passageiro desenhado) e volta intacto na troca (`charUnstashCar` em charEnter, prologueReset e no fim). O NPC do outro personagem (duoWorldTick) não aparece durante a missão.
+  - Especiais travados na história até a missão 1 liberar (`specUnlocked`), com a barra azul oculta:
+    - Claire libera ao roubar o carro, com a dica no bloco laranja;
+    - Nathan libera na cena do motel: câmera lenta (corte a 40%, imagem dessaturada) enquanto ele aponta e Claire se vira; ele desiste. Aviso "BULLET TIME LIBERADO".
+    - Saves com 'pier' concluída já vêm liberados.
+  - Cadeia:
+    - "GUARDA VOLTANDO!" em amarelo (verde = fora, amarelo = voltando, vermelho = olhando);
+    - beliche de solteiro com 1,05 m de largura (antes 2 m), com colisor ajustado;
+    - buraco, marca e poeira da cavação escurecidos (eram cores sem luz, brilhando na parede escura).
+  - Monitor liberado no menu durante a missão jogável (continua oculto nas cutscenes).
+  - Shopping: a seta da loja de eletrônicos fica na PORTA e some ao entrar.
+  - Bloco laranja (#storyGuide) 2× no PC; no mobile ficou como estava.
+  - Cena do motel: diálogo acima das tarjas de cinema (`body.story-cinematic #dlg`). Beijo com narizes encostando (0,78 m entre sprites); conversa a 1,0 m.
+  - AMOnições:
+    - placa, porta com moldura dourada e seta passaram para a fachada real (`ammoFacadeFix` recua do ponto da porta até o colisor 'bld' quando o quarteirão carrega);
+    - interior com roomLitMat e luminárias, piso em placas, lambri, painel perfurado, gôndolas com montantes e 4 prateleiras com caixas variadas, caixa registradora, mostruário de facas, alvos, tapete e poltrona;
+    - 9 colisores (antes nenhum).
+  - Câmeras estilo GTA III/VC/SA: carro perto/bem perto ficam acima do teto (altura 2,05+H·.75 / 1,6+H·.75, olhando levemente para baixo); a pé, perto/bem perto ficam mais altas e afastadas.
+  - Modo foto: slider ALTURA + teclas R/V; desativado nas câmeras de topo/isométrica.
+  - Fios dos postes: LineSegments (10 segmentos por vão, 0 triângulos, 1 draw por chunk) + isoladores instanciados de 12 triângulos. Não vale reduzir.
+- Casas repaginadas (12/11, 20h):
+  - Gerador `houseBuild(X,Z,seed,safe)` + `houseLayout`. A sala 10×8 m fica nas MESMAS coordenadas de antes: porta ao sul, sofá a oeste, rack e TV no centro, por isso TV, tvPos, a Claire e a seta de saída continuam funcionando.
+  - Cômodos novos:
+    - quarto + banheiro ao norte (profundidade 3,9–5 m; banheiro de 2,8–3,6 m de largura, à esquerda ou à direita);
+    - cozinha a leste ou oeste (3,9–4,9 m);
+    - em ~38% das casas, a ala lateral se divide em cozinha + quarto de criança.
+  - Portas: vãos de 1,1 m com batentes; a posição evita sofá, estante e móveis.
+  - Paredes:
+    - quads voltados para dentro; azulejo até 1,35 m no banheiro e na cozinha;
+    - rodapé, colisores de ±0,12 m e janelas nas paredes externas;
+    - teto com mb.quad (visível de baixo, invisível na câmera de topo).
+  - Móveis:
+    - sala: sofá, mesa de centro, tapete, rack, estante em pé com livros, luminária e planta em cantos livres, quadro;
+    - quarto: cama de casal, criados-mudos com abajur, guarda-roupa na parede externa, cômoda com espelho, tapete, quadro;
+    - banheiro: box com vidro, vaso, pia com gabinete e espelho, toalheiro, tapetinho, janela alta;
+    - cozinha: bancada, pia, cooktop, armários aéreos, coifa, geladeira, mesa com 2–4 cadeiras;
+    - criança: cama de solteiro, escrivaninha com monitor, cadeira, baú de brinquedos.
+    - Tudo com roomLitMat; grime aleatório só nas casas roubáveis.
+  - Casa segura: layout fixo (cozinha a oeste, banheiro a leste). `SAFE.rooms`, `bedRect`, `bedSpot`, `catSpot`, `wardRect` substituem as coordenadas fixas em bedNear, wardNear, gato e acordar na cama.
+  - Casas roubáveis:
+    - seed = posição da porta × seed da cidade; montadas em SAFE.IN −130/+40;
+    - a anterior é descartada (`houseDispose`, com `remCol` tirando os colisores do grid);
+    - objetos por cômodo:
+      - sala: TV, DVD, videogame, celular;
+      - quarto: joias, celular, notebook, dinheiro no guarda-roupa, perfume na cômoda;
+      - banheiro: perfume, secador;
+      - cozinha: micro-ondas, liquidificador, cafeteira;
+      - criança: videogame, celular.
+    - valores por tipo (`LOOT_VAL`); cada noite sorteia ~12% de ausências;
+    - tempo do assalto 15 s (antes 10).
+  - Câmera: `houseCamClamp` prende ao cômodo do jogador (substituiu as caixas fixas da safe nas câmeras FPS e TP).
+  - Testado:
+    - planta de cima da safe e de 4 casas (variações de lado, banheiro e quarto infantil), vistas de cada cômodo;
+    - todos os vãos livres de colisor (safe + 8 casas);
+    - bedNear/wardNear verdadeiros nos novos retângulos;
+    - missão 1 completa sem erros.
+  - Não testado: andar de verdade com o controle entre os cômodos.
+- Polígonos, borracharia, impérios (12/11, 21h):
+  - Medição: polyprobe em 12 pontos, seeds 777/7, 999156065/14, 4242/14, 31337/14, 14h.
+    - Antes: principal 552 mil triângulos (média; máx. 797 mil), sombra 230 mil (máx. 294 mil).
+    - Vilões:
+      - carros instanciados do trânsito: 22% da cena e 54% da sombra;
+      - faróis instanciados: 17%. Os apagados mandavam ~1.600 triângulos com matriz zero, e sem recorte;
+      - postes de luz: 12% / 21%;
+      - árvores: 12% / 13%;
+      - semáforos (tlpMesh, ~610 triângulos cada): 6% / 8%.
+  - Feito:
+    - carros instanciados:
+      - recorte por frustum (antes ia tudo num raio de 360 m, inclusive atrás da câmera);
+      - faróis só nos carros acesos;
+      - sombra só dentro do alcance da sombra (lote `fim` sem castShadow);
+      - esferas 8×6 e cilindros de 9 lados (`INST_LOW`), só nos instanciados (os próximos têm malha detalhada).
+    - semáforos: haste/base/braço de 9 lados e esfera 8×5.
+    - opção nova "Sombras de Postes" (`S.poleShadows`; Baixo desliga; Médio e Alto mantêm) controla postes de luz e semáforos.
+  - Depois, nos mesmos pontos: principal 351 mil (−36%), sombra 99 mil (−57%); chamadas iguais (~480). Desligar a sombra dos postes tira mais ~48% da sombra que sobrou.
+  - Sugestões não aplicadas:
+    - copa das árvores 10×6 → 8×5 (~−25% em plantMesh);
+    - sombra de árvore só perto.
+  - Lâmpadas da casa (safe e roubáveis): plafon achatado rente ao teto (antes bola de 0,2 m pendurada); brilho dos abajures pela metade.
+  - AMOnições na BORRACHARIA:
+    - `city.tireRi` = 2º posto, ou o posto da concessionária;
+    - escritório (cubículo de compensado com porta, placa ESCRITÓRIO e janela com persiana) DENTRO do galpão, encostado na parede lateral;
+    - `city.tireOffice` vira AMMO.pos (sem a placa de fachada); se o lote não tiver borracharia, volta à porta de prédio (`ammoTireFallback`);
+    - o borracheiro na porta solta trocadilhos a cada 8 s (`AMMO_LINES`);
+    - a fala e o objetivo da missão citam a borracharia.
+  - Iluminação de interiores:
+    - roomLitMat agora também na conveniência do posto (fluorescente), na casa de penhores (empoeirada) e nos impérios (calhas, grime .6);
+    - o shopping continua com o `mallMat` próprio.
+  - Impérios (`empRoomExtra`):
+    - sala da gangue: sofá velho, mesinha com garrafas e baralho, TV no caixote;
+    - sacos de lixo, caixas de pizza, tambores, engradados, pichações procedurais (frente e fundo);
+    - estação do negócio na frente à direita:
+      - gráfica: notas e varal de notas;
+      - agiota: mesa com livro-caixa e cofre;
+      - diplomas: rolos com fita e certificados na parede;
+      - apostas: painel de odds e boletos;
+      - desmanche: bloco de motor, pneus e caixa de ferramentas;
+      - aeroporto: paletes e empilhadeira.
+    - Tudo com colisores.
+  - Bugs corrigidos:
+    - penhores: o jogador nascia a 0,7 m da saída e saía sozinho após 1 s parado;
+    - o aviso "SUBIR AO TERRAÇO" podia ficar na tela ao entrar num interior (doorEnter agora o esconde).
+  - Testado:
+    - probes antes e depois;
+    - borracharia nas seeds 777/7 e 999156065/14 (entra na loja);
+    - vistas de safe, conveniência, penhores e impérios;
+    - missão 1 completa sem erros.
