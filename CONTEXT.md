@@ -1,9 +1,508 @@
+## v78 · Jogo 100% local (three.js e fontes dentro do zip)
+- Nova pasta `lib/` (~1 MB): `lib/three/` = three.js r128 (`three.min.js`) + CopyShader, LuminosityHighPassShader, EffectComposer, RenderPass, ShaderPass, UnrealBloomPass e GLTFExporter (mesma versão do CDN, do pacote npm three@0.128.0; LICENSE MIT junto). `lib/fonts/` + `lib/fonts.css` = Silkscreen, VT323, Pacifico, Fredoka 600/700, Monoton, Creepster, Pirata One em woff2 latin + latin-ext (pacotes @fontsource, licenças OFL junto).
+- `index.html` não usa mais jsdelivr nem Google Fonts. Teste com toda rede externa bloqueada: jogo carrega, bloom ok, fontes carregam, exportar .glb funciona, zero pedidos externos. Só as rádios online (KRFM) continuam dependendo de internet, por natureza.
+- Ao trocar a versão do three.js no futuro, trocar os arquivos em `lib/three/` (o código usa a API r128).
+
+## v78 · Exportar .GLB (monitor F3)
+- Linha ".GLB" no monitor com CIDADE (cidade inteira, todos os chunks, inclusive os fora da distância de desenho), ÁREA (150 m em volta) e INTERIOR (interior atual, 90 m). Baixa `coastal-chaos_seed<seed>_<modo>.glb` para abrir no editor do three.js (threejs.org/editor) ou no Blender.
+- Peso zero: o `GLTFExporter` r128 vem do mesmo CDN do three só no 1º clique (precisa de internet). Cópia da cena: materiais viram MeshStandardMaterial simples (cor, cor por vértice, textura de canvas, transparência), InstancedMesh vira malha mesclada (postes, semáforos…), linhas (fios) entram; sprites/partículas/céu/ShaderMaterial ficam de fora. Shaders do jogo não são tocados.
+- Teste seed 777 tamanho 7: cidade 18 MB (~23 s), área 6 MB, shopping 13 MB; os três abriram no GLTFLoader.
+
+## v78 · Modo foto: logo padrão, tamanho guardado, marca arrastável · sol se põe no mar · ORB
+- Marca d'água: LOGO é a padrão (ordem logo → texto → nenhuma). Tamanho guardado por marca e posição arrastável (clique e arraste a marca na tela; vale para logo e texto, inclusive na foto final). Tudo salvo em `localStorage` `pcPhotoMark` (`PHMARK`, `phMarkSave`, `PHOTO.wmBox`).
+- Sol: antes o caminho era fixo nos eixos do mundo (nascia em +X, se punha em −X) e, como a costa muda por seed, parecia aleatório. `sunRot()` gira só o azimute (sol, lua, sombra, céu) para o poente cair numa faixa de 45° (±22,5°, sorteio fixo pela seed) centrada na direção do mar. Teste: seed 4242, poente a 18° do mar.
+- BUG GRAVE corrigido: o comentário da câmera padrão (`VIEW`) engolia a declaração `const ORB` → "ORB is not defined" (câmera giratória/isométrica e arrastar com o mouse). Varredura: nenhum outro comentário engolindo declaração.
+
+## v78 · Cronômetros viram barras (UX)
+- Conceito: em jogo frenético, tempo restante se lê de relance — barra, não número. Componente `.tb` (`tbHTML(f,cls)` para HTML inline; `#tbar` + `tbarShow(dono,rótulo,f)`/`tbarHide` para barra central temporária, que some sozinha se ninguém a atualizar por 0,4 s). Abaixo de 25% fica vermelha.
+- Cela: o relógio m:ss virou a barra "PENA" que esvazia; o guarda pegando você cavando volta a pena ao máximo e a barra reenche com transição. O "túnel X%" virou barra verde "TÚNEL".
+- Missão 1: fora do conversível → barra "VOLTE PARA O CONVERSÍVEL" (30 s) em vez de avisos numéricos. Corrida: fora do carro → barra "VOLTE PARA O CARRO" (5 s, antes sem aviso).
+- Assalto a casas ("SAIA" 15 s) e loja de penhores ("NÃO DEMORE" 10 s): barras. Missões de táxi/paramédico/vigilante: o m:ss virou barra (máximo = tempo dado na etapa).
+- Ficam como número de propósito: contagem 3-2-1 da largada, tempo da corrida (é resultado), relógio do dia.
+- Bug antigo: `jailEscapeTick` usava `m` indefinido (ReferenceError na cela fora da missão) → `JAIL.mate||PL`.
+
+## v78 · Polícia: Maskara como disfarce, helicópteros em série, nível cai com o tempo
+- Fugiu da perseguição e a polícia ficou só em BUSCA (área do crime, `WZ.list`, sem `POL.wanted`): vestir ou tirar a Maskara, ao fim do rodopio, encerra a busca (`maskSearchClear`): limpa as áreas, dá trégua de 20 s, e as viaturas de busca voltam à ronda normal sem sumir na frente do jogador. Toast "DISFARCE PERFEITO · BUSCA ENCERRADA". Dentro da perseguição ativa não faz nada.
+- Nível 3: helicóptero abatido → outro chega em 8 s (antes 45 s), com aviso "outro já está a caminho".
+- Nível cai sobrevivendo: a cada 10 min reais sem subir de nível (`POL.lvT`, `polDecayTick`), cai 1 estrela (3→2→1; nunca zera sozinho). Subir de nível zera o contador. PT/EN.
+
+## v78 · Gramado sem placas quadradas; linhas no chão
+- `lawn()`: os tons de grama (antes caixas quadradas, inclusive sobrepostas formando "molduras") são manchas suaves `softStain` com borda na cor da grama — mesma lógica do cemitério/piscina do motel. Vale para quarteirões rurais, parques, quintais e chão da floresta.
+- Linhas finas no chão (praça laranja da orla, heliponto): eram os fios dos postes derrubados, que ficavam esticados no chão para sempre. Com o sistema `DEBRIS` eles somem junto com o poste caído em 1 h de jogo.
+- Detector de z-fight rodado no shopping (seed 777, tamanho 7): 2 conflitos de 0,003 m² em linhas fora do MB, sem impacto visível.
+
+## v78 · Nathan duplicado na troca "Enquanto isso…"
+- Na troca vinda de interior (shopping → Nathan no conversível), o `iswitch` chamava `actorShowNow(PL)` depois do `charEnter`, deixando o sprite em pé visível além do Nathan sentado (`convRs`) — parecia um passageiro/duplicata e, ao descer e voltar, um Nathan "bugado" na rua. Agora só mostra o sprite se não estiver em carro/heli.
+- `charEnter` descarta o balão de pensamento do personagem anterior ("Preciso falar com o Nathan." aparecia no Nathan).
+
+## v78 · Seta-guia do shopping e letreiro apagado
+- A seta-guia da missão no shopping (`MALL.arrGd`) estava com a luz presa à seta (`ringFixed`), então o brilho subia e descia junto e ficava no meio da escada. Agora usa `userData.floorRay`: um raio para baixo dentro do `MALL.grp` acha o piso/degrau real (refeito só quando a seta muda de lugar) e a luz fica parada ali; só a seta balança.
+- Lojas fechadas com grade: a placa de letreiro lisa e escura (parecia painel sem textura) virou letreiro velho apagado com nome antigo (VÍDEO LOCADORA, FOTO 1 HORA, LAN HOUSE, MODA 2000, DISCO MANIA; PT/EN).
+
+## v78 · Banca de jornal
+- As bancas das esquinas (mobiliário urbano dos quarteirões de prédios) registram o ponto do cliente em `ch.kiosks`. A pé perto dela: "BANCA DE JORNAL · JORNAL $1" (E/F/→, controle, toque). Paga $1 e abre a "GAZETA DE SUNSET SHORES" (`#news`), que fecha com E/Esc/Enter/clique ou o botão do controle.
+- Manchete e resumo das 5 últimas ocorrências (`NEWS.items`, até 12), com bairro (`districtName`), dia e hora: morte (queda, afogamento, atropelamento, tiroteio, gangue, banco, criatura, genérica), carro explodido com o modelo (`vehicleModelName`), prisão com estrelas, e a Maskara saindo rindo do carro em chamas. Com menos de 3 notícias entram matérias de enchimento. Nada disso vai pro registro de falas do menu. Não registra durante a missão 1.
+- Detecção: `killPlayer` guarda a causa; explosão do carro do jogador marca `NEWS.boomT`; atropelamento marca a causa; `newsTick` pega a borda de `PL.dead`; `busted` registra a prisão. Save: campo opcional `news`. PT/EN.
+
+## v78 · Ressaca não fica para sempre
+- `clubWake` deixava `DRUNK.level=.2` com `DRUNK.t=0`; como o decaimento só roda com `t>0`, o balanço da câmera nunca acabava (e passava pro Nathan). Agora acorda com `t=9.6` (decai em ~17 s) e trocar de personagem (`charEnter`, `duoSwap`) zera a bebedeira.
+
+## v78 · Maskara com arsenal infinito; cama sempre cura
+- Vestir a Maskara guarda o arsenal atual (`MASK.kit`, `maskKitSave`) e libera TODAS as armas (pistola, Magnum, metralhadora, bazuca, granada, bomba remota, jammer) sempre no máximo (`maskArm` no `maskTick` = munição infinita).
+- Tirar (de qualquer jeito: rodopio, troca de personagem) devolve o arsenal de antes (`maskUnkit`) e deixa o Nathan com 15 de vida e 15 de colete.
+- Save/snapshot da Haze gravam o arsenal guardado, nunca o da Maskara (`maskGunSave`); a Haze leva o `kit` junto; carregar save zera o `kit`.
+- Cama da safe house: deitar recupera 100% da vida antes de checar se pode salvar (missão 1/cheat continuam sem salvar, mas curam).
+
+## v78 · Missão 1: guarda-roupa, iPixel, falhas, créditos, limpeza da rua
+- VISUAL INVÁLIDO: o uniforme laranja da cadeia (`jailWear`, `#f07818`) não existe no `WEAR_PAL`, e a validação recusava qualquer compra. Agora peça NÃO trocada não é validada nem cobrada (`wardCost` só conta o que mudou); ao equipar com `jailLook`, as peças laranja que sobraram voltam à roupa normal dela e o `jailLook` é apagado — o fim da missão não troca mais a roupa que ela comprou.
+- Objetivo do celular: "Compre um celular na loja de eletrônicos. Claire gosta do modelo iPixel." + linha menor "Se desejar pode comprar roupas e acessórios nas demais lojas!" (campo `sub` do estágio, PT/EN).
+- Missão 1 falha se a polícia entrar na cola (`POL.wanted`) ou se o Nathan ficar fora do conversível por 30 s (dentro de lojas/interiores não conta; aviso em 30/20/10/5/3 s). Motivos com LANG_EN.
+- Créditos finais: fonte 2× e rolagem de 38→60 s.
+- Marcas de pneu: atributo de idade por segmento; ficam 50 s e esmaecem em 10 s (1 h de jogo). Material básico próprio.
+- Destroços (poste, árvore, semáforo derrubados): 50 s caídos + 10 s de dither (`lodSoftBind`, preserva o shader de luz); depois somem, os fios caídos somem junto, e o objeto em pé volta quando o jogador está a >70 m (`DEBRIS`, `debrisSave/Tag/Gone/Restore`).
+
+## v78 · Sem ponto da Claire no mapa durante a missão 1
+- `luciaMapPose` e `luciaIdleTick` não rodam com `PROLOGUE.active`: o ponto rosa da Claire "ociosa" (e a realocação dela pela cidade) só existe no modo livre e depois da missão 1. O ped dela já não nascia no prólogo (`duoWorldTick`).
+
+## v78 · Maskara: tirar em situação extrema / vestir caindo
+- `maskRisky()` bloqueia GUARDAR a máscara sobre a água, em queda livre (farol, paraquedas no ar, pulo alto), queimando ou no chão: Nathan diz "Tirar a máscara aqui? Eu afundo!" (água) ou "Agora não!". O cheat de desligar passa pela mesma regra.
+- `maskSafe()`: a imortalidade já vale durante o rodopio de VESTIR — vestir em queda livre cancela a morte por queda (vira a piada da queda); também vale contra afogamento.
+
+## v78 · Maskara no laboratório
+- Bug: com a Maskara dentro do lab (que fica em coordenada de mar) a regra de andar na água puxava o Nathan para o nível do mar, abaixo do piso. Andar na água (e ir a pé para a Haze) agora só vale fora de interiores (`!PL.inside`); `hazeShift` só usa o caminho a pé com a Maskara vestida (sem ela, continua criando o barco).
+
+## v78 · Transformação esmaecida e câmera padrão
+- Rodopio da Maskara: a roupa atual some e a de destino aparece aos poucos durante o giro (`maskGhostStart/Tick/End`: sprite "fantasma" com o atlas da roupa de destino — 2D `atlasTex` ou 3D `atlas8Tex` — copiando o quadro do jogador; opacidades cruzadas com suavização; alphaTest baixado só durante a troca e devolvido a .5). Tirar a máscara é o inverso.
+- Câmera padrão: 3ª pessoa PERTO (`VIEW.tpz=1`), a pé e de carro; o ciclo de câmeras continua igual.
+
+## v78 · Maskara: explosão, queda e tiros
+- Explosão (carro/posto) com a Maskara: sem dano; fica QUEIMADA por 10 s — troca para uma versão carbonizada com esmaecimento (escurece pelo `actorTint` do sprite, troca no meio, clareia; mesmo na volta). 2D: `drawCharFrame` embrulhado passa o quadro por `burnFrame` (carvão + cinza + brasas, olhos claros); 3D: `atlas8Build` embrulhado carboniza o atlas já assado (chave inclui `burnt`). Nenhum shader/luz foi mexido. Fumaça e brasas saindo dela. Falas: "Tô defumado!", "Esse churrasco é dos bons!", "Ao ponto, por favor!", "Alguém pediu bem passado?".
+- Queda fatal (terraço, paraquedas, farol): cai, levanta, poeira e "Essa vai deixar marca!", "Essa doeu!", "Ai, minha coluna… brincadeira!", "Chão: 1. Eu: imortal.".
+- Tiros/porrada: "Fez cócegas!", "Só isso?", "Errou… quer dizer, acertou. Mas não doeu!", "Minha vez!" (no máximo uma a cada ~3 s; `MASK_LINES`, `maskSay`). Tudo com LANG_EN.
+
+## v78 · Cheat THEMASK = item Maskara; traje no 3D
+- `THEMASK` agora faz o mesmo que abrir o cofre: dá a Maskara como item (fatia do JAMMER na roda) e veste; repetir o cheat guarda e tira o item (só se ele veio do cheat, `MASK.cheatHave`). Só o Nathan; a Claire recusa. Salvar segue bloqueado após qualquer cheat (`CHEAT.used` → `saveBlocked`), mesmo desligando. Descrição do cheat atualizada (PT/EN).
+- Boneco 3D do traje (`charModel3D`, `p0.maskSuit`): camisa branca e gravata marrom listrada na frente do tronco (o 2D já tinha).
+
+## v78 · Contorno de seleção cortado no provador
+- `#wardSecs` (lista com rolagem) recortava o contorno da 1ª amostra de cada seção à esquerda: ganhou folga interna (padding 6–8 px, compensada com margem negativa). Conferidos com foco/contorno: Configurações (abas e conteúdo), Tuning, Registros — sem corte.
+
+## v78 · Gravata da Maskara
+- Gravata do traje (sprite, frente e perfil) passou de vermelha para marrom `#7a4a28` com listras escuras `#3e2414`.
+
+## v78 · Transatlântico, Maskara atropelada, mãos, estampas nas camisas
+- **Navio de cruzeiro** (`shipBuildCruise`): virou transatlântico clássico dos anos 1910 — casco preto com faixa vermelha na linha d'água, friso branco e dourado, 2 fileiras de vigias, superestrutura branca baixa e comprida, 4 chaminés ocre com topo preto inclinadas para trás (`GEO.cyl16` elíptico), 2 mastros com cabo, botes salva-vidas nos turcos. Sem piscina/espreguiçadeiras. Proa no +x; `containers` atualizados (conveses, ponte, chaminés).
+- **Maskara atropelada**: em vez de dano/nocaute → cai 2,4 s, tela preto e branco (`PL.maskKO` nos dois toggles de `ko-grayscale`) com "OLHA MÃE, FUI ATROPELADO! HA HA!" (EN: LOOK MA, I GOT RUN OVER! HA HA!) e levanta; a tela volta ao normal.
+- **Mãos**: o traje grava `handSkin` (pele original); sprite (braços de frente/costas/perfil, mangas do traje mais curtas) e boneco 3D usam essa cor nas mãos — só a cabeça fica verde.
+- **Camisas** (`SHIRT_ART`, `shirtArt`/`shirtArtOf`): detalhes no atlas — bolso, botões, listras, estampa (tinta clara/escura conforme a cor). Loja de roupas (Moda Pixel) vende "ESTAMPA DA CAMISA" ($25, `WEAR_PAL.art`, padrão sem estampa); peds sem `art` ganham um detalhe sorteado pelas próprias cores (determinístico, 4/7 têm). Boné já tinha a opção ✕ (sem boné) na loja.
+- **Bug antigo corrigido**: em `drawCharFrame` um comentário engolia o código da roupa de praia (sem camisa → tronco na cor da pele, sunga, descalço) na versão 2D.
+
+## v78 · Maskara (item do Nathan), polícia nível 3, cemitério com manchas, ajustes de HUD
+- **Polícia**: `polCap` nível 3 = 3 viaturas (+ helicóptero, que já vinha no nível 3). No nível 2 aparecem blitzes à frente do jogador (`blitzWant` → 'wanted', `blitzMake` mira ~170 m na direção do movimento, `b.wb`; nova a cada 25–45 s depois que a anterior some). Furar uma blitz dessas ou o pedágio = +1 estrela (blitz de procurado → nível 3). Em blitz `wb` não tem parada/documentos.
+- **MASKARA** (`MASK`): item, não cheat. Fica no cofre da sala 207 do laboratório; só o NATHAN pega (`CHAR.cur===0`); com a Claire ela pensa "Tem uma máscara verde aí dentro… Nem encosto nisso. Me dá medo." e não pega; Claire também recusa vestir (inclusive pelo cheat).
+  Roda de armas: a fatia do JAMMER tem 2 páginas (`it.pages`, `WHL.pg`, `wheelPage`): JAMMER 1/2 · MASKARA 2/2; troca com ‹ › (clique/toque), A/D, ←/→, rodinha do mouse ou direcional do controle; soltar na Maskara veste/guarda.
+  Vestir/guardar: rodopio de 1,5 s bem mais rápido (30 rad/s) com "vento" — 6 fitas aditivas em hélice (verde-lima → branco, mesma linguagem do rastro da câmera lenta) + partículas; o personagem gira junto.
+  Poderes (`maskOn()`): imortal (`killPlayer`/`drown` ignoram), corrida a pé 3× (`spdM`), todo carro dirigido ganha nitro (`hasNitro`, `_maskNos` — tirado ao guardar), anda e corre sobre rio e mar (gy = `waterLevel`, sem correnteza do estuário), desce de lancha em qualquer lugar e vai a pé até a Point Haze (hazeTick/hazeShift `viaFoot`; a Maskara atravessa a viagem).
+  Save: campo opcional `maskara:1` (saves antigos valem); o save/snapshot guarda a roupa de baixo (`MASK.original`), nunca o traje. Trocar de personagem tira a máscara na hora (`maskInstantOff`). O cheat THEMASK usa o mesmo efeito.
+- **Cemitério**: as covas e as manchas do gramado deixaram de ser retângulos — `softStain(mb,…)` faz manchas irregulares com degradê até a cor da grama (mesmos sorteios).
+- **HUD**: especial ainda bloqueado → a faixa some e o colete ocupa a largura toda (antes sobrava vermelho da vida). Sem legenda "BULLET TIME" no reencontro da missão 1.
+
+## v78 · Pedágio furado com procurado
+- Furar a cancela da micro-ilha já estando procurado sobe 1 estrela (`wantedUp(level+1)`, teto 3); sem estrela continua como antes (vira 1 estrela).
+
+## v78 · Backup = última build estável
+- REGRA: a cada atualização entregue, `backup/` guarda a build estável ANTERIOR como `backup/index.anterior.html` (substitui a que estava lá). O antigo `backup/index.antes-drawcalls.html` saiu (obsoleto). Agora o backup é a build "números nas portas do motel".
+
+## v78 · Detector de z-fight (ferramenta), RAM do Monitor e arquivos unificados
+- **Detector de z-fight: `tools/zfight-detector.js`** (Node + Playwright). REGRA: rodar SEMPRE que criar ou alterar qualquer ambiente, cenário, interior, prédio especial ou objeto; meta = 0 conflitos com área relevante (> ~0,01 m²).
+  Uso: servir a pasta (`python3 -m http.server 8791`) e `node tools/zfight-detector.js http://localhost:8791/index.html [--seed 777] [--size 7] [--only lab,motel] [--ext] [--off] [--top N]`.
+  Remonta cada interior (safe, ammo, shop, mall, casino, pawn, bank, jail, motel, lab) e, com `--ext`, varre os chunks nas áreas dos prédios especiais (landmarks, motel, loja de pneus, aeroporto). Acusa faces axiais no mesmo plano (≤ 2,5 mm), aparência diferente, sobreposição ≥ 1 cm e visíveis; lista posição, área, Δ entre planos e as LINHAS do index.html que geraram cada face (rastreio de `MB.quad`; "(fora do MB)" = malha avulsa/geo). `--off` desliga o ZF para ver o antes. Grava `zfight-report.json`.
+  Ao achar conflito: preferir que a montagem resolva (ZF/`zfBoxAdj` — o builder novo deve rodar dentro de `zfWrap`); malhas avulsas (PlaneGeometry, telas, placas) → afastar 6–12 mm ou `polygonOffset`.
+  Pendências conhecidas (seed 777): 2 faces laterais de ~1,5 m² no posto a 5,1 m (verde × amarelo, Δ 2 mm, fora do MB) e uma borda de 2 cm de calçada no mercado. `gasVisual` agora roda dentro de `zfWrap` (é remontado fora do chunk).
+- **Monitor · RAM**: o `performance.memory` do Chrome só mede o heap JS e, fora de página cross-origin isolated, é arredondado e congelado por ~20 min (daí os 10 MB logo após abrir). `monRam`: usa `measureUserAgentSpecificMemory` quando a página é isolada; senão mostra `~(heap JS + buffers de geometria/textura mantidos na RAM)` — `monVram` agora também soma `MON.cpuBuf` — com `*` quando o heap está congelado e tooltip com a divisão. Textos de ajuda PT/EN atualizados.
+- **Arquivos**: `pwa.js` embutido no index.html (script inline, roda no DOMContentLoaded). Removidos `locale_en_catalog.json` (não era carregado pelo jogo — o catálogo usado é o `LANG_EN` embutido) e `v2g2.json` (sobra de teste de câmera do lab). `sw.js` e `manifest.webmanifest` continuam arquivos separados: o navegador só registra service worker a partir de um arquivo .js do mesmo site.
+
+## v78 · Números em todas as portas do motel
+- A placa dourada separada do 6 saiu; todos os quartos (térreo 1…, andar de cima 101…) têm o número na plaquinha creme da própria porta: um atlas de canvas com todos os números + uma malha só (MB com UV, MeshLambert), quad 4 mm à frente da plaquinha.
+
+## v78 · Motel menos sujo
+- Manchas do motel (shader CITY_AGE.box) com metade da intensidade: paredes `*.8→*.4`, piso/deck `st*.8→st*.4`.
+
+## v78 · Varredura de z-fight (faces coplanares) em interiores e prédios especiais
+- Detector (fora do jogo, playwright): todas as faces alinhadas a eixo dos interiores (casa segura, AMOnições, conveniência, shopping, cassino/boate, penhores, banco, cadeia, motel, laboratório) e dos chunks nas áreas de prédios especiais; acusa pares no mesmo plano (±2,5 mm), aparência diferente, sobreposição real e visíveis (ponto 1,2 cm à frente da face dentro do ambiente). Antes: ~1.200 conflitos nos interiores e ~290 nos exteriores especiais; depois: 6 e 5, todos de poucos cm².
+- Correção na montagem (`ZF`, antes da `class MB`): com `ZF.on` cada face axial vai para um registro por plano (grade de 4 m). `zfBoxAdj` (wrappers de `MB.box` e `ibox`): se uma face da caixa cai num plano ocupado, a caixa inteira CRESCE 4 mm daquele lado (o detalhe aparece) ou ENCOLHE 4 mm quando a face é >4× maior que a vizinha no mesmo sentido (parede que chega depois do detalhe); as laterais acompanham, sem fresta. Quads soltos (`zfFix`) avançam 4 mm; faces de sólidos que sobrarem recuam. `zfGeo` trata as tampas de cilindros/esferas (`MB.geo`), `zfPost` as peças giradas do shopping (`mallMergeRot`) e os `fq`.
+- Ativo em: buildSafehouse, ammoBuild, buildShop, buildMall, casinoBuild, buildPawn, bankBuild, buildJail, motelRoomBuild, labBuild, houseBuild, empEnter e buildChunk (`zfWrap`). Tempo de carga igual (medido).
+- Ajustes manuais: anéis do alvo da AMOnições (empilhados à frente do quadro, o menor na frente); tela da TV do motel e da casa segura; placa SAÍDA do cassino; letreiros das lojas do shopping 12 mm à frente das colunas; halos de luz do shopping (`MALL._hb`) com polygonOffset.
+- Exemplos conferidos antes/depois: base da cápsula 201 do lab, rodapé/batente do motel (porta e banheiro), fachada da delegacia, faixa vermelha do shopping, pórtico do banco.
+
+## v78 · Preset médio padrão, píer da Haze, legenda "Enquanto isso…", missão 1 revisada e ajustes do lab
+- Gráficos: padrão de S = preset MÉDIO. `GRAPHICS_PRESETS` ganhou `sprite8` (LOW/MEDIUM false = peds 2D; HIGH true = peds 3D); `graphicsPresetApply` troca os atlas dos peds na hora quando o sprite8 muda.
+- Point Haze: `groundY0` consulta `pierY` primeiro no ramo haze → dá pra andar nos píeres (antes caía na água). Ícone da casa segura escondido no minimapa/mapa/legenda quando `city.haze`.
+- Missões: troca longa no mesmo mundo sem cartão preto. `prologueCapThen(cap,after)` faz a troca aérea com a legenda `#switchCap` "Enquanto isso…" (LANG_EN Meanwhile…) durante todo o `SWITCH`, sem fade; `switchCapSync` no updateCamera. Trocas interior/exterior e curtas seguem iguais.
+- Missão 1: Claire começa com $0 (`CHAR.list[1].cash=0`); objetivo "Livre, mas a pé e sem grana. Roube um carro!". Ao roubar o carro (ou pular a etapa), `prologueLoot()` dá $1.000 "MOCHILA NO BANCO DE TRÁS" + pensamento sobre chip e celular. Depois do celular ela LIGA para o Nathan pela agenda: `phoneBusy()` (tom de ocupado) + toast OCUPADO + fala "depois tento de novo… tomara que o Nathan não tenha perdido meu número antigo" → "Enquanto isso…" → Nathan recebe SMS de NÚMERO DESCONHECIDO (o jogador não vê a Claire mandando).
+- Cela: `jailMateSync()` cria/posiciona a colega fora do tick; chamado antes do diálogo da cutscene → ela aparece desde o começo.
+- Rádio dos carros que passam (`BOOM`): `boomStop()` ao entrar em interiores (roomStageLocalTick, transitionAudioStop) e `boomUpdate` inativo com `PL.inside` → nada vaza no motel/lojas.
+- Lab: demogorgon da cápsula 201 agora é um PED de verdade (`labTankPed`, mesmo `DEMO_PAL` do Rampage/floresta, `q.demo`, `q.labTank`), congelado e boiando (gy .45±.09); segue 2D/3D como todo mundo. `ped3dJobTick` roda também nos interiores com palco (roupas fora do pool viram 3D lá dentro). Removido o sprite antigo (labTankDemo).
+- Lab: luminárias dos corredores nas mesmas posições dos 8 spots (`LAMP_AT` → lamps e cL). Arquivo 203: última prateleira em 1,65 m — as pastas não furam o topo da estante.
+- Demogorgon (floresta/Rampage): anima as pernas quando o `at` se desloca (`p._dmT` em updatePeds).
+- Seta amarela (`makeArrow`): a mancha de luz fica parada rente ao chão (3 cm + polygonOffset), só a seta balança; piso estimado pelo centro do balanço menos `userData.rest` (1,5 m; 1,6 na escotilha do lab; guia do shopping mantém o comportamento antigo via `ringFixed`).
+- Coletáveis: a luz branca no chão (`p.glow`) some junto com o item quando ele está oculto (ex.: bloqueado pela história).
+
+## v78 · Ícones do mapa sem desvio + zoom/alternar no mapa grande
+- `mapIconPlace` não desloca mais. `drawMapIcon` adia o desenho (fila por canvas com a transformação salva) quando o canvas tem referência (`mapIconReset(g,ref)`): minimapa (ref = centro/jogador) e mapa grande (ref = jogador na tela); `mapIconFlush(g)` desenha do mais longe pro mais perto → o ícone mais perto do jogador fica por cima. Legenda e outros canvases desenham direto (`drawMapIcon0`).
+- Mapa grande (inspirado no GTA IV/V): roda do mouse ou +/− = zoom (1–6×, mantendo o ponto sob o cursor); arrastar com o botão esquerdo move (arrastar não fecha o mapa; clique simples continua fechando); passar o mouse mostra o nome dos ícones sob o cursor (`mapHoverTip`, `mapIconName` pela legenda); botão direito em cima de ícones empilhados ALTERNA entre eles e marca o GPS no escolhido (toast "NOME · 1/2"); fora de ícone marca como antes (`mapPickAt`).
+- Controle (DualSense/Xbox): analógico esquerdo move o cursor (mais lento com zoom), RT aproxima / LT afasta segurando (como no GTA V) e analógico direito cima/baixo também; A marca/alterna igual ao botão direito; com zoom a vista acompanha o cursor; dica mostra "A · ALTERNA". Cheats no mapa continuam lendo os botões (gatilhos só dão zoom de leve enquanto digita um cheat).
+- Toque: toque curto marca/alterna (mesma `mapPickAt`); pinça = zoom; um dedo arrastando com zoom = mover.
+
+## v78 · Demogorgon na cápsula da 201
+- O usuário apontou que o "demogorgon" é a criatura ORIGINAL do próprio jogo (a da floresta / Rampage: humanoide marrom com veias e olhos vermelhos — `demoRedAtlas`). `labTankDemo()` cria esse mesmo sprite (mesma paleta + atlas vermelho, tom azulado da água) boiando dentro da cápsula da 201 (`LAB.tankAt`), escala 1,25, sobe/desce e balança devagar (`labTankDemoTick`). O vulto de blocos escuros saiu.
+
+## v78 · Transatlântico, biquíni 3D, lua x estrelas, lanterna
+- Navios: o 2º (pista de 200 m) agora é um transatlântico (`shipBuildCruise`): mesmo casco/colisão do cargueiro; casco branco com faixas marinho/cor, vigias, 3 andares de cabines com janelas, montantes e varandas, ponte de comando, chaminé, piscina com espreguiçadeiras, botes laranja. Andares/ponte/chaminé entram em `containers` (mais altos primeiro) → colisão e dá pra pousar/andar em cima.
+- Banhistas no 3D (`charModel3D`) estavam sem a parte de cima do biquíni: faixa + alças na cor `p0.bikini` (o 2D já tinha).
+- Céu: estrelas não somam mais dentro do disco da lua (antes apareciam por cima da parte escura) — nos 2 ramos do shader.
+- Lanterna do celular a pé: direção = câmera (`camera.getWorldDirection`), não o boneco; antes usava `PL.yaw` com outra convenção e girava ao contrário. Teste: alinhada com a câmera nas 3 direções.
+
+## v78 · Point Haze · Etapa 2g — cofre (fim da etapa 2)
+- Sala 207 (diretor, B2): cofre de chão no canto (porta, disco, puxador, LED vermelho). Encostar dá +$2.500 uma vez por dia de jogo (`LAB.safeDay`); toast "COFRE · +$2.500" (LANG_EN "SAFE · +$2,500"). Teste: ganho 2500 ok.
+- Maquete da mesa conferida: água recortada nos limites da cidade (não passa da mesa).
+
+## v78 · Point Haze · Etapa 2f — equipe de branco (+ maquete e minimapa)
+- `labSpawnPeds(andar)`/`labClearPeds`: só o andar atual (troca na escada/elevador). Jalecos (camisa branca, calça clara/escura) parados no corredor diante das janelas olhando pra dentro das salas (5 por andar) + até 4 trabalhando dentro (bancadas, consoles, macas, cápsula, gaiolas, arquivo, bobinas); seguranças de branco com boné branco nos cruzamentos (+1 no hall do B1). `state='fare'`, `fixed`, `labStaff`.
+- Mesa da sala de controle = maquete 3D minimalista da cidade normal (base branca = ruas, quarteirões em blocos cinza de alturas variadas, casas brancas baixas, verde nos parques/mato, água cinza-clara recortada na mesa). Dados guardados em `LAB.homeCity` ao montar o minimapa de uma cidade normal.
+- Minimapa de Haze sem ruas (estradas de terra e cantos arredondados não são mais desenhados em Haze).
+- Pedido de pôr um personagem de série protegido (Demogorgon) no tanque da 201: não feito (personagem de terceiros); o vulto original continua lá.
+
+## v78 · Point Haze · Etapa 2e — escada e elevador de carga (+ mapas da sala de controle)
+- Núcleo (célula C) nos 2 andares: parede no meio; metade sul = escada (B1 desce num vão do piso com degraus a −25 cm, B2 sobe), corrimão amarelo, faixa amarela no bico dos degraus; metade norte = elevador de carga (cabine com grade pantográfica, piso zebrado, painel B1/B2 aceso no andar atual) + máquinas ao lado.
+- `labCoreTick`: pisar no vão/escada (x −3,4..−1,1; z 0,4..2,6) leva ao outro andar (chega em x 1,8 z 1,5); ficar ~1 s na cabine (|x|<1,1, z −2,5..−0,6) troca de andar na mesma posição; trava até sair da cabine. Toast curto B1/B2. `labFloorAt()`.
+- Sala de controle: telão = mapa da ilha igual ao minimapa (mar/areia/relevo, sem marcas, quadrado 2,4 m); mesa = desenho cru da cidade (cópia 256² do `mapCv` guardada em `LAB.homeMap` ao montar o minimapa de uma cidade normal; sem ícones). Sem cidade guardada → ilha.
+
+## v78 · Point Haze · Etapa 2d — salas do andar 2 (+ ajustes)
+- Andar 2: 201 contenção (NW: cápsula translúcida azul com vulto escuro encolhido boiando, bolhas, zebra no chão, painel), 202 animais (NE: 8 gaiolas empilhadas — uma arrombada com grades tortas —, gaiolinhas, ração, pegadas saindo), 203 arquivo (SW: 3 estantes de pastas coloridas, gaveteiros, papéis no chão, quadro de cortiça com fotos e barbante vermelho, mesa), 204 gerador (SE: 2 bobinas de Tesla com faíscas que piscam — `LAB.sparks` —, transformador, cabos grossos, grade com placa), 205 dormitório (N), 206 amostras (W: freezers + bancada com tubos), 207 diretor (E: mesa, estante, sofá), depósito (S: caixas). Líquidos (cápsula, tanque verde do 103) em `F.mT` translúcido.
+- Colisão da praia de Haze = a própria malha do `hazeShore` (`city.hzShore` raios por ângulo, `hazeShoreY`) — o chão por `hazeU` ficava até ~1 m abaixo da areia visível onde a costa ondula (jogador afundado na chegada).
+- Minimapa de Haze: relevo da ilha por pixel (cor por altura, paredão em cinza, sombreado NO) no lugar dos quarteirões.
+- Minimapa dos interiores: zoom 3,8 nos pequenos (conveniência, cela, motel…), 2,6 em shopping/lab/cassino/clube/banco/império (antes 2,3 em todos).
+
+## v78 · Point Haze · Etapa 2c — salas do andar 1 (+ 2 correções)
+- `labRoomsDress(F)` andar 1: 101 CPD (NW: 6 racks com LEDs nas 2 faces, calha e feixe de cabos caídos no teto, mesa com 2 terminais de tubo de tela verde), 102 enfermaria (NE: 3 macas, soro, biombo, armário com cruz, pia), 103 lab químico (SW: 2 bancadas com frascos/béqueres/tubos de cor acesa, capela, tanque verde com bolhas + luz extra), 104 controle (SE: consoles com botões, telas, mesa e telão com o MAPA DA ILHA gerado do `hazeH` — `labIslandTex`, castelo em vermelho, escotilha em X amarelo), 105 copa (N), 106 vestiário (W), 107 segurança (E: monitores CCTV). Partes acesas em `F.mE` (MeshBasic). `r.warm/amb/extra` por sala.
+- BUG (print do usuário: preto, Y −256): em Haze o perfil da praia continuava descendo até ~−250 m a 1,5 km — interiores (lab) ficam lá → jogador caía no breu. `groundY0` em Haze devolve 0 para u>700.
+- Jet ski na travessia virava lancha: agora `hazeShift` guarda o tipo (`vType`) e recria jet ski ida e volta (não pega a lancha da marina).
+
+## v78 · Point Haze · Etapa 2b — estrutura dos 2 andares
+- `labFloorBuild(F)` por andar (F1 em SAFE.IN+(-300,+200), F2 +70 m em z): corredores em # (piso, 2 faixas amarelas por corredor, faixa azul do hall ao núcleo, teto por faixa, luminárias a cada 4 m), paredes externas, e 9 células (`LAB_CELLS`: NW/NE/SW/SE = salas principais, N/W/E = salas de apoio, S = hall (F1) / depósito (F2), C = núcleo da escada/elevador).
+- Cada parede = 2 cascas (lado do cômodo no material do cômodo, lado do corredor no material do corredor) → luz certa dos dois lados; portas com batente e placa numerada (atlas `labNumTex`, 101–109 / 201–209, hall = "B1"); janelas com caixilho e vidro (MeshBasic transparente) nas salas de canto e laterais; rodapé escuro; colisores por trecho.
+- Luz fria: roomLitMat por cômodo + 1 do corredor (`m.userData.U` agora exposto); 1 em ~17 luminárias pisca (`LAB.flick`: cor do painel + pow do corredor).
+- Escada de marinheiro do hall = saída (seta). `LAB.bounds` = retângulos dos andares (clamp). `labRoomsDress(F)` vazio (2c/2d).
+
+## v78 · Point Haze · Etapa 2a — escotilha e entrada do laboratório
+- `hazeHatchBuild()` (junto do `hazeTerrain`): escotilha de aço (colar de concreto, tampa com nervuras, volante vermelho, dobradiças, faixa amarela) no pé do paredão, do lado do centro da ilha; pedras + mato seco em volta, placa apagada torta e antena enferrujada inclinada (pistas). `LAB.hatch={x,z,y,nx,nz}`; seta só a <7 m; entra a <1,1 m a pé.
+- `LAB` (bloco antes de `motelDoor`): `labBuild/labEnter/labExit/labTick`; PL.inside='lab', palco 'lab' (roomStageKind/Root/Arrows). Andares em SAFE.IN+(-300,+200) e +70 m em z (andar 2). Coordenadas locais x −18..18, z −14..14; corredores em # previstos (x −7..−4/4..7, z −6..−3/3..6).
+- 2a: só o hall de entrada (célula sul-central) com escada de marinheiro (saída, seta), faixas zebradas, porta norte fechada, luz fria (roomLitMat amb .45/pow 1.3).
+
+## v78 · Jet ski com 2 pilotos
+- `playerBoatTick` (piloto das embarcações abertas) também desenhava no jet ski, onde o próprio `PL.sp` já aparece montado (igual moto) → 2 sprites sobrepostos (visível com 3D). Agora só lancha.
+
+## v78 · Point Haze · Etapa 1c — castelo
+- Castelo sem tablado (sai junto com a laje, 1a) e em cima do platô do morro (1b).
+- Malha do castelo agora usa `M.solid` via `add()` (o Standard próprio deixava tudo quase preto); pedras mais claras (#a09684/#8a8274/#726b60), blocos salientes claros/escuros espalhados nas 4 faces da torre de menagem e faixa de musgo na base (sorteio próprio `city.hzSeed^0x51a7`). Muralha externa continua em ruína (trechos com falhas + rochas).
+- Pedido do usuário: em Point Haze o castelo NÃO é casa segura — seta (`SAFE.arrowOut`) escondida e porta não entra (`!city.haze`). `city.safe` continua existindo (spawn/checagens).
+
+## v78 · Point Haze · Etapa 1b — relevo
+- `hazeH(x,z)` (params em `city.hzT` via `hazeHInit`, só cacheia quando `city.safeRi` existe): dunas suaves (seno + ruído), 3 morros (3–6,5 m, raio 18–28, longe do castelo e do paredão), paredão rochoso tipo mesa num canto sorteado (~10–13 m, borda áspera por ruído, cai em ~7 m até a areia; `hazeCliff` = máscara), morro do castelo com platô plano Hc=4,5 m (r<21) e rampa até r=44. Tudo some nos 30 m da borda (paredão em 7 m).
+- Objetos dos lotes Haze (side/det/plants/hazeCastle/lodNear/marks/glow/roofD/neonDN) sobem vértice a vértice pelo relevo (`hzLift` antes do `return` do bloco haze) — castelo inteiro no platô (deslocamento igual).
+- Cor: rocha por inclinação (>.35) + leve tom no paredão. Seed 777: paredão no canto (26,26).
+
+## v78 · Point Haze · Etapa 1a — chão sem grade
+- `hazeTerrain()`: uma malha única (grade 2 m, cores por vértice, normais suaves) cobre a ilha [-RW/2, E+RW/2]; nasce após o check do castelo (`city.hazeTerrainMesh`, zerado a cada cidade). Borda com a mesma cor da faixa de grama do `hazeShore`.
+- Saíram: laje + gramado por quarteirão (`info.kind==='haze'`), estradas de terra/cruzamentos (laço das ruas pula em `city.haze`), chão base `gnd` (invisível em Haze) e o plano de chuva sobre ruas (`renderReflection` desliga em Haze — marcava a grade e atravessaria morros).
+- `groundY0`: em Haze, dentro da ilha devolve `.2+hazeH(x,z)` (hoje 0; relevo na etapa 1b). `hzN` = ruído de valor determinístico (`city.hzSeed`).
+
+## v78 · Ajustes pós-aeroporto (prints do usuário)
+- Olhos dos peds 3D (atlas): de 3/4 e de lado as duas pupilas agora vão pro lado do giro (`setFace({look:±1})` por fileira no bake; `PED_LOOK` = sentido). Antes um olho mostrava branco e o outro só a pupila → vesgo.
+- Aeroporto: heliponto do aeroporto saiu do estacionamento (l=a+9 → a+19, pintado no pátio). Estacionamento: no máx. 3 táxis (60%), só depois da baia do ônibus.
+- Avião: taxiamento ganhou raio/tolerância por ponto (q[4]/q[5]) e trava anti-círculo (14 s no mesmo ponto → próximo). Retorno em U curto logo após a rolagem (raio 3,2) e volta pela pista até o hangar. Simulado: chega no hangar em ~30 s, folga ≥1,9 m dos jatos, dentro da cerca.
+- Ponto de ônibus: anúncio em 2 peças (uma de cada lado da moldura, montadas pra quem olha daquele lado — nenhuma espelhada); placa/poste com caixa azul removidos.
+- Brilho demais: sheds da indústria com vidro apagado (det); vitrine do supermercado acesa só no miolo da entrada (resto vidro escuro com montantes); luzes da doca em neonDN.
+
+## v78 · Aeroporto completo (versão Normal; a Mobile compacta só teve a placa corrigida)
+- Tudo nos lotes do chunk (det/neonDN/roofD/marks) — único draw novo é a placa EMBARQUE (LANG_EN "DEPARTURES"). Sorteio próprio `xr` (não consome R()).
+- Terminal: corpo recuado para a+4.5; fachada de vidro em curva (14 segmentos, neonDN #6aa8c4: escuro de dia, aceso à noite) com montantes, porta, colisores por segmento; vidro do lado do pátio também em neonDN. Marquise de embarque sobre a calçada (pilares com colisor 'pole', faixa de luz embaixo). Máquinas no telhado (roofD).
+- Torre: cabine em neonDN, montantes, passarela com guarda-corpo, mastro com luz vermelha (neonDN) e antena.
+- Jatos parados: `jetBodyMB(mb,ac)` = corpo do skyPlane separado em função (skyPlane chama a mesma); 2–3 jatos a 50% (= avião do aeroporto) de nariz para o terminal, colocados a partir de max(-16, hs+18.5) a cada 19 m. Os 2 primeiros com finger (túnel + cabine + perna com rodas); o 3º com escada num caminhãozinho. Rebocador com 3 carrinhos de bagagem; caminhão de combustível atrás da asa do 2º. Colisores na fuselagem, motores e veículos.
+- Pista: luzes azuis nas bordas a cada 8 m e verdes nas cabeceiras (neonDN), biruta, 3 placas amarelas/pretas a rl-12.4.
+- Estacionamento (se L/2-39 ≥ 14) ao lado da torre: baia de ônibus (ônibus azul) + vagas de táxi (65%). Cerca da frente reaberta no terminal e no estacionamento; cerca interna separa o pátio.
+- Placas AEROPORTO (Normal e Mobile) estavam espelhadas quando o eixo não é X: rotação corrigida (ax?0:+PI/2).
+- Avião animado: o taxiamento de chegada passava pela taxiway colada nos jatos parados. Agora segue a pista até perto da cabeceira, faz o retorno ali e volta pela pista direto pro hangar (a saída já ia do hangar direto pra pista). Simulado (seed 716540, L=128): folga mínima dos jatos parados 4,3 m, dentro da cerca (asa até l=24,7 de 25,4; nariz até s=58,5 de 63,4).
+
+## v78 · Neon que não acendia + manchas (casas/motel)
+- BUG: `lodSoftBind` clona o material de cada malha do LOD médio (neonDNMesh, adMesh…). O clone guardava a cor/brilho da hora em que o chunk nasceu → começando de dia, neon e placas ficavam apagados à noite (inclusive no CENÁRIO do modo foto). Agora o clone de `M.neonDN` divide o MESMO objeto `color`, e clones de `dnSignMat` entram no `DN_SIGNS` (marcados `dnClone`, limpos ao refazer a cidade). Teste: começar 13h → DN.tod 23:45 → Malibu, tubo ciano e mural acesos.
+- Casas: desgaste do shader (CITY_AGE) em paredes baixas (topo < 4,6 m) cai pra 30%.
+- Motel: manchas no estilo do INTERIOR do shopping, no shader (`CITY_AGE.box` = lote do motel, `boxH` = altura do andar): umidade subindo da base e infiltração sob cada andar nas paredes; no chão (< 1 m) manchas largas marrom/esverdeadas — pegam o deck e o fundo da piscina. Saíram os 30 quadrados do deck e os 7 quadrados de lodo da piscina (sorteios mantidos pra não mudar o resto do lote). Tentativa com caixinhas na parede foi descartada (ficava quadriculado).
+
+## v78 · Outdoors, mobiliário urbano, casas e toldos
+- Atlas único de anúncios `adsAtlas()` (1024×512, 16 peças fictícias 256×128, material `dnSignMat` acende à noite). Cada chunk junta todas as faces em `ch.ads` → 1 malha `ch.adMesh` (no lote do LOD médio).
+- Outdoor no telhado: ~26% dos prédios com fachada pra rua (não simples/pátio/casa segura/abandonado, respeita teto do aeroporto). Armação, postes, passarela em `roofD` (sem sombra), 3 refletores em `neonDN`. Sorteio próprio (não consome R()).
+- Quarteirões 'bld': ponto de ônibus (cobertura, vidro fosco sem brilho — antes estava no hwin e acendia branco à noite —, banco, painel lateral do atlas, placa na guia, colisor), banca de jornal com toldo e revistas (colisor), caixa de correio. Só em calçada livre (`query`).
+- Casas: caixa d'água azul de fibra na cumeeira (45%, roofD, respeita houseCap) e varal com roupas no quintal dos fundos (50%, só sem piscina). Sorteio próprio por lote.
+- Toldos listrados (3 degraus por listra, paleta de 7 pares) no térreo da fachada principal, 1–3 por prédio, fora da baia da porta; 55% comerciais / 30% residenciais; prédios `tour` mantêm os toldos antigos.
+- Testes (seed 716540, size 10): 17 outdoors, 31 toldos, ponto/banca de dia e noite, casas vistas de cima; sem erros de página.
+
+## v78 · Neon enxuto + paleta única por mundo
+- Diretriz do usuário: neon é acento caro (anos 80) — destaca letreiro/entrada/topo, nunca contorna o prédio todo. Sunset Shores = ciano/rosa (vaporwave/Miami); Synthwave = azul/vermelho (outrun). Fonte única: `mallPal()` (a/b/c/d), comentada no código.
+- Malibu: saíram faixa rosa do meio, tubos dos cantos e faixa dos fundos; fica 1 tubo ciano no topo saindo da frente e dobrando 1/3 de cada lateral + contorno frontal. Mural com brilho menor (.35).
+- Shopping: INTERIOR não mexer (aprovado). Fachada: neon enxuto e apagado de dia (neonDN; Synth = neon): saíram linha entre pisos, linha do corpo, faixas verticais das alas, arestas da claraboia, 2º chevron e 1 arco; ficam topo das alas, contorno do pórtico, 1 chevron, 2 arcos, moldura do letreiro.
+- Motel: neon rosa (beiral/recepção) e seta ciano em Sunset Shores, vermelho/azul no Synth; apagado de dia. Placa: "Miragem" rosa e VAGAS em turquesa (Synth mantém vermelho).
+- Arranha-céu LED = a; lâmpadas do cassino = d.
+
+## v78 · Correções dos prédios (prints do usuário)
+- IMPORTANTE (armadilha): no buildChunk, `night` = estilo noturno do mundo (Synthwave), NÃO a hora. Em Sunset Shores é sempre false → todo `night?neon:det` caía no det (apagado). Novo: lote `neonDN` (M.neonDN, MeshBasic vertexColors; cor animada no updateDayNight: .42 de dia → 1 à noite) e `dnSignMat(tex,k)` (placas com emissiveMap registradas em DN_SIGNS; intensidade = k × noite). Usados em: faixas/tubos da Malibu (laterais, fundos, cantos) + contorno frontal, mural MALIBU, LED da coroa e letreiro SUNSET TOWER, lâmpadas do cassino, faixas do mercado, 24 HORAS, bilheterias. Holofotes que eu tinha posto na Malibu removidos (nunca eram montados; o jogo já tem os seus).
+- Roça: `pedZoneK()` (a cada 2 s) reduz o alvo de peds pela fração de lotes rural/industrial em 160 m (até 18% do normal). Antes o alvo era igual e todos nasciam na roça.
+- Placas pintadas: `fitFill` e o sg da conveniência encolhem a fonte até caber (REFRI 2L, PROIBIDO FUMAR, CAFÉ FRESQUINHO, DOCES, BILHETERIA, 24 HORAS cortavam).
+- Estádio: bilheterias com placa e janela na face alinhada aos eixos (antes atravessavam a cabine).
+- Hospital: "EMERGÊNCIA" branco sobre a faixa vermelha (não sobrepõe mais a placa do hospital); placa de pedra movida para v=4,6 (longe das ambulâncias).
+- Banco: placa civic "BANCO DE SUNSET SHORES" colada no frontão do pórtico (v0−1,92; antes 2 m à frente); "$" com base visível na borda da cornija.
+- Mercado: baias de carrinhos do estacionamento removidas (viravam blocos nas vagas); carrinhos da porta em arame (barras finas) com alça vermelha.
+- Delegacia: 2º mastro removido (caía no heliponto térreo).
+- Z-fight: cornija/pilares/calhas do kit terminam abaixo do topo das lajes existentes; cascalho dos telhados .01–.06 acima da laje (kit, Malibu, cassino, shopping); tubos dos cantos da Malibu levemente maiores que as faixas.
+- Testado: bilheteria, hospital, banco, mercado, Malibu/mercado/arranha-céu à noite.
+
+## v78 · Prédios especiais · ETAPA 3j: cassino
+- Fileiras de lâmpadas (neon à noite) contornando a marquise e o letreiro; púlpito do manobrista (colisor) com cone; carro VIP preto ('super', spotId 'cas-vip'+ri) na frente; telhado (roofD): cascalho, mureta, 5 condensadoras, parabólica; fundos: porta de serviço com toldo e luz, 2 caçambas (colisor), engradados.
+- Achado não corrigido: o letreiro "CASSINO SUNSET ROYALE" é um plano só e aparece espelhado visto de trás (já era assim).
+- Etapas 1–3 concluídas: kit comum + danceteria, supermercado, arranha-céu, hospital, delegacia, universidade, banco, prefeitura, estádio, shopping, cassino. Todos os objetos de telhado em roofD (sem sombra em nenhum preset).
+
+## v78 · Prédios especiais · ETAPA 3i: shopping
+- mallBuild recebe roofD. Telhado do corpo: cascalho, mureta frente/fundos, 3 faixas de claraboia em vidro com caixilhos sobre o corredor (o átrio já tinha teto de vidro grande — ficam parcialmente encobertas), 4 grupos de 4 condensadoras. Torres laterais: casa de máquinas, caixa d'água e antena com luz vermelha. Sem doca (só 2 m atrás).
+- Testado: 2 ângulos altos.
+
+## v78 · Prédios especiais · ETAPA 3h: estádio (+ ajuste prefeitura/banco)
+- Estádio: 4 bilheterias (2 por entrada, colisor) com placa "BILHETERIA"/TICKETS (emissiva à noite) e janela; telão no alto da arquibancada norte (placar "SUNSET 2 x 1 PORTO 78'", virado para o campo); faixas verticais azul/vermelho "SS" na parede externa a cada 3 setores. As torres de refletor já existiam.
+- Prefeitura e banco: removidos os nomes que eu tinha acrescentado ("PREFEITURA", "BANCO SUNSET"); já existem as placas civic "PREFEITURA DE / BANCO DE SUNSET SHORES" (sunsetFacade) — evita letreiro repetido.
+- Testado: 4 ângulos do estádio.
+
+## v78 · Prédios especiais · ETAPA 3g: prefeitura
+- Nome "PREFEITURA" (EN: CITY HALL) no friso sobre as colunas; 2 jardins laterais com sebe baixa em U (colisor na frente); chafariz de 2 níveis no jardim esquerdo (colisor) e arbustos no direito; 2 postes clássicos de 2 globos na escadaria (acesos à noite).
+- Testado: 4 ângulos.
+
+## v78 · Prédios especiais · ETAPA 3f: banco
+- Lateral direita: nicho com 2 caixas eletrônicos (tela neon, colisor), toldo dourado e placa "24 HORAS" (emissiva à noite).
+- Fundos: portão de enrolar do carro-forte com moldura dourada, frades amarelos, carro-forte (van verde, spotId 'armored'+ri) se houver ≥6 m.
+- Câmeras de segurança nos 4 cantos; nome "BANCO SUNSET" em letras douradas na fachada.
+- Testado: 4 ângulos.
+
+## v78 · Prédios especiais · ETAPA 3e: universidade (ref. Harvard)
+- Kit sem telhado de laje (roof:false). Mansarda de ardósia (4 águas + topo, roofs2) no bloco principal e nas 2 alas; chaminés de tijolo e trapeiras (roofD).
+- 2 frontões pontudos de tijolo na fachada principal com friso e janela redonda; pórtico de entrada (escadaria de 3 degraus, 2 pilares com colisor, frontão pequeno) e guarda-corpo baixo com balaústres dos dois lados.
+- Pátio: estátua verde sobre pedestal (colisor), 4 bancos, postes com globo ao longo do caminho (acesos à noite), bicicletário.
+- Testado: 8 ângulos.
+
+## v78 · Prédios especiais · ETAPA 3d: delegacia (ref. Los Santos PD)
+- worldPolice recebe roofD. Heliponto marcado (círculo + borda amarela + H) no telhado do bloco central (y=H+.7, sobre a laje azul); condensadoras nas alas (roofD).
+- Pátio cercado nos fundos (se ≥5 m): alambrado com postes a cada 2,5 m, fios horizontais e topo (colisores nos 3 lados), guarita com janela, viatura + van guardadas (spotId próprio), 2 postes de holofote (acesos à noite).
+- 2º mastro de bandeira (branca) na frente.
+- Testado: 4 ângulos + telhado de perto.
+
+## v78 · Prédios especiais · ETAPA 3c: hospital (ref. GTA IV / SA)
+- Marquise de concreto com 4 pilares (colisor) sobre as ambulâncias da ala esquerda; letras soltas "HOSPITAL CENTRAL" no alto da torre e "EMERGÊNCIA" sobre a entrada; placa baixa de pedra no gramado "HOSPITAL DE / SUNSET SHORES"; torre de antenas treliçada (12 m) com pratos e luz vermelha na ala direita (roofD); chaminé de exaustão na ala esquerda (roofD); cilindros de oxigênio cercados nos fundos.
+- Testado: 4 ângulos, sem erro.
+
+## v78 · Prédios especiais · ETAPA 3b: arranha-céu
+- Terraços dos recuos (roofD): guarda-corpo + rodapé, 4 canteiros com arbustos, condensadoras.
+- Coroa em treliça (6 m) sobre o topo, com faixa de LED (neon à noite).
+- Letreiro "SUNSET TOWER" (emissivo à noite) na face da frente do 4º bloco, afastado dos pilares.
+- Balancim de limpeza pendurado na fachada da frente.
+- Entrada: marquise de vidro maior, 2 canteiros (colisor), 2 mastros com bandeiras, frades.
+- Testado: dia/noite, 4 lados e letreiro de perto.
+
+## v78 · Prédios especiais · ETAPA 3a: supermercado
+- Doca nos fundos: 2 portas com para-choques, luzes e frades amarelos; prensa de papelão com fardos; baias de carrinhos no estacionamento (colisor); fila de 11 carrinhos encaixados ao lado da porta (ref. do usuário, colisor); frades de aço ao longo da vitrine; faixas "OFERTAS / ATÉ 50% OFF" e "HORTIFRÚTI / FRESQUINHO" (emissivas à noite); letreiro de letras soltas "SUPERMERCADO" no telhado (só face da frente) com estrutura em roofD. EN: DEALS/PRODUCE/FARM FRESH/SUPERMARKET.
+- Testado: 4 ângulos dia/noite + frente de perto.
+
+## v78 · Prédios especiais · ETAPA 2: danceteria (Malibu Flash)
+- Antes da rotação de 45° (roofD entrou em rotBuilders), em coordenadas locais:
+  - telhado (roofD, sem sombra): cascalho, mureta, 2 holofotes na frente, 2 caixas de som nos fundos, 4 condensadoras;
+  - fundos: porta de artistas com toldo rosa e luz, 2 caçambas (colisor), 5 barris de chope, engradados, gerador (colisor);
+  - laterais: condensadoras penduradas; faixa de neon ciano única no topo (laterais + fundos; a frente já tinha a rosa);
+  - mural pintado (CanvasTexture 18×6,4 m: pôr do sol, coqueiros, "MALIBU") na lateral esquerda; emissivo à noite;
+  - à noite: 2 fachos de holofote (cone aditivo, opacidade .09, sem depthWrite).
+- Testado: 4 ângulos de dia e de noite (seed 716540/14), sem erro.
+
+## v78 · Prédios especiais · ETAPA 1: kit de acabamento comum
+- Lote novo `roofD` (MB) no buildChunk: objetos de telhado SEM sombra (mesh com castShadow=false, fora dos _shadowCasterGroups; vale em todos os presets). Entra em isoBuilders. 1 draw por chunk.
+- `bldKit(F,u0,u1,v0,v1,H,o)` (closure antes do landmark): sorteio próprio por lote (mulberry32 por curRi; não consome R()).
+  - telhado (roofD): cascalho, mureta com capa (o.parapet), casinha da escada, condensadoras, exaustores, caixa d'água sobre pés, parabólica, antena; `o.avoid=[[u,v,r]]` evita cúpula/torre/letreiro;
+  - fachada (det, sombra só com Sombras Detalhadas): faixa de base, frisos a cada 3,6 m, cornija, pilares de canto, calhas, condensadoras nas laterais, escada de incêndio (H>12);
+  - fundos (det): porta de serviço com toldo e luz, 2 caçambas (colisor), paletes/caixas, medidores, pichação (se houver ≥2,2 m atrás).
+- Aplicado em: prefeitura, hospital (torre só fachada; alas completas), banco, supermercado, universidade.
+- Bug antigo corrigido: no mercado, o `//` da linha "laterais/fundos do mercado" engolia a vitrine frontal (F.box … hwin) → vitrine voltou.
+- Testado (seed 716540/14): 4 ângulos de cada + mercado de perto, sem erro.
+
+## v78 · Peds 3D sem pico (etapas 1 e 2)
+- Causa do throttling no 3D: cada roupa nova (praia, lojista, variantes) montava o boneco e tirava 64 fotos com `readRenderTargetPixels` (leitura síncrona: espera a GPU) NO MEIO do jogo → ~230 ms por ped novo (headless).
+- Etapa 1:
+  - `pedAtlas3Build()` no carregamento (charPreload3D): 2 atlas 3D em RenderTarget 1280×2304 (cidade 25 + policial / praia 25), 16 ângulos × 4 quadros (3 poses + piscada), 1× (32×48). Fotos DIRETO na textura da GPU (`char3DBakeRow`, viewport/scissor por quadro, linhas de baixo para cima → mesma conta de UV do canvas). Contorno de 1 px = silhueta preta (overrideMaterial) deslocada ±1 px nas 4 direções + clearDepth + boneco. Sem readPixels.
+  - `pedAtlas3Proxy(pal,true)`: proxy com bloco (`isPedAtlas3`, setFrame calcula o quadro no bloco). Roupa fora do pool nasce com a roupa MAIS PARECIDA (`pedPalDist`) e entra na fila `ped3dQueue`; `ped3dJobTick()` (início do updatePeds) monta 1 fileira de ângulos por quadro num RT 128×768 próprio e troca sozinho (`ped3dAdopt`).
+  - `char3DWith` agora salva/restaura shadowMap (enabled/autoUpdate/needsUpdate) e info.autoReset: a foto do boneco não consome mais a atualização de sombra do mundo.
+  - Medido (headless): criar ped praia/especial 230 ms → 0,1 ms; passo da fila 1–4 ms, início de roupa 16–49 ms; preparo 2,3 s no carregamento (antes, com readPixels, 9–10 s). Visual igual (contorno, cores, ângulos).
+- Etapa 2:
+  - simulação por distância começa mais perto (>42 m 30 Hz, >80 m 15 Hz, >140 m 8 Hz; antes >90 m 20 Hz, >160 m 10 Hz);
+  - sombra redonda dos peds só até 38 m da câmera (placeSprite);
+  - luz do sprite (actorLighting) só na câmera principal; o reflexo reaproveita a cor.
+- Não testado: GPU real do usuário. Jogador e retratos continuam no caminho antigo (uma vez só).
+
+## v78 · Modo foto: marca d'água configurável
+- Botão "MARCA · TEXTO/LOGO/NENHUMA" (tecla M) + slider TAMANHO (50–250%) na barra. `photoMarkDraw(x,w,h)` desenha a marca na foto salva: 'text' = assinatura de antes, 'logo' = mesma logo do fim da missão 1 (canvas #prologueTitle via prologueTitleDraw, 22% da largura × escala), 'none' = sem marca.
+- Prévia ao vivo: canvas #phMarkPrev sobre a tela (não entra na foto; a foto usa o canvas do jogo + photoMarkDraw).
+- Testado: texto, logo a 160% e nenhuma (slider desativa).
+
+## v78 · Noite menos escura (contraste)
+- Referências do usuário: noite azul-petróleo legível, silhuetas recortadas, lâmpadas e janelas fazendo o contraste.
+- SKYK (Sunset Shores): 00h top #101c44 / hor #2a3c66 (antes #0a1028/#1b2440); 4h48 e 19h30 também mais azuis → neblina e fundo herdam.
+- Luz da lua (sun à noite) .16→.27; ambiente à noite .08→.21; cor do hemi noturno #3a4a7a→#5266a0; chão noturno #14141c→#232838. Lâmpadas, janelas e Synth (SKYK_S) sem mudança.
+- Comparado no motel (seed 777/7) à 00h e às 19h15, antes × depois.
+
+## v78 · Textos de tela enxutos (revisão do usuário) + revisão do inglês
+- Aplicadas as edições do usuário em notificacoes_v78.txt (~50 textos): subtítulos explicativos removidos (táxi, ponte, banco, danceteria, cassino, cela, fuga, Point Haze, fenda, mochila, assassinato, etc.), objetivos encurtados ("Cave no canto marcado…", "Passe no escritório da borracharia.", "Siga para o Motel Miragem, quarto 6."), cheats com "⚠ … POR SEGURANÇA, SALVAR ESTÁ PROIBIDO ATÉ INICIAR NOVO JOGO", "VEJA O CONSOLE DO NAVEGADOR". Nada quebrou (sintaxe ok; nenhum trecho deixou de ser achado).
+- Inglês: varredura automática (literais do código + DOM + atributos traduzidos por translatePlain em modo EN, procurando restos em PT). ~210 frases novas em `Object.assign(LANG_EN,…)` logo antes de LANG_EXACT (telas de jogo de mesa, jornal/TV, guarda-roupa, avisos, config do controle, tooltips, foto). Direções da tempestade: chaves completas "vindo do norte"… (chave terminada em espaço não casa, o regex exige fim de palavra). Restam só textos internos/debug (benchmark, erros de geração, console).
+- REGRA (pedido do usuário): textos de tela curtos e não expositivos — título direto, sem subtítulo explicando o óbvio; o jogador não é burro. Ver CLAUDE.md.
+
+## v78 · Relógio da pena na cela
+- `#jailClock` (canto superior direito, "SOLTURA EM" + m:ss) aparece enquanto PL.inside==='jail' e JAIL.locked; `jailClockSync()` no início do jailTick. Guarda pegando cavando: já voltava JAIL.left=300 e `jailResetDig()` → relógio volta a 5:00 e túnel a 0%.
+- Missão da Claire (stage 'escape'): o jailTick mantém JAIL.left ≥ 120 para ela não ser solta antes do túnel → o relógio desce até 2:00 e para ali.
+- Testado: entra 5:00, mostra 2:17 com JAIL.left=137.
+
+## v78 · Interior da conveniência com acabamento
+- `buildShop`: mesmo layout e colisões (+ colisor do freezer de gelo). Adicionado: forro com grade e calhas nas fluorescentes; manchas no piso e tapete na entrada; cabeçalho "BEBIDAS GELADAS", molduras, puxadores e luz interna nas geladeiras; trilhos de preço com etiquetas nas gôndolas; pontas promocionais ("OFERTA 2 POR $5") e placas penduradas (SNACKS / DOCES · MERCEARIA); chapa de salsicha com tampa, display de doces na frente do caixa, maquininha, pote de gorjeta; painel de raspadinhas/loteria; câmera domo e espelho convexo; freezer de GELO na entrada; porta "SÓ FUNCIONÁRIOS", extintor, relógio e cartazes (PROIBIDO FUMAR, REFRI 2L, CAFÉ FRESQUINHO, 24 HORAS).
+- Tudo no mesmo MB (1 draw) + ~14 placas pintadas (CanvasTexture). Testado: 3 vistas, sem erro.
+
+## v78 · Piada do borracheiro, tutorial touch, export de avisos
+- AMMO_LINES: removida a 1ª fala ("Se quer uns pneus zerinhos, temos estoque… lá dentro.").
+- Tutorial (STORY_GUIDES 02 · ACELERE) no touch: "Segure o botão ACELERAR para acelerar." (antes mandava empurrar o analógico, que não acelera mais) + tradução EN.
+- Exportado para o usuário `notificacoes_v78.txt`: guias e objetivos (janela laranja #storyGuide), wxToast e toast/toastIf (centro superior), com número de linha.
+
+## PLANO (não implementado) · Point Haze: ilha, castelo, escotilha e laboratório subterrâneo
+- Diagnóstico atual (seed 777): o chão da ilha mostra a grade de quarteirões/ruas (retângulos retos de tons diferentes); o castelo fica num "tablado" retangular elevado e aparece quase preto; ilha totalmente plana.
+- Etapa 1 · terreno e castelo: tirar a grade; relevo (dunas, morros baixos, paredão rochoso num canto); castelo sobre um morro, sem tablado, pedra com cor/textura melhor e muralha em ruína.
+- Etapa 2 · escotilha + laboratório (referência: anexo subterrâneo do GTA SA):
+  - escotilha de aço escondida entre rochas/mato no canto do paredão, placa apagada e antena enferrujada como pista;
+  - interior com palco (ROOM_STAGE), 2 andares, corredores em # estreitos, faixas no chão, luz fria piscando, portas numeradas e janelas de vidro para as salas;
+  - andar 1: CPD (racks com LEDs, terminais de tubo, cabos no teto), enfermaria (macas, soro, biombo), lab químico (bancadas, vidraria, tanque verde), sala de controle (painéis, mapa da ilha);
+  - andar 2: contenção (cápsula com algo boiando), animais (gaiolas, uma arrombada), arquivo (pastas, quadro com fotos e barbante), gerador (bobinas com faíscas);
+  - escada + elevador de carga entre andares;
+  - peds do lab todos de branco (jaleco/segurança), os de jaleco param nas janelas;
+  - opcional: cofre/colecionável no fundo.
+- Combinado: fazer em 2 etapas (terreno/castelo primeiro), depois dos bugs que o usuário vai trazer.
+
+## v78 · Modo foto: painel CENÁRIO
+- Botão "☀ CENÁRIO" (tecla C) na barra do modo foto abre o painel `#phScenePanel` (só em Sunset Shores; Synth/Point Haze/mundo invertido sem mudança):
+  - HORA (0–23:45, passo 15 min) muda DN.tod em tempo real;
+  - CÉU FECHADO 0–100% (etapa da tempestade: frente de nuvem `stormK` + gloom/sunDim);
+  - Água caindo (chuva visível, congelada com o jogo pausado; WX.f ≥ .75 molha o chão). A intensidade da chuva no shader vem das células (`CELLS_U`): no pós do modo foto a célula 0 vira uma célula forte (r 600, s 1) em volta da câmera; stepCells a recalcula a cada quadro, então some sozinha. Conferido: chuva parada visível.
+  - Clarão de raio (hemi + nuvens claras, constante);
+  - Raio parado no céu (grupo próprio `PHS.bolt`, à frente da câmera; ↻ sorteia outro);
+  - ECLIPSE SOLAR 0–100% (usa o ECLIPSE existente com stage 'photo': sep = .12×(1−k); 0% = lua invisível ao lado do sol; 100% = total).
+- Mecanismo: `updateWeather` embrulhado (pré `phSceneApply` / pós `phScenePost` + `updateDayNight(0,true)`) só com PHOTO.on e PHS.act. `photoExit` → `phSceneRestore()` devolve hora, eclipse, chuva e nuvens; botão RESTAURAR CENÁRIO faz o mesmo sem sair.
+- Layout: celular deitado (altura ≤ 520 px) → barra compacta à esquerda e painel CENÁRIO na altura inteira à direita; PC (≥ 900×521) → painel maior (380 px, fonte 13). Conferido em 844×390, 390×844 e 1280×720.
+- Testado (headless, seed 777/7): tempestade 100% + chuva + raio parado + clarão; hora 11h/21h; eclipse 70% e 100% (cena escurece); sair restaura a hora. NÃO conferido: disco do eclipse no céu com a câmera apontada pro sol; painel no controle (só mouse/toque/teclado).
+
+## v78 · Controle (DualSense): modo foto, X igual ao E, mapeamento não-padrão
+- Bug: no padPoll a pé, um comentário `//` no fim da linha do ✕ engolia `PAD.run=...` (armadilha 1): correr segurando ✕ não funcionava. Corrigido (linha quebrada).
+- ✕/A a pé agora faz exatamente o que o E do teclado faz: `medLoad()` ou `ctxAct(1)` (vendedores/balcões, bares, cela, cofres, mesas, guarda-roupa…). Antes chamava `enterExit` (=F) numa lista de casos, que não abre todos os balcões.
+- `padGet()` agora converte controles PlayStation que chegam SEM `mapping:'standard'` (Firefox, Linux/hid-playstation): □/△ trocados, L2/R2 como eixos, analógico direito em 3/4, direcional em 6/7 → layout padrão do jogo. `PAD.mapping` guarda o mapeamento; o console avisa ao conectar. Hipótese para "não cava com ✕/R2, não interage, não atira em interiores": com o layout padrão simulado TUDO funcionava (loja, cela, penhores, banco, cassino, AMOnições), então o controle do usuário provavelmente chega sem layout padrão. NÃO confirmado no hardware.
+- Modo foto no controle: LS move o foco, RS gira, L2/R2 afasta/aproxima, L1/R1 FOV, ↑/↓ altura, ✕ foto, □ filtro, △ esconde a interface, ○/OPTIONS sai.
+- Testado (headless com gamepad simulado, seed 777/7): ✕ compra no balcão da conveniência; R2 atira em loja, penhores, banco, cassino e AMOnições; segurar ✕ cava na cela; modo foto; R2 como eixo (sem layout padrão) atira.
+
+## v78 · Retratos de volta ao pixel art (2D padrão)
+- Cards de escolha de modo (`mpPaint`), botão de troca na tela (`charFaces`) e retrato da caixa de diálogo voltaram ao pixel art 2D (makeAtlas) quando "Pedestres em 3D" está desligado (padrão). Com a opção ligada, usam o retrato 3D (`charPortrait`, com boca/piscada no diálogo). Trocar a opção repinta o botão de troca.
+- O rosto do botão de troca continua centrado em cada metade (CSS do canvas), também no 2D.
+- Testado (headless): cards de modo, botão de troca e diálogo em 2D.
+
+## v78 · Botão de troca, olhos do retrato e pedais no touch
+- Botão de troca de personagem (#chsel, canto inferior direito): cada metade mostrava o rosto 2D deslocado para a divisória (só um olho visível = "vesgo"). Agora usa o retrato 3D (`charPortrait`) recortado na cabeça e centrado em cada metade (`charFaces`; CSS do canvas centralizado).
+- `charModel3D`: olhos pintados mais perto do centro (x 7 e 18) e pupila 3 px centrada; a borda arredondada da cabeça espremia o lado de fora do olho e as pupilas pareciam encostar no nariz (afeta retrato, diálogo, cards de modo e peds 3D).
+- Touch: no carro o analógico só ESTERÇA; botões ACELERAR e FREAR/RÉ (já existiam para o modo de inclinação) aparecem sempre no veículo (`TOUCH.gas`/`TOUCH.brake`). O modo "empurrar o analógico na direção para dirigir" (isoTouchDrive) ficou desligado (`TOUCH.isoLegacy`).
+- Touch: BUZINA saiu de cima do botão de troca (agora à esquerda de ARMA).
+- Sombras: o mapa de sombra é refeito a 30 Hz (`simT-shadowRefreshAt>=1/30`). Não alterado.
+- Testado (headless, viewport celular 844×390, seed 777/7): botões aparecem no carro, segurar ACELERAR acelera e soltar libera; retratos conferidos ampliados. Não testado em aparelho real.
+
+## v78 · Estado marcado + opção "Pedestres em 3D (Experimental)"
+- ESTADO DA v78 (esta build): base estável antes do v78n (sem instancing de sombras/coletáveis/guarda-sóis) + atlas único 2D dos peds (25 roupas). Peds 2D são o padrão e o modo recomendado.
+- PENDENTE (não resolvido): peds 3D causam picos de CPU/GPU quando surgem (montagem do boneco na hora com 64 fotos + readRenderTargetPixels síncrono + upload da textura). Ideia para depois: pré-montar todas as roupas 3D num atlas único no carregamento. Não implementado.
+- Configurações → Gráficos: o seletor "Personagem 2D/3D" virou a caixa "Pedestres em 3D (Experimental)" (`#optSprite8`, mesma chave `S.sprite8`, salva no ps_cfg; desmarcada por padrão). Comportamento igual ao anterior (também troca o visual do jogador).
+- Testado: sintaxe dos scripts. Não testado em jogo.
+
+## v78 · Atlas único dos pedestres (base: build estável antes do v78n)
+- Base: a build v78n (instancing de sombras, coletáveis e guarda-sóis) deformava a geometria na GPU do usuário ("PSOne"); voltamos para `backup/index.antes-drawcalls.html`. O v78n NÃO está nesta build.
+- `PED_ATLAS_N=25`: o pool de roupas da cidade passou de 14 para 25 (BEACH_PALS = as mesmas 25 de praia).
+- `PEDATLAS`/`pedAtlasBuild()`: as 50 roupas (25 rua + 25 praia) num só canvas 1280×960 (10×5 blocos de 128×192), UMA CanvasTexture enviada à GPU (`initTexture`).
+- `pedAtlasProxy(pal)`: proxy por ped (`isPedAtlas`, `tile`, offset/repeat próprios); `setFrame` calcula o quadro dentro do bloco; o onBeforeRender do sprite copia para a textura compartilhada (mesmo mecanismo do v78m). `makeCharacter` e `spritesRefreshPeds` usam o atlas no modo 2D; jogador e roupas fora do pool (lojistas, policiais, figurantes especiais) continuam com textura própria.
+- Medido (seed 716540, 13h, headless): 87 de 92 peds no atlas; texturas na GPU 225 → 154. Draw calls NÃO mudam (cada sprite ainda é um draw, porque o material é próprio por causa da iluminação do ator).
+- Não testado: GPU real do usuário, praia lotada, modo 3D (continua com uma textura por roupa via atlas8Shared).
+
 # Atualização v78 — Pedestres de porta e vidros de prédios especiais à noite
 
 - Spawn "fromDoor" (popT, a cada 0,35 s): cada porta de `city.doors` ganha cooldown `d.cd` de 25–45 s (`DOOR_NOW()` = performance.now/1000). Antes a porta era sorteada entre todas a 18–140 m; na zona rural a conveniência do posto rural era quase a única candidata e virava fonte contínua de pedestres.
 - Vidros grandes de prédios especiais saem de `M.hwin` (emissivo até .9 à noite, estourava com bloom) para `M.hwinSoft` (mesmo tom, emissivo = hwin × .28). Batch novo `hwinS` no buildChunk (isoBuilders/reflOK incluídos). Usado em: vitrine e porta da conveniência (gasVisual), fachada/porta da delegacia (worldPolice recebe `hwin:hwinS`), torre de vidro e entrada do hospital. Janelas comuns, farol e shopping inalterados.
 - Achado não corrigido: na linha do mercado (`kind` mercado, "// v77: laterais/fundos do mercado") o `F.box(...hwin)` da vitrine ficou DENTRO do comentário (falta quebra de linha) — a vitrine frontal do mercado não é desenhada.
 - GAME_VER=78, saves v1–v78. Testado: página carrega sem erro de console no Chrome headless. Cena noturna e contagem de pedestres em gameplay ainda não conferidas.
+
+## v78n — draw calls (instancing)
+- Sombras de ped: proxy + `pedShadowTick()` (InstancedMesh único, 512). Coletáveis: `pickupInstAdopt`/`pickupInstTick` (InstancedMesh por tipo + anéis; escondidos em ROOM_STAGE). Guarda-sóis: `umbrellaInstTick` (cones por cor + hastes). Peds longe (> min(90 mobile/140 desktop, fog.far+10)) ocultos em updatePeds, exceto policiais.
+- Testado seed 716540, frente da danceteria 13h: 1066 → 727 draw calls (-32%), sem erros no console. Rodas de carro NÃO instanciadas (risco com timeWheels/carcaças/atraso de matriz) — pendente.
+
+## v78 · Pixel art dos personagens: passada de volume (etapa 1 de 2)
+- `charVolumeShade` no fim de `drawCharFrame` (chave `CHAR_SHADE`, `let`, true): cada trecho horizontal contínuo de pixels recebe 3 tons (luz 1,12 à esquerda / base / sombra 0,84 à direita), borda iluminada +7%, borda em sombra −5%, topo de cada forma +6% (boné, ombros, cabeça), leve escurecimento para baixo; pixels quase pretos (olhos, contornos) intactos. Só altera cores no canvas de 32×48 antes do contorno do `makeAtlas`; atlas, `SpriteMaterial`, alphaTest, camada e `actorLighting` inalterados (diagnóstico `pixelCitySpriteStatus` OK).
+- Comparado lado a lado (Nathan e Claire, frente e perfil, 7×) e no jogo dia/noite; sem erro de console. Degradê suave foi descartado (borrava a pixel art).
+- **Etapa 2 · protótipo 8 ângulos (só jogador, opção "Personagem 3D · 8 ângulos (protótipo)" em Configurações → Gráficos, `S.sprite8`, salvo no ps_cfg):** `atlas8Build(pal)` monta um boneco de blocos (pernas/sapatos, tronco/faixa/cinto, braços/mãos, pescoço, cabeça com olhos/boca/nariz, cabelo ou boné com aba, óculos, fone, colar, mochila) da mesma paleta e o fotografa com o `renderer` do jogo numa cena separada (ortográfica, inclinação ~10°, luz ambiente .6 + direcional .8 do alto-esquerda) em 8 ângulos × 3 poses, 32×48 cada, + contorno escuro → atlas 96×384 (linhas r: 0 costas, 2 direita da tela, 4 frente, 6 esquerda). `atlas8Tex` (cache por paleta) marca a textura com `isAtlas8` (three r128: Texture NÃO tem `userData`). `pickDir` guarda o setor de 8 (`PICK8.r`, ângulo atan2(cr,dot)); `setFrame` só usa esse setor em texturas `isAtlas8` (fora disso, 4 direções como antes; chamada sem pickDir recente → `DIR4_TO8`). `applyPlayerLook` escolhe o atlas conforme a opção. SpriteMaterial/alphaTest/camada/actorLighting inalterados.
+- **v78m · textura 3D COMPARTILHADA por roupa (peds):** `atlas8Shared(pal,N,RES)` = uma textura por roupa (pré-enviada com `initTexture`; cache `SHARED_TEX`); cada ped tem um proxy (`atlas8Proxy`: `isProxy`, `offset`, `repeat`, `shared`, `dispose(){}` vazio) que nunca vai à GPU. `makeCharacter` põe `px.shared` no material e `sp.userData.texProxy=px`; `setFrame`/piscada escrevem no proxy; o `onBeforeRender` de `makeActorLitSprite` copia offset/repeat do proxy para a textura compartilhada logo antes do draw (o uvTransform do sprite é lido depois, e cada ped tem material próprio → uniform atualizado por ped), só se o map ainda for o compartilhado. `charTexRelease` ignora proxies/compartilhadas; `charPreload3D` só cria as compartilhadas. Jogador continua com textura própria. Medido: 148 peds com 26 texturas no total; em 15 s correndo só +2 texturas na GPU, 1 quadro > 50 ms (112 ms, provável roupa rara gerada na hora); fila da danceteria com quadros/ângulos distintos por ped. Backup: scratchpad `index.before-sharedtex.html`.
+- **v78l · stutter dos sprites 3D:** cada ped novo criava uma textura de ~1,5 MB (16 ângulos × 4 colunas em 2×) que a GPU recebia na 1ª renderização → engasgo a cada ped que surgia. Agora há reserva por roupa (`CHARTEX_POOL`): `charTexRelease` (em `removePed`, `killChar`, `spritesRefreshPeds`) devolve a textura (até 48 por roupa); `atlas8Tex` pega da reserva antes de criar. `charPreload3D()` (fim do `warmCityGPU` e ao ligar o 3D) gera o boneco de cada `PED_PALS` + `COP_PAL` e pré-envia (`renderer.initTexture`) K texturas por roupa (K ≈ peds×1,6/nº de roupas +1). Funções separadas: `atlas8Key`, `atlas8Canvas`, `atlas8NewTex`. Medido (150 peds, 15 s correndo): 27 reaproveitadas, 5 texturas novas, 3 bonecos gerados na hora (roupas fora de PED_PALS), 3 quadros >50 ms (pior 65 ms); pré-carga 63 ms. Restante: roupas variantes (fora de PED_PALS) ainda geram na hora.
+- **v78j · piscada na rua (jogador e pedestres, 2D e 3D):** coluna 3 do atlas = quadro 0 de olhos fechados. 2D: `drawCharFrame` com `fr===3` desenha os olhos como traço (frente e perfil); `makeAtlas` gera 4 colunas (a 4ª já existia vazia no canvas 128×192 → sem custo de memória; quadros 0–2 idênticos ao original). 3D: `atlas8Build` gera 4 colunas (`setFace({eyes:'closed'})` na pose 0), atlas 4×N, `repeat(1/4,1/N)`, cache com prefixo `b4|`; memória 3D +33%. `charBlinkCol(tex,fr)` no início de `setFrame`: só texturas `isChar` (marcadas em `atlasTex`/`atlas8Tex`; cães/gatos fora), só no quadro 0, cronômetro por textura, 140 ms a cada 2,5–6 s. Testado (3D): jogador piscou; 10/11 peds próximos piscaram em 6 s; quadros conferidos ampliados em 2D e 3D.
+- **v78i · retratos 3D planos + boca/piscada:** modelo extraído para `charModel3D(pal,face)` (retorna `g`, `pose`, `setFace`, `dispose`; `face={eyes:'open'|'closed',mouth:'closed'|'open'}` só repinta a textura do rosto). Helpers `char3DStage(W,H)` (cena/luz + render target por tamanho), `char3DShoot(cam,rt,W,H,contorno)`, `char3DWith(fn)` (salva/restaura render target e clear). `atlas8Build` usa esses helpers (mesmo resultado). `charPortrait(pal)` = foto de frente, cabeça e ombros, 192×192, contorno 3 px, 4 variações (olhos × boca), cache por paleta, independe de 2D/3D. Usado em `mpPaint` (cards MODO HISTÓRIA/LIVRE, ~23 ms os dois) e `dlgOpen` (caixa de diálogo, 96×96); `dlgFace()` (chamado no `dlgTick`) abre/fecha a boca a cada 110 ms enquanto o texto é digitado e pisca 140 ms a cada 3–5 s. Fallback para o sprite 2D se der erro. Testado: cards e diálogo da Claire (estados boca aberta/fechada e piscada), sem erro de console.
+- **v78h — teste extremo:** pedestres também 16 ângulos em 2× (`makeCharacter` e `spritesRefreshPeds` → `atlas8Tex(pal,16,2)`). Gráficos: select "Personagens: 2D (clássico) / 3D (16 ângulos)" (`#optSprite8`, ainda `S.sprite8` boolean no ps_cfg). 2D = sprite ORIGINAL: `CHAR_SHADE=false` (passada de volume da etapa 1 desligada) e `atlasCache.clear()` na troca. Medido: gerar 16 paletas em 3D ≈ 510 ms (travada única na troca/1ª aparição de cada roupa); 149 peds em 16 ângulos. Memória estimada: atlas 192×1536 RGBA ≈ 1,2 MB por TEXTURA e cada ped tem a sua (offset é por textura) → ~180 MB de GPU com ~150 peds. Se pesar: compartilhar textura por paleta com offset por sprite (UV no material/shader) ou voltar peds a 1×.
+- **v78g — todos os personagens:** `atlas8Build(pal,N,RES)` / `atlas8Tex(pal,N,RES)` (cache por N|RES|paleta; um render target por RES). Jogador 16 ângulos em 2× (atlas 192×1536); pedestres 8 ângulos em 1× (96×384; cada ped tem textura própria → 2× daria ~90 MB de GPU com 150 peds). `pickDir` guarda o ângulo contínuo (`PICK8.a`); `setFrame` escolhe a linha por `tex.dirsN` (sem pickDir recente → `DIR4_ANG`). `makeCharacter` usa o atlas 3D quando `S.sprite8` (exceto `PLAYER_PAL`, tratado por `applyPlayerLook`) e devolve `pal`; `spritesRefreshPeds()` troca os peds já na rua ao ligar/desligar (pula os que tiveram `material.map` trocado, ex.: atendentes do shopping). Opção renomeada "Personagens 3D (jogador 16 ângulos, pedestres 8)". Testado: 148 peds em 8 ângulos (28 paletas no cache), jogador 16, sem erro de console; visto na fila da danceteria. Não testado: celular (memória/tempo de geração), interiores com muitos NPCs.
+- **v78f:** "vesgo" na diagonal = olhos em relevo (pupila 0,2 à frente do branco → paralaxe) + arredondamento comendo a parte plana do rosto + só 32×48 px. Agora: rosto PINTADO numa textura 32×32 (NearestFilter) na face +z da cabeça (sobrancelhas, olhos 7×7 com pupila e brilho, nariz, boca, queixo; óculos com armação e lente translúcida), nariz pequeno em relevo só para o perfil; cabeça com raio máx. .7 (corpo 1,6); fotos em 2× (64×96 por quadro, atlas 192×768, mesmas frações → `setFrame`/`atlas8Tex` inalterados), contorno com 2 passadas (mesma espessura visual). Backup: scratchpad `index.before-face.html`. NÃO conferido na tela.
+- **v78e:** proporções adultas do 1º protótipo (quadril y=16, ombros y=28, cabeça 11×11×10 em y=31, rosto original) + blocos arredondados (`rbox`). O cartoon chibi foi rejeitado ("parecem crianças"). Não conferido na tela.
+- **v78c · cartoon em blocos (descartado)** (o arredondado de cilindros/esferas foi rejeitado: "feio"): cabeça 14×13×12 (~30% maior), olhos 3,6×4,2 com pupila e brilho, sobrancelhas da cor do cabelo, corpo/pernas mais curtos (quadril y=13, ombros y=24, cabeça y=25); mesmos grupos de pernas/braços e `pose`.
+- **v78d · blocos arredondados:** `rbox(w,h,d)` = BoxGeometry 4×4×4 com vértices empurrados para uma caixa interna + raio (28% da menor medida, máx. 1,6; peças finas ficam quase retas) e normais recalculadas. NÃO conferido na tela (usuário pediu para não usar o navegador naquele momento).
+- **v78b · modelo arredondado (descartado):** blocos trocados por cilindros/esferas (tronco oval com faixa/cinto em anel, ombros esféricos, braços/pernas cilíndricos, mãos esféricas, sapatos ovais, cabeça esférica, olhos/nariz/boca na curva do rosto, cabelo em calota + volume atrás (longo = cilindro oval), boné em calota + aba semicircular, óculos em aro, fone em toro, colar em toro, mochila oval). Pivôs, alturas e `pose` iguais → animação mantida. Conferido: 8 vistas de Nathan e Claire + passos de caminhada (perfil e ¾) ampliados; no jogo, sem erro de console.
+- Testado: atlas das 8 vistas conferido ampliado (Nathan); no jogo andando W/D/S/A troca de vista (costas, ¾, frente), luz dinâmica aplicada, sem erro de console. Não testado: Claire no jogo, troca de roupa com a opção ligada, celular. Pedestres continuam 4 direções.
+
+## v78 · Viatura roubada pelo jogador
+- Causa: em `updateCop`, `back = PL.car || …` → com o jogador em QUALQUER carro (inclusive a viatura do próprio policial) ele corria até a viatura e "embarcava" (`removePed` + sai de `copsOut`); com `copsOut` vazio, `policeDrive` voltava a dirigir a viatura quando o jogador descia.
+- Agora: se `c===PL.car`, a viatura recebe `c.playerStolen=true`; o policial dela fica a pé perseguindo/atirando (some a >70 m, sem procura ou com o jogador morto) e nunca embarca; `policeDrive` não dirige viatura `playerStolen` (fica parada onde o jogador largou).
+- Testado (cena montada com `deployCops` + `hazeBoard`): policial a pé com o jogador na viatura; após descer, viatura 0 m em 3,5 s. Não testado: perseguição longa jogada normalmente.
+
+## v78 · CLAUDE.md e funções comuns
+- Novo `CLAUDE.md` na pasta (lido automaticamente pelo Claude Code a cada sessão): regras do projeto, 11 armadilhas que já causaram bugs, funções comuns e mapa dos sistemas. Este `CONTEXT.md` continua sendo o histórico completo.
+- Funções comuns em `index.html` (bloco "FUNÇÕES COMUNS", antes de `transitionAudioStop`): `actorShowNow(o,mx,mz)` (ator visível/posicionado antes de diálogo), `weaponTick(dt)` (armas; usada em `update()` e `roomStageLocalTick`), `audioCutKeepScene()` + `sceneRadioResume(k)` (usadas em `roomStageEnter`). A chegada da prisão (`'iswitch'`) usa `actorShowNow`; `storyAirportSpawn` mantém o código próprio equivalente.
+- Testado: jogo carrega sem erro; tiro contínuo 7 tiros/1,5 s na rua e na danceteria; rádio da danceteria online.
+
+## v78 · Troca de personagem na história com interior ("Enquanto isso…")
+- Só no modo história (`prologueSwitch`): se a origem está num interior (`PL.inside`) ou o destino é interior (`tgt.prologueJail`/`tgt.safe`), em vez do voo pelo céu (que mostrava o interior carregando no vazio) roda o corte `'iswitch'`: 0–0,9 s câmera recua (sobe 2,6 m, afasta 2 m) já escurecendo; no preto troca o personagem (`charEnter`) e mostra "Enquanto isso…" (+ legenda opcional `tgt.card`); 3–3,9 s clareia com o movimento inverso chegando no destino. Modo livre inalterado. F9 pula.
+- Prisão (`prologueJail`): o cartão "PENITENCIÁRIA DE SUNSET SHORES · Claire · ano 3 de 10" virou a legenda do "Enquanto isso…" (antes eram duas telas pretas). Na chegada a Claire fica virada para as grades (câmera dentro da cela; antes ficava no corredor atrás da placa "CELA 01").
+- Sprite posicionado/visível antes do diálogo de chegada (mesmo bug da v43: o diálogo pausa `updatePlayer` e a Claire ficava invisível até a conversa acabar).
+- Testado no Chrome (seed 716540): escurecer → "Enquanto isso…" + legenda → chegada na cela com diálogo. A correção da câmera e da Claire invisível ainda não foi conferida na tela.
+
+## v78 · Arco sobre o rio incompleto
+- `buildRiverArches`: o laço da curva era `i<=16` com `t=i/24` → o tubo ia só até 2/3 do vão e terminava no ar (todos os arcos; mais visível perto de píer). Agora `i<=24` (margem a margem). Conferido na seed 2661671933 (arco a ~30 m de um píer): inteiro. A escolha de posição dos arcos não mudou (mesmos lugares por seed).
+
+## v78 · Piloto visível nas lanchas
+- O jogador é escondido em qualquer veículo (`PL.sp.visible=false`); nas embarcações abertas ficava vazio. `playerBoatTick` (em `myTick`) cria um sprite com a roupa atual (`PLAYER_PAL`; recria se o visual mudar): lancha = em pé no comando à DIREITA (estibordo, padrão americano), 12% do comprimento atrás do meio, 22% da largura para o lado; jet ski = no centro. Some ao desembarcar/morrer/entrar em interior. Testado: Nathan na lancha, 0,53 m a estibordo. NPCs das lanchas não mudaram.
+
+## v78 · Tiro nos interiores e pontes levadiças na troca de mundo
+- **Não dava para atirar nos capangas dos impérios (mouse e controle):** `GUN.cd -= dt`, o tiro contínuo (`GUN.firing`), `updateTracers`, `updateRockets` e `updateDecals` só rodavam em `update()`; nos interiores com palco (`roomStageLocalTick`: impérios, banco, assalto, danceteria…) o 1º tiro saía e a recarga nunca baixava → arma travada. Agora rodam também no caminho do palco. Testado: segurando o gatilho na danceteria, 7 tiros em 1,5 s (antes 1).
+- **Pontes levadiças boiando em Point Haze / duplicadas e congeladas na volta:** `dbBuild` põe o grupo direto na cena (`scene.add`), fora do grupo da cidade; `dbTick` só reconstruía quando `seed:estilo` mudava e nunca removia as antigas. Agora `DB.groups` guarda todas; na troca de mundo (chave mudou OU `city.dbs` é outra lista) todas saem da cena e só voltam as do mundo atual (reaproveita `d.g` se a cidade veio do cache). Testado: normal 2 pontes → Point Haze 0 → volta 2 (sem duplicatas). Caminho Synth → Haze → Synth do usuário não refeito literalmente (mesma lógica).
+
+## v78 · Controle: interagir no ✕/A, cavar segurando, giroflex azul/vermelho
+- DualSense real do usuário (Linux, Chrome 157) lido pela aba: `mapping:"standard"`, 17 botões (✕0 ○1 □2 △3 L1 4 R1 5 L2 6 R2 7, direcional 12–15). O mapeamento NÃO era o problema.
+- **Cela (fuga da Claire):** só o toque de ✕/□/R2 marcava `JAIL.click` (janela de 0,4 s); no teclado segurar E funciona pela repetição da tecla, no controle segurar parava de cavar. Agora segurar ✕, □ ou R2 cava continuamente (`B[...]` em vez de `pr(...)`), toques rápidos continuam valendo.
+- **✕/A = interagir** (toque) quando há algo perto: lojas, shopping, bar, caça-níquel, mesas, balcão de armas, receptador, guarda-roupa, TV (liga/desliga), médico — chama `enterExit()` (mesma rotina do △/F), mas nunca carros (correr com ✕ perto de carro não rouba). Segurar continua correr. Na cela ✕ só cava (não aciona fiança). △ continua igual. Ajuda de comandos + EN atualizadas.
+- **Luz do DualSense procurado:** vermelho/azul (antes vermelho/branco) em `dualLightColor`.
+- **Regressão corrigida no mesmo dia:** um comentário `//` no meio da linha de `dualLightColor` (linha longa) comentou o resto do script → "Unexpected end of input", jogo não carregava. Trocado por `/* */`. Cuidado: várias linhas deste arquivo contêm várias funções.
+- Testado com controle virtual no padrão do DualSense (getGamepads simulado): △ entra/sai do carro; △ e ✕ pedem drink no bar; ✕ perto de carro não entra; segurar ✕ 3 s na cela cava sem parar; luz alterna azul/vermelho.
+- **Confirmado com o DualSense físico do usuário** (monitor na aba, cela, no canto): segurar ✕ ~5 s → túnel 0→5 s; segurar R2 → até 7,6; toques → 10,3 s (34%). O "não faz nada" relatado era falta de retorno: guarda olhando boa parte do tempo (cavar com ele olhando zera o túnel) e △ mudo fora das grades.
+- **Aviso da cela** (`#jailp`) agora diz o que fazer: sem colher → espere o colega; longe → vá até a marca no canto; guarda olhando → pare de cavar; no canto → "segure ✕ ou R2" (controle) / "E ou o clique" (teclado) / "o botão de ação" (toque), + % do túnel. `jailBail` fora da área das grades avisa "FIANÇA: VÁ ATÉ AS GRADES" (na fuga da história: "CAVE NO CANTO…") em vez de não fazer nada. Traduções EN.
 
 ## v78 · Especiais com filtro VINTAGE + rastro, som da danceteria, abertura do Nathan, navegação do controle
 - **Filtro VINTAGE nos especiais** (`SLOWFX`, `slowFxTick`, chamado no loop depois do bloco simulação/cutscene): câmera lenta (Claire), bullet time (Nathan) e a cena do motel (`SLOWFX.cine`, antes filtro seco próprio) aplicam o filtro VINTAGE do modo foto interpolado por peso `w` (~1 s entrando e saindo). Modo foto manda no filtro enquanto aberto; ao sair, reaplica.
@@ -633,7 +1132,7 @@ Aplicação estática concentrada em `index.html`: Three.js r128, WebGL, scripts
 | `README.md` | Apresentação pública em linguagem de jogador, preparada para adaptação ao itch.io |
 | `CONTEXT.md` | Contexto técnico atual, contratos, índice de código e histórico integral |
 | `SKILL.md` | Orientação de handoff; aponta para este contexto em vez de duplicá-lo |
-| `locale_en_catalog.json` | Catálogo de localização; conferir também textos e tabela `LANG_EN` no HTML |
+| ~~`locale_en_catalog.json`~~ | Removido na v78 (não era carregado); o catálogo é a tabela `LANG_EN` no HTML |
 | `manifest.webmanifest`, `pwa.js`, `sw.js`, `icons/` | Identidade e instalação PWA, cache/registro e ícones |
 
 Servir via HTTP para desenvolvimento; HTTPS ou localhost para recursos como Web Crypto e instalação, conforme exigências do navegador. Não prometer instalação automática nem suporte idêntico de recursos em todos os dispositivos.
