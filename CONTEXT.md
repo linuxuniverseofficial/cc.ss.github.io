@@ -1,3 +1,20 @@
+## v78 · .GLB: prédios brancos no Blender
+- O exportador copiava a cor `emissive` dos materiais, mas não o mapa de emissão (janelas acesas). No Blender (Material Preview/Rendered) virava brilho branco no prédio inteiro. Agora emissive = preto. Render EEVEE de conferência: prefeitura de tijolo, casas, telhados, ruas com faixas, aeroporto.
+- Limitações conhecidas: água de rio/mar usa shader próprio (fica de fora, aparece o leito), e o céu também.
+
+## v78 · .GLB completo (paredes, árvores, calçadas)
+- O exportador pulava objetos na camada 1 (`layers.mask===2`), achando que eram partículas — mas é onde o jogo põe paredes, árvores, calçadas, grama etc. (~80% dos triângulos). Filtro removido; partículas já saem por serem sprites.
+- Seed 777 tam. 7: cidade 82 MB / 640 mil polígonos, área 35 MB / 267 mil, shopping 12,5 MB. Validador: 0 erros; render de conferência no Blender (workbench, cor por vértice) mostra motel, palmeiras, casas com paredes, semáforos.
+
+## v78 · .GLB mais compatível e centrado
+- Exportação conservadora para importadores antigos: só malhas (linhas/fios fora), todos os atributos em Float32 (cores 0..1 RGB, sem normalizados/RGBA), textura só se a malha tem UV, cor por vértice só se o atributo existe.
+- Modelo centrado na origem: CIDADE pelo centro do mapa, ÁREA/INTERIOR pela posição do jogador (grupo raiz `coastal_chaos_<modo>`).
+- Validador oficial: 0 erros; Blender 5.3: cidade 301 objetos, área 128, shopping 61.
+
+## v78 · .GLB abre no Blender
+- O Blender recusava ("Couldn't parse glTF"): algumas malhas tinham NaN (normais de comprimento zero / atributos inválidos), e o glTF gravava `min:[null…]`. `glbClean()` troca NaN/Infinity por 0, normaliza normais (zero → para cima) e limita cores a 0..1.
+- Validação: gltf-validator oficial = 0 erros nos três modos; importados no Blender 5.3 (bpy): cidade 321 objetos / 139 mil polígonos, área 135 / 41 mil, shopping 60 / 93 mil.
+
 ## v78 · Jogo 100% local (three.js e fontes dentro do zip)
 - Nova pasta `lib/` (~1 MB): `lib/three/` = three.js r128 (`three.min.js`) + CopyShader, LuminosityHighPassShader, EffectComposer, RenderPass, ShaderPass, UnrealBloomPass e GLTFExporter (mesma versão do CDN, do pacote npm three@0.128.0; LICENSE MIT junto). `lib/fonts/` + `lib/fonts.css` = Silkscreen, VT323, Pacifico, Fredoka 600/700, Monoton, Creepster, Pirata One em woff2 latin + latin-ext (pacotes @fontsource, licenças OFL junto).
 - `index.html` não usa mais jsdelivr nem Google Fonts. Teste com toda rede externa bloqueada: jogo carrega, bloom ok, fontes carregam, exportar .glb funciona, zero pedidos externos. Só as rádios online (KRFM) continuam dependendo de internet, por natureza.
