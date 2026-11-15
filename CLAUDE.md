@@ -39,5 +39,6 @@ Jogo inteiro em `index.html` (three r128, scripts inline). `CONTEXT.md` é o his
 
 ## Onde fica cada coisa (buscar pelo nome)
 `generateCity`, `buildChunk`, `chunkLod`, `cullChunks`, `roomStageLocalTick`, `roomStageEnter`, `casinoBuild` (cassino + interior da danceteria), `clubInteriorTick`, `prologueSwitch`/`prologueCutTick` (história), `charSwitch` (troca no modo livre), `sceneRadioStart`, `padPoll`, `jailEscapeTick`, `dbTick`/`dbBuild` (pontes levadiças), `specTick`/`slowFxTick` (especiais).
+- Build: a cada entrega, subir `BUILD_TAG` (topo do index.html) e `version.txt` para o mesmo rN — o jogo recarrega sozinho quando o servidor tem outra build.
 - Backup: a cada atualização entregue, `backup/index.anterior.html` = a build estável anterior (só uma, substitui a antiga).
 - Rodar `tools/zfight-detector.js` ao criar/alterar ambiente, cenário ou objeto (meta: 0 conflitos de z-fight).
