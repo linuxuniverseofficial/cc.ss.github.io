@@ -1,3 +1,20 @@
+## v79 · r13 — cassino em + · Liar's Dice · lista completa de cheats · chiado sem piscar
+- Cassino virou um + como o shopping: salão central 20×14 (blackjack, pôquer, roleta, lounge, caixa) com 3 alas de 12 m — NORTE (6 caça-níqueis em 2 fileiras, SUNSET ROYALE e JACKPOT), OESTE (sinuca + Seu Zé + porta-tacos), LESTE (mesa redonda de dados + 2 NPCs). Paredes do salão com vãos (`OPN/OPW/OPE`) e batentes dourados; colisões segmentadas; cada ala é uma malha própria (`WG`, `CAS.wgN/W/E`) com `roomLitMat` e luzes próprias → penumbra nas paredes de cada ala (o retângulo de luz avança 2,4 m no vão para não escurecer a passagem). Mapa do interior ancorado no cassino (`interiorMapAnchor`).
+- Liar's Dice (`DICE`): você × Dona Cida × Tonhão, 5 dados cada, copo virado; física de corpo rígido (cubo com contatos por vértice no pano e na parede do copo, atrito, quique; dado×dado por esfera; assenta e "deita" na face ao parar, `diceSnap`). O 1 é coringa (não se aposta no 1). Aposta = quantidade × face (2–6), tem que subir; DUVIDO abre os copos (sobem e inclinam, dados que contam pulsam). Quem erra perde 1 dado; sem dados sai; último vence. Aposta $50, vitória $150. IA por probabilidade binomial (Tonhão blefa mais). Vistas 3D (do seu lugar; seu copo fica translúcido) e de cima. Controles: ↑/↓ quantidade, ←/→ face, Espaço apostar, X duvido, V vista, Esc sair; controle: direcional, A, X, Y, B; botões na tela.
+- Dados maiores (4,5 cm) e copos maiores pra leitura; dados que se encostam não se "acordam" mais (antes a rodada travava em "chacoalhando").
+- COMANDOS → CHEATS: lista gerada do próprio `CHC.list` (22, nenhum faltando: ECLIPSE, JAMMER, THEMASK, IMPOSSIBLETOSEE…), com descrição e sequência do controle; caixa rolável.
+- IMPOSSIBLETOSEE: troca de material a cada quadro antes do render (carro/ped novo já nasce com chiado; antes piscava colorido até 0,4 s).
+
+## v79 · r12 — cheat IMPOSSIBLETOSEE (experimental; se não prestar, voltar pra r11)
+- Digite IMPOSSIBLETOSEE (liga/desliga). Todo mesh/sprite ganha um clone "chiado" (cache por material original, `ITS`): MeshBasic com onBeforeCompile — célula 3D de ruído preto/branco presa ao espaço do objeto/instância (escala do objeto aplicada), tamanho da célula ≈ 1,25 px pela distância (níveis em potência de 2 com troca sorteada por célula, sem anéis); sprites usam o próprio pixel da arte ×4 e mantêm o recorte (alpha .5).
+- Some: transparentes sem recorte, aditivos (brilhos/halos), partículas, linhas, sombras-blob e setas amarelas. Sem sombras, neblina, reflexo e bloom (render direto); fundo cinza; hora travada em 12:00. Radar/HUD continuam.
+- Varredura a cada 0,4 s pega objetos novos (trânsito, peds, tiros) e atualiza o `map` dos sprites que trocaram de roupa/atlas. Ao desligar, cada objeto volta ao material original (`userData.itsOrig`), clones descartados, sombra/fundo/neblina/hora restaurados.
+- Parado: estática uniforme (testado — nem poste perto da câmera vaza). Visível só com movimento (objeto ou câmera).
+
+## v79 · r11 — fuga da Claire sem afogamento em loop
+- `jailEscape` escolhia o beco (catSpot não residencial a 35–220 m da delegacia) sem olhar água: em algumas seeds o beco ficava colado no canal/foz; o estuário puxava a Claire e ela se afogava, e o checkpoint da missão 1 repetia a mesma fuga pro mesmo beco (loop).
+- Agora o ponto tem que ser seco: fora d'água/estuário no centro e em 24 amostras (anéis de 4 e 9 m) e fora de colisão. Sem beco válido: procura em espiral 30–120 m em volta da delegacia; último recurso, a porta da delegacia (antes era +30,+30 às cegas).
+
 ## v79 · r10 — textos do itch.io e do GitHub atualizados
 - `README.md` e `ITCHIO.txt` (mesmo conteúdo, markdown × HTML): paraquedas, pontes levadiças, Neon Road, estampa de 1 caractere; cassino com sinuca "castigado" contra o Seu Zé; bebedeira na danceteria (5 doses); motel; nova seção "Beyond the city limits" (mundos paralelos — synthwave, Upside Down, Point Haze —, laboratório militar secreto sob a Point Haze, a máscara que corre na água); mapa do interior, modo foto (ocultar personagem), trilha original e estrela cadente.
 
