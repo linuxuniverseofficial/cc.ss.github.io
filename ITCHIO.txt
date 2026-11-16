@@ -15,12 +15,12 @@
     <li><strong>Fill up at the gas station</strong>, grab a snack at the convenience store, and try not to get too close to the tire shop's scrapyard next door.</li>
     <li><strong>Hit a dirt jump</strong> out in the countryside, launch from a back-alley ramp, or <strong>parachute from a rooftop</strong> and aim for the target on the sand.</li>
     <li><strong>Raise the drawbridges</strong> from the booth, or wait for the boats to pass. Find the hidden <strong>Neon Road</strong>, a street that only lights up for those who know where to look.</li>
-    <li><strong>Grab a skateboard</strong> from your garage and cruise the sidewalks: push, carve, ollie, and eat the pavement when you hit something. The mall's skate shop sells new decks with custom colors, prints and your own 6-character text.</li>
+    <li><strong>Grab a skateboard</strong> from your garage and cruise the sidewalks: push, carve, ollie, and eat the pavement when you hit something. Get up to full speed and hold the jump for a <strong>kickflip</strong>, but land it straight or you're kissing the asphalt. Put your headphones on and the radio rides with you. The mall's skate shop sells new decks with custom colors, prints and your own 6-character text.</li>
     <li><strong>Dress the part</strong>: shirts, prints, caps, glasses, jewelry. Put your own letter, number or symbol on your shirt.</li>
 </ul>
 <h2>Make money. Make trouble.</h2>
-<p>Pick up taxi fares, take on vigilante work, race at night, or survive a rampage. Spend the cash on clothes, weapons, fuel and upgrades.</p>
-<p>Try your luck at the <strong>casino</strong>: slots, blackjack, video poker, roulette and a <strong>pool table</strong> where Seu Zé is waiting for a game of <em>castigado</em> (evens vs odds, and ball 1 is the penalty). Dance until sunrise at the <strong>nightclub</strong>, and maybe have one drink too many: the room starts to spin, and five drinks is the limit. Shop across two floors of the <strong>mall</strong>, and check into the roadside <strong>motel</strong> if you need a place to hide. Some businesses in town have a less respectable side, and the people running them won't hand over the keys without a fight. <strong>Build an empire</strong> if you can hold it.</p>
+<p>Pick up taxi fares, take on vigilante work, race at night, or survive a rampage. Spend the cash on clothes, weapons, fuel and upgrades. In free roam, the pause menu's <strong>Minigames</strong> shortcut drops you straight at any casino table, and if you're broke, a loan shark will front you $10,000. Pay it back in ten hours, or his crew comes looking for you, guns out, every few hours until you do.</p>
+<p>Try your luck at the <strong>casino</strong>: slots, blackjack, video poker, roulette a <strong>pool table</strong> where Seu Zé is waiting for a game of <em>castigado</em> (evens vs odds, and ball 1 is the penalty), and a <strong>Liar's Dice</strong> table where Dona Cida and Tonhão shake their cups the old frontier way: bid, call the bluff, or go for the exact count with <em>spot on</em>. Dance until sunrise at the <strong>nightclub</strong>, and maybe have one drink too many: the room starts to spin, and five drinks is the limit. Shop across two floors of the <strong>mall</strong>, and check into the roadside <strong>motel</strong> if you need a place to hide. Some businesses in town have a less respectable side, and the people running them won't hand over the keys without a fight. <strong>Build an empire</strong> if you can hold it.</p>
 <p>And there's a bank. With a vault. Just saying.</p>
 <p>Don't expect the police to look the other way. Patrol cars, checkpoints, helicopters and local word-of-mouth can turn a quiet afternoon into a five-alarm chase.</p>
 <h2>A world that lives without you</h2>
@@ -39,15 +39,15 @@
     <li>Some masks give more than a disguise. Ever tried running across the water?</li>
 </ul>
 <h2>A place to come home to</h2>
-<p>Your safe house is where you rest, change clothes, save your progress and <strong>watch TV</strong>. The local channels follow what's really happening out there: police operations, storms, chases, departures from the airport, and the occasional strange report from the woods.</p>
+<p>Your safe house is where you rest, change clothes, save your progress and <strong>watch TV</strong>. The garage keeps your rides, plates and all, and if you go down out there, your cars and your skateboard are waiting back home when you wake up. The local channels follow what's really happening out there: police operations, storms, chases, departures from the airport, and the occasional strange report from the woods.</p>
 <h2>Secrets in every corner</h2>
 <p>There are records to collect, stunts to land, and dangerous opponents waiting in places you wouldn't expect. Some secrets take patience. Others take nerve.</p>
 <p>And some might leave you wondering whether you're still in the same city at all.</p>
 <h2>See the city your way</h2>
 <ul>
     <li><strong>First person, third person, top-down or isometric</strong>: switch any time.</li>
-    <li><strong>Map + GPS</strong> with route guidance, and a marker on your last vehicle so you can always find it again. Inside a building, the map switches to its floor plan.</li>
-    <li><strong>Photo mode</strong>: change the hour, the weather and the lens, add an eclipse, hide your character and take the shot.</li>
+    <li><strong>Map + GPS</strong> with route guidance that respects one-way streets, and a marker on your last vehicle so you can always find it again. Inside a building, the map switches to its floor plan.</li>
+    <li><strong>Photo mode</strong>: change the hour, the weather and the lens, add an eclipse or a VHS look, freeze your character and walk the camera around for the perfect angle, or hide them and take the shot.</li>
     <li><strong>Original soundtrack</strong> for the tense moments, plus radio stations on the road.</li>
     <li><strong>At night, look up</strong>: once in a while a shooting star crosses the sky.</li>
     <li><strong>Keyboard &amp; mouse, controllers and touch</strong>, with full mobile support in landscape.</li>

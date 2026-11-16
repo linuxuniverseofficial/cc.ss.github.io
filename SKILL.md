@@ -5,7 +5,7 @@ argument-hint: "What will the next session be used for?"
 disable-model-invocation: true
 ---
 
-Before preparing a handoff, read `CONTEXT.md` next to this file and inspect the relevant code in `index.html`. `README.md` is the public player-facing presentation, not the technical specification. Preserve the historical archive in `CONTEXT.md`; reference existing sections instead of duplicating them. Treat historical notes as prior states, and use the current code and latest user request to resolve conflicts.
+Before preparing a handoff, read `CONTEXT.md` next to this file and inspect the relevant code in `index.html`. `README.md` is the public player-facing presentation, not the technical specification. `CONTEXT.md` is the curated working context; the full old history lives in `backup/CONTEXT.historico.md` (grep only). Reference existing sections instead of duplicating them. Treat historical notes as prior states, and use the current code and latest user request to resolve conflicts.
 
 Write a handoff document summarising the current conversation so a fresh agent can continue the work. Save to the temporary directory of the user's OS (`$TMPDIR`, else `/tmp`; `%TEMP%` on Windows) - not the current workspace.
 

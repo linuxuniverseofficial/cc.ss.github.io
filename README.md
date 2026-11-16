@@ -29,14 +29,14 @@ Start on foot. Grab a car. Head across town.
 - **Fill up at the gas station**, grab a snack at the convenience store, and try not to get too close to the tire shop's scrapyard next door.
 - **Hit a dirt jump out in the countryside**, launch from a back-alley ramp, or **parachute from a rooftop** and aim for the target on the sand.
 - **Raise the drawbridges** from the booth, or wait for the boats to pass. Find the hidden **Neon Road**, a street that only lights up for those who know where to look.
-- **Grab a skateboard** from your garage and cruise the sidewalks: push, carve, ollie, and eat the pavement when you hit something. The mall's skate shop sells new decks with custom colors, prints and your own 6-character text.
+- **Grab a skateboard** from your garage and cruise the sidewalks: push, carve, ollie, and eat the pavement when you hit something. Get up to full speed and hold the jump for a **kickflip**, but land it straight or you're kissing the asphalt. Put your headphones on and the radio rides with you. The mall's skate shop sells new decks with custom colors, prints and your own 6-character text.
 - **Dress the part**: shirts, prints, caps, glasses, jewelry. Put your own letter, number or symbol on your shirt.
 
 ## 💸 Make money. Make trouble.
 
-Pick up taxi fares, take on vigilante work, race at night, or survive a rampage. Spend the cash on clothes, weapons, fuel and upgrades.
+Pick up taxi fares, take on vigilante work, race at night, or survive a rampage. Spend the cash on clothes, weapons, fuel and upgrades. In free roam, the pause menu's **Minigames** shortcut drops you straight at any casino table, and if you're broke, a loan shark will front you $10,000. Pay it back in ten hours, or his crew comes looking for you, guns out, every few hours until you do.
 
-Try your luck at the **casino**: slots, blackjack, video poker, roulette and a **pool table** where Seu Zé is waiting for a game of *castigado* (evens vs odds, and ball 1 is the penalty). Dance until sunrise at the **nightclub**, and maybe have one drink too many: the room starts to spin, and five drinks is the limit. Shop across two floors of the **mall**, and check into the roadside **motel** if you need a place to hide. Some businesses in town have a less respectable side, and the people running them won't hand over the keys without a fight. **Build an empire** if you can hold it.
+Try your luck at the **casino**: slots, blackjack, video poker, roulette a **pool table** where Seu Zé is waiting for a game of *castigado* (evens vs odds, and ball 1 is the penalty), and a **Liar's Dice** table where Dona Cida and Tonhão shake their cups the old frontier way: bid, call the bluff, or go for the exact count with *spot on*. Dance until sunrise at the **nightclub**, and maybe have one drink too many: the room starts to spin, and five drinks is the limit. Shop across two floors of the **mall**, and check into the roadside **motel** if you need a place to hide. Some businesses in town have a less respectable side, and the people running them won't hand over the keys without a fight. **Build an empire** if you can hold it.
 
 And there's a bank. With a vault. Just saying.
 
@@ -61,7 +61,7 @@ Sunset Shores isn't the only place you can end up.
 
 ## 🏠 A place to come home to
 
-Your safe house is where you rest, change clothes, save your progress and **watch TV**. The local channels follow what's really happening out there: police operations, storms, chases, departures from the airport, and the occasional strange report from the woods.
+Your safe house is where you rest, change clothes, save your progress and **watch TV**. The garage keeps your rides, plates and all, and if you go down out there, your cars and your skateboard are waiting back home when you wake up. The local channels follow what's really happening out there: police operations, storms, chases, departures from the airport, and the occasional strange report from the woods.
 
 ## 🕵️ Secrets in every corner
 
@@ -72,8 +72,8 @@ And some might leave you wondering whether you're still in the same city at all.
 ## 🎮 See the city your way
 
 - **First person, third person, top-down or isometric**: switch any time.
-- **Map + GPS** with route guidance, and a marker on your last vehicle so you can always find it again. Inside a building, the map switches to its floor plan.
-- **Photo mode**: change the hour, the weather and the lens, add an eclipse, hide your character and take the shot.
+- **Map + GPS** with route guidance that respects one-way streets, and a marker on your last vehicle so you can always find it again. Inside a building, the map switches to its floor plan.
+- **Photo mode**: change the hour, the weather and the lens, add an eclipse or a VHS look, freeze your character and walk the camera around for the perfect angle, or hide them and take the shot.
 - **Original soundtrack** for the tense moments, plus radio stations on the road.
 - **At night, look up**: once in a while a shooting star crosses the sky.
 - **Keyboard & mouse, controllers and touch**, with full mobile support in landscape.
