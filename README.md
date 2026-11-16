@@ -29,6 +29,7 @@ Start on foot. Grab a car. Head across town.
 - **Fill up at the gas station**, grab a snack at the convenience store, and try not to get too close to the tire shop's scrapyard next door.
 - **Hit a dirt jump out in the countryside**, launch from a back-alley ramp, or **parachute from a rooftop** and aim for the target on the sand.
 - **Raise the drawbridges** from the booth, or wait for the boats to pass. Find the hidden **Neon Road**, a street that only lights up for those who know where to look.
+- **Grab a skateboard** from your garage and cruise the sidewalks: push, carve, ollie, and eat the pavement when you hit something. The mall's skate shop sells new decks with custom colors, prints and your own 6-character text.
 - **Dress the part**: shirts, prints, caps, glasses, jewelry. Put your own letter, number or symbol on your shirt.
 
 ## 💸 Make money. Make trouble.

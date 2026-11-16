@@ -1,3 +1,54 @@
+## v79 · r23 — garagem sem carro duplicado · skate pela metade · skates no corredor
+- `safeGarage`: antes de criar o carro guardado de uma vaga, procura um igual já parado nela (até 2,5 m) e adota esse. Antes o conversível da missão 1 (que fica na vaga 1) ganhava uma cópia ao carregar o jogo sem recriar a cidade: 2 conversíveis na garagem.
+- Skate pela metade do tamanho da r18 (`SK_SCL=[1,125;1,5;1,5]`, personagem 17 cm acima).
+- Skates da garagem ficam no corredor entre as duas vagas, em fila a partir da parede do fundo (1,15 m entre eles). Antes ia um atrás de cada carro e parecia ocupar as duas vagas.
+
+## v79 · r22 — fim do "pisca" na origem (0,0)
+- Todo objeto novo nasce na posição (0,0,0) e só ganha a posição certa no quadro seguinte (ou até 3 depois): no canto da orla da seed 653267 (que fica na origem do mapa) dava pra ver pedestre, skate, avião e helicóptero aparecendo 1 quadro e sumindo. Medido com um gancho no render: dezenas de peds/sombras por minuto em 0,0.
+- Agora nascem longe e invisíveis até serem posicionados: sprite dos personagens (`makeActorLitSprite`) e a sombra (`makeCharacter`) em y −9999; prancha (`skBoard`) idem; avião/heli que cruzam o céu (`skySpawn`) já entram na cena na posição de partida. Depois da correção: nada visível em 0,0 além do cenário fixo.
+
+## v79 · r21 — campo do TP aceita clique/colar · botão COLAR
+- O MONITOR tem `pointer-events:none` (só os botões recebiam clique): o campo da coordenada não pegava foco nem Ctrl+V. Agora o campo recebe clique/seleção.
+- Botão COLAR ao lado do TP: lê a área de transferência (`navigator.clipboard.readText`) e põe no campo; se o navegador bloquear, foca o campo e avisa pra usar Ctrl+V.
+
+## v79 · r20 — TP alinhado
+- Campo de coordenada do MONITOR com a mesma largura do texto X/Y/Z (ajustado a cada atualização): o botão TP fica logo embaixo do COPY.
+
+## v79 · r19 — teleporte por coordenada no MONITOR (debug)
+- MONITOR (F3), abaixo de X/Y/Z: campo pra colar o texto do COPIAR ("X,Y,Z") ou "X,Z" + botão TP (ou Enter) → `monTeleport` lê os números (1º = X, 3º = Z, ou 2º se vierem só dois) e usa `cheatWarp`. Respeita `eventLock` (morto, paraquedas…), desce do skate antes. Conta como cheat: `CHEAT.used=true` + `syncSave()` → salvar fica bloqueado até novo jogo. Teclas digitadas no campo não vazam pro jogo.
+
+## v79 · r18 — skate maior · skatista da orla só no calçadão
+- Prancha 3× maior, com comprimento a 75% (`SK_SCL=[2,25;3;3]` no grupo do `skBoard`: pickup, a que você anda, skatistas). Personagem em cima sobe 32 cm (`SK_UP`).
+- Skatista da orla: faixa de t limitada ao calçadão de verdade (`skTRange`: 0..`city.ext`, 10 m de folga). Antes ia até `BEACH.t0/t1`, que passa da ponta da avenida da orla e entra na esquina/cruzamento (seed 653267, ponta da orla). Se fica preso entre dois bloqueios (mais de 3 meias-voltas sem embalar), some em vez de ficar tremendo.
+
+## v79 · r17 — rádio dos carros que passam
+- Carro com som (`c.boom`) toca a rádio escolhida no menu: ONLINE → KRFM ao vivo (`LIVE_URL`, só no Modern e se a stream não caiu); servidor/personalizada → músicas das pastas `radios/`. Antes usava só as do servidor e, sem elas, o carro ficava mudo. Trocar o modo corta o som do slot e ele recomeça na rádio nova.
+- Servidor em sequência: slots sem `loop`; no `ended` passa pra próxima música da mesma estação (`sl.st/sl.i`). Antes repetia a mesma música. A 1ª começa num ponto sorteado, como antes.
+- Só toca carro rodando com motorista (trânsito `rail`/IA), fora de `tempPark` (`boomOk`). Não tocam: carro estacionado, carro seu (`owned`), da garagem (`SAFE.cars`), da história (`PROLOGUE.car`), da dupla, guardado ou o último que você usou. Se o carro deixa de valer (estacionou, virou seu), o som para. Corrige o conversível na garagem tocando rádio no fim da história (seed 509166) e o carro parado no estacionamento com música.
+
+## v79 · r16 — história: motorista do conversível, Claire com a roupa certa, beijo, blitz limpa
+- Conversível do jogador (`convRiderTick`): carro do jogador (owned, `PROLOGUE.car`, último carro, garagem) nunca recebe motorista sorteado de `PED_PALS`. Se o carro está guardado no estado do personagem atual (troca aérea/SMS), mostra o próprio jogador (`selfSt`, `PLAYER_PAL`). Antes, no SMS de número desconhecido, o Nathan aparecia no volante com roupa de NPC. O retrato do diálogo continua por fala: NATHAN = ele, SMS = o desconhecido (`CLERK_PAL` escuro), sem mexer na skin do jogador.
+- Claire/Nathan como ped (motel, dupla, casa, `main:true` em 5 `spawnPed`): no modo "Pedestres em 3D" o ped nascia com o boneco mais parecido do pool (NPC comum: outra calça, botões) até a roupa ser montada aos poucos, e nos cortes a fila nem andava. Agora `pedExact` monta a roupa exata na hora (~0,35 s, uma vez por roupa) e `prologueCutTick` também anda a fila 3D. O uniforme da cadeia é todo laranja (camisa, calça, cinto), sem estampa. `jailWear` agora também zera `art`.
+- Beijo no motel: os dois chegam a ±0,27 m do meio (antes ±0,39), e os rostos se encostam.
+- Blitz da história: no fade que posiciona o carro, `trafficCalm(blitz,70 m,45 s)` remove o trânsito comum (rail/IA/estacionados de NPC) num raio de 70 m, mas não viaturas, carros do jogador nem os guardados. `populate` não cria carro ali até acabar o tempo. Se o carro que a blitz atendia sumiu, ela solta (`serving=null`). Fim da batida no nascimento → polícia → missão falha.
+
+## v79 · r15 — skatistas na orla · 5 marchas no som do motor
+- Orla: de dia (sem chuva, perto da praia) até 2 skatistas (`BEACH.skaters`, estado `bskate`) deslizam pelo calçadão numa faixa entre RW/2+1,5 e +4,4 (longe dos postes e da mureta), 3,6–5,8 m/s, prancha 3D com cor/roda/estampa sorteadas e personagem 11 cm acima. Olham 1,7 m à frente (`skLaneFree`: colisor, água, desnível, jogador, pedestres): trocam de faixa com leve inclinação ou freiam e dão meia-volta. Nascem a 55–150 m do jogador e somem a 330 m. Usam `Math.random` (não mexe na sequência `R2`).
+- Derrubado (carro, soco, tiro…) o skate sai do pé e vira pickup no chão (`pedSkDrop`, até 6 soltos no mapa) — dá pra pegar e levar pra garagem. `removePed` descarta a prancha.
+- Som do motor: todo veículo (carro, moto, lancha, jet ski, hovercraft, caminhão) passa 5 marchas antes de ficar contínuo — troca a cada 14% da vel. máx. (sedã: 23/46/70/93/116 km/h), 6ª contínua (`ENG_GEARS`). Antes o passo era fixo por perfil (11 m/s no carro → na prática só 1–2 trocas) e lancha/jet/hovercraft não tinham marcha (`gk` agora 5/10/4).
+
+## v79 · r14 — skate · SKATE SHOP no shopping · tacada de porcelana na sinuca
+- Skate (`SKATE`, bloco antes do Liar's Dice): fica no mundo como pickup (prancha 3D com bicos, lixa estampada, trucks e rodas). F perto = sobe (já virado pro lado que o personagem olha); F parado = desce e a prancha fica ao lado. Andando substitui a caminhada em `updatePlayer` (`skMove`): W empurra (até 9,5 m/s), S freia, A/D curva com leve inclinação (`lean`), Espaço = pulo (`plJump` → `skJump`), sem manobras; personagem 11 cm mais alto (`SK_UP`). Câmera 1ª/3ª pessoa acompanha a direção.
+- Queda: bater em parede/colisor (andou <50% do esperado com v>2,2), carro parado ou pedestre na frente, cair n'água ou ser derrubado/atropelado → personagem deitado (`PL.down` 1,6 s), skate sai do pé e para de lado como pickup (nunca dentro d'água: volta pro último ponto seco). Acima de 5,5 m/s tira vida (pode matar). Raspar de lado na parede só perde velocidade.
+- Desmonta sozinho ao entrar em carro/heli/táxi/paraquedas/TV, morrer, entrar em interior (prancha fica na porta de fora: `DOOR.from`, `MALL.out`, `SHOP.st.out`; casa → garagem) ou trocar de personagem (fica onde o outro estava).
+- Garagem de casa: skates a até 4,6 m das vagas são salvos (`d.skates`, `skSave`/`skLoad`, até 12, look validado). Primeiro jogo da seed ganha um skate vermelho (RAIO) encostado na parede do fundo da garagem. Save antigo sem `skates` também ganha.
+- Trava da história: só sobe com `storyOK('safe')`; oficina com `storyOK('tune')`; loja dentro do shopping (já travado por `storyOK('mall')`).
+- Oficina: chegar de skate na vaga (`city.tuneSpot`, <3,2 m) abre a customização ($40, só cobra se mudar).
+- SKATE SHOP: 17ª loja (`MALL_SHOPS[16]`, `'skate'`, ciano) no 2º piso, no lugar do tapume "em breve" da ala 0 (`[6,16]`). Loja temática (`MALL_THEMED`): piso de concreto com juntas, parede de 32 shapes em 2 trilhos com grafismos, estante de rodas e capacetes, rack com 12 skates montados, podium com mini rampa e 3 skates, letreiro "SKATE · SHAPES · RODAS", neon e balcão com atendente de camisa ciano (`MALL_CLERK_KEYS`). Penumbra/luz própria: arrays do shader do shopping passaram de 16 pra 17 (`uSC/uSK`), tom `skate` em `mallStoreLight`. Anúncios da Neon Road continuam sorteando só as 16 lojas antigas (mesmo visual por seed).
+- Compra ($120): escolhe shape (10 cores), rodas (6), estampa (lisa, chamas, listras, estrelas, xadrez, raio, palmeira, olho, TEXTO). TEXTO = até 6 caracteres na fonte pixel da camiseta (`SHIRT_FONT`). "Dar 1 skate da garagem na troca" (−$50) quando você tem algum lá. O novo vai pra garagem de casa. Esc/Sair fecha; Enter compra; controle A compra, B sai. Jogo pausa com a janela aberta.
+- README/ITCHIO: item do skate em "What's the plan today?".
+- Sinuca: tacada e choque bola × bola com som novo `poolClack` — pancada seca de porcelana (estalo agudo de ruído de ~20 ms + parciais inarmônicos 2,6/4,2/6 kHz que morrem em ≤60 ms + corpo médio curto). O choque entre bolas não tinha som.
+
 ## v79 · r13 — cassino em + · Liar's Dice · lista completa de cheats · chiado sem piscar
 - Cassino virou um + como o shopping: salão central 20×14 (blackjack, pôquer, roleta, lounge, caixa) com 3 alas de 12 m — NORTE (6 caça-níqueis em 2 fileiras, SUNSET ROYALE e JACKPOT), OESTE (sinuca + Seu Zé + porta-tacos), LESTE (mesa redonda de dados + 2 NPCs). Paredes do salão com vãos (`OPN/OPW/OPE`) e batentes dourados; colisões segmentadas; cada ala é uma malha própria (`WG`, `CAS.wgN/W/E`) com `roomLitMat` e luzes próprias → penumbra nas paredes de cada ala (o retângulo de luz avança 2,4 m no vão para não escurecer a passagem). Mapa do interior ancorado no cassino (`interiorMapAnchor`).
 - Liar's Dice (`DICE`): você × Dona Cida × Tonhão, 5 dados cada, copo virado; física de corpo rígido (cubo com contatos por vértice no pano e na parede do copo, atrito, quique; dado×dado por esfera; assenta e "deita" na face ao parar, `diceSnap`). O 1 é coringa (não se aposta no 1). Aposta = quantidade × face (2–6), tem que subir; DUVIDO abre os copos (sobem e inclinam, dados que contam pulsam). Quem erra perde 1 dado; sem dados sai; último vence. Aposta $50, vitória $150. IA por probabilidade binomial (Tonhão blefa mais). Vistas 3D (do seu lugar; seu copo fica translúcido) e de cima. Controles: ↑/↓ quantidade, ←/→ face, Espaço apostar, X duvido, V vista, Esc sair; controle: direcional, A, X, Y, B; botões na tela.

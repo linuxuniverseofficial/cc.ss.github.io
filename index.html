@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 <script>
 /* v78 · BUILD: número da entrega. Ao abrir, o jogo lê version.txt (poucos bytes, sem cache) e, se a build no servidor for outra
    (navegador/celular servindo cópia velha), recarrega uma vez. Saves e configurações (localStorage) NÃO são apagados. */
-var BUILD_TAG='r13';
+var BUILD_TAG='r23';
 (function(){try{if(!/^https?:$/.test(location.protocol))return;const k='ps_build_reload';
  fetch(new URL('version.txt?b='+Date.now(),location.href).href,{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=/^\s*(r\d+)\s*$/.exec(t||'');if(!m||m[1]===BUILD_TAG){try{sessionStorage.removeItem(k)}catch(e){}return}
   let n=0;try{n=+sessionStorage.getItem(k)||0}catch(e){}if(n>=2)return;try{sessionStorage.setItem(k,String(n+1))}catch(e){}
@@ -114,6 +114,16 @@ body.touch #bigmap{touch-action:none}
 #mapLegendToggle[aria-expanded="true"]{background:#413063;color:#fff}
 body.pool-mode #mini,body.pool-mode #hpwrap,body.pool-mode #chsel,body.pool-mode #areaHud,body.pool-mode #wanted,body.pool-mode #ctxp,body.pool-mode #prompt{display:none!important} /* v79r9: sem radar/kit na sinuca */
 #dice{position:fixed;inset:0;z-index:40;pointer-events:none;font-family:'Segoe UI',Arial,sans-serif;color:#fff}#dice[hidden]{display:none}
+#skShop{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(6,4,14,.55);font-family:'Segoe UI',Arial,sans-serif;color:#fff}#skShop[hidden]{display:none}
+#skShop .sk-box{width:min(420px,calc(100vw - 32px));max-height:calc(100vh - 24px);overflow:auto;background:#15121e;border:2px solid #2ad6c8;border-radius:12px;padding:14px 16px;box-shadow:0 10px 40px rgba(0,0,0,.6)}
+#skShop .sk-hd{display:flex;justify-content:space-between;align-items:center;font-family:Silkscreen,monospace;font-size:18px;color:#2ad6c8;margin-bottom:6px}#skShop .sk-hd button{background:none;border:0;color:#fff;font-size:18px;cursor:pointer}
+#skPrev{display:block;width:100%;height:auto;background:#0c0a12;border-radius:8px;margin-bottom:6px}
+#skShop .sk-lb{font-size:11px;letter-spacing:.12em;color:#9a94b0;margin:8px 0 4px}#skShop .sk-row{display:flex;flex-wrap:wrap;gap:6px}
+#skShop .sw{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.25);cursor:pointer;padding:0}#skShop .sw.on{border-color:#fff;box-shadow:0 0 0 2px #2ad6c8}
+#skShop .sw.tx{width:auto;height:auto;border-radius:6px;padding:5px 9px;background:#262236;color:#fff;font-size:12px;font-weight:700}#skShop .sw.tx.on{background:#2ad6c8;color:#0c0a12}
+#skShop .sk-txt{display:flex;gap:8px;align-items:center;margin-top:8px}#skShop .sk-txt[hidden]{display:none}#skText{width:9ch;font:700 18px Silkscreen,monospace;text-transform:uppercase;letter-spacing:.12em;background:#0c0a12;color:#fff;border:2px solid #2ad6c8;border-radius:6px;padding:4px 8px}#skTxtHint{font-size:11px;color:#9a94b0}
+#skShop .sk-trade{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:12px;color:#ffd23a;cursor:pointer}#skShop .sk-trade[hidden]{display:none}#skTrade{width:16px;height:16px;accent-color:#2ad6c8}
+#skNote{font-size:12px;color:#c8c2d8;margin:10px 0 8px}#skShop .sk-ft{display:flex;gap:8px;justify-content:flex-end}#skShop .sk-ft button{font:700 13px 'Segoe UI',Arial,sans-serif;border:0;border-radius:8px;padding:9px 14px;cursor:pointer;background:#2a2638;color:#fff}#skShop #skBuy{background:#2ad6c8;color:#0c0a12}#skShop #skBuy:disabled{opacity:.45;cursor:default}
 #dice .dc-top{position:absolute;left:0;right:0;top:calc(8px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;align-items:center;gap:6px;padding:0 10px}
 #dice #dcPl{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}#dice .dc-p{background:#1a1024e6;border:2px solid #4a2a5a;border-radius:8px;padding:4px 10px;font-size:13px;display:flex;gap:6px;align-items:center}#dice .dc-p.on{border-color:#ffd23a;box-shadow:0 0 0 2px #ffd23a55}#dice .dc-p.out{opacity:.4}
 #dice #dcMsg{font-weight:800;font-size:15px;text-align:center;text-shadow:0 2px 4px #000;max-width:94vw}#dice #dcBid{background:#000a;border-radius:8px;padding:4px 12px;font-size:14px}
@@ -267,6 +277,7 @@ body:not(.touch) #mon{left:calc(16px + env(safe-area-inset-left,0px));top:calc(1
 #mon i{display:block;height:8px;background:#1a1a26;border:1px solid #333}#mon u{display:block;height:100%;width:0;background:#4ad66d;text-decoration:none;transition:width .25s}
 #mon .mx{margin-top:6px;color:#8a8fa0;font-size:9.5px;line-height:1.5}
 #mon .mcoord{display:flex;align-items:center;flex-wrap:wrap;gap:3px 7px;margin-top:5px;color:#dce4ff;font-size:10px;font-variant-numeric:tabular-nums;line-height:1.3}
+#mTpIn{pointer-events:auto;user-select:text;-webkit-user-select:text;touch-action:manipulation;width:15ch;min-width:0;flex:0 0 auto;box-sizing:border-box;font:11px ui-monospace,Consolas,monospace;background:#0c0f1a;color:#dce4ff;border:1px solid #3a4466;border-radius:5px;padding:3px 6px}#mTpIn:focus{outline:none;border-color:#7a8cff}
 #mon .mcoord span{min-width:0;overflow-wrap:anywhere}
 #mon .mcoord button{pointer-events:auto;touch-action:manipulation;flex:none;padding:3px 6px;border:1px solid #7b8caa;border-radius:3px;background:#242e42;color:#ecf5ff;font:700 9px 'Segoe UI',Arial,sans-serif;letter-spacing:0;cursor:pointer}
 #mon .mcoord button:hover{border-color:#c2dfff;background:#384868}
@@ -1517,11 +1528,19 @@ body.cutscene-paused #menu.in-game #photoBtn{display:none!important}
   <div class="msec">
   <div class="mcoord"><span id="mSeedVal">SEED: --</span><button id="mSeedCopy" type="button" title="Copiar seed" aria-label="Copiar somente o número da seed atual" disabled>COPIAR</button></div>
   <div class="mcoord"><span id="mCoordXYZ">X: -- · Y: -- · Z: --</span><button id="mCoordCopy" type="button" title="Copiar X,Y,Z" aria-label="Copiar as coordenadas X, Y e Z, somente números" disabled>COPIAR</button></div>
+  <div class="mcoord mtp"><input id="mTpIn" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="colar X,Y,Z" aria-label="Coordenadas para teleportar"><button id="mTpGo" type="button" title="Teleportar (conta como cheat: desativa o save)">TP</button><button id="mTpPaste" type="button" title="Colar o que estiver na área de transferência">COLAR</button></div>
   </div>
   <div class="msec mglb"><div class="mglbt">Exporte o modelo 3D do jogo!</div>
   <div class="mcoord" id="mGlb"><span>.GLB</span><button type="button" data-glb="city" title="Exportar a cidade inteira (.glb)">CIDADE</button><button type="button" data-glb="area" title="Exportar 150 m em volta (.glb)">ÁREA</button><button type="button" data-glb="inside" title="Exportar o interior atual (.glb)">INTERIOR</button></div></div>
   <div id="mInfo" hidden></div></div>
 <div id="tvbar" hidden><div class="tvlive">● AO VIVO</div><div class="tvlogo">PIXEL<b>NEWS</b></div><div class="tvhead" id="tvHead"></div><div class="tvtick"><span id="tvTick"></span></div><div class="tvoff" style="pointer-events:auto"><button class="btn" id="tvPrev" type="button">◀ CANAL</button> <button class="btn" id="tvNext" type="button">CANAL ▶</button> <button class="btn" id="tvExit" type="button">F · DESLIGAR</button><br><small>A / D · ← / → · direcional / analógico</small></div></div>
+<div id="skShop" hidden><div class="sk-box"><div class="sk-hd"><b id="skTitle">SKATE SHOP</b><button type="button" id="skX" aria-label="fechar">✕</button></div>
+<canvas id="skPrev" width="360" height="130"></canvas>
+<div class="sk-lb">SHAPE</div><div class="sk-row" id="skDeck"></div>
+<div class="sk-lb">RODAS</div><div class="sk-row" id="skWheel"></div>
+<div class="sk-lb">ESTAMPA</div><div class="sk-row" id="skPrint"></div><div class="sk-txt" id="skTxtRow" hidden><input id="skText" maxlength="6" autocomplete="off" spellcheck="false" placeholder="ATÉ 6"><span id="skTxtHint">letras, números e símbolos · até 6</span></div>
+<label class="sk-trade" id="skTradeRow" hidden><input type="checkbox" id="skTrade"> <span id="skTradeTx">dar 1 skate da garagem na troca</span></label>
+<div id="skNote"></div><div class="sk-ft"><button type="button" id="skCancel">SAIR</button><button type="button" id="skBuy">COMPRAR</button></div></div></div>
 <div id="dice" hidden><div class="dc-top"><div id="dcPl"></div><div id="dcMsg"></div><div id="dcBid"></div></div>
  <div class="dc-bot"><div id="dcMine"></div><div id="dcCtl" class="off"><span class="dc-lbl">QUANTIDADE</span><button id="dcQm" class="btn" type="button">−</button><b id="dcQ">1</b><button id="dcQp" class="btn" type="button">+</button><span class="dc-lbl">FACE</span><button id="dcFm" class="btn" type="button">−</button><b id="dcF">⚁ 2</b><button id="dcFp" class="btn" type="button">+</button><button id="dcBidBtn" class="btn primary" type="button">APOSTAR</button><button id="dcCall" class="btn dc-call" type="button">DUVIDO!</button></div>
  <div class="dc-ctl2"><button id="dcView" class="btn" type="button">VISTA: 3D</button><button id="dcQuit" class="btn" type="button">SAIR</button></div>
@@ -2768,9 +2787,11 @@ function v67Hud(dt){if(!GUN.has&&!PL.car&&played){$('#gun').hidden=false;$('#gun
  else if(dealNear())h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>CONCESSIONÁRIA COASTAL · VER VEÍCULOS À VENDA';
  else if(CTX.car&&PL.car){h=''}
  else if(PL.inside==='shop'&&SHOP.rob>0&&!SHOP.alarm){const k=Math.min(1,SHOP.rob/3.2),n=12,f=Math.round(k*n);h=`<span style="color:#ff4a4a">ASSALTO</span> ${'█'.repeat(f)}${'░'.repeat(n-f)}`}
+ else if(SKATE.near)h='<kbd>F</kbd><kbd>→</kbd>SUBIR NO SKATE';
+ else if(SKATE.ride&&SKATE.ride.v<.6&&!PL.inside)h='<kbd>F</kbd><kbd>→</kbd>DESCER DO SKATE';
  else if(CTX.shop)h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>COMPRAR LANCHE $20 · +50 VIDA';
  else if(CTX.mall&&/^fc\d$/.test(CTX.mall)){const f=MALL_FOOD[+CTX.mall[2]];h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>'+f[0]+' $'+f[2]+' · +'+f[3]+' VIDA'}
- else if(CTX.mall)h=CTX.mall==='cafe'?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>CAFÉ $5 · +25 VIDA':CTX.mall==='pharm'?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>FARMÁCIA · REMÉDIO $60 · +100 VIDA':CTX.mall==='jewel'?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>JOIAS · COLARES E FIVELAS':CTX.mall==='optic'?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>ÓTICA · ÓCULOS':CTX.mall==='shoes'?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>SAPATOS · CALÇADOS':CTX.mall==='beach'?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>MODA PRAIA · SUNGA E BIQUÍNI':CTX.mall&&/^vd\d+$/.test(CTX.mall)?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>REFRIGERANTE $1 · +1 VIDA':CTX.mall==='music'?'LOJA DE DISCOS · fone de cortesia perto das prateleiras':CTX.mall==='bag'?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>MALAS & MOCHILAS CO. · MOCHILA':CTX.mall==='tech'?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>ELETRÔNICOS · CELULAR E HEADPHONE':CTX.mall==='wear'?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>PROVADOR · TROCAR ROUPA E ACESSÓRIOS':'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>COMPRAR LANCHE $20 · +50 VIDA';
+ else if(CTX.mall)h=CTX.mall==='skate'?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>SKATE SHOP · SKATES $120':CTX.mall==='cafe'?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>CAFÉ $5 · +25 VIDA':CTX.mall==='pharm'?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>FARMÁCIA · REMÉDIO $60 · +100 VIDA':CTX.mall==='jewel'?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>JOIAS · COLARES E FIVELAS':CTX.mall==='optic'?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>ÓTICA · ÓCULOS':CTX.mall==='shoes'?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>SAPATOS · CALÇADOS':CTX.mall==='beach'?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>MODA PRAIA · SUNGA E BIQUÍNI':CTX.mall&&/^vd\d+$/.test(CTX.mall)?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>REFRIGERANTE $1 · +1 VIDA':CTX.mall==='music'?'LOJA DE DISCOS · fone de cortesia perto das prateleiras':CTX.mall==='bag'?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>MALAS & MOCHILAS CO. · MOCHILA':CTX.mall==='tech'?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>ELETRÔNICOS · CELULAR E HEADPHONE':CTX.mall==='wear'?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>PROVADOR · TROCAR ROUPA E ACESSÓRIOS':'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>COMPRAR LANCHE $20 · +50 VIDA';
  else if(PL.inside==='shop'&&GUN.has&&!SHOP.alarm&&SHOP.cashier&&SHOP.cashier.state!=='dead')h='<span style="color:#ff4a4a">MIRE NO CAIXA = ASSALTO</span> · <kbd>1</kbd>guarda a arma';
  else if(PL.inside==='shop'&&SHOP.alarm)h=`<span style="color:#ff4a4a">ALARME · POLÍCIA EM ${Math.max(0,Math.ceil(SHOP.alarmT))}s</span>`;
  if(cp){if(cp.hidden===!h)cp.hidden=!!h?false:true;if(h&&cp.dataset.h!==h){cp.dataset.h=h;cp.innerHTML=h}}
@@ -2883,7 +2904,7 @@ function aqTick(dt){if(AQ.seaWave){AQ.seaWave.offset.x+=dt*.004;AQ.seaWave.offse
 /* ================= shopping center (fachada nova + interior de 2 andares + loja de roupas) ================= */
 const MALL={door:null,out:null,nrm:null,grp:null,G:null,U:null,lvl:0,lock:0,peds:[],arrow:null,arrIn:null,tex:{},HX:40,HZ:12,CZ:6,CZG:6,CZU:10,VZ:4,SK:3,SX0:-32,SP:18,VX0:-28,VX1:28,EX0:18,EX1:28,FX:-12};
 const MALL_SHOPS=[['MODA PIXEL','#ff4fa0','wear'],['CONVENIÊNCIA','#2ad67a','food'],['GAMES','#7a4ad6'],['SAPATOS','#d8402a','shoes'],['BRINQUEDOS','#ff8a1a'],['CAFÉ','#7a4a2a','cafe'],['ÓTICA','#2ac8c8','optic'],['JOIAS','#e8b830','jewel'],
- ['ELETRÔNICOS','#2a8ad6','tech'],['MALAS & MOCHILAS CO.','#c8762a','bag'],['MÚSICA · DISCOS','#a02ad6','music'],['MODA PRAIA','#1e9ab0','beach'],['PERFUMES','#e86ac8'],['PIZZA','#e8282a'],['FARMÁCIA','#2a9a5a','pharm'],['CINEMA','#1a1a2a']];
+ ['ELETRÔNICOS','#2a8ad6','tech'],['MALAS & MOCHILAS CO.','#c8762a','bag'],['MÚSICA · DISCOS','#a02ad6','music'],['MODA PRAIA','#1e9ab0','beach'],['PERFUMES','#e86ac8'],['PIZZA','#e8282a'],['FARMÁCIA','#2a9a5a','pharm'],['CINEMA','#1a1a2a'],['SKATE SHOP','#2ad6c8','skate']];
 function mallSignMat(txt,bg,fg,w,h){txt=translatePlain(txt);const key=(S.lang||'br')+'|'+txt+bg+fg;if(MALL.tex[key])return MALL.tex[key];const W=w||256,H=h||48,c=cv(W,H),g=c.getContext('2d');g.fillStyle=bg;g.fillRect(0,0,W,H);g.fillStyle=fg;let fs=Math.floor(H*.55);g.font=`700 ${fs}px Silkscreen,monospace`;while(g.measureText(txt).width>W-12&&fs>8){fs--;g.font=`700 ${fs}px Silkscreen,monospace`}g.textAlign='center';g.textBaseline='middle';g.fillText(txt,W/2,H/2+1);
  const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;return MALL.tex[key]=new THREE.MeshBasicMaterial({map:t,side:THREE.DoubleSide})}
 // Identidade municipal: placas compactas, com quebra de linha sem aumentar a fachada.
@@ -3207,7 +3228,7 @@ function mallPanel(mb,x0,y0,z0,x1,y1,z1,n,uv,col){const c=col||COL('#ffffff'),u=
 /* luzes por loja (cor da luz real, ambiente no modo real) */
 function mallStoreLight(idx){const k=MALL_SHOPS[idx][2]||MALL_DECO[idx]||'';const VW=!!(city.st&&city.st.night);
  // v77: todas as lojas no clima da cafeteria/loja de discos — ambiente baixo e luz quente pendurada
- const T={cafe:['#ffae5c',.17,9],music:['#ff8c8c',.16,9.5],tech:['#ffd0a0',.18,9],wear:['#ffb8c8',.18,9],jewel:['#ffd890',.17,8.5],pharm:['#fff0d0',.2,9],food:['#ffd8a0',.19,9],bag:['#ffc080',.17,9],
+ const T={cafe:['#ffae5c',.17,9],music:['#ff8c8c',.16,9.5],tech:['#ffd0a0',.18,9],wear:['#ffb8c8',.18,9],jewel:['#ffd890',.17,8.5],skate:['#d8fff4',.18,9],pharm:['#fff0d0',.2,9],food:['#ffd8a0',.19,9],bag:['#ffc080',.17,9],
   games:['#c89cff',.14,9],shoes:['#ffc89a',.17,9],toys:['#ffe0a0',.19,9],optic:['#ffe8c8',.18,9],beach:['#ffe6b8',.19,9],perfume:['#ffb0d0',.17,9],pizza:['#ffa060',.17,9],cinema:['#ff6a5a',.1,9.5]};
  const t=T[k]||['#fff0d8',.3,9];const c=COL(t[0]);if(VW)c.lerp(COL(k==='cafe'||k==='pizza'?'#ff7040':'#ff5a7a'),.25);return{col:c,amb:t[1],rad:t[2]}}
 const MALL_DECO={2:'games',3:'shoes',4:'toys',6:'optic',11:'beach',12:'perfume',13:'pizza',15:'cinema'};
@@ -3239,6 +3260,25 @@ function mallStoreDecor(g,mb,tm,nb,X,Z,x0,s,idx,up,cols){const k=MALL_SHOPS[idx]
   for(let j=0;j<=8;j++){const t=Math.PI*j/8,a=1.75+Math.cos(t)*1.4,c=9.4-Math.sin(t)*.6;B(a-.3,0,c-.26,a+.3,1.0,c+.26,j%2?'#1d1a22':'#26222c');B(a-.32,1.0,c-.28,a+.32,1.07,c+.28,'#3a3442')}
   col(.05,8.5,3.45,9.7);
   ceilGlow(COL(P.b).multiplyScalar(.6));
+ }else if(k==='skate'){
+  // v79r14: SKATE SHOP — piso de concreto com juntas, parede de shapes no fundo, estante de rodas e capacetes, rack de skates montados e podium com mini rampa
+  const decks=['#e8282a','#1e6ad6','#2ab36a','#f2c21a','#ff4fa0','#7a4ad6','#ff8a1a','#2ac8c8','#1a1a1e','#f4f2ea'],inkOf=h=>['#1a1a1e','#7a4ad6','#1e6ad6','#e8282a'].includes(h)?'#f4f2ea':'#1a1a1e',wcol=['#f4f2ea','#f2c21a','#e8282a','#2ac8c8'];
+  B(.02,.012,6.05,9.38,.03,11.6,'#8d8c90');for(let n=1;n<6;n++)B(.02+n*1.56,.03,6.05,.05+n*1.56,.034,11.6,'#6e6d72');
+  // parede de shapes (2 fileiras) com trilhos
+  for(let r=0;r<2;r++){const y=1.0+r*1.05;B(.35,y-.06,11.47,9.05,y-.01,11.6,'#2a2a30');for(let j=0;j<16;j++){const a=.5+j*.53,h=decks[(j*3+r*5)%10];B(a,y,11.5,a+.24,y+.85,11.57,h);const ik=inkOf(h);if((j+r)%3===0)B(a+.06,y+.2,11.495,a+.18,y+.65,11.5,ik);else if((j+r)%3===1){B(a+.04,y+.38,11.495,a+.2,y+.47,11.5,ik)}else{B(a+.08,y+.3,11.495,a+.16,y+.55,11.5,ik);B(a+.04,y+.38,11.495,a+.2,y+.47,11.5,ik)}}}
+  // estante de rodas e capacetes (parede esquerda, antes do balcão)
+  B(.05,0,6.45,.12,2.2,8.25,'#3a3440');for(const y of [.5,1.1,1.7]){B(.12,y,6.45,.58,y+.04,8.25,'#6a5a4a');for(let j=0;j<5;j++){const c=6.65+j*.35;if((j+Math.round(y*10))%2){for(let q=0;q<4;q++){const p=W(.3,c);mb.geo(GEO.cyl16,mtx(p[0],y+.075+q*.065,p[1],.06,.06,.06),COL(wcol[(j+q)%4]))}}else{const p=W(.32,c);mb.geo(GEO.hemi,mtx(p[0],y+.04,p[1],.15,.14,.15),COL(decks[(j*2+Math.round(y*10))%10]))}}}
+  col(.05,6.45,.6,8.25);
+  // rack de skates montados (parede direita)
+  for(const y of [.8,1.45,2.1])for(let k2=0;k2<4;k2++){const c0=6.7+k2*1.0,h=decks[(k2*4+Math.round(y*10))%10],wh=wcol[(k2+Math.round(y*10))%4];B(9.04,y,c0,9.28,y+.025,c0+.8,h);B(9.06,y+.025,c0+.06,9.26,y+.03,c0+.74,'#26262a');for(const cw of [.14,.66]){B(9.1,y-.04,cw+c0-.03,9.22,y,cw+c0+.03,'#9aa0a8');B(9.06,y-.07,cw+c0-.035,9.1,y-.02,cw+c0+.035,wh);B(9.22,y-.07,cw+c0-.035,9.26,y-.02,cw+c0+.035,wh)}B(9.28,y-.1,c0+.38,9.36,y,c0+.42,'#2a2a30')}
+  col(9.0,6.6,9.38,10.6);
+  // podium com mini rampa e 3 skates em exposição
+  B(4.4,0,8.7,7.7,.2,10.4,'#c9c2b6');B(4.38,.2,8.68,7.72,.24,10.42,'#8a8a90');for(let t=0;t<5;t++){B(4.4,.24,10.0+t*.08,7.7,.24+(t+1)*.07,10.08+t*.08,'#b8b0a4');B(4.4,.24,9.1-t*.08,7.7,.24+(t+1)*.07,9.18-t*.08,'#b8b0a4')}B(4.4,.6,10.36,7.7,.64,10.42,'#9aa0a8');
+  for(let j=0;j<3;j++){const a=4.75+j*1.0,h=decks[(j*3+2)%10];B(a,.3,9.25,a+.24,.325,10.0,h);B(a+.06,.326,9.4,a+.18,.33,9.85,inkOf(h));for(const cw of [9.4,9.85]){const p=W(a+.12,cw);mb.geo(GEO.cyl16,mtx(p[0],.272,p[1],.03,.2,.03,0,0,Math.PI/2),COL(wcol[j%4]))}}
+  col(4.4,8.7,7.7,10.4);
+  {const p=W(4.7,11.55);signPlane(g,mallSignMat('SKATE · SHAPES · RODAS','#111118','#2ad6c8',512,64),p[0],3.12,p[1],4.2,.52,s>0?Math.PI:0)}
+  NB(.4,2.95,11.6,9.0,2.99,11.62,COL(P.b).multiplyScalar(.9));
+  ceilGlow(COL('#2ad6c8').multiplyScalar(.5));
  }else if(k==='cafe'){
   // cafeteria mais intimista: forro escuro, pendentes acesos e lousa
   B(.05,4.0,6.1,9.35,4.18,11.55,'#2a1d16');
@@ -3398,7 +3438,7 @@ function mallFacade(g,mb,nb,X,Z,x0,s,idx,up,cols){const col=(a,c,d,f)=>cols&&col
    for(const a of [-.1,9.5])for(let y=.4;y<4.5;y+=.36)nb.geo(GEO.sph,mtx(X+x0+a,y,Z+s*5.78,.045,.045,.045),COL('#fff1a8'));break;
  }}
 
-const MALL_THEMED=new Set(['music','games','shoes','toys','optic','beach','perfume','cinema','pizza']);
+const MALL_THEMED=new Set(['music','games','shoes','toys','optic','beach','perfume','cinema','pizza','skate']);
 /* =====================================================================
    v77 — SHOPPING EM CRUZ (+): átrio central com escada rolante e claraboia,
    quatro braços por andar. Mesmas 16 lojas, só redistribuídas; o resto
@@ -3413,7 +3453,7 @@ const MALL_A=[12,16],MALL_CZL=[6,10],MALL_HC=[4.6,6],MALL_V=7,MALL_SP2=12.4,MALL
 // slots: [lado +, lado −]; número = índice em MALL_SHOPS, 'g' = grade fechada, 'b' = tapume "em breve"
 const MALL_LAYOUT=[
  [{type:'food',L:40},{type:'shops',L:37,slots:[[5,10],[0,14]]},{type:'entry',L:49.4,slots:[['b','g','b'],['g','b','g']]},{type:'shops',L:37,slots:[[15,2],[3,4]]}],
- [{type:'shops',L:41,slots:[['g',8],[6,'b']]},{type:'shops',L:41,slots:[[9,'b'],['g',7]]},{type:'shops',L:41,slots:[['b',1],[11,'g']]},{type:'shops',L:41,slots:[[12,'g'],['b',13]]}]];
+ [{type:'shops',L:41,slots:[['g',8],[6,16]]},{type:'shops',L:41,slots:[[9,'b'],['g',7]]},{type:'shops',L:41,slots:[['b',1],[11,'g']]},{type:'shops',L:41,slots:[[12,'g'],['b',13]]}]];
 const MALL_WDIR=[[1,0,0,1],[0,-1,1,0],[-1,0,0,-1],[0,1,-1,0]]; // dir.x,dir.z,lat.x,lat.z  (igual a rotation.y = w·90°)
 // Lanchonetes da praça de alimentação: nome, cor, preço, vida
 const MALL_FOOD=[['BURGER RAD','#ff5a2a',12,30],['PASTEL DO CAIS','#f2c21a',6,15],['AÇAÍ TROPICAL','#a04ad6',9,22],['TACO LOCO','#3ab36a',10,26],['SUSHI NEON','#2ac8e8',18,45],['HOT DOG 88','#e8282a',5,12]];
@@ -3446,7 +3486,7 @@ function mallStoreShell(g,mb,nb,hb,X,ZS,x0,s,idx,up,cols,C,Hc){
   mallBox(mb,X+x1-1.4,.4,ZS+(s>0?11.6:-11.8),X+x1-.3,2.6,ZS+(s>0?11.8:-11.6),C('#d8f0ff'));
   mallBox(mb,X+x0+.3,0,ZS+s*10.2-.4,X+x0+3.4,1.05,ZS+s*10.2+.4,C('#5a3a28'));cols.push([X+x0+.3,ZS+s*10.2-.4,X+x0+3.4,ZS+s*10.2+.4]);MALL['wear'+(up?'U':'G')]={x:X+x0+1.8,z:ZS+s*9.2,clerk:{x:X+x0+1.8,z:ZS+s*10.9}}}
  else if(info[2]==='cafe'||info[2]==='tech'){}
- else if(func){const bg=info[2]==='bag',tk=info[2]==='tech'||bg,tp=bg?['#2f6fd6','#d62828','#1b1b1b','#3ab36a','#f2c21a','#7a4ad6','#8a5a3a','#5a5a62']:['#1b1b1b','#2a6ad6','#e8e8ee','#3a3e46','#d62828','#0a84ff','#3ddc84','#1d1f24'];if(!['music','optic','shoes','beach'].includes(info[2]))for(let k=0;k<2;k++){const xx=x0+4.6+k*2.4;mallBox(mb,X+xx,0,ZS+s*8.2,X+xx+.9,1.5,ZS+s*10.6,C(bg?'#8a6a44':tk?'#3a3e46':'#d8d8dc'));for(let j=0;j<5;j++)for(let r=0;r<3;r++)mallBox(mb,X+xx-.06,.2+r*.45,ZS+s*8.3+j*.45*s,X+xx+.96,.5+r*.45-(tk?.12:0),ZS+s*8.3+j*.45*s+.3*s,C(tk?tp[(j+r+k)%8]:prod[(j+r+k)%8]));cols.push([X+xx,ZS+Math.min(s*8.2,s*10.6),X+xx+.9,ZS+Math.max(s*8.2,s*10.6)])}
+ else if(func){const bg=info[2]==='bag',tk=info[2]==='tech'||bg,tp=bg?['#2f6fd6','#d62828','#1b1b1b','#3ab36a','#f2c21a','#7a4ad6','#8a5a3a','#5a5a62']:['#1b1b1b','#2a6ad6','#e8e8ee','#3a3e46','#d62828','#0a84ff','#3ddc84','#1d1f24'];if(!['music','optic','shoes','beach','skate'].includes(info[2]))for(let k=0;k<2;k++){const xx=x0+4.6+k*2.4;mallBox(mb,X+xx,0,ZS+s*8.2,X+xx+.9,1.5,ZS+s*10.6,C(bg?'#8a6a44':tk?'#3a3e46':'#d8d8dc'));for(let j=0;j<5;j++)for(let r=0;r<3;r++)mallBox(mb,X+xx-.06,.2+r*.45,ZS+s*8.3+j*.45*s,X+xx+.96,.5+r*.45-(tk?.12:0),ZS+s*8.3+j*.45*s+.3*s,C(tk?tp[(j+r+k)%8]:prod[(j+r+k)%8]));cols.push([X+xx,ZS+Math.min(s*8.2,s*10.6),X+xx+.9,ZS+Math.max(s*8.2,s*10.6)])}
   if(info[2]!=='music'){mallBox(mb,X+x0+.3,0,ZS+s*9-.4,X+x0+3.2,1.05,ZS+s*9+.4,C('#5a3a28'));mallBox(mb,X+x0+1.2,1.05,ZS+s*9-.3,X+x0+1.9,1.35,ZS+s*9+.3,C('#2a2a30'))}cols.push([X+x0+.3,ZS+s*9-.4,X+x0+3.2,ZS+s*9+.4]);MALL[info[2]+(up?'U':'G')]={x:X+x0+1.8,z:ZS+s*8,clerk:{x:X+x0+1.8,z:ZS+s*10.3}}}
  const tm=MALL._tm;mallStoreFit(g,mb,X,ZS,x0,s,info[2]||MALL_DECO[idx],up,cols);mallStoreDecor(g,mb,tm,nb,X,ZS,x0,s,idx,up,cols);mallFacade(g,mb,nb,X,ZS,x0,s,idx,up,cols);
  cols.push([X+x0,ZS+Math.min(s*11.0,s*11.9),X+x1,ZS+Math.max(s*11.0,s*11.9)]);
@@ -3625,9 +3665,9 @@ function buildMall(){if(MALL.grp){scene.remove(MALL.grp);disposeGroup(MALL.grp)}
  MALL._tm=MALL._nb=MALL._hb=null;mallLightsInit();
  MALL.arrIn.visible=false;MALL.arrow.visible=false;MALL.arrGd.visible=false}
 /* ---------- iluminação: braço dobrado no shader (o mesmo cálculo serve para os quatro braços) ---------- */
-const MALL_LU={uG:{value:new THREE.Vector2()},uU:{value:new THREE.Vector2()},uSlot:{value:new Array(48).fill(-1)},uSC:{value:[...Array(16)].map(()=>new THREE.Vector3(1,.8,.6))},uSK:{value:new Array(16).fill(.22)},
+const MALL_LU={uG:{value:new THREE.Vector2()},uU:{value:new THREE.Vector2()},uSlot:{value:new Array(48).fill(-1)},uSC:{value:[...Array(17)].map(()=>new THREE.Vector3(1,.8,.6))},uSK:{value:new Array(17).fill(.22)},
  uLenG:{value:new THREE.Vector4(40,37,49.4,37)},uLenU:{value:new THREE.Vector4(41,41,41,41)},uDim:{value:.5},uOn:{value:1},uCA:{value:new THREE.Vector3(.16,.94,1)},uCB:{value:new THREE.Vector3(1,.24,.78)},uDay:{value:new THREE.Vector3(1,.95,.88)}};
-const MALL_GLSL=`uniform vec2 uG;uniform vec2 uU;uniform float uSlot[48];uniform vec3 uSC[16];uniform float uSK[16];uniform vec4 uLenG;uniform vec4 uLenU;uniform float uDim;uniform float uOn;uniform vec3 uCA;uniform vec3 uCB;uniform vec3 uDay;
+const MALL_GLSL=`uniform vec2 uG;uniform vec2 uU;uniform float uSlot[48];uniform vec3 uSC[17];uniform float uSK[17];uniform vec4 uLenG;uniform vec4 uLenU;uniform float uDim;uniform float uOn;uniform vec3 uCA;uniform vec3 uCB;uniform vec3 uDay;
 float mPool(vec2 p,vec2 c,float r){vec2 d=(p-c)/r;return exp(-dot(d,d)*2.2);}
 float mH(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float mN(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mH(i),mH(i+vec2(1.,0.)),f.x),mix(mH(i+vec2(0.,1.)),mH(i+vec2(1.,1.)),f.x),f.y);}
@@ -3652,7 +3692,7 @@ vec3 mallLight(vec3 w,vec3 n){
  // ---- dentro de uma loja: luz própria, quente e baixa (aconchegante)
  if(wi>=0&&av>CZ+.02&&av<CZ+5.9&&!food){float k=floor((u-A-1.6)/12.4);float fx=u-A-1.6-k*12.4;
   if(k>=0.&&k<3.&&fx<9.42){int slot=(up?24:0)+wi*6+(v<0.?3:0)+int(k);float si=-1.;for(int i=0;i<48;i++){if(i==slot)si=uSlot[i];}
-   if(si>=0.){vec3 col=vec3(1.,.8,.6);float amb=.22;for(int i=0;i<16;i++){if(float(i)==si){col=uSC[i];amb=uSK[i];}}
+   if(si>=0.){vec3 col=vec3(1.,.8,.6);float amb=.22;for(int i=0;i<17;i++){if(float(i)==si){col=uSC[i];amb=uSK[i];}}
     float lu=A+1.6+k*12.4+4.7;vec3 lp=vec3(R.x,3.6,R.y)+vec3(dir.x*lu+lat.x*sign(v)*(CZ+3.1),0.,dir.y*lu+lat.y*sign(v)*(CZ+3.1));
     vec3 d=lp-w;float dist=length(d);float att=clamp(1.-dist/7.6,0.,1.);att*=att;float nl=max(dot(n,d/max(dist,.001)),0.)*.75+.25;
     vec3 f=vec3(amb)+col*att*nl*1.0+col*.05;
@@ -3669,7 +3709,7 @@ vec3 mallLight(vec3 w,vec3 n){
  vec3 f=vec3(uDim*.9+pools*.42)*pen*endf;
  // saída de luz das vitrines (cor da loja em frente)
  if(wi>=0&&!food&&av>CZ-3.){float k=floor((u-A-1.6)/12.4);float fx=u-A-1.6-k*12.4;if(k>=0.&&k<3.&&fx<9.42){int slot=(up?24:0)+wi*6+(v<0.?3:0)+int(k);float si=-1.;for(int i=0;i<48;i++){if(i==slot)si=uSlot[i];}
-  if(si>=0.){vec3 col=vec3(1.);for(int i=0;i<16;i++){if(float(i)==si)col=uSC[i];}float sp=smoothstep(CZ-3.,CZ,av)*(1.-smoothstep(0.,2.6,y))*sin(3.1416*fx/9.42);f+=col*sp*.32;}}}
+  if(si>=0.){vec3 col=vec3(1.);for(int i=0;i<17;i++){if(float(i)==si)col=uSC[i];}float sp=smoothstep(CZ-3.,CZ,av)*(1.-smoothstep(0.,2.6,y))*sin(3.1416*fx/9.42);f+=col*sp*.32;}}}
  // entrada com luz do dia
  if(!up&&wi==2){f+=uDay*mPool(vec2(u,v),vec2(L,0.),4.)*.22;}
  float cove=smoothstep(W-3.,W-.2,av)*smoothstep(Hc-2.4,Hc,y);f+=(v<0.?uCA:uCB)*cove*.22;
@@ -3681,7 +3721,7 @@ vec3 mallLight(vec3 w,vec3 n){
 function mallLightsInit(){const U=MALL_LU,P=mallPal();U.uG.value.set(MALL.G.x,MALL.G.z);U.uU.value.set(MALL.U.x,MALL.U.z);const a=COL(P.a),b=COL(P.b);U.uCA.value.set(a.r,a.g,a.b);U.uCB.value.set(b.r,b.g,b.b);U.uDim.value=P.dim;
  const VW=!!(city.st&&city.st.night),day=COL(VW?'#ff9ad0':'#fff1dc');U.uDay.value.set(day.r,day.g,day.b);
  for(let i=0;i<48;i++)U.uSlot.value[i]=MALL._slotMap?MALL._slotMap[i]:-1;
- for(let idx=0;idx<16;idx++){const L=mallStoreLight(idx);U.uSC.value[idx].set(L.col.r,L.col.g,L.col.b);U.uSK.value[idx]=L.amb}
+ for(let idx=0;idx<MALL_SHOPS.length;idx++){const L=mallStoreLight(idx);U.uSC.value[idx].set(L.col.r,L.col.g,L.col.b);U.uSK.value[idx]=L.amb}
  U.uLenG.value.set(...MALL_LAYOUT[0].map(c=>c.L));U.uLenU.value.set(...MALL_LAYOUT[1].map(c=>c.L));
  MALL._slotMapLive=MALL._slotMap;MALL.stores=[];for(const k of Object.keys(MALL))if(/(G|U)$/.test(k)&&MALL[k]&&MALL[k].fr&&!MALL[k].fr.none)MALL.stores.push(MALL[k].fr)}
 function mallLightsTick(dt){}
@@ -3700,12 +3740,12 @@ function mallRandSpot(lv,rr){for(let t=0;t<20;t++){const w=Math.floor(rr()*5),A=
   if(w===4){x=(rr()*2-1)*(A-1.5);z=(rr()*2-1)*(A-1.5);if(Math.abs(x)<MALL_V+.6&&Math.abs(z)<MALL_V+.6&&(lv||Math.abs(z)<3.4))continue}
   else{const cfg=MALL_LAYOUT[lv][w];if(cfg.type==='food')continue;const u=A+2+rr()*(cfg.L-A-5),v=(rr()*2-1)*(CZ-1.6);const R=lv?MALL.U:MALL.G,p=mallRot({x:0,z:0},w,u,v);x=p[0];z=p[1]}
   const R=lv?MALL.U:MALL.G,X=R.x+x,Z=R.z+z;if(query(X,Z,.6).some(b=>!b.dead&&X>b.x0-.5&&X<b.x1+.5&&Z>b.z0-.5&&Z<b.z1+.5))continue;return[X,Z]}return null}
-const MALL_CLERK_KEYS=['wear','food','tech','bag','cafe','jewel','music','pharm','optic','shoes','beach'];
+const MALL_CLERK_KEYS=['wear','food','tech','bag','cafe','jewel','music','pharm','optic','shoes','beach','skate'];
 function mallSpawnPeds(R,up){for(const q of MALL.peds)if(peds.includes(q))removePed(q);MALL.peds=[];const rr=mulberry32((up?77:33)+(DN.day||0)),lv=up?1:0;
  for(let k=0;k<(up?11:10);k++){const p=mallRandSpot(lv,rr);if(!p)continue;const q=spawnPed(null,{x:p[0],z:p[1],vx:0,vz:0,pal:pick2(PED_PALS)});if(!q)continue;q.fixed=true;const a=rr()*6.28;q.mx=Math.cos(a);q.mz=Math.sin(a);
   // v77: ~75% andam pelos corredores (de vitrine em vitrine), o resto fica parado olhando
   if(rr()<.75){q.state='mwalk';q.mlv=lv;q.spd=1.05+rr()*.5;q.path=null;q.mwIdle=true;q.wait=rr()*3}else q.state='fare';MALL.peds.push(q)}
- for(const key of MALL_CLERK_KEYS){const sp=MALL[key+(up?'U':'G')];if(!sp)continue;const q=spawnPed(null,{x:sp.clerk.x,z:sp.clerk.z,vx:0,vz:0,pal:key==='wear'?{...CLERK_PAL,shirt:'#ff4fa0',cap:null,long:true,hair:'#2a1a10'}:CLERK_PAL});q.state='clerk';q.fixed=true;q.at=sp.clerk;q.mallClerk=key;if(key==='bag')q.sp.material.map=atlasTex({...CLERK_PAL,shirt:'#c8762a',cap:null,bag:'#3ab36a'});if(key==='tech')q.sp.material.map=atlasTex({...CLERK_PAL,shirt:'#2a8ad6',cap:null,headphone:'#1b1b1b'});if(key==='music')q.sp.material.map=atlasTex({...CLERK_PAL,shirt:'#a02ad6',cap:null,headphone:'#ff4fa3'});if(key==='cafe')q.sp.material.map=atlasTex({...CLERK_PAL,shirt:'#f4f0e8',cap:null,stripe:'#7a4a2a'});if(key==='pharm')q.sp.material.map=atlasTex({...CLERK_PAL,shirt:'#f4f4f0',cap:null,stripe:'#2a9a5a'});if(key==='jewel')q.sp.material.map=atlasTex({...CLERK_PAL,shirt:'#1b1b1b',cap:null,necklace:'#e8c040'});if(key==='optic')q.sp.material.map=atlasTex({...CLERK_PAL,shirt:'#f2f6f8',cap:null,stripe:'#2ac8c8',glasses:'#121218'});if(key==='shoes')q.sp.material.map=atlasTex({...CLERK_PAL,shirt:'#d8402a',cap:null,shoes:'#f2f2ee'});if(key==='beach')q.sp.material.map=atlasTex({...CLERK_PAL,shirt:'#1e9ab0',stripe:'#f2f2ee',cap:'#f2f2ee',glasses:'#121218'});MALL.peds.push(q)}
+ for(const key of MALL_CLERK_KEYS){const sp=MALL[key+(up?'U':'G')];if(!sp)continue;const q=spawnPed(null,{x:sp.clerk.x,z:sp.clerk.z,vx:0,vz:0,pal:key==='wear'?{...CLERK_PAL,shirt:'#ff4fa0',cap:null,long:true,hair:'#2a1a10'}:CLERK_PAL});q.state='clerk';q.fixed=true;q.at=sp.clerk;q.mallClerk=key;if(key==='skate')q.sp.material.map=atlasTex({...CLERK_PAL,shirt:'#2ad6c8',cap:null,headphone:'#1b1b1b'});if(key==='bag')q.sp.material.map=atlasTex({...CLERK_PAL,shirt:'#c8762a',cap:null,bag:'#3ab36a'});if(key==='tech')q.sp.material.map=atlasTex({...CLERK_PAL,shirt:'#2a8ad6',cap:null,headphone:'#1b1b1b'});if(key==='music')q.sp.material.map=atlasTex({...CLERK_PAL,shirt:'#a02ad6',cap:null,headphone:'#ff4fa3'});if(key==='cafe')q.sp.material.map=atlasTex({...CLERK_PAL,shirt:'#f4f0e8',cap:null,stripe:'#7a4a2a'});if(key==='pharm')q.sp.material.map=atlasTex({...CLERK_PAL,shirt:'#f4f4f0',cap:null,stripe:'#2a9a5a'});if(key==='jewel')q.sp.material.map=atlasTex({...CLERK_PAL,shirt:'#1b1b1b',cap:null,necklace:'#e8c040'});if(key==='optic')q.sp.material.map=atlasTex({...CLERK_PAL,shirt:'#f2f6f8',cap:null,stripe:'#2ac8c8',glasses:'#121218'});if(key==='shoes')q.sp.material.map=atlasTex({...CLERK_PAL,shirt:'#d8402a',cap:null,shoes:'#f2f2ee'});if(key==='beach')q.sp.material.map=atlasTex({...CLERK_PAL,shirt:'#1e9ab0',stripe:'#f2f2ee',cap:'#f2f2ee',glasses:'#121218'});MALL.peds.push(q)}
  // atendentes da praça de alimentação e clientes sentados nas mesas
  if(!up){for(let n=0;n<MALL_FOOD.length;n++){const sp=MALL['fc'+n+'G'];if(!sp)continue;const q=spawnPed(null,{x:sp.clerk.x,z:sp.clerk.z,vx:0,vz:0,pal:{...CLERK_PAL,shirt:MALL_FOOD[n][1],cap:null}});if(!q)continue;q.state='clerk';q.fixed=true;q.at=sp.clerk;q.mallClerk='fc'+n;MALL.peds.push(q)}
   const A=MALL_A[0],u0=A+MALL_FC_NECK;for(let k=0;k<7;k++){const u=u0+4.2+4.4*Math.floor(rr()*4),v=[-5.4,-1.8,1.8,5.4][Math.floor(rr()*4)],du=(rr(),k%2?-.95:.95), /* v79r4: alterna o lado da mesa (antes o sorteio deixava quase todos virados pro mesmo lado); o rr() continua sendo consumido */p=mallRot({x:0,z:0},0,u+du,v);const q=spawnPed(null,{x:R.x+p[0],z:R.z+p[1],vx:0,vz:0,pal:pick2(PED_PALS)});if(!q)continue;q.state='clerk';q.fixed=true;q.at={x:q.x,z:q.z};{const c=mallRot({x:0,z:0},0,u,v),dx=R.x+c[0]-q.x,dz=R.z+c[1]-q.z,l=Math.hypot(dx,dz)||1;q.mx=dx/l;q.mz=dz/l} /* v79r4: cada cliente olha pra própria mesa (antes −sign(du) no eixo X do mundo, sem girar com o braço: todos pro mesmo lado) */MALL.peds.push(q)}}
@@ -3752,7 +3792,7 @@ function mallTick(dt){MALL.lock=Math.max(0,MALL.lock-dt);const inM=PL.inside==='
  if(MALL.lvl===0){if(lx<-mallEntryL()+1.4&&Math.abs(lz)<1.8){exitMall();return}if(lx>-4.8&&lx<-3.15&&Math.abs(lz)<1.1){mallGo(1,MALL_V+1.6,2.4,[1,0]);toast('1º ANDAR');return}}
  else if(lx>MALL_V-.1&&lx<MALL_V+.75&&Math.abs(lz)<1.1){mallGo(0,-6.2,2.6,[-1,0]);toast('TÉRREO');return}
  let best=null,bd=1.7;for(const key of [...MALL_CLERK_KEYS,...MALL_FOOD.map((f,i)=>'fc'+i),...Array.from({length:12},(_,i)=>'vd'+(i+1))]){if(MALLROB[key]&&MALLROB[key].closed)continue;const sp=MALL[key+(MALL.lvl?'U':'G')];if(!sp)continue;const d=Math.hypot(PL.x-sp.x,PL.z-sp.z);if(d<bd){bd=d;best=key}}if(best)CTX.mall=best}
-function mallAct(key){if(/^vd\d+$/.test(key)){if(PL.hp>=100){toast('VOCÊ ESTÁ COM A VIDA CHEIA');return}if((PL.money||0)<1){toast('DINHEIRO INSUFICIENTE · REFRIGERANTE $1');clang(.1);return}money(-1);PL.hp=Math.min(100,PL.hp+1);toast('REFRIGERANTE · +1 VIDA · −$1');clang(.2);return}
+function mallAct(key){if(key==='skate'){skUiOpen('shop');return}if(/^vd\d+$/.test(key)){if(PL.hp>=100){toast('VOCÊ ESTÁ COM A VIDA CHEIA');return}if((PL.money||0)<1){toast('DINHEIRO INSUFICIENTE · REFRIGERANTE $1');clang(.1);return}money(-1);PL.hp=Math.min(100,PL.hp+1);toast('REFRIGERANTE · +1 VIDA · −$1');clang(.2);return}
  if(/^fc\d$/.test(key)){const f=MALL_FOOD[+key[2]],[nm,,price,gain]=f;if(PL.hp>=100){toast('VOCÊ JÁ ESTÁ SATISFEITO');return}if((PL.money||0)<price){toast('DINHEIRO INSUFICIENTE · '+nm+' $'+price);clang(.1);return}money(-price);const g0=PL.hp;PL.hp=Math.min(100,PL.hp+gain);toast(nm+' · +'+Math.round(PL.hp-g0)+' VIDA · −$'+price);clang(.25);const q=peds.find(p=>p.mallClerk===key);if(q)say(q,SAY.thanks);return}
  if(key==='cafe'||key==='pharm'){const cafe=key==='cafe',price=cafe?5:60,gain=cafe?25:100,nm=cafe?'CAFÉ':'REMÉDIO';if(PL.hp>=100){toast(cafe?'VOCÊ JÁ ESTÁ ELÉTRICO DE CAFÉ':'VOCÊ ESTÁ COM A VIDA CHEIA');return}if((PL.money||0)<price){toast('DINHEIRO INSUFICIENTE · '+nm+' $'+price);clang(.1);return}money(-price);const g0=PL.hp;PL.hp=Math.min(100,PL.hp+gain);toast(nm+' · +'+Math.round(PL.hp-g0)+' VIDA · −$'+price);clang(.25);const q=peds.find(p=>p.mallClerk===key);if(q)say(q,SAY.thanks);return}
  if(key==='jewel'){openWard('jewel');return}if(key==='optic'){openWard('optic');return}if(key==='shoes'){openWard('shoes');return}if(key==='beach'){openWard('beach');return}if(key==='music'){toast('LOJA DE DISCOS<br><small style="font-size:11px;color:#fff">fone de cortesia para ouvir as rádios</small>');return}
@@ -5775,7 +5815,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
    const all=[];for(const cl of ch.cols){if(cl.dead||cl.kind!=='bld'||cl.nrTunnel)continue;const mx=(cl.x0+cl.x1)/2,mz=(cl.z0+cl.z1)/2;if(mx<bx0||mx>bx1||mz<bz0||mz>bz1||nearT(mx,mz,8))continue;
     const lo=ax==='x'?cl.z0:cl.x0,hi=ax==='x'?cl.z1:cl.x1,u2a=ax==='x'?cl.x0:cl.z0,u2b=ax==='x'?cl.x1:cl.z1;if(u2b-u2a<4.5||(u2b>ta-2&&u2a<tb+2))continue;let fv=null,s3=0;if(c-h-hi>-.1&&c-h-hi<4){fv=hi;s3=1}else if(lo-(c+h)>-.1&&lo-(c+h)<4){fv=lo;s3=-1}if(fv===null)continue;
     if(NR.oceanAt&&Math.hypot(((u2a+u2b)/2)-(ax==='x'?NR.oceanAt[0]:NR.oceanAt[2]),fv-(ax==='x'?NR.oceanAt[2]:NR.oceanAt[0]))<4)continue;all.push({fv,s3,u2a,u2b,top:cl.top})}
-   const nAd=Math.min(3,all.length);let lastS=0;for(let k=0;k<nAd;k++){let i=all.findIndex(a=>a.s3!==lastS);if(i<0)i=0;const a=all.splice(i,1)[0];lastS=a.s3;const idx=Math.floor(q()*(typeof MALL_SHOPS!=='undefined'?MALL_SHOPS.length:1)),vv=Math.floor(q()*2),key='nrAd'+idx+'_'+vv;
+   const nAd=Math.min(3,all.length);let lastS=0;for(let k=0;k<nAd;k++){let i=all.findIndex(a=>a.s3!==lastS);if(i<0)i=0;const a=all.splice(i,1)[0];lastS=a.s3;const idx=Math.floor(q()*(typeof MALL_SHOPS!=='undefined'?16:1)),vv=Math.floor(q()*2),key='nrAd'+idx+'_'+vv;
     let mat=NEON_TXT.get(key);if(!mat){try{const t=new THREE.CanvasTexture(mallAdCanvas(idx,vv));t.anisotropy=4;mat=new THREE.MeshBasicMaterial({map:t});mat.userData.cached=true;NEON_TXT.set(key,mat)}catch(e){console.error('[neon road ad]',e);break}}
     const w=Math.min(3.4,(a.u2b-a.u2a)*.7),hh=w/2,y=clamp(Math.min((a.top||9)-hh/2-.8,3.4+hh/2),2.6+hh/2,20),um2=a.u2a+(a.u2b-a.u2a)*qr(.35,.65),p=Wp(um2,a.fv+a.s3*.07),n=Wp(0,a.s3);
     signPlane(ch.group,mat,p[0],y,p[1],w,hh,Math.atan2(n[0],n[1]));const fr=COL('#2a2430');bxU(det,um2-w/2-.1,um2+w/2+.1,Math.min(a.fv,a.fv+a.s3*.05),Math.max(a.fv,a.fv+a.s3*.05),y-hh/2-.1,y+hh/2+.1,fr)}}
@@ -10075,7 +10115,7 @@ function actorLighting0(sp,local){
 // Cada sprite mantém sua cor individual e o tint especial para fantasmas.
 function makeActorLitSprite(tex){const mat=new THREE.SpriteMaterial({map:tex,transparent:true,alphaTest:.5,fog:true});
  const local={value:ACTOR_LIGHT.value.clone(),target:new THREE.Color(),next:0,last:simT,shade:0};
- const sp=new THREE.Sprite(mat);sp.userData.actorTint=new THREE.Color(1,1,1);
+ const sp=new THREE.Sprite(mat);sp.userData.actorTint=new THREE.Color(1,1,1);sp.position.set(0,-9999,0); /* v79r22: nasce longe — até o 1º placeSprite não pisca na origem (0,0) */
  sp.onBeforeRender=(renderer0,scene0,renderCam)=>{if(renderCam===camera){sp.userData.actorLastDraw=simT;actorLighting(sp,local);mat.color.copy(local.value).multiply(sp.userData.actorTint)}else if(!local._init){local._init=1;actorLighting(sp,local);mat.color.copy(local.value).multiply(sp.userData.actorTint)}
   /* v78m: textura 3D COMPARTILHADA por roupa — cada ped guarda seu quadro num proxy; copiado aqui, antes do draw (uvTransform é lido depois). Só se o map ainda for o compartilhado. */const px=sp.userData.texProxy;if(px&&mat.map===px.shared){mat.map.offset.copy(px.offset);mat.map.repeat.copy(px.repeat)}};
  sp.center.set(.5,0);sp.layers.set(1);scene.add(sp);
@@ -10102,7 +10142,7 @@ window.pixelCitySpriteStatus=()=>{
  return{world:S.style,worldNo:city.worldNo,pedTarget:pedTarget(),peds:peds.length,actors:all.length,drawnLastSecond:recent.length,cameraLayers:camera.layers.mask,player:data(PL.sp),samplePed:data(peds[0]?.sp),drawCalls:renderer.info.render.calls};
 };
 function makeCharacter(pal){const px=pal===PLAYER_PAL?null:S.sprite8===true?pedAtlas3Proxy(pal,true):pedAtlasProxy(pal),tex=px||atlasTex(pal),sp=makeActorLitSprite(px?px.shared:tex);if(px)sp.userData.texProxy=px;
- const sh=new THREE.Mesh(new THREE.PlaneGeometry(1.3,1.3),new THREE.MeshBasicMaterial({map:blobTex,transparent:true,depthWrite:false}));sh.rotation.x=-Math.PI/2;sh.layers.set(1);scene.add(sh);
+ const sh=new THREE.Mesh(new THREE.PlaneGeometry(1.3,1.3),new THREE.MeshBasicMaterial({map:blobTex,transparent:true,depthWrite:false}));sh.rotation.x=-Math.PI/2;sh.layers.set(1);sh.position.set(0,-9999,0);scene.add(sh);
  if(px&&px.standIn)ped3dQueue(pal,px,sp);
  return {sp,tex,sh,pal}}
 function pickDir(mx,mz,ox,oz){ // move dir m, object pos o
@@ -10877,7 +10917,7 @@ function riverBoatsTick(dt){
 }
 /* ================= PRAIA: gente caminhando e fogueiras ================= */
 const BEACH={ok:false,fires:[],walkers:[],t:0};
-function beachInit(){for(const f of BEACH.fires){scene.remove(f.g);disposeGroup(f.g)}BEACH.fires=[];BEACH.walkers=[];BEACH.ok=false;if(city.coast===undefined||!city.ext||city.haze)return;
+function beachInit(){for(const f of BEACH.fires){scene.remove(f.g);disposeGroup(f.g)}BEACH.fires=[];BEACH.walkers=[];for(const q of BEACH.skaters||[])if(peds.includes(q))removePed(q);BEACH.skaters=[];BEACH.ok=false;if(city.coast===undefined||!city.ext||city.haze)return;
  const E=city.ext,o=RW/2,s=city.coast,sp=city.coastSpan,t0=sp?Math.max(-o-SW,sp[0]):-o-SW,t1=sp?Math.min(E+o+SW,sp[1]):E+o+SW;
  Object.assign(BEACH,{ok:t1-t0>40,s,t0,t1,u0:o+SW+4,u1:SHORE-5,TU:(t,u)=>s===0?[t,-u]:s===1?[t,E+u]:s===2?[-u,t]:[E+u,t]});if(!BEACH.ok)return;
  const rnd=mulberry32(((S.seed>>>0)^0x2545f491)>>>0),n=1+(rnd()<.5?1:0),st=STYLES[S.style];
@@ -10907,9 +10947,32 @@ function beachTick(dt){if(!BEACH.ok)return;const pc=PL.car||PL,near=!PL.inside&&
   while(f.peds.length<want){const ang=Math.random()*6.283,r=2.2+Math.random()*.7,q=spawnLying(f.x+Math.cos(ang)*r,f.z+Math.sin(ang)*r);q.state='fire';q.rot=0;q.fx=f.x;q.fz=f.z;q.fixed=true;f.peds.push(q)}}
  BEACH.walkers=BEACH.walkers.filter(q=>peds.includes(q)&&q.state==='bwalk');
  for(const q of BEACH.walkers.slice())if(Math.hypot(q.x-pc.x,q.z-pc.z)>330){removePed(q)}
+ /* v79r14: de dia, até 2 skatistas deslizando pelo calçadão da orla */
+ BEACH.skaters=(BEACH.skaters||[]).filter(q=>peds.includes(q)&&q.state==='bskate');for(const q of BEACH.skaters.slice())if(Math.hypot(q.x-pc.x,q.z-pc.z)>330)removePed(q);
+ BEACH.skT=(BEACH.skT||0)-dt;if(BEACH.skT<=0){BEACH.skT=4+Math.random()*6;const wantS=near&&DN.nightF<.5&&!(CELLS.length&&rainAt(pc.x,pc.z)>.2)?2:0;if(BEACH.skaters.length<wantS&&Math.random()<.6)pedSkSpawn(pc)}
  if(BEACH.t>0)return;BEACH.t=1.5;const want=near?(DN.nightF>.5?2:6):0;
  if(BEACH.walkers.length<want){const B=BEACH,pt=B.s<2?pc.x:pc.z,t=clamp(pt+(Math.random()-.5)*260,B.t0+6,B.t1-6),u=B.u0+Math.random()*(B.u1-B.u0),q0=B.TU(t,u);
   if(Math.hypot(q0[0]-pc.x,q0[1]-pc.z)>45||Math.random()<.3){const q=spawnLying(q0[0],q0[1],pick2(BEACH_PALS));q.state='bwalk';q.rot=0;q.fixed=true;q.bt=t;q.bu=u;q.bdir=Math.random()<.5?1:-1;q.spd=.9+Math.random()*.6;q.fin=0;q.sp.material.opacity=0;q.sh.material.opacity=0;B.walkers.push(q)}}}
+/* v79r14: skatista da orla — anda numa faixa do calçadão (u entre RW/2+1,5 e +4,4, longe dos postes e da mureta), desvia trocando de faixa, para e volta se não tiver passagem.
+   Derrubado (carro, soco, tiro) o skate sai do pé e fica no chão como pickup (dá pra pegar). */
+function skLaneFree(x,z,self){if(inWater(x,z)||Math.abs(groundY(x,z)-.2)>.12)return false;for(const b of query(x,z,.9)){if(b.dead)continue;const cx=clamp(x,b.x0,b.x1),cz=clamp(z,b.z0,b.z1);if(Math.hypot(x-cx,z-cz)<.5)return false}
+ if(!PL.car&&!PL.inside&&Math.hypot(PL.x-x,PL.z-z)<1.1)return false;for(const q of peds){if(q===self||q.state==='lie'||q.state==='fire'||Math.abs(q.x-x)>1||Math.abs(q.z-z)>1)continue;if(Math.hypot(q.x-x,q.z-z)<.9)return false}return true}
+function skTRange(){const B=BEACH;return[Math.max(B.t0,0)+10,Math.min(B.t1,city.ext)-10]}
+function pedSkSpawn(pc){const B=BEACH,o=RW/2,pt=B.s<2?pc.x:pc.z,TR=skTRange();if(TR[1]-TR[0]<30)return null;for(let k=0;k<6;k++){const t=clamp(pt+(Math.random()<.5?-1:1)*(55+Math.random()*95),TR[0]+4,TR[1]-4),u=o+1.8+Math.random()*2.4,q0=B.TU(t,u);
+  if(Math.hypot(q0[0]-pc.x,q0[1]-pc.z)<45||!skLaneFree(q0[0],q0[1],null))continue;
+  const q=spawnLying(q0[0],q0[1]);q.state='bskate';q.rot=0;q.fixed=true;q.bt=t;q.bu=u;q.bU=u;q.bdir=Math.random()<.5?1:-1;q.spd=3.6+Math.random()*2.2;q.sv=q.spd*.6;q.fin=0;q.sp.material.opacity=0;q.sh.material.opacity=0;
+  q.skLook={deck:SK_DECK[Math.floor(Math.random()*SK_DECK.length)],wheel:SK_WHEEL[Math.floor(Math.random()*SK_WHEEL.length)],print:SK_PRINT[Math.floor(Math.random()*(SK_PRINT.length-1))]};q.skb=skBoard(q.skLook);scene.add(q.skb);q.gy=groundY(q.x,q.z);q.jy=SK_UP;BEACH.skaters.push(q);return q}return null}
+function pedSkTick(p,dt){const B=BEACH,o=RW/2,lo=o+1.5,hi=o+4.4,ah=B.TU(p.bt+p.bdir*1.7,p.bU);
+ if(!skLaneFree(ah[0],ah[1],p)){let ok=false;for(const du of [-1,1,-2,2]){const u=clamp(p.bU+du*.9,lo,hi);if(Math.abs(u-p.bU)<.1)continue;const a2=B.TU(p.bt+p.bdir*1.7,u),a3=B.TU(p.bt,u);if(skLaneFree(a2[0],a2[1],p)&&skLaneFree(a3[0],a3[1],p)){p.bU=u;ok=true;break}}
+  if(!ok){p.sv=Math.max(0,p.sv-9*dt);if(p.sv<.4){p.bdir*=-1;p.sv=.8;p.flips=(p.flips||0)+1}}}
+ else{p.sv=Math.min(p.spd,p.sv+1.6*dt);if(p.sv>=p.spd)p.flips=0}
+ const TR=skTRange();if((p.bt<TR[0]&&p.bdir<0)||(p.bt>TR[1]&&p.bdir>0)){p.bdir*=-1;p.sv=.8}
+ if(p.flips>3){removePed(p);return true} /* preso entre dois bloqueios: some em vez de ficar tremendo */
+ const du=p.bU-p.bu,st=Math.sign(du)*Math.min(Math.abs(du),1.6*dt);p.bu+=st;p.bt+=p.bdir*p.sv*dt;
+ const q=B.TU(p.bt,p.bu),q2=B.TU(p.bt+p.bdir,p.bu);p.mx=q2[0]-q[0];p.mz=q2[1]-q[1];p.vx=p.mx*p.sv;p.vz=p.mz*p.sv;p.x=q[0];p.z=q[1];p.gy=groundY(p.x,p.z);p.jy=SK_UP;p.anim=0;
+ if(p.skb){const vis=!PL.inside&&(p.fin===undefined||p.fin>.3);p.skb.visible=vis;p.skb.position.set(p.x,p.gy,p.z);p.skb.rotation.set(0,-Math.atan2(p.mz,p.mx),0);const side=(B.TU(p.bt,p.bu+1)[0]-q[0])*p.mz-(B.TU(p.bt,p.bu+1)[1]-q[1])*p.mx;p.skb.rotateX(clamp(dt>0?st/dt/1.6:0,-1,1)*.15*Math.sign(side||1))}}
+function pedSkDrop(p){const L=p.skLook,g=p.skb;p.skb=null;p.jy=0;skDisposeG(g);if(!L||!peds.includes(p)||p.state==='bskate')return;
+ const loose=SKATE.items.filter(it=>!skInGarage(it)).length;if(loose>=6)return;const a=Math.random()*6.283,o={x:p.x+Math.cos(a)*1.1,z:p.z+Math.sin(a)*1.1};circleVsWorld(o,.3);if(inWater(o.x,o.z))return;skAdd(o.x,o.z,Math.random()*6.283,L,true)}
 /* ================= CÉU: helicóptero e avião passando ================= */
 // faixas de altitude separadas (heli ~135-150 m, avião ~240-280 m): os dois nunca colidem nem atravessam prédios
 // Três fluxos independentes por tipo: 3× o tráfego, sem sincronizar horários ou rotas.
@@ -11001,7 +11064,7 @@ function skySound(heli){if(!AC||!AC._noise)return null;try{const src=AC.createBu
   src.connect(f);g.connect(master);src.start();return{src,g,lfo}}catch(e){return null}}
 function skySpawn(slot){slot.hp=undefined;const k=slot.kind,pc=PL.car||PL,E=city.ext,heli=k==='heli';const near=Math.random()<.6;const cx=near?pc.x+(Math.random()-.5)*240:Math.random()*E,cz=near?pc.z+(Math.random()-.5)*240:Math.random()*E;
  const a=Math.random()*6.283,L=heli?650:1500,o=heli?skyHeli():skyPlane();o.dx=Math.cos(a);o.dz=Math.sin(a);o.x=cx-o.dx*L;o.z=cz-o.dz*L;o.y=heli?135+Math.random()*15:240+Math.random()*40;o.v=heli?24+Math.random()*8:68+Math.random()*12;o.left=2*L;
- o.g.rotation.y=-a;scene.add(o.g);o.snd=skySound(heli);slot.o=o}
+ o.g.rotation.y=-a;o.g.position.set(o.x,o.y,o.z);scene.add(o.g);o.snd=skySound(heli);slot.o=o} /* v79r22: posiciona antes de entrar na cena (antes o avião/heli aparecia 1 quadro no chão em 0,0) */
 /* ================= HELICÓPTERO DO JOGADOR =================
    Mesmo modelo dos helicópteros que cruzam o céu. Fica parado nos helipontos (delegacia, hospital e arranha-céu).
    E perto dele: embarca. ↑ decola até a altitude fixa (acima dos prédios, abaixo dos helicópteros NPC).
@@ -11198,7 +11261,7 @@ async function charWorldJump(to,tgt,world){HAZE.switching=true;const loading=$('
 // Personagem parado dentro da casa segura (o outro, quando não está em atividade).
 function safeMateClear(){if(SAFE.mate){removePed(SAFE.mate);SAFE.mate=null}}
 function safeMateSpawn(at,force=false){safeMateClear();const o=CHAR.list[1-CHAR.cur];if(!SAFE.IN||(charFresh(o)&&!force))return;const IN=SAFE.IN,x=at?at[0]:IN.x-2.4,z=at?at[1]:IN.z-1.2;
- const q=spawnPed(null,{x,z,vx:0,vz:0,pal:{...(o.look||LUCIA_PAL),pack:false}});if(!q)return;q.state='clerk';q.fixed=true;q.mx=force?PL.x-x:0;q.mz=force?PL.z-z:1;q.timer=0;q.mate=true;SAFE.mate=q}
+ const q=spawnPed(null,{x,z,vx:0,vz:0,main:true,pal:{...(o.look||LUCIA_PAL),pack:false}});if(!q)return;q.state='clerk';q.fixed=true;q.mx=force?PL.x-x:0;q.mz=force?PL.z-z:1;q.timer=0;q.mate=true;SAFE.mate=q}
 // Same local pitch arc as CAMHOP, followed by strictly vertical sky legs.
 function switchCameraPrepare(){const h=SWITCH;
  // Both campaign and free roam enter through this same preparation.
@@ -12145,9 +12208,10 @@ function convRiderTick(){
   const active=c===PL.car,duo=active&&DUO.on&&DUO.car===c;
   const other=CHAR.list[1-CHAR.cur],st=other.st;
   const parked=!active&&charFresh(other)&&st?.car?.ref===c;
-  const n=active?(duo?2:1):parked?1:c.convN;
-  const sign=active?(duo?'duo-'+DUO.drv:'solo-'+CHAR.cur):parked?'park-'+(1-CHAR.cur):'npc-'+n;
-  const show=n>0&&(active||parked||c.hasRider!==false)&&c.alive&&(active||parked||!!c.ai||c.mode==='rail')&&Math.hypot(c.x-PL.x,c.z-PL.z)<165;
+  const selfSt=!active&&!parked&&charFresh(CHAR.list[CHAR.cur])&&CHAR.list[CHAR.cur].st?.car?.ref===c,mine=!active&&!parked&&!selfSt&&(c.owned||c===PL.lastCar||c===(typeof PROLOGUE!=='undefined'&&PROLOGUE.car)||(SAFE.cars||[]).includes(c)); /* v79r16: carro do jogador nunca ganha motorista sorteado (antes o conversível da história mostrava um NPC qualquer no lugar do Nathan) */
+  const n=active?(duo?2:1):parked||selfSt?1:mine?0:c.convN;
+  const sign=active?(duo?'duo-'+DUO.drv:'solo-'+CHAR.cur):parked?'park-'+(1-CHAR.cur):selfSt?'self-'+CHAR.cur:'npc-'+n;
+  const show=n>0&&(active||parked||selfSt||c.hasRider!==false)&&c.alive&&(active||parked||selfSt||!!c.ai||c.mode==='rail')&&Math.hypot(c.x-PL.x,c.z-PL.z)<165;
   if(!show||c.convSign!==sign||c.convRs&&c.convRs.length!==n){
    if(c.convRs){for(const r of c.convRs){CONVR.delete(r);killChar(r)}c.convRs=null}
    c.convSign=null;
@@ -12157,6 +12221,7 @@ function convRiderTick(){
    let pal;if(active){const ix=duo?(k===0?DUO.drv:1-DUO.drv):CHAR.cur;
     pal=ix===CHAR.cur?PLAYER_PAL:(CHAR.list[ix].look||(ix?LUCIA_PAL:PLAYER_PAL));}
    else if(parked)pal=st.look||other.look||(CHAR.cur===0?LUCIA_PAL:PLAYER_PAL);
+   else if(selfSt)pal=PLAYER_PAL;
    else pal=pick2(PED_PALS);
    const r=makeCharacter({...pal,pack:false});r.rpal=pal;r.rot=0;c.convRs.push(r);CONVR.set(r,c);
   }}
@@ -12604,6 +12669,11 @@ function trafficRegionIndex(){
   return n};
  return{add,nearby};
 }
+/* v79r16: zona calma — some com o trânsito comum em volta (blitz da história: só o jogador e as viaturas) e não nasce carro novo ali até o tempo acabar */
+var TRAFFIC_CALM=null;
+function trafficCalm(x,z,r,sec){TRAFFIC_CALM={x,z,r,until:simT+sec};for(const c of vehicles.slice()){if(c===PL.car||c.police||c.keep||c.owned||c.stashed||c.blitz||c===PL.lastCar||(SAFE.cars||[]).includes(c))continue;if(!(c.mode==='rail'||c.ai||c.parkedNpc||c.tempPark))continue;if(Math.hypot(c.x-x,c.z-z)<r)removeVehicle(c)}
+ const B=typeof BLITZ!=='undefined'&&BLITZ.on;if(B&&B.serving&&!vehicles.includes(B.serving)){B.serving=null;B.npcPhase=null}}
+function trafficCalmAt(x,z){const T=TRAFFIC_CALM;if(!T)return false;if(simT>T.until){TRAFFIC_CALM=null;return false}return Math.hypot(x-T.x,z-T.z)<T.r}
 function populate(initial){const ctr=TVM.on?TVM.foc:PL.car||PL;const Rp=3*P;const viewR=camMode==='top'?camH*1.3+25:150;
  const want=trafficDensity()*(SEG_END-RW/2);let budget=initial?100000:90;
  // Limite efetivo por regiao, proporcional a densidade configurada e a frota acumulada.
@@ -12620,7 +12690,7 @@ function populate(initial){const ctr=TVM.on?TVM.foc:PL.car||PL;const Rp=3*P;cons
    let need=Math.floor(want-ss.length+R2());if(need<=0)continue;let sites;
    if(initial||md>viewR+30)sites=null;else{const ep=lanePt(kx,kz,d,li,RW/2+3);if(Math.hypot(ep[0]-ctr.x,ep[1]-ctr.z)<viewR)continue;sites=[RW/2+3];need=1}
    for(let n=0;n<need&&budget>0;n++){const s=sites?sites[0]:RW/2+3+R2()*(SEG_END-RW/2-9);if(ss.some(o=>Math.abs(o-s)<9))continue;
-    const p=lanePt(kx,kz,d,li,s);if(Math.hypot(p[0]-PL.x,p[1]-PL.z)<9)continue;if(carsNear(p[0],p[1],5).some(o=>Math.hypot(o.x-p[0],o.z-p[1])<6))continue;
+    const p=lanePt(kx,kz,d,li,s);if(Math.hypot(p[0]-PL.x,p[1]-PL.z)<9||trafficCalmAt(p[0],p[1]))continue;if(carsNear(p[0],p[1],5).some(o=>Math.hypot(o.x-p[0],o.z-p[1])<6))continue;
     if(region.nearby(p[0],p[1],regionRadius)>=regionLimit)continue;
     const spawned=makeRailCar(kx,kz,d,li,s);region.add(spawned);ss.push(s);budget--}}}
  // 0% de trânsito significa ultra-baixa densidade, não deserto sem veículos.
@@ -12761,7 +12831,9 @@ function spawnPed(near,at){const NR=city.rects.length;let ri=0;
  if(!at&&near&&city.strips&&city.strips.length&&R2()<city.pedRatio/(1+city.pedRatio)){const c=city.strips.filter(q=>{const d=Math.hypot((q[0]+q[2])/2-near.x,(q[1]+q[3])/2-near.z);return d>near.min&&d<near.max});
   if(c.length){p.strip=c[Math.floor(R2()*c.length)];p.t=R2()*Math.hypot(p.strip[2]-p.strip[0],p.strip[3]-p.strip[1]);const q=pedPoint(p);p.x=q[0];p.z=q[1]}}
  if(at){p.x=at.x;p.z=at.z;p.state='flee';p.timer=2.5;p.vx=at.vx;p.vz=at.vz;p.ri=rectNear(p.x,p.z);p.r=perim(p.ri)}
- peds.push(p);return p}
+ peds.push(p);if(at&&at.main)pedExact(p);return p}
+/* v79r16: Claire/Nathan como ped (motel, dupla, casa): no modo 3D o ped nascia com o boneco "mais parecido" do pool (NPC comum, outra calça, botões) até a roupa dele ser montada aos poucos — e nos cortes a fila nem andava. Agora monta na hora. */
+function pedExact(p){const px=p&&p.sp&&p.sp.userData.texProxy;if(S.sprite8!==true||!px||!px.standIn)return;for(let i=0;i<800&&px.standIn;i++){try{ped3dJobTick()}catch(e){console.error(e);break}}}
 function spawnBalconyPed(x,z,y,mx,mz,pal){const ch=makeCharacter(pal||pick2(PED_PALS));const gy=groundY(x,z);const p={...ch,ri:rectNear(x,z),r:null,pitch:.8+R2()*.5,t:0,spd:0,dir:1,state:'fare',fixed:true,timer:0,x,z,vx:0,vz:0,mx:mx||0,mz:mz||1,anim:R2()*10,gy,rot:0,jy:Math.max(.1,y-gy),balcony:true};p.r=perim(p.ri);p.sh.visible=false;peds.push(p);return p}
 const UMB={geo:new THREE.ConeGeometry(.85,.38,12),stick:new THREE.CylinderGeometry(.03,.03,1,5),mats:['#e04a3a','#2a8ad6','#f2c21a','#1e1e24','#3ab36a','#ff6fae','#7a4ad6'].map(c=>new THREE.MeshStandardMaterial({color:c,roughness:.55})),sm:new THREE.MeshStandardMaterial({color:0x333333})};
 function giveUmbrella(p){const g=new THREE.Group();const c=new THREE.Mesh(UMB.geo,UMB.mats[Math.floor(R2()*UMB.mats.length)]);c.castShadow=true;const st=new THREE.Mesh(UMB.stick,UMB.sm);st.position.y=-.5;g.add(c,st);scene.add(g);p.umb=g}
@@ -12774,7 +12846,7 @@ function pedZoneK(){const now=simT||0;if(now-PEDZ.t<2)return PEDZ.k;PEDZ.t=now;c
 function pedTarget(){if(S.style==='inverted'||S.style==='haze')return 0;return Math.max(1,Math.round(S.peds*(50/75)*1.25*(1+(city.pedRatio||0))*pedZoneK()))}
 function pedPoint(p){if(!p.strip)return perimPoint(p.r,p.t);const q=p.strip,L=Math.hypot(q[2]-q[0],q[3]-q[1]);if(p.t>L){p.t=L;p.dir=-1}else if(p.t<0){p.t=0;p.dir=1}
  const ux=(q[2]-q[0])/L,uz=(q[3]-q[1])/L;return[q[0]+ux*p.t,q[1]+uz*p.t,ux,uz]}
-function removePed(p){releasePatioGuest(p);for(const ch of city.chunks.values()){const i=(ch.peds||[]).indexOf(p);if(i>=0)ch.peds.splice(i,1)}if(p.poseMesh){scene.remove(p.poseMesh);p.poseMesh.geometry.dispose();p.poseMesh.material.dispose();p.poseMesh=null}dropUmbrella(p);scene.remove(p.sp);scene.remove(p.sh);p.sp.material.dispose();charTexRelease(p.tex);p.sh.geometry.dispose();p.sh.material.dispose();const k=peds.indexOf(p);if(k>=0)peds.splice(k,1)}
+function removePed(p){if(p.skb){skDisposeG(p.skb);p.skb=null}releasePatioGuest(p);for(const ch of city.chunks.values()){const i=(ch.peds||[]).indexOf(p);if(i>=0)ch.peds.splice(i,1)}if(p.poseMesh){scene.remove(p.poseMesh);p.poseMesh.geometry.dispose();p.poseMesh.material.dispose();p.poseMesh=null}dropUmbrella(p);scene.remove(p.sp);scene.remove(p.sh);p.sp.material.dispose();charTexRelease(p.tex);p.sh.geometry.dispose();p.sh.material.dispose();const k=peds.indexOf(p);if(k>=0)peds.splice(k,1)}
 function clearPeds(){while(peds.length)removePed(peds[0])}
 function circleVsWorld(o,r){const near=query(o.x,o.z,r+1);
  const jy=o.jy||0;for(const b of near){if(b.dead)continue;if(o===PL&&b.kind==='bin'&&b.bin&&!b.bin.big&&o.x>b.x0-.45&&o.x<b.x1+.45&&o.z>b.z0-.45&&o.z<b.z1+.45){const bx=(b.x0+b.x1)/2-o.x,bz=(b.z0+b.z1)/2-o.z,l=Math.hypot(bx,bz)||1;knockBin(b,bx/l*5,bz/l*5);continue}if(o===PL&&PL.ubr&&b.low)continue;if(jy>0&&((b.kind==='bin'&&jy>.9)||(b.low&&jy>b.low-.15)))continue;const cx=clamp(o.x,b.x0,b.x1),cz=clamp(o.z,b.z0,b.z1);let dx=o.x-cx,dz=o.z-cz;const d=Math.hypot(dx,dz);
@@ -12823,6 +12895,7 @@ function updatePeds(dt){try{ped3dJobTick()}catch(e){console.error(e);PED3JOB.cur
    p._rainT=(p._rainT||0)-dt;
    if(p._rainT<=0){p._rainT=.20+R2()*.10;p._rainValue=anyRain?rainAt(p.x,p.z):0;}
    const rl=p._rainValue||0;if(rl>.45&&!p.rainMode){p.rainMode=R2()<.55?'umb':'run';if(p.rainMode==='umb')giveUmbrella(p);else p.state='walk'}else if(rl<.2&&p.rainMode){p.rainMode=null;dropUmbrella(p)}}}
+  if(p.skb&&p.state!=='bskate')pedSkDrop(p);
   if(p.umb&&(p.state==='dead'||p.state==='down'))dropUmbrella(p);if(p.state==='dead'&&!p.bled){p.bled=true;bloodHit(p.x,.8,p.z,null);decal(p.x,p.z,1.9+Math.random()*.8,.9,p)}if(p.state==='dead'&&p.timer<=0){removePed(p);continue}
   if(p.state==='cop'){updateCop(p,dt);if(!peds.includes(p))continue}
   else if(p.state==='lie'){if(DN.nightF>.5&&!p.corpse){removePed(p);continue}p.vx=p.vz=0;if(!p.corpse&&CELLS.length&&rainAt(p.x,p.z)>.3&&R2()<dt*1.5){const dI=inland();p.state='leave';p.rot=0;p.sp.material.alphaTest=.02;p.sp.material.needsUpdate=true;p.timer=14;p.vx=dI[0]*2.6+(R2()-.5);p.vz=dI[1]*2.6+(R2()-.5);p.mx=dI[0];p.mz=dI[1]}}
@@ -12837,6 +12910,7 @@ function updatePeds(dt){try{ped3dJobTick()}catch(e){console.error(e);PED3JOB.cur
   else if(p.state==='toDoor'||p.state==='fromDoor'){const w=p.wp[0],dx=w[0]-p.x,dz=w[1]-p.z,d=Math.hypot(dx,dz),v=p.spd*(p.rainMode==='run'?2.4:1);
    if(d<.25){p.wp.shift();if(!p.wp.length){if(p.state==='toDoor'){p.state='inside';p.timer=.7;p.vx=p.vz=0;p.sp.material.alphaTest=.02;p.sp.material.needsUpdate=true}else{p.state='walk';p.t=perimNearest(p.r,p.x,p.z)}}}
    else{const st=Math.min(d,v*dt);p.mx=dx/d;p.mz=dz/d;p.vx=p.mx*v;p.vz=p.mz*v;p.x+=p.mx*st;p.z+=p.mz*st}}
+  else if(p.state==='bskate'){if(!BEACH.ok){removePed(p);continue}if(pedSkTick(p,dt))continue}
   else if(p.state==='bwalk'){const B=BEACH;if(!B.ok){removePed(p);continue}if(CELLS.length&&rainAt(p.x,p.z)>.4){const dI=inland();p.state='leave';p.timer=14;p.vx=dI[0]*2.6;p.vz=dI[1]*2.6}
    else{if(p.bt<B.t0+4||p.bt>B.t1-4||R2()<dt*.015)p.bdir*=-1;p.bt+=p.bdir*p.spd*dt;p.bu=clamp(p.bu+(R2()-.5)*dt*.5,B.u0,B.u1);const q=B.TU(p.bt,p.bu),q2=B.TU(p.bt+p.bdir,p.bu);
     p.mx=q2[0]-q[0];p.mz=q2[1]-q[1];p.vx=p.mx*p.spd;p.vz=p.mz*p.spd;p.x=q[0];p.z=q[1]}}
@@ -12919,7 +12993,7 @@ function respawnBase(){worldReset();if(PL.dead&&!PL.inside){const m=PL.money||0,
  PL.armor=0;PL.x=hs?hs.x:pt[0];PL.z=hs?hs.z:pt[1];PL.vx=PL.vz=0;PL.inside=false;PL.hp=100;PL.dead=false;PL.rot=0;PL.down=0;document.body.classList.remove('ko-grayscale');$('#ko').hidden=true;$('#ko').textContent='NOCAUTE';toast(hs&&hs.hz?'POINT HAZE<br><small style="font-size:11px;color:#fff">você acordou nas ruínas do castelo</small>':hs?(hs.pol?'DELEGACIA<br><small style="font-size:11px;color:#fff">você foi liberado</small>':'HOSPITAL<br><small style="font-size:11px;color:#fff">você recebeu alta</small>'):'DE VOLTA ÀS RUAS')}
 function respawnPlayer(){if(storyMissionFail('VOCÊ MORREU'))return;if(S.style==='inverted'||INVERT.deathReturn){if(!INVERT.switching)void invertShiftWorld('modern','ESCAPANDO DA MORTE…',true);return}respawnBase()}
 function enterExit(){if(PL.inside==='ammo'){if(ammoCounterNear())ammoOpen();return}if((PL.inside==='heist'||PL.inside==='pawn')&&heistAct())return;if(PL.taxi){taxiEnd('CORRIDA ENCERRADA · TOTAL $'+TAXI.paid);return}if(heliAct())return;if(paraAct())return;if(PL.inside==='jail'){jailBail();return}if(TVM.on){tvOff();return}if(PL.inside==='shop'||PL.inside==='mall'||PL.inside==='club'||PL.inside==='casino'){if(CTX.shop||CTX.mall||CTX.club||slotNear()>=0||casinoTableNear())ctxAct(1);return}if(wardNear()){openWard('home');return}if(PL.inside&&tvNear()){tvOn();return}
- if(PL.dead||menuOpen)return;PL.jy=0;PL.jv=0;
+ if(PL.dead||menuOpen)return;if(SKATE.ride&&!PL.car){skDismount(false);return}if(!PL.car){const sk=skNear();if(sk){skMount(sk);return}}PL.jy=0;PL.jv=0;
  if(PL.car&&PL.car.t.boat){const c=PL.car;let spot=null;for(const p of city.piers||[]){if(Math.hypot(p.boat?p.boat.x-c.x:1e9,p.boat?p.boat.z-c.z:1e9)<14||Math.hypot(p.cx-c.x,p.cz-c.z)<16){for(let a=0;a<16&&!spot;a++){for(const dd of [2.2,3,4,5]){const x=c.x+Math.cos(a/16*6.283)*dd,z=c.z+Math.sin(a/16*6.283)*dd;if(pierY(x,z)!==null){spot=[x,z];break}}}}}
   if(!spot)for(let a=0;a<24&&!spot;a++)for(const dd of [2.5,3.5,4.5]){const x=c.x+Math.cos(a/24*6.283)*dd,z=c.z+Math.sin(a/24*6.283)*dd;if(!inWater(x,z)&&!riverZone(x,z)){spot=[x,z];break}}
   if(!spot&&maskOn()){const a=c.a+Math.PI/2;spot=[c.x+Math.cos(a)*(c.t.W/2+1.4),c.z+Math.sin(a)*(c.t.W/2+1.4)]} /* v78: com a Maskara desce da lancha em qualquer lugar (anda na água) */
@@ -12966,7 +13040,7 @@ function enterExit(){if(PL.inside==='ammo'){if(ammoCounterNear())ammoOpen();retu
  if(camMode==='fps'){chasePos.set(best.x-Math.cos(best.a)*9,4,best.z-Math.sin(best.a)*9)}
  initAudio();
 }
-function plJump(){if(PL.car||PL.dead||PL.down>0||PL.jy>.05&&PL.jv!==0)return;if(PL.jy>.05&&PL.jv===0){PL.jv=6.2;return}PL.jv=7.4;PL.jy=.001}
+function plJump(){if(SKATE.ride){skJump();return}if(PL.car||PL.dead||PL.down>0||PL.jy>.05&&PL.jv!==0)return;if(PL.jy>.05&&PL.jv===0){PL.jv=6.2;return}PL.jv=7.4;PL.jy=.001}
 /* Beach rooftop jumps: resident access points and a small shared parachute model. */
 const PARA={sites:[],active:null,npcs:[],timer:15,lastNpcMin:-1e9,group:null,approachCd:0,approachArmed:true};
 function paraModel(npc){
@@ -13187,6 +13261,7 @@ function updatePlayer(dt){
   if(c.type==='moto'||c.type==='jetski'){const vis=camMode!=='fps'||VIEW.tp;PL.sp.visible=vis;PL.sh.visible=false;PL.gy=c.gy+(c.airY||0)+(c.rampY||0)+(c.type==='moto'?.42:(camMode==='top'&&!VIEW.orbit?.04:.08));PL.jy=0;PL.rot=-(c.roll||0)*.9;const ca=Math.cos(c.a),sa=Math.sin(c.a);PL.face=[ca,sa];setFrame(PL.tex,pickDir(ca,sa,c.x-ca*.15,c.z-sa*.15),0);placeSprite({...PL,x:c.x-ca*.15,z:c.z-sa*.15,sh:PL.sh})}
   return}
  if(PL.down>0||PL.dead){PL.down-=dt;PL.x+=PL.vx*dt;PL.z+=PL.vz*dt;PL.vx*=Math.exp(-dt*3);PL.vz*=Math.exp(-dt*3);circleVsWorld(PL,.4);if(PL.down<=0&&!PL.dead)PL.rot=0}
+ else if(SKATE.ride)skMove(dt);
  else{
   let mx=0,mz=0;
   if(camMode==='top'){const sx=clamp(((keys.KeyD||keys.ArrowRight)?1:0)-((keys.KeyA||keys.ArrowLeft)?1:0)+PAD.lx,-1,1),sy=clamp(((keys.KeyW||keys.ArrowUp)?1:0)-((keys.KeyS||keys.ArrowDown)?1:0)-PAD.ly,-1,1),y=VIEW.orbit?ORB.yaw:0;mx=Math.cos(y)*sx-Math.sin(y)*sy;mz=-Math.sin(y)*sx-Math.cos(y)*sy}
@@ -13210,7 +13285,7 @@ function updatePlayer(dt){
  const es=maskOn()?null:estuaryAt(PL.x,PL.z);if(es&&!PL.car&&!PL.dead){PL.x+=es.dx*(1-es.edge)*5*dt;PL.z+=es.dz*(1-es.edge)*5*dt;if(es.edge<.22)drown()}if(!worldPlGy(dt)){let sy=shipAt(PL.x,PL.z)?shipSupportY(PL.x,PL.z,PL.gy+PL.jy):groundY(PL.x,PL.z);{ /* v79r2: Maskara correndo na água passa POR BAIXO das pontes — segue no nível da água, ignora a mureta baixa e some sob a laje (balão 1x por passagem) */
   const mk=maskOn()&&!PL.car&&!PL.inside,wet=mk&&inWater(PL.x,PL.z),dk=(m)=>(city.decks||[]).some(r=>PL.x>r[0]-m&&PL.x<r[2]+m&&PL.z>r[1]-m&&PL.z<r[3]+m);
   PL.ubr=mk&&!wet&&PL.gy<-1&&dk(1.2);PL.ubrIn=PL.ubr&&dk(-.3);if(PL.ubrIn&&!PL.ubrSaid){PL.ubrSaid=true;think(PL,'Gostoso esse concreto todo',2.6)}if(!PL.ubr&&!dk(3))PL.ubrSaid=false;
-  if(wet||PL.ubr)sy=waterLevel(PL.x,PL.z)+.02} /* v78: só fora de interiores (o lab fica em coordenada de mar) */ /* v78: Maskara corre por cima de rio e mar */PL.gy+=(sy-PL.gy)*Math.min(1,dt*10)}
+  if(wet||PL.ubr)sy=waterLevel(PL.x,PL.z)+.02} /* v78: só fora de interiores (o lab fica em coordenada de mar) */ /* v78: Maskara corre por cima de rio e mar */if(SKATE.ride)sy+=SK_UP;PL.gy+=(sy-PL.gy)*Math.min(1,dt*10)}
  const moving=Math.hypot(PL.vx,PL.vz)>.5&&PL.down<=0;const ph=Math.floor(PL.anim)%4;const fr=PL.jy>.05?1:moving?(ph===1?1:ph===3?2:0):0;
  setFrame(PL.tex,pickDir(PL.face[0],PL.face[1],PL.x,PL.z),fr);
  placeSprite(PL);const vis=(camMode!=='fps'||VIEW.tp)&&!PL.ubrIn&&!(typeof PHOTO!=='undefined'&&PHOTO.hidePl);PL.sp.visible=vis;PL.sh.visible=vis;
@@ -13368,17 +13443,23 @@ function ouch(x,z,pitch=1){if(!AC)return;const d=Math.hypot(x-camera.position.x,
 const BOOM={slots:[],t:0};
 // v78: rádio dos carros que passam não vaza para dentro dos interiores (motel, lojas…): corta ao entrar
 function boomStop(){for(const sl of BOOM.slots){try{sl.el.pause()}catch(e){}sl.car=null}BOOM.t=.8}
-function boomUpdate(dt){if(!AC||!canRoute||!RADIO.list.length)return;
- if(!BOOM.slots.length){for(let i=0;i<2;i++){const el=new Audio();el.loop=true;el.preload='auto';try{const src=AC.createMediaElementSource(el);const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2600;
-  const pn=AC.createPanner();pn.panningModel='HRTF';pn.distanceModel='inverse';pn.refDistance=5;pn.rolloffFactor=1.3;pn.maxDistance=80;const g=eqChain(lp,1.3),g7=AC.createGain();g7.gain.value=.7;src.connect(lp);g.connect(g7);g7.connect(pn);pn.connect(musicBus);BOOM.slots.push({el,pn,car:null})}catch(e){return}}}
+/* v79r17: carro que passa toca a rádio que você escolheu — ONLINE (KRFM ao vivo) ou as do servidor, estas em sequência (antes: loop da mesma música, e sem rádios no servidor ficava mudo).
+   Só carro rodando com motorista (trânsito/IA): estacionado, seu, da garagem, da história ou guardado não toca. */
+function boomLive(){return RADIO.mode==='live'&&S.style==='modern'&&!RADIO.liveDown}
+function boomOk(c){return!!(c&&c.boom&&c.alive&&!c.exploded&&(c.ai||c.mode==='rail')&&!c.tempPark&&!c.owned&&!c.stashed&&c!==PL.lastCar&&!(SAFE.cars||[]).includes(c)&&!(typeof PROLOGUE!=='undefined'&&c===PROLOGUE.car)&&!(DUO.car&&c===DUO.car))}
+function boomPick(sl){const live=boomLive();if(live)return{url:LIVE_URL,live:true};BOOM.rng=BOOM.rng||mulberry32((S.seed*2654435761)>>>0);const pool=RADIO.list.filter(s=>!s.world&&s.songs.length),sts=pool.length?pool:RADIO.list.filter(s=>s.songs.length);if(!sts.length)return null;
+ const st=sts[Math.floor(BOOM.rng()*sts.length)],i=Math.floor(BOOM.rng()*st.songs.length);sl.st=st;sl.i=i;return{url:st.songs[i].url,live:false}}
+function boomSet(sl,src,seek){sl.live=src.live;if(sl.el.dataset.url===src.url)return;sl.el.dataset.url=src.url;sl.el.src=src.live?src.url:encodeURI(decodeURI(src.url));if(seek&&!src.live)sl.el.addEventListener('loadedmetadata',()=>{try{if(sl.el.seekable.length&&isFinite(sl.el.duration))sl.el.currentTime=Math.random()*sl.el.duration*.8}catch(e){}},{once:true})}
+function boomUpdate(dt){if(!AC||!canRoute)return;if(!boomLive()&&!RADIO.list.some(s=>s.songs.length)){for(const sl of BOOM.slots)if(sl.car){sl.el.pause();sl.car=null}return}
+ if(!BOOM.slots.length){for(let i=0;i<2;i++){const el=new Audio();el.loop=false;el.preload='auto';try{const src=AC.createMediaElementSource(el);const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2600;
+  const pn=AC.createPanner();pn.panningModel='HRTF';pn.distanceModel='inverse';pn.refDistance=5;pn.rolloffFactor=1.3;pn.maxDistance=80;const g=eqChain(lp,1.3),g7=AC.createGain();g7.gain.value=.7;src.connect(lp);g.connect(g7);g7.connect(pn);pn.connect(musicBus);const sl={el,pn,car:null};BOOM.slots.push(sl);el.addEventListener('ended',()=>{if(!sl.car||sl.live||!sl.st||!sl.st.songs.length)return;sl.i=(sl.i+1)%sl.st.songs.length;boomSet(sl,{url:sl.st.songs[sl.i].url,live:false},false);const pr=el.play();if(pr&&pr.catch)pr.catch(()=>{})})}catch(e){return}}}
  const cp=camera.position;const lx=camMode==='top'?PL.x:cp.x,lz=camMode==='top'?PL.z:cp.z;
  const active=!PL.car&&!PL.inside&&!menuOpen&&S.sound&&S.style==='modern';
- for(const sl of BOOM.slots){const c=sl.car;if(c&&(!active||vehicles.indexOf(c)<0||Math.hypot(c.x-lx,c.z-lz)>60)){sl.el.pause();sl.car=null}
+ const liveNow=boomLive();for(const sl of BOOM.slots){const c=sl.car;if(c&&(!active||vehicles.indexOf(c)<0||!boomOk(c)||Math.hypot(c.x-lx,c.z-lz)>60||!!sl.live!==liveNow)){sl.el.pause();sl.car=null}
   if(sl.car){if(sl.pn.positionX){sl.pn.positionX.value=c.x;sl.pn.positionY.value=1;sl.pn.positionZ.value=c.z}else sl.pn.setPosition(c.x,1,c.z)}}
  BOOM.t-=dt;if(BOOM.t>0||!active)return;BOOM.t=.8;
- const used=new Set(BOOM.slots.map(s=>s.car));const cands=carsNear(lx,lz,45).filter(c=>c.boom&&c.alive&&c!==PL.lastCar&&!used.has(c)).sort((a,b)=>Math.hypot(a.x-lx,a.z-lz)-Math.hypot(b.x-lx,b.z-lz));
- for(const sl of BOOM.slots){if(sl.car||!cands.length)continue;const c=cands.shift();sl.car=c;BOOM.rng=BOOM.rng||mulberry32((S.seed*2654435761)>>>0);const pool=RADIO.list.filter(s=>!s.world&&s.songs.length),sts=pool.length?pool:RADIO.list,st=sts[Math.floor(BOOM.rng()*sts.length)],song=st.songs[Math.floor(BOOM.rng()*st.songs.length)];if(!song)continue;
-  if(sl.el.dataset.url!==song.url){sl.el.dataset.url=song.url;sl.el.src=encodeURI(decodeURI(song.url));sl.el.addEventListener('loadedmetadata',()=>{try{if(sl.el.seekable.length&&isFinite(sl.el.duration))sl.el.currentTime=Math.random()*sl.el.duration*.8}catch(e){}},{once:true})}
+ const used=new Set(BOOM.slots.map(s=>s.car));const cands=carsNear(lx,lz,45).filter(c=>boomOk(c)&&!used.has(c)).sort((a,b)=>Math.hypot(a.x-lx,a.z-lz)-Math.hypot(b.x-lx,b.z-lz));
+ for(const sl of BOOM.slots){if(sl.car||!cands.length)continue;const src=boomPick(sl);if(!src)continue;const c=cands.shift();sl.car=c;boomSet(sl,src,true);
   if(sl.pn.positionX){sl.pn.positionX.value=c.x;sl.pn.positionY.value=1;sl.pn.positionZ.value=c.z}const pr=sl.el.play();if(pr&&pr.catch)pr.catch(()=>{})}}
 /* ---- RADIO ---- */
 const LIVE_URL='https://azura.sims.dev.br/listen/krfm/128k.mp3';
@@ -13729,10 +13810,11 @@ const ENG_PROF={
  heavy:{o1:'triangle',o2:'sawtooth',r2:.5,base:40,rk:62,gk:7,ld:10,gears:5,gs:10,fb:380,fr:600,fl:250,q:1.2,g0:.08,g1:.05,lag:.07},
  truck:{o1:'triangle',o2:'sawtooth',r2:.5,base:26,rk:40,gk:5,ld:8,gears:7,gs:6,fb:260,fr:380,fl:180,q:.8,g0:.11,g1:.05,lag:.1},
  moto:{o1:'sawtooth',o2:'square',r2:2,base:78,rk:170,gk:14,ld:24,gears:5,gs:10,fb:1200,fr:2200,fl:800,q:3,g0:.06,g1:.06,lag:.025},
- boat:{o1:'sine',o2:'sawtooth',r2:.5,base:34,rk:52,gk:0,ld:10,gears:0,gs:1,fb:300,fr:500,fl:200,q:1,g0:.08,g1:.05,lag:.12,wob:9,wa:3},
- jet:{o1:'sawtooth',o2:'square',r2:1.5,base:70,rk:120,gk:0,ld:18,gears:0,gs:1,fb:900,fr:1800,fl:600,q:2,g0:.06,g1:.06,lag:.05,wob:14,wa:5},
- hover:{o1:'triangle',o2:'sawtooth',r2:4,base:32,rk:30,gk:0,ld:8,gears:0,gs:1,fb:1400,fr:1200,fl:400,q:4,g0:.07,g1:.04,lag:.15}};
+ boat:{o1:'sine',o2:'sawtooth',r2:.5,base:34,rk:52,gk:5,ld:10,gears:0,gs:1,fb:300,fr:500,fl:200,q:1,g0:.08,g1:.05,lag:.12,wob:9,wa:3},
+ jet:{o1:'sawtooth',o2:'square',r2:1.5,base:70,rk:120,gk:10,ld:18,gears:0,gs:1,fb:900,fr:1800,fl:600,q:2,g0:.06,g1:.06,lag:.05,wob:14,wa:5},
+ hover:{o1:'triangle',o2:'sawtooth',r2:4,base:32,rk:30,gk:4,ld:8,gears:0,gs:1,fb:1400,fr:1200,fl:400,q:4,g0:.07,g1:.04,lag:.15}};
 const ENG_OF={sedan:'car',taxi:'car',wagon:'car',police:'sport',hatch:'small',mini:'small',sports:'sport',conv:'sport',roadster:'sport',super:'super',suv:'heavy',crossover:'heavy',pickup:'heavy',van:'heavy',truck:'truck',bus:'truck',moto:'moto',boat:'boat',jetski:'jet',vortex:'hover'};
+const ENG_GEARS=6;
 function engProf(c){return ENG_PROF[ENG_OF[c.type]||'car']}
 // v284: bancos de harmônicos reutilizados, mantendo os dois osciladores existentes.
 const ENGINE_WAVES=new Map();let engineWaveKind=null;
@@ -13804,7 +13886,7 @@ function updateAudio(dt){hornTick();updateRadio();if(!AC)return;const t=AC.curre
  if(menuOpen){// pausado: os ticks de helicóptero/avião não rodam, então zera os loops aqui
   const mute=s=>{if(s&&s.g)s.g.gain.setTargetAtTime(0,t,.05)};for(const h of HELI.list)mute(h.snd);if(HELI.cur)mute(HELI.cur.snd);if(typeof COPH!=='undefined'&&COPH.h)mute(COPH.h.snd);for(const sl of SKY.slots)if(sl.o)mute(sl.o.snd);for(const v of vehicles)mute(v.snd)}
  if(PL.car&&!menuOpen){const c=PL.car,E=engProf(c),sp=Math.abs(c.fwd),vt=c.vt||(c.vt=soundVary(1,.06,(((c.id*2654435761)>>>0)%1000)/1000));
-  let gear=0,rpm;if(E.gears){gear=Math.min(E.gears-1,Math.floor(sp/E.gs));rpm=(sp-gear*E.gs)/E.gs;if(gear===E.gears-1)rpm=Math.min(1.6,rpm)}else rpm=Math.min(1.2,sp/Math.max(8,c.t.vmax*.8));
+  let gear=0,rpm;{const G=ENG_GEARS,gs=Math.max(2.5,c.t.vmax*.14);gear=Math.min(G-1,Math.floor(sp/gs));rpm=(sp-gear*gs)/gs;if(gear===G-1)rpm=Math.min(1.6,rpm)} /* v79r14: todo veículo (carro, moto, lancha, jet ski, hovercraft) troca 5 marchas até ~70% da vel. máx.; a 6ª fica contínua */
   const a=c._audio284||(c._audio284={load:0,gear,ramp:0});a.load+=(Math.max(0,c.thr)-a.load)*(1-Math.exp(-Math.min(.1,dt||0)*9));if(a.gear!==gear){a.gear=gear;a.ramp=.14}a.ramp=Math.max(0,a.ramp-(dt||0));const load=a.load,idle=sp<1.2?Math.sin(t*7.2+c.id)*1.35:0,f=c.alive?(E.base+rpm*E.rk+gear*E.gk+load*E.ld+idle)*vt*(c.turbo?1.06:1)*(c.nitro?1.12:1):0;
   const kind=ENG_OF[c.type]||'car';if(engineWaveKind!==kind){engineWaveKind=kind;engO1.setPeriodicWave(engineWave(kind,0));engO2.setPeriodicWave(engineWave(kind,1))}
   engO1.frequency.setTargetAtTime(f,t,E.lag);engO2.frequency.setTargetAtTime(f*E.r2+(E.wob?Math.sin(t*E.wob)*E.wa:0),t,E.lag);engMix2.gain.setTargetAtTime((ENG_OF[c.type]==='super'||ENG_OF[c.type]==='sport'||ENG_OF[c.type]==='moto'?.49:.24)+load*.12,t,.09);engF.frequency.setTargetAtTime((E.fb+rpm*E.fr+load*E.fl)*(c.turbo?1.25:1),t,.09);engF.Q.setTargetAtTime(Math.min(1.25,E.q),t,.1);
@@ -13823,6 +13905,11 @@ function clang(v=1){if(!AC)return;const t=AC.currentTime;const g=AC.createGain()
 function boomSound(dist){if(!AC)return;const t=AC.currentTime,vol=Math.max(.05,1-dist/180);const s=AC.createBufferSource();s.buffer=AC._noise;s.loop=true;const f=AC.createBiquadFilter();f.type='lowpass';f.frequency.setValueAtTime(1600,t);f.frequency.exponentialRampToValueAtTime(120,t+1.6);
  const g=AC.createGain();g.gain.setValueAtTime(.9*vol,t);g.gain.exponentialRampToValueAtTime(.001,t+1.8);s.connect(f);f.connect(g);g.connect(master);s.start(t);s.stop(t+1.9);
  const o=AC.createOscillator();o.type='sine';o.frequency.setValueAtTime(90,t);o.frequency.exponentialRampToValueAtTime(30,t+.8);const g2=AC.createGain();g2.gain.setValueAtTime(.8*vol,t);g2.gain.exponentialRampToValueAtTime(.001,t+1);o.connect(g2);g2.connect(master);o.start(t);o.stop(t+1.1)}
+/* v79r14: pancada seca de porcelana (tacada e bola com bola): estalo de ruído agudo bem curto + 2 parciais inarmônicos que morrem em ~60 ms + corpo médio sem cauda */
+function poolClack(v=1){if(!AC)return;const t=AC.currentTime;if(t-(AC._pcT||0)<.025)return;AC._pcT=t;v=Math.max(.05,Math.min(1,v));
+ const s=AC.createBufferSource();s.buffer=AC._noise;s.playbackRate.value=1.6;const hp=AC.createBiquadFilter();hp.type='highpass';hp.frequency.value=2200;const bp=AC.createBiquadFilter();bp.type='bandpass';bp.frequency.value=3900;bp.Q.value=1.3;const gn=AC.createGain();gn.gain.setValueAtTime(.5*v,t);gn.gain.exponentialRampToValueAtTime(.001,t+.022);s.connect(hp);hp.connect(bp);bp.connect(gn);gn.connect(master);s.start(t,Math.random()*.5);s.stop(t+.03);
+ for(const [f,a,d] of [[2630,.16,.06],[4170,.08,.04],[6020,.035,.025]]){const o=AC.createOscillator();o.type='sine';o.frequency.setValueAtTime(f*(.98+Math.random()*.04),t);const g=AC.createGain();g.gain.setValueAtTime(a*v,t);g.gain.exponentialRampToValueAtTime(.0005,t+d);o.connect(g);g.connect(master);o.start(t);o.stop(t+d+.01)}
+ const b=AC.createOscillator();b.type='triangle';b.frequency.setValueAtTime(1050,t);b.frequency.exponentialRampToValueAtTime(620,t+.03);const gb=AC.createGain();gb.gain.setValueAtTime(.14*v,t);gb.gain.exponentialRampToValueAtTime(.0005,t+.045);b.connect(gb);gb.connect(master);b.start(t);b.stop(t+.06)}
 function thud(v){if(!AC)return;const t=AC.currentTime;const o=AC.createOscillator();o.type='sine';o.frequency.setValueAtTime(140,t);o.frequency.exponentialRampToValueAtTime(40,t+.2);const g=AC.createGain();g.gain.setValueAtTime(Math.min(.5,v*.04),t);g.gain.exponentialRampToValueAtTime(.001,t+.25);o.connect(g);g.connect(master);o.start(t);o.stop(t+.3)}
 
 /* ================= CAMERA ================= */
@@ -13958,6 +14045,7 @@ addEventListener('keydown',e=>{
  if(e.code==='F8'&&e.ctrlKey&&e.shiftKey){e.preventDefault();e.stopPropagation();if(!e.repeat)devTour();return}
  if(e.code==='F9'&&e.ctrlKey&&e.shiftKey){e.preventDefault();e.stopPropagation();if(!e.repeat&&!/^(INPUT|TEXTAREA|SELECT)$/.test(e.target?.tagName||''))missionDebugSkip();return}
  if(e.target&&e.target.id==='chin')return;
+ if(SKATE.ui){if(e.code==='Escape'){e.preventDefault();skUiClose()}else if(e.code==='Enter'){e.preventDefault();skUiBuy()}return}
  if(STORYFAIL.active){e.preventDefault();return}
  if(STORYEND.active||STORYINTRO.active){
   if(e.code==='Escape'){e.preventDefault();if(!e.repeat){if(menuOpen&&played)closeMenu();else if(played)openMenu()}return}
@@ -14252,7 +14340,7 @@ function padPoll(dt){const g=PAD.on?padGet():null;if(!g){PAD.lx=PAD.ly=PAD.rx=PA
   return}
  const dlg=padDialog();
  if(pr(9)){if(PHOTO.on)photoExit();else if(NEWS.open)newsClose();else if(AMMO.uiOpen)ammoClose();else if(recordsOpen)closeRecords();else if(cfgOpen)closeCfg();else if(cmdsOpen)closeCmds();else if(TUNE.open)closeTune();else if(SLOT.open)slotClose();else if(TABLE_GAME.open)tableGameClose();else if(MP.open)modePickClose();else if(DEAL.open)dealClose();else if(WARD.open)closeWard(false);else if(NAV.open)closeMap();else if(menuOpen){if(played)closeMenu();else $('#play').click()}else if(played)openMenu();return}
- if(POOL.on){poolPad(pr,dt);return}if(DICE.on){dicePad(pr);return}
+ if(POOL.on){poolPad(pr,dt);return}if(DICE.on){dicePad(pr);return}if(SKATE.ui){if(pr(1))skUiClose();else if(pr(0))skUiBuy();return}
  if(NAV.open){cheatPad(pr);if(pr(3))mapIntToggle(); /* v79r3: Y/△ alterna interior ⇄ cidade */
   if(NAV.inMode){const zt=((PAD.r2||0)-(PAD.l2||0))+(Math.abs(PAD.ry||0)>.25?-PAD.ry:0);if(Math.abs(zt)>.12)mapZoomAt(innerWidth/2,innerHeight/2,Math.exp(zt*dt*1.8));if((NAV.zoom||1)>1.001&&Math.hypot(PAD.lx||0,PAD.ly||0)>.15){const v=bigView();NAV.cx=(NAV.cx||0)+PAD.lx*420*dt/v.sc;NAV.cy=(NAV.cy||0)+PAD.ly*420*dt/v.sc;drawBigmap()}if(pr(1)||pr(8)||pr(17))closeMap();return}
   if(!NAV.cur){const p=PL.car||PL;NAV.cur={x:p.x,z:p.z}}const E=city.ext,sp=E*.55*dt;const zk=(NAV.zoom||1);NAV.cur.x=clamp(NAV.cur.x+PAD.lx*sp/zk,-MOFF,E+MOFF);NAV.cur.z=clamp(NAV.cur.z+PAD.ly*sp/zk,-MOFF,E+MOFF);{const zt=((PAD.r2||0)-(PAD.l2||0))+(Math.abs(PAD.ry||0)>.25?-PAD.ry:0);if(Math.abs(zt)>.12)mapZoomAt(innerWidth/2,innerHeight/2,Math.exp(zt*dt*1.8))} /* v78: como no GTA V — RT aproxima, LT afasta (segurar); analógico direito cima/baixo também */
@@ -14487,6 +14575,17 @@ async function monCopyText(txt,button,originalTitle){if(!txt)return;
  setTimeout(()=>{button.textContent='COPIAR';button.title=originalTitle},1500);
 }
 $('#mCoordCopy').addEventListener('click',e=>{e.stopPropagation();void monCopyText(MON.coords,$('#mCoordCopy'),'Copiar X,Y,Z')});
+/* v79r19: debug — cola "X,Y,Z" (o mesmo texto do COPIAR) ou "X,Z" e teleporta. Conta como cheat de teleporte: desativa o save. */
+function monTeleport(){const el=$('#mTpIn'),n=(String(el.value||'').match(/-?\d+(?:\.\d+)?/g)||[]).map(Number);
+ if(!played||n.length<2||!n.every(Number.isFinite)){toast('TELEPORT · USE X,Y,Z OU X,Z');return}
+ const x=n[0],z=n.length>=3?n[2]:n[1];{const ev=eventLock();if(ev){toast('TELEPORT BLOQUEADO · '+ev);return}}
+ if(SKATE.ride)skDismount(false);CHEAT.used=true;try{syncSave()}catch(e){}cheatWarp(x,z);el.blur();toast('TELEPORT · '+x.toFixed(2)+', '+z.toFixed(2)+'<br><small style="font-size:11px;color:#fff">cheat: save desativado</small>')}
+$('#mTpGo').addEventListener('click',e=>{e.stopPropagation();monTeleport()});
+/* v79r21: o monitor tem pointer-events:none (só os botões recebiam clique) — o campo não pegava foco nem Ctrl+V. Agora recebe; e COLAR lê a área de transferência */
+$('#mTpPaste').addEventListener('click',async e=>{e.stopPropagation();const el=$('#mTpIn');let t='';try{if(navigator.clipboard&&navigator.clipboard.readText)t=await navigator.clipboard.readText()}catch(err){}
+ if(t){el.value=t.trim().slice(0,80);el.focus()}else{el.focus();el.select();toast(translatePlain('O NAVEGADOR BLOQUEOU A LEITURA')+'<br><small style="font-size:11px;color:#fff">'+translatePlain('clique no campo e use Ctrl+V')+'</small>')}});
+$('#mTpIn').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter'){e.preventDefault();monTeleport()}});
+for(const ev of ['keyup','pointerdown','click'])$('#mTpIn').addEventListener(ev,e=>e.stopPropagation());
 /* v78 · EXPORTAR .GLB (debug, F3): a cena GERADA vira um .glb para abrir no editor do three.js ou no Blender.
    Peso zero no jogo: o GLTFExporter (r128, mesmo CDN do three) só é baixado no 1º clique. Só geometria + cores/texturas:
    materiais viram MeshStandardMaterial simples, InstancedMesh vira malha mesclada, sprites/partículas/céu ficam de fora. */
@@ -14631,7 +14730,7 @@ function monEnd(t0,now){if(!MON.on)return;const A=MON.acc;A.busy+=performance.no
  const coordX=_coord(PL.x),coordY=_coord(_my),coordZ=_coord(PL.z);
  MON.coords=[PL.x,_my,PL.z].every(Number.isFinite)?`${coordX},${coordY},${coordZ}`:'';
  monSeedRefresh();
- $('#mCoordXYZ').textContent=`X: ${coordX} · Y: ${coordY} · Z: ${coordZ}`;
+ $('#mCoordXYZ').textContent=`X: ${coordX} · Y: ${coordY} · Z: ${coordZ}`;{const sp=$('#mCoordXYZ'),ti=$('#mTpIn');if(ti&&sp.offsetWidth){const w=sp.offsetWidth+'px';if(ti.style.width!==w)ti.style.width=w}} /* v79r20: campo do TP com a largura do texto X/Y/Z → TP fica embaixo do COPY */
  $('#mCoordCopy').disabled=!MON.coords;
 monPanels(ri,_trafficMS,_pedMS,_skip,iv,A)
  A.n=0;A.busy=0;A.iv=0;A.max=0;A.hitch=0}
@@ -15812,7 +15911,7 @@ function prologueBlitz(){
  if(!blitzMake('calm',mid))return false;
  const b=BLITZ.on;PROLOGUE.blitz=b;b.prologue=true;PROLOGUE.blitzDone=true;PROLOGUE.said=1;$('#storyGuide').hidden=true;
  prologueStage('blitz');
- prologueFade(()=>{c.x=b.x+b.ux*2.5-b.uz*2.8;c.z=b.z+b.uz*2.5+b.ux*2.8;c.a=Math.atan2(b.uz,b.ux);c.vx=c.vz=c.fwd=c.w=0;c.legal=true;c.hand=true;syncCar(c,0);PL.x=c.x;PL.z=c.z;camT.x=c.x;camT.z=c.z;},()=>{
+ prologueFade(()=>{c.x=b.x+b.ux*2.5-b.uz*2.8;c.z=b.z+b.uz*2.5+b.ux*2.8;c.a=Math.atan2(b.uz,b.ux);c.vx=c.vz=c.fwd=c.w=0;c.legal=true;c.hand=true;syncCar(c,0);PL.x=c.x;PL.z=c.z;camT.x=c.x;camT.z=c.z;trafficCalm(b.x,b.z,70,45);},()=>{
   c.hand=true;PROLOGUE.cut='inspection';PROLOGUE.t=0;document.body.classList.add('story-cinematic');
   toast('<span style="color:#ffac48">Se você estiver procurado, blitzes serão feitas para tentar te achar.</span>');
  });return true;
@@ -16006,7 +16105,7 @@ function prologueHomeEnd(){
  QUEST.pier.state='home';updateCamera(0);storyFinalBegin(0);
 }
 function prologueCutTick(dt){
- if(menuOpen)return;const I=PROLOGUE;I.t+=dt;I.cutT=(I.cutT||0)+dt;simT+=dt;balTick(dt);convRiderTick();
+ if(menuOpen)return;const I=PROLOGUE;I.t+=dt;I.cutT=(I.cutT||0)+dt;simT+=dt;balTick(dt);convRiderTick();try{ped3dJobTick()}catch(e){}
  if(I.cut==='doorWalk'){
   const w=I.walk,k=Math.min(1,I.t/2.4);PL.x=w.x+(w.tx-w.x)*k;PL.z=w.z+(w.tz-w.z)*k;PL.gy=groundY(PL.x,PL.z);
   PL.mx=w.tx-w.x;PL.mz=w.tz-w.z;setFrame(PL.tex,pickDir(PL.mx,PL.mz,PL.x,PL.z),k<1?1+Math.floor(I.t*5)%2:0);placeSprite(PL);
@@ -16084,7 +16183,7 @@ function prologueMotelCut(dt){const I=PROLOGUE,d=I.door,M=MOTEL;
  if(!M.scene){ // corte: entra, Claire de costas na janela
   const IN=(motelRoomBuild(),M.IN),wp=M.window;
   if(M.claire&&peds.includes(M.claire))removePed(M.claire);
-  const q=spawnPed(null,{x:wp.x,z:wp.z,vx:0,vz:0,pal:{...(CHAR.list[1].look||LUCIA_PAL)}});if(q){q.fixed=true;q.state='clerk';q.at={x:q.x,z:q.z};q.mx=0;q.mz=-1;q.gy=0;M.claire=q}
+  const q=spawnPed(null,{x:wp.x,z:wp.z,vx:0,vz:0,main:true,pal:{...(CHAR.list[1].look||LUCIA_PAL)}});if(q){q.fixed=true;q.state='clerk';q.at={x:q.x,z:q.z};q.mx=0;q.mz=-1;q.gy=0;M.claire=q}
   motelEnter(true);PL.x=M.exit.x+.25;PL.z=M.exit.z-1.35;PL.gy=0;roomStageSync();fadeFlash();I.walkA={x:PL.x,z:PL.z};
  }
  const IN=M.IN,q=M.claire,a=I.walkA;if(!q)return;q.gy=0;PL.gy=0;
@@ -16100,7 +16199,7 @@ function prologueMotelCut(dt){const I=PROLOGUE,d=I.door,M=MOTEL;
  // 4) plano lateral: ele baixa a arma, os dois se aproximam e se beijam no susto
  if(I.said===3){I.said=4;gunHolster(true);cineSay(PL,'Claire?!',1.6,.55)}
  const k=clamp((t-8.0)/1.6,0,1),mx=(a.x+q.at.x)/2,mz=(a.z+q.at.z)/2,dx=q.at.x-a.x,dz=q.at.z-a.z,dl=Math.hypot(dx,dz)||1,ux=dx/dl,uz=dz/dl;
- PL.x=a.x+(mx-ux*.39-a.x)*k;PL.z=a.z+(mz-uz*.39-a.z)*k;q.x=q.at.x+(mx+ux*.39-q.at.x)*k;q.z=q.at.z+(mz+uz*.39-q.at.z)*k; // narizes encostam sem atravessar
+ PL.x=a.x+(mx-ux*.27-a.x)*k;PL.z=a.z+(mz-uz*.27-a.z)*k;q.x=q.at.x+(mx+ux*.27-q.at.x)*k;q.z=q.at.z+(mz+uz*.27-q.at.z)*k; /* v79r16: mais perto — os rostos se encostam */ // narizes encostam sem atravessar
  face(PL,q.x,q.z);face(q,PL.x,PL.z);pose(PL,k>0&&k<1);pose(q,k>0&&k<1);
  const px=-uz,pz=ux,push=clamp((t-9.6)/2,0,1);setLens(50-push*8,.1);camera.position.set(mx+px*(3.1-push*.9),1.55,mz+pz*(3.1-push*.9));camera.lookAt(mx,1.3,mz);sky.position.copy(camera.position);
  if(I.said===4&&t>9.7){I.said=5;cineSay(q,'♥',2.2,.6)}
@@ -16134,7 +16233,7 @@ function prologueTick(dt){
   if(I.stage==='motelDrive'&&!I.blitzDone&&PL.car&&T){if(Math.abs(PL.car.fwd)>2)I.wait-=dt;if(I.wait<=0||Math.hypot(PL.car.x-T.x,PL.car.z-T.z)<35){if(!prologueBlitz())I.blitzDone=true}}} /* v78: antes exigia estar a >60 m do motel após 8–14 s dirigindo — com o motel ao lado da borracharia a blitz era pulada quase sempre. A blitz usa fade e leva o carro até a operação, então vale mesmo perto do destino */
  if(I.stage==='home'){
   const h=city.safe,c=PL.car||PL,d=Math.hypot(c.x-h.x,c.z-h.z);
-  if(d<70&&(!I.mate||!peds.includes(I.mate))){I.mate=spawnPed(null,{x:h.x+h.nx*3,z:h.z+h.nz*3,vx:0,vz:0,pal:CHAR.list[1].look||LUCIA_PAL});if(I.mate){I.mate.fixed=true;I.mate.state='clerk';I.mate.at={x:I.mate.x,z:I.mate.z};}}
+  if(d<70&&(!I.mate||!peds.includes(I.mate))){I.mate=spawnPed(null,{x:h.x+h.nx*3,z:h.z+h.nz*3,vx:0,vz:0,main:true,pal:CHAR.list[1].look||LUCIA_PAL});if(I.mate){I.mate.fixed=true;I.mate.state='clerk';I.mate.at={x:I.mate.x,z:I.mate.z};}}
   if(d<8&&(!PL.car||Math.abs(PL.car.fwd)<1.5))prologueReunion();
  }
 }
@@ -17730,7 +17829,7 @@ function poolMoving(){return POOL.balls.some(b=>!b.in&&(Math.abs(b.vx)>.004||Mat
 function poolStep(h){const t=poolTab(),R=POOL_R,B=POOL.balls,P=poolPockets();
  for(const b of B){if(b.in)continue;b.x+=b.vx*h;b.z+=b.vz*h;const sp=Math.hypot(b.vx,b.vz);if(sp>0){const ns=Math.max(0,sp-.62*h-sp*.06*h);b.vx*=ns/sp;b.vz*=ns/sp}}
  for(let i=0;i<B.length;i++){const a=B[i];if(a.in)continue;for(let j=i+1;j<B.length;j++){const c=B[j];if(c.in)continue;const dx=c.x-a.x,dz=c.z-a.z,d2=dx*dx+dz*dz;if(d2>=4*R*R||d2===0)continue;const d=Math.sqrt(d2),nx=dx/d,nz=dz/d,ov=2*R-d;a.x-=nx*ov/2;a.z-=nz*ov/2;c.x+=nx*ov/2;c.z+=nz*ov/2;
-   const vn=(a.vx-c.vx)*nx+(a.vz-c.vz)*nz;if(vn>0){const im=vn*.97;a.vx-=im*nx;a.vz-=im*nz;c.vx+=im*nx;c.vz+=im*nz;if(POOL.first===null){if(a.n===0)POOL.first=c.n;else if(c.n===0)POOL.first=a.n}if(vn>.3)POOL.clack=Math.max(POOL.clack||0,Math.min(1,vn/3))}}}
+   const vn=(a.vx-c.vx)*nx+(a.vz-c.vz)*nz;if(vn>0){const im=vn*.97;a.vx-=im*nx;a.vz-=im*nz;c.vx+=im*nx;c.vz+=im*nz;if(POOL.first===null){if(a.n===0)POOL.first=c.n;else if(c.n===0)POOL.first=a.n}if(vn>.3){POOL.clack=Math.max(POOL.clack||0,Math.min(1,vn/3));try{poolClack(Math.min(1,vn/3)*.6)}catch(e){}}}}}
  for(const b of B){if(b.in)continue;
   for(const p of P){if(Math.hypot(b.x-p[0],b.z-p[1])<p[2]){b.in=true;b.vx=b.vz=0;if(b.n===0)POOL.cuePot=true;else POOL.potted.push(b.n);break}}if(b.in)continue;
   const mouthX=Math.abs(b.z)<.068||Math.abs(b.z)>t.hl-.09,mouthZ=Math.abs(b.x)>t.hw-.09;
@@ -17742,7 +17841,7 @@ function poolCast(ox,oz,dx,dz,skip){const t=poolTab(),R=POOL_R;let best=1e9,hit=
  for(const b of POOL.balls){if(b.in||b.n===0||b===skip)continue;const fx=ox-b.x,fz=oz-b.z,bb=fx*dx+fz*dz,cc=fx*fx+fz*fz-4*R*R,disc=bb*bb-cc;if(disc<0)continue;const s=-bb-Math.sqrt(disc);if(s>1e-4&&s<best){best=s;hit=b}}
  for(const [v,lim] of [[dx,t.hw-R],[dz,t.hl-R]]){if(Math.abs(v)<1e-6)continue;const o=v===dx?ox:oz,s=((v>0?lim:-lim)-o)/v;if(s>0&&s<best){best=s;hit=null}}
  return{s:best,x:ox+dx*best,z:oz+dz*best,ball:hit}}
-function poolShoot(aim,pow){const c=poolBall(0);if(!c||c.in||POOL.phase!=='aim')return;const sp=.35+pow*4.3;c.vx=Math.sin(aim)*sp;c.vz=Math.cos(aim)*sp;POOL.first=null;POOL.potted=[];POOL.cuePot=false;POOL.castAt=poolOnCast(POOL.turn);POOL.phase='roll';POOL.cue.visible=false;POOL.line.visible=false;POOL.ghost.visible=false;try{clang(.06+pow*.1)}catch(e){}}
+function poolShoot(aim,pow){const c=poolBall(0);if(!c||c.in||POOL.phase!=='aim')return;const sp=.35+pow*4.3;c.vx=Math.sin(aim)*sp;c.vz=Math.cos(aim)*sp;POOL.first=null;POOL.potted=[];POOL.cuePot=false;POOL.castAt=poolOnCast(POOL.turn);POOL.phase='roll';POOL.cue.visible=false;POOL.line.visible=false;POOL.ghost.visible=false;try{poolClack(.55+pow*.45)}catch(e){}}
 function poolSpot(c){const t=poolTab();c.in=false;c.vx=c.vz=0;c.x=0;c.z=-t.hl*.5;for(let k=0;k<40&&POOL.balls.some(b=>b!==c&&!b.in&&Math.hypot(b.x-c.x,b.z-c.z)<POOL_R*2.05);k++)c.x=((k%2)?1:-1)*Math.ceil(k/2+1)*POOL_R*2.2}
 function poolName(s){return s===0?translatePlain('VOCÊ'):POOL_NAME}
 function poolResolve(){const s=POOL.turn,o=1-s,cast=POOL.castAt!=null?POOL.castAt:poolOnCast(s),pot=POOL.potted,fh=POOL.first,cue=POOL.cuePot;let foul=null,msg='';
@@ -17828,6 +17927,119 @@ function casPedsSpawn(){casPedsClear();const K=CAS.casinoBase;if(!K)return;const
  const a=spawnPed(null,{x:X+8.95,z:Z+2.75,vx:0,vz:0,pal:{...CLERK_PAL,cap:null,capDark:null,shirt:'#f4f0e8',stripe:'#7a1a2a'}});if(a){a.state='clerk';a.fixed=true;a.at={x:X+8.95,z:Z+2.75};a.mx=-1;a.mz=0;a.timer=0;POOL.cashier=a}
  const b=spawnPed(null,{x:X-18.3,z:Z+2.4,vx:0,vz:0,pal:{...pick2(PED_PALS),shirt:'#2a4a3a',cap:'#1b1b1b'}});if(b){b.state='clerk';b.fixed=true;b.at={x:X-18.3,z:Z+2.4};b.mx=.76;b.mz=-.65;b.timer=0;POOL.npc=b}}
 function casPedsClear(){for(const q of [POOL.cashier,POOL.npc])if(q&&peds.includes(q))removePed(q);POOL.cashier=POOL.npc=null}
+/* ================= v79r14 · SKATE =================
+   Fica no mundo como pickup (prancha no chão). F perto dele = sobe; F de novo = desce e ele fica ali.
+   Andando: "desliza durinho" — W empurra, S freia, A/D faz a curva com uma leve inclinação; Espaço = pulo (ollie). Sem manobras.
+   Bateu em qualquer coisa com velocidade = cai deitado e o skate sai do pé, parando ao lado como pickup.
+   Deixado na garagem de casa fica salvo. Na oficina dá pra trocar cores/estampa; o shopping (2º piso) tem a SKATE SHOP. */
+var SKATE={items:[],ride:null,g:null,tex:new Map(),near:null,ui:null,seeded:{},tuneLock:false,taught:false};
+const SK_DECK=['#e8282a','#1e6ad6','#2ab36a','#f2c21a','#ff4fa0','#7a4ad6','#1a1a1e','#f4f2ea','#ff8a1a','#2ac8c8'],SK_WHEEL=['#f4f2ea','#f2c21a','#e8282a','#2ac8c8','#1a1a1e','#ff4fa0'],SK_PRINT=['LISA','CHAMAS','LISTRAS','ESTRELAS','XADREZ','RAIO','PALMEIRA','OLHO','TEXTO'];
+const SK_SCL=[1.125,1.5,1.5],SK_PRICE=120,SK_TUNE=40,SK_UP=.17,SK_TRADE=50,SK_TXT=6;
+function skTxtClean(t){return [...String(t||'').toUpperCase()].filter(shirtGlyphOk).slice(0,SK_TXT).join('')}
+function skLookDefault(){return{deck:'#e8282a',wheel:'#f4f2ea',print:'RAIO'}}
+function skLookOk(L){return !!L&&SK_DECK.includes(L.deck)&&SK_WHEEL.includes(L.wheel)&&SK_PRINT.includes(L.print)&&(L.text==null||(typeof L.text==='string'&&skTxtClean(L.text)===L.text))}
+function skTex(L){const k=L.deck+L.print+(L.print==='TEXTO'?'|'+(L.text||''):'');if(SKATE.tex.has(k))return SKATE.tex.get(k);const c=cv(256,96),g=c.getContext('2d'),base=L.deck,ink=(['#1a1a1e','#7a4ad6','#1e6ad6','#e8282a'].includes(base))?'#f4f2ea':'#1a1a1e',r=mulberry32(k.length*131+k.charCodeAt(1)*7);
+ g.fillStyle=base;g.fillRect(0,0,256,96);g.fillStyle=ink;g.strokeStyle=ink;
+ const P=L.print;if(P==='CHAMAS'){g.fillStyle=base==='#ff8a1a'?'#e8282a':'#ff8a1a';for(let i=0;i<6;i++){const y=12+i*14;g.beginPath();g.moveTo(0,y-6);g.quadraticCurveTo(80,y-14,130+i*9,y);g.quadraticCurveTo(80,y+10,0,y+8);g.fill()}g.fillStyle='#f2c21a';for(let i=0;i<5;i++){const y=18+i*15;g.beginPath();g.moveTo(0,y-3);g.quadraticCurveTo(40,y-8,75+i*5,y);g.quadraticCurveTo(40,y+6,0,y+4);g.fill()}}
+ else if(P==='LISTRAS'){for(let x=-96;x<256;x+=36){g.beginPath();g.moveTo(x,96);g.lineTo(x+16,96);g.lineTo(x+112,0);g.lineTo(x+96,0);g.fill()}}
+ else if(P==='ESTRELAS'){const st=(x,y,rr)=>{g.beginPath();for(let i=0;i<10;i++){const a=i*Math.PI/5-Math.PI/2,q=i%2?rr*.45:rr;g.lineTo(x+Math.cos(a)*q,y+Math.sin(a)*q)}g.closePath();g.fill()};[[40,30,16],[100,64,12],[150,28,18],[210,62,14],[70,74,8],[188,20,8]].forEach(a=>st(...a))}
+ else if(P==='XADREZ'){for(let x=0;x<256;x+=16)for(let y=0;y<96;y+=16)if(((x+y)/16)%2)g.fillRect(x,y,16,16)}
+ else if(P==='RAIO'){g.beginPath();g.moveTo(30,50);g.lineTo(120,30);g.lineTo(114,45);g.lineTo(226,38);g.lineTo(136,68);g.lineTo(142,53);g.closePath();g.fill()}
+ else if(P==='PALMEIRA'){g.lineCap='round';g.lineWidth=8;g.beginPath();g.moveTo(70,86);g.quadraticCurveTo(115,74,150,42);g.stroke();g.lineWidth=6;for(const a of[-2.6,-1.9,-1.2,-.4,.4]){g.beginPath();g.moveTo(150,42);g.quadraticCurveTo(150+Math.cos(a)*36,42+Math.sin(a)*26-12,150+Math.cos(a)*60,42+Math.sin(a)*30+8);g.stroke()}g.beginPath();g.arc(214,68,13,0,7);g.fillStyle='#ff8a1a';g.fill()}
+ else if(P==='OLHO'){g.fillStyle='#f4f2ea';g.beginPath();g.ellipse(128,48,58,30,0,0,7);g.fill();g.lineWidth=4;g.strokeStyle='#1a1a1e';g.stroke();g.fillStyle='#2ab36a';g.beginPath();g.arc(128,48,20,0,7);g.fill();g.fillStyle='#1a1a1e';g.beginPath();g.arc(128,48,9,0,7);g.fill()}
+ else if(P==='TEXTO'&&L.text){const ch=[...L.text],cols=ch.length*4-1,cs=Math.floor(Math.min(232/cols,72/5)),x0=Math.round((256-cols*cs)/2),y0=Math.round((96-5*cs)/2);
+  for(const [dx,dy,col] of [[2,2,'rgba(0,0,0,.35)'],[0,0,ink]]){g.fillStyle=col;ch.forEach((c,i)=>{const b=SHIRT_FONT[c];if(!b)return;for(let y=0;y<5;y++)for(let x=0;x<3;x++)if(b[y*3+x]==='1')g.fillRect(x0+(i*4+x)*cs+dx,y0+y*cs+dy,cs,cs)})}}
+ g.fillStyle='rgba(0,0,0,.16)';for(let i=0;i<50;i++)g.fillRect(r()*256,r()*96,2,2);
+ const t=new THREE.CanvasTexture(c);t.anisotropy=4;SKATE.tex.set(k,t);return t}
+/* prancha 3D: deck com bicos levantados (nose/tail arredondados), lixa estampada em cima, trucks e 4 rodinhas */
+function skBoard(L){const g=new THREE.Group(),d=COL(L.deck),top=new THREE.MeshLambertMaterial({map:skTex(L)}),side=new THREE.MeshLambertMaterial({color:d.clone().multiplyScalar(.6)}),grey=new THREE.MeshLambertMaterial({color:0x9aa0a8}),wh=new THREE.MeshLambertMaterial({color:COL(L.wheel)});
+ const deck=new THREE.Mesh(new THREE.BoxGeometry(.62,.022,.21),[side,side,top,side,side,side]);deck.position.y=.085;g.add(deck);
+ for(const s of[-1,1]){const kick=new THREE.Mesh(new THREE.BoxGeometry(.13,.022,.21),[side,side,top,side,side,side]);kick.position.set(s*.37,.1,0);kick.rotation.z=s*.3;g.add(kick);
+  const nose=new THREE.Mesh(new THREE.CylinderGeometry(.105,.105,.022,12,1,false,0,Math.PI),side);nose.position.set(s*.43,.118,0);nose.rotation.y=s>0?0:Math.PI;nose.rotation.z=s*.3;g.add(nose);
+  const tr=new THREE.Mesh(new THREE.BoxGeometry(.05,.03,.17),grey);tr.position.set(s*.22,.058,0);g.add(tr);for(const z of[-1,1]){const w=new THREE.Mesh(new THREE.CylinderGeometry(.027,.027,.032,12),wh);w.rotation.x=Math.PI/2;w.position.set(s*.22,.028,z*.1);g.add(w)}}
+ g.scale.set(SK_SCL[0],SK_SCL[1],SK_SCL[2]);g.position.set(0,-9999,0); /* v79r18: 3× maior e comprimento a 75% (2,25× no comprimento, 3× na largura e na altura) */
+ g.traverse(o=>{if(o.isMesh)o.castShadow=true});g.userData.skate=true;return g}
+function skDisposeG(g){if(!g)return;if(g.parent)g.parent.remove(g);g.traverse(o=>{if(o.isMesh)o.geometry.dispose()})}
+function skAdd(x,z,a,look,quiet){const it={x,z,a,look:{...look},seed:S.seed,style:S.style,g:skBoard(look)};it.g.position.set(x,groundY(x,z)+.005,z);it.g.rotation.y=-a;scene.add(it.g);SKATE.items.push(it);if(!quiet)try{clang(.08)}catch(e){}return it}
+function skRemove(it){skDisposeG(it.g);const i=SKATE.items.indexOf(it);if(i>=0)SKATE.items.splice(i,1)}
+function skNear(){if(PL.car||PL.inside||PL.dead||PL.down>0||SKATE.ride||PL.heli||!storyOK('safe'))return null;let b=null,bd=1.5;for(const it of SKATE.items){if(it.seed!==S.seed||it.style!==S.style)continue;const d=Math.hypot(it.x-PL.x,it.z-PL.z);if(d<bd){bd=d;b=it}}return b}
+function skMount(it){if(!it)return false;SKATE.ride={look:{...it.look},a:it.a,v:0,lean:0,crash:0,dry:{x:it.x,z:it.z},who:typeof CHAR!=='undefined'?CHAR.cur:0};
+ {const f=PL.face||[1,0];if(Math.cos(it.a)*f[0]+Math.sin(it.a)*f[1]<0)SKATE.ride.a=it.a+Math.PI} /* sobe virado pro lado que o personagem olha */
+ skRemove(it);SKATE.g=skBoard(SKATE.ride.look);scene.add(SKATE.g);PL.x=it.x;PL.z=it.z;PL.vx=PL.vz=0;PL.face=[Math.cos(SKATE.ride.a),Math.sin(SKATE.ride.a)];
+ if(!SKATE.taught){SKATE.taught=true;toast('SKATE<br><small style="font-size:11px;color:#fff">W empurra · S freia · A/D curva · Espaço pula · F desce</small>')}try{clang(.12)}catch(e){}return true}
+function skDrop(R,x,z,a){const o={x,z};circleVsWorld(o,.3);if(inWater(o.x,o.z)){o.x=R.dry.x;o.z=R.dry.z}return skAdd(o.x,o.z,a,R.look,true)}
+function skDismount(crash){const R=SKATE.ride;if(!R)return;skDisposeG(SKATE.g);SKATE.g=null;SKATE.ride=null;
+ if(crash){const sd=Math.random()<.5?1:-1,a=R.a+sd*(1.1+Math.random()*.6),k=1.0+Math.min(1.5,R.v*.12);skDrop(R,PL.x+Math.cos(a)*k,PL.z+Math.sin(a)*k,R.a+sd*.9+(Math.random()-.5))}
+ else{skDrop(R,PL.x+Math.cos(R.a+Math.PI/2)*.45,PL.z+Math.sin(R.a+Math.PI/2)*.45,R.a);PL.vx=PL.vz=0}}
+function skCrash(){const R=SKATE.ride;if(!R)return;const v=R.v,ca=Math.cos(R.a),sa=Math.sin(R.a);skDismount(true);PL.jy=Math.max(0,PL.jy);PL.jv=0;PL.down=1.6;PL.rot=Math.PI/2;PL.vx=ca*v*.5;PL.vz=sa*v*.5;
+ if(v>5.5){PL.hp-=armorHit(Math.round((v-5.5)*3));try{rumble(.6,.6,240)}catch(e){}}try{thud(Math.max(3,v))}catch(e){}
+ if(PL.hp<=0&&!PL.dead){NEWS.cause='SKATE';if(!storyMissionFail('VOCÊ MORREU')){PL.hp=0;PL.dead=true;PL.deadT=5;$('#ko').hidden=false}}}
+function skBlocked(){const R=SKATE.ride,ca=Math.cos(R.a),sa=Math.sin(R.a);
+ for(const c of carsNear(PL.x,PL.z,7)){if(!c.t||c.display)continue;const dx=PL.x-c.x,dz=PL.z-c.z,cc=Math.cos(c.a),ss=Math.sin(c.a),lx=dx*cc+dz*ss,lz=-dx*ss+dz*cc;if(Math.abs(lx)<c.t.L/2+.32&&Math.abs(lz)<c.t.W/2+.32&&PL.jy<c.t.H-.3&&(c.x-PL.x)*ca+(c.z-PL.z)*sa>0)return true}
+ for(const p of peds){if(p.state==='dead'||p.state==='down'||p.inCar||p.hidden)continue;const dx=p.x-PL.x,dz=p.z-PL.z;if(Math.abs(dx)<.6&&Math.abs(dz)<.6&&Math.hypot(dx,dz)<.55&&dx*ca+dz*sa>0&&PL.jy<.9)return true}
+ return false}
+/* chamado no lugar da caminhada (updatePlayer) */
+function skMove(dt){const R=SKATE.ride;let thr=((keys.KeyW||keys.ArrowUp)?1:0)-((keys.KeyS||keys.ArrowDown)?1:0),st=((keys.KeyD||keys.ArrowRight)?1:0)-((keys.KeyA||keys.ArrowLeft)?1:0);
+ if(PAD.on){thr=clamp(thr+(PAD.r2||0)-(PAD.l2||0)-(Math.abs(PAD.ly)>.3?PAD.ly:0),-1,1);if(Math.abs(PAD.lx)>.12)st=clamp(st+PAD.lx,-1,1)}
+ const air=PL.jy>.03;if(!air){if(thr>0)R.v+=3.4*thr*dt*Math.max(0,1-R.v/9.5);else if(thr<0)R.v-=7*dt*(-thr);R.v-=(.3+R.v*.035)*dt;R.v=clamp(R.v,0,9.5)}
+ R.a+=SK_TURN*st*(1.9-Math.min(1.05,R.v*.11))*dt*(R.v>.2?1:.45)*(air?.35:1);
+ R.lean+=((st*Math.min(1,R.v/4.5))*.2-R.lean)*Math.min(1,dt*6);
+ const ca=Math.cos(R.a),sa=Math.sin(R.a);PL.vx=ca*R.v;PL.vz=sa*R.v;PL.face=[ca,sa];PL.anim=0;
+ if(camMode!=='top'){const ty=Math.atan2(-ca,-sa);let d=ty-PL.yaw;d=Math.atan2(Math.sin(d),Math.cos(d));PL.yaw+=d*Math.min(1,dt*3.2)}
+ const bx=PL.x,bz=PL.z,ex=PL.vx*dt,ez=PL.vz*dt;PL.x+=ex;PL.z+=ez;circleVsWorld(PL,.4);shipPlayerVsContainers(PL,.38);if(!PL.inside)dbWallActor(PL,bx,bz,dt,.36);
+ const want=Math.hypot(ex,ez),got=Math.hypot(PL.x-bx,PL.z-bz);
+ if(R.v>2.2&&want>1e-4&&got<want*.5){R.crash+=dt;if(R.crash>.03){skCrash();return}}else{R.crash=0;if(got<want*.9)R.v*=Math.max(.6,1-dt*2)} /* raspou de lado na parede: perde velocidade, não cai */
+ if(R.v>2.2&&skBlocked()){skCrash();return}
+ if(!inWater(PL.x,PL.z))R.dry={x:PL.x,z:PL.z};else if(!maskOn()){skCrash();return}}
+var SK_TURN=1;
+function skJump(){if(PL.jy>.03||PL.jv>0||PL.down>0)return;PL.jv=5.4;PL.jy=.001;try{clang(.05)}catch(e){}}
+function skTick(dt){const vis=!PL.inside;for(const it of SKATE.items){const on=vis&&it.seed===S.seed&&it.style===S.style;if(it.g.visible!==on)it.g.visible=on;if(on&&!it.g.parent)scene.add(it.g)}
+ const wk=S.seed+'|'+S.style;if(!SKATE.seeded[wk]&&played&&S.style!=='inverted'&&!city.haze&&city.safe&&city.safe.slots&&city.safe.slots[0]){SKATE.seeded[wk]=true;if(!SKATE.items.some(it=>it.seed===S.seed&&it.style===S.style))skGaragePlace(skLookDefault())} /* skate de boas-vindas na garagem de casa */
+ const R=SKATE.ride;if(R&&typeof CHAR!=='undefined'&&R.who!==CHAR.cur){skDisposeG(SKATE.g);SKATE.g=null;SKATE.ride=null;skAdd(R.dry.x,R.dry.z,R.a,R.look,true)} /* trocou de personagem: o skate fica onde o outro estava */
+ else if(R&&PL.down>0&&!PL.dead){skDismount(true)} /* atropelado/derrubado: o skate sai do pé */
+ else if(R){if(PL.car||PL.dead||PL.inside||PARA.active||PL.heli||TVM.on||PL.taxi){skDisposeG(SKATE.g);SKATE.g=null;SKATE.ride=null;
+   const f=PL.inside&&DOOR.from&&DOOR.from.seed===S.seed?DOOR.from:PL.inside==='mall'&&MALL.out?MALL.out:PL.inside==='shop'&&SHOP.st&&SHOP.st.out?SHOP.st.out:null;
+   if(f)skDrop(R,f.x+(f.nx||0)*1.2,f.z+(f.nz||0)*1.2,R.a);else if(PL.inside&&city.safe)skGaragePlace(R.look);else skDrop(R,PL.x+.8,PL.z,R.a)}
+  else if(SKATE.g){if(!SKATE.g.parent)scene.add(SKATE.g);SKATE.g.position.set(PL.x,PL.gy-SK_UP+Math.max(0,PL.jy),PL.z);SKATE.g.rotation.set(0,-R.a,0);SKATE.g.rotateX(R.lean);if(PL.jy>.03)SKATE.g.rotateZ(clamp(PL.jv*.06,-.2,.35))}}
+ SKATE.near=skNear();
+ /* oficina: andar de skate até a vaga da oficina abre a customização */
+ const ts=city.tuneSpot;if(ts){const d=Math.hypot(PL.x-ts.x,PL.z-ts.z);if(d>4.5)SKATE.tuneLock=false;if(SKATE.ride&&!SKATE.ui&&!SKATE.tuneLock&&d<3.2){SKATE.tuneLock=true;if(storyOK('tune'))skUiOpen('tune');else storyLocked('OFICINA FECHADA')}}}
+function skInGarage(it){const s=city.safe;if(!s||!s.slots)return false;return s.slots.some(sl=>sl&&Math.hypot(it.x-sl.x,it.z-sl.z)<4.6)}
+function skSave(){const home=SKATE.items.filter(it=>it.seed===S.seed&&it.style===S.style&&skInGarage(it)).map(it=>({x:+it.x.toFixed(2),z:+it.z.toFixed(2),a:+it.a.toFixed(2),look:{...it.look}}));
+ const R=SKATE.ride;if(R&&skInGarage({x:PL.x,z:PL.z}))home.push({x:+PL.x.toFixed(2),z:+PL.z.toFixed(2),a:+R.a.toFixed(2),look:{...R.look}});return{home}}
+function skLoad(d){for(const it of SKATE.items.slice())skRemove(it);if(SKATE.g){skDisposeG(SKATE.g);SKATE.g=null}SKATE.ride=null;if(!d)return;SKATE.seeded[S.seed+'|'+S.style]=true;
+ if(Array.isArray(d.home))for(const h of d.home.slice(0,12))if(h&&skLookOk(h.look)&&isFinite(h.x)&&isFinite(h.z))skAdd(h.x,h.z,+h.a||0,h.look,true)}
+/* vaga da garagem: encostado na parede do fundo, atrás dos carros */
+function skGaragePlace(look){const s=city.safe,sl=s&&s.slots;if(!sl||!sl[0])return skAdd(PL.x+1,PL.z,0,look,true);
+ if(sl[0]&&sl[1]){const q=sl[0],mx=(sl[0].x+sl[1].x)/2,mz=(sl[0].z+sl[1].z)/2,ca=Math.cos(q.a),sa=Math.sin(q.a); /* v79r23: skates no corredor entre as duas vagas, em fila a partir da parede do fundo (antes um atrás de cada carro, parecia ocupar as vagas) */
+  for(let k=0;k<6;k++){const x=mx+ca*(2.9-k*1.15),z=mz+sa*(2.9-k*1.15);if(SKATE.items.some(it=>Math.hypot(it.x-x,it.z-z)<.6))continue;return skAdd(x,z,q.a,look,true)}}
+ for(const lat of[0,-1.15,1.15,-.6,.6])for(const q of sl){if(!q)continue;const ca=Math.cos(q.a),sa=Math.sin(q.a),x=q.x+ca*2.85-sa*lat,z=q.z+sa*2.85+ca*lat;if(SKATE.items.some(it=>Math.hypot(it.x-x,it.z-z)<.5))continue;return skAdd(x,z,q.a+Math.PI/2,look,true)}
+ const q=sl[0];return skAdd(q.x,q.z,q.a+Math.PI/2,look,true)}
+/* ---------- loja (shopping) e oficina ---------- */
+function skOwned(){return SKATE.items.filter(it=>it.seed===S.seed&&it.style===S.style&&skInGarage(it))}
+function skUiOpen(mode){if(SKATE.ui)return;const cur=mode==='tune'&&SKATE.ride?{text:'',...SKATE.ride.look}:{...skLookDefault(),text:''};SKATE.ui={mode,look:cur,orig:{...cur},trade:false};$('#skText').value=cur.text||'';$('#skTrade').checked=false;for(const k in keys)keys[k]=false;if(document.pointerLockElement)document.exitPointerLock();if(SKATE.ride)SKATE.ride.v=0;PL.vx=PL.vz=0;$('#skShop').hidden=false;skUiRender()}
+function skUiClose(){SKATE.ui=null;$('#skShop').hidden=true;for(const k in keys)keys[k]=false}
+function skPrev(L){const c=$('#skPrev'),g=c.getContext('2d'),W=c.width,H=c.height;g.clearRect(0,0,W,H);const t=skTex(L).image;g.save();g.translate(W/2,H/2);const w=W*.86,h=H*.46;
+ const path=()=>{g.beginPath();g.moveTo(-w/2+h/2,-h/2);g.lineTo(w/2-h/2,-h/2);g.arc(w/2-h/2,0,h/2,-Math.PI/2,Math.PI/2);g.lineTo(-w/2+h/2,h/2);g.arc(-w/2+h/2,0,h/2,Math.PI/2,Math.PI*1.5);g.closePath()};
+ g.fillStyle=L.wheel;g.strokeStyle='#000';g.lineWidth=3;for(const sx of[-1,1])for(const sy of[-1,1]){g.beginPath();g.ellipse(sx*w*.3,sy*(h/2+4),11,7,0,0,7);g.fill();g.stroke()}
+ path();g.save();g.clip();g.drawImage(t,-w/2,-h/2,w,h);g.restore();path();g.lineWidth=4;g.stroke();g.restore()}
+const SK_EN={LISA:'PLAIN',CHAMAS:'FLAMES',LISTRAS:'STRIPES',ESTRELAS:'STARS',XADREZ:'CHECKER',RAIO:'BOLT',PALMEIRA:'PALM',OLHO:'EYE',SHAPE:'DECK',RODAS:'WHEELS',ESTAMPA:'PRINT',SAIR:'EXIT',COMPRAR:'BUY',APLICAR:'APPLY',TEXTO:'TEXT'};
+function skT(v){return S.lang==='en'&&SK_EN[v]?SK_EN[v]:v}
+function skUiPrice(U){return U.mode==='tune'?SK_TUNE:SK_PRICE-(U.trade&&skOwned().length?SK_TRADE:0)}
+function skUiRender(){const U=SKATE.ui;if(!U)return;{const lb=document.querySelectorAll('#skShop .sk-lb');['SHAPE','RODAS','ESTAMPA'].forEach((t,i)=>{if(lb[i])lb[i].textContent=skT(t)});$('#skCancel').textContent=skT('SAIR')}const L=U.look,row=(id,arr,key,txt)=>{const el=$(id);el.innerHTML='';for(const v of arr){const b=document.createElement('button');b.type='button';b.className='sw'+(L[key]===v?' on':'')+(txt?' tx':'');if(txt)b.textContent=skT(v);else b.style.background=v;b.addEventListener('click',()=>{L[key]=v;skUiRender()});el.appendChild(b)}};
+ row('#skDeck',SK_DECK,'deck');row('#skWheel',SK_WHEEL,'wheel');row('#skPrint',SK_PRINT,'print',true);skPrev(L);
+ $('#skTxtRow').hidden=L.print!=='TEXTO';{const own=skOwned().length;$('#skTradeRow').hidden=U.mode==='tune'||!own;$('#skTradeTx').textContent=translatePlain('dar 1 skate da garagem na troca')+' · −$'+SK_TRADE+' ('+own+')'}
+ const tune=U.mode==='tune',ch=JSON.stringify(L)!==JSON.stringify(U.orig),price=skUiPrice(U);$('#skTitle').textContent=translatePlain(tune?'OFICINA · SKATE':'SKATE SHOP');
+ const b=$('#skBuy');b.textContent=tune?(ch?skT('APLICAR')+' · $'+price:translatePlain('SEM MUDANÇAS')):skT('COMPRAR')+' · $'+price;b.disabled=tune&&!ch;
+ $('#skNote').textContent=translatePlain(tune?'troque as cores e a estampa do seu skate':'o skate novo vai pra garagem da sua casa')+' · $'+Math.round(PL.money||0)}
+$('#skX').addEventListener('click',skUiClose);$('#skCancel').addEventListener('click',skUiClose);$('#skBuy').addEventListener('click',skUiBuy);
+$('#skText').addEventListener('input',e=>{const U=SKATE.ui;if(!U)return;const v=skTxtClean(e.target.value);if(e.target.value!==v)e.target.value=v;U.look.text=v;skPrev(U.look);skUiRender()});
+$('#skText').addEventListener('keydown',e=>{if(e.code!=='Escape'&&e.code!=='Enter')e.stopPropagation()});
+$('#skTrade').addEventListener('change',e=>{if(SKATE.ui){SKATE.ui.trade=e.target.checked;skUiRender()}});
+function skUiBuy(){const U=SKATE.ui;if(!U)return;const tune=U.mode==='tune',price=skUiPrice(U);U.look.text=U.look.print==='TEXTO'?skTxtClean(U.look.text):'';if(tune&&JSON.stringify(U.look)===JSON.stringify(U.orig))return;if((PL.money||0)<price){toast('DINHEIRO INSUFICIENTE · $'+price);try{clang(.1)}catch(e){}return}money(-price);
+ if(tune&&SKATE.ride){SKATE.ride.look={...U.look};skDisposeG(SKATE.g);SKATE.g=skBoard(SKATE.ride.look);scene.add(SKATE.g);toast('SKATE CUSTOMIZADO · −$'+price)}
+ else{const old=U.trade?skOwned().pop():null;if(old)skRemove(old);skGaragePlace(U.look);toast((old?'SKATE TROCADO':'SKATE COMPRADO')+' · −$'+price+'<br><small style="font-size:11px;color:#fff">está na garagem da sua casa</small>');const q=peds.find(p=>p.mallClerk==='skate');if(q)try{say(q,SAY.thanks)}catch(e){}}
+ try{clang(.3)}catch(e){}skUiClose()}
 /* ================= v79r13 · LIAR'S DICE (DADO MENTIROSO) NA ALA LESTE DO CASSINO =================
    Você contra Dona Cida e Tonhão. Cada um com 5 dados num copo. Todos chacoalham e viram o copo (física de verdade: dados rolam e quicam dentro do copo).
    Na sua vez: aumente a aposta (quantidade × face; o 1 é coringa e não se aposta nele) ou diga DUVIDO.
@@ -19047,7 +19259,7 @@ function duoWorldTick(){const ix=1-CHAR.cur,o=CHAR.list[ix],st=o.st;
  if(c&&vehicles.includes(c)){const ca=Math.cos(c.a),sa=Math.sin(c.a);x+=-sa*(c.t.W/2+1.25);z+=ca*(c.t.W/2+1.25)}
  if(!Number.isFinite(x)||!Number.isFinite(z)||Math.hypot(PL.x-x,PL.z-z)>38){duoWorldClear();return}
  let q=DUO.worldPed;
- if(!q||!peds.includes(q)||DUO.worldIndex!==ix){duoWorldClear();q=spawnPed(null,{x,z,vx:0,vz:0,pal:{...(st.look||o.look||(ix?LUCIA_PAL:PLAYER_PAL)),pack:false}});
+ if(!q||!peds.includes(q)||DUO.worldIndex!==ix){duoWorldClear();q=spawnPed(null,{x,z,vx:0,vz:0,main:true,pal:{...(st.look||o.look||(ix?LUCIA_PAL:PLAYER_PAL)),pack:false}});
   if(!q)return;q.state='clerk';q.fixed=true;q.at={x,z};q.mx=0;q.mz=1;q.timer=0;q.duoWorld=true;q.duoChar=ix;DUO.worldPed=q;DUO.worldIndex=ix}
  q.at.x=x;q.at.z=z;q.mx=PL.x-q.x;q.mz=PL.z-q.z;
  if(!DUO.worldHi&&Math.hypot(PL.x-q.x,PL.z-q.z)<7){DUO.worldHi=true;
@@ -19056,7 +19268,7 @@ function duoWorldTick(){const ix=1-CHAR.cur,o=CHAR.list[ix],st=o.st;
 }
 function duoAutoOn(){return DUO.on&&PL.car===DUO.car&&CHAR.cur!==DUO.drv}
 function duoShooter(){return DUO.on&&PL.car===DUO.car&&CHAR.cur!==DUO.drv}
-function duoSpawnFollower(x,z){if(DUO.ped&&peds.includes(DUO.ped))removePed(DUO.ped);const o=CHAR.list[1-CHAR.cur];const q=spawnPed(null,{x,z,vx:0,vz:0,pal:{...(o.look||LUCIA_PAL),pack:false}});if(!q){DUO.follow=false;return}q.state='duoFollow';q.fixed=true;q.at={x,z};q.mx=0;q.mz=1;q.timer=0;q.duoMoving=false;q.duo=true;DUO.ped=q;DUO.follow=true}
+function duoSpawnFollower(x,z){if(DUO.ped&&peds.includes(DUO.ped))removePed(DUO.ped);const o=CHAR.list[1-CHAR.cur];const q=spawnPed(null,{x,z,vx:0,vz:0,main:true,pal:{...(o.look||LUCIA_PAL),pack:false}});if(!q){DUO.follow=false;return}q.state='duoFollow';q.fixed=true;q.at={x,z};q.mx=0;q.mz=1;q.timer=0;q.duoMoving=false;q.duo=true;DUO.ped=q;DUO.follow=true}
 function duoDrop(msg){duoWorldClear();if(DUO.ped&&peds.includes(DUO.ped))removePed(DUO.ped);DUO.ped=null;DUO.follow=false;DUO.on=false;DUO.car=null;CHAR.list[1-CHAR.cur].st=null;if(msg)toast(msg)}
 function duoMateNear(){return PL.inside===true&&SAFE.mate&&peds.includes(SAFE.mate)&&!DUO.follow&&Math.hypot(PL.x-SAFE.mate.x,PL.z-SAFE.mate.z)<2.6}
 function duoPedNear(){return !PL.car&&DUO.ped&&peds.includes(DUO.ped)&&Math.hypot(PL.x-DUO.ped.x,PL.z-DUO.ped.z)<2.4}
@@ -19857,7 +20069,7 @@ function buildJail(){if(JAIL.grp){scene.remove(JAIL.grp);disposeGroup(JAIL.grp)}
 }
 function jailWear(on){
  const ch=CHAR.list[CHAR.cur];
- if(on){if(!ch.jailLook)ch.jailLook={...PLAYER_PAL};Object.assign(PLAYER_PAL,{shirt:'#f07818',pants:'#f07818',belt:'#f07818',stripe:null,cap:null,capDark:null,bag:null,pack:false,glasses:null,necklace:null,headphone:null,swim:null});}
+ if(on){if(!ch.jailLook)ch.jailLook={...PLAYER_PAL};Object.assign(PLAYER_PAL,{shirt:'#f07818',pants:'#f07818',belt:'#f07818',stripe:null,art:null,cap:null,capDark:null,bag:null,pack:false,glasses:null,necklace:null,headphone:null,swim:null});}
  else{if(!ch.jailLook)return;Object.assign(PLAYER_PAL,ch.jailLook);delete ch.jailLook;}
  ch.look={...PLAYER_PAL};applyPlayerLook();charFaces();
 }
@@ -19940,7 +20152,9 @@ function safeGarage(){const s=city.safe;if(!s||!s.slots||PL.inside)return;const 
   // a garagem é a sua frota: o carro sai e continua seu; se sumir do mundo, volta pra vaga; destruído, a vaga fica livre
   if(car&&(!car.alive||car.exploded)){if(SAFE.stored[i]){SAFE.stored[i]=null;toast('SEU VEÍCULO FOI DESTRUÍDO<br><small style="font-size:11px;color:#fff">a vaga '+(i+1)+' da garagem ficou livre</small>')}SAFE.cars[i]=car=null}
   else if(car&&!vehicles.includes(car))SAFE.cars[i]=car=null;
-  const st=SAFE.stored[i];if(st&&!car&&Math.hypot(p.x-sl.x,p.z-sl.z)<220&&VT[st.type]){const c=makeVehicle(st.type,sl.x,sl.z,sl.a,st.color);c.hasNitro=st.nitro;c.turbo=!!st.turbo;if(st.neon){c.neon=true;c.neonCol=st.neon}if(st.plate)c.plate=normPlate(st.plate)||c.plate;c.special=st.special;c.legal=!!st.legal;c.owned=true;c.hand=true;c.sleep=true;SAFE.cars[i]=c}
+  const st=SAFE.stored[i];if(st&&!car&&Math.hypot(p.x-sl.x,p.z-sl.z)<220&&VT[st.type]){ /* v79r23: se o carro dessa vaga já está parado nela (ex.: conversível da missão 1, ou após carregar o jogo sem recriar a cidade), adota em vez de criar outro igual */
+   const here=vehicles.find(v=>v.alive&&!v.exploded&&v.type===st.type&&v!==PL.car&&!SAFE.cars.includes(v)&&Math.hypot(v.x-sl.x,v.z-sl.z)<2.5);if(here){here.owned=true;here.hand=true;SAFE.cars[i]=here;car=here}}
+  if(st&&!car&&Math.hypot(p.x-sl.x,p.z-sl.z)<220&&VT[st.type]){const c=makeVehicle(st.type,sl.x,sl.z,sl.a,st.color);c.hasNitro=st.nitro;c.turbo=!!st.turbo;if(st.neon){c.neon=true;c.neonCol=st.neon}if(st.plate)c.plate=normPlate(st.plate)||c.plate;c.special=st.special;c.legal=!!st.legal;c.owned=true;c.hand=true;c.sleep=true;SAFE.cars[i]=c}
   car=SAFE.cars[i];if(car&&PL.car===car&&st)SAFE.stored[i]={...carRec(car),legal:!!(st.legal||car.legal),t:st.t||Date.now()}}
  const lc=PL.lastCar;if(PL.car||!lc||!lc.alive||lc.t.boat||Math.hypot(lc.vx,lc.vz)>1||SAFE.msgFor===lc&&lc.hp>=100)return;
  for(let i=0;i<2;i++){const sl=s.slots[i];if(!sl||Math.hypot(lc.x-sl.x,lc.z-sl.z)>3.4)continue;
@@ -19983,7 +20197,7 @@ function saveBlocked(){if(PROLOGUE.active){toast("CONCLUA A MISSÃO INICIAL PARA
 function saveGame(quiet){if(!played||PL.dead||STORYFAIL.active||storyOn()&&!STORY.checkpoint||saveBlocked())return;try{SAVE.last=buildSave()}catch(e){}}
 const SAVE={last:null,fileT:0};
 function buildSave(){{const c=PL.car,s=PL.inside&&DOOR.from&&DOOR.from.seed===S.seed?DOOR.from:PL.inside==='mall'&&MALL.out?MALL.out:PL.inside==='shop'&&SHOP.st?SHOP.st.out:PL.inside&&city.safe?city.safe:null;if(GUN.has&&GUN.inv[GUN.w])GUN.inv[GUN.w].ammo=GUN.ammo;
- const d={v:1,gv:GAME_VER,saveSeries:SAVE_SERIES,tommy:{got:[...TOMMY.got],bonus:TOMMY.bonus},maskara:MASK.have?1:0,t:Date.now(),seed:S.seed,style:S.style,size:S.size,tod:DN.tod,day:DN.day||0,x:s?s.x:PL.x,z:s?s.z:PL.z,hp:Math.max(1,Math.round(PL.hp)),car:c&&c.alive&&!c.t.boat?{type:c.type,color:c.color,a:c.a,hp:c.hp,nitro:!!c.hasNitro,special:!!c.special,fuel:c.fuel,turbo:!!c.turbo,neon:c.neon?c.neonCol:null}:null,wantedZones:wzSave(),garage:SAFE.stored,safeHeli:safeHeliSave(),gun:maskGunSave(),news:NEWS.items.slice(-12),ammoUp:AMMO.up,money:PL.money||0,picked:[...city.picked].slice(-400),quest:questSave(),emp:empSave(),mode:GAMEMODE,pets:{cat:PET.adopted,ci:PET.catCi},story:storySave(),vinyl:{seed:S.seed,got:[...VINYL.got],cheat:VINYL.cheat},records:RECLOG.items.slice(),stunts:[...(city.stunts||[])],wx:WX.wx,wz:WX.wz,cfg:cfgObj(),wxs:wxState(),look:MASK.original?{...MASK.original}:{...PLAYER_PAL},wardrobe:wearSave(),wardrobeChars:wearChars(),kits:CHAR.list.map((c,i)=>i===CHAR.cur?null:(c.kit||null)),cheatUsed:!!CHEAT.used,moneyChars:CHAR.list.map((c,i)=>i===CHAR.cur?(PL.money||0):(c.cash||0)),inv:invertStateSave()};if(S.style==='haze')d.hazeHome=HAZE.home||hazeHomeFallback();d.armor=Math.round(PL.armor||0);d.phone={models:PHONE.models.slice(),notif:PHONE.notif};d.chars={cur:CHAR.cur,looks:CHAR.list.map((c,i)=>i===CHAR.cur?null:c.look),sp:CHAR.list.map(c=>c.sp),lucia:CHAR.cur===0&&CHAR.list[1].st&&(!CHAR.list[1].st.car&&!CHAR.list[1].st.heli)?{...CHAR.list[1].st,world:CHAR.list[1].st.world}:null};
+ const d={v:1,gv:GAME_VER,saveSeries:SAVE_SERIES,tommy:{got:[...TOMMY.got],bonus:TOMMY.bonus},maskara:MASK.have?1:0,t:Date.now(),seed:S.seed,style:S.style,size:S.size,tod:DN.tod,day:DN.day||0,x:s?s.x:PL.x,z:s?s.z:PL.z,hp:Math.max(1,Math.round(PL.hp)),car:c&&c.alive&&!c.t.boat?{type:c.type,color:c.color,a:c.a,hp:c.hp,nitro:!!c.hasNitro,special:!!c.special,fuel:c.fuel,turbo:!!c.turbo,neon:c.neon?c.neonCol:null}:null,wantedZones:wzSave(),garage:SAFE.stored,safeHeli:safeHeliSave(),gun:maskGunSave(),skates:skSave(),news:NEWS.items.slice(-12),ammoUp:AMMO.up,money:PL.money||0,picked:[...city.picked].slice(-400),quest:questSave(),emp:empSave(),mode:GAMEMODE,pets:{cat:PET.adopted,ci:PET.catCi},story:storySave(),vinyl:{seed:S.seed,got:[...VINYL.got],cheat:VINYL.cheat},records:RECLOG.items.slice(),stunts:[...(city.stunts||[])],wx:WX.wx,wz:WX.wz,cfg:cfgObj(),wxs:wxState(),look:MASK.original?{...MASK.original}:{...PLAYER_PAL},wardrobe:wearSave(),wardrobeChars:wearChars(),kits:CHAR.list.map((c,i)=>i===CHAR.cur?null:(c.kit||null)),cheatUsed:!!CHEAT.used,moneyChars:CHAR.list.map((c,i)=>i===CHAR.cur?(PL.money||0):(c.cash||0)),inv:invertStateSave()};if(S.style==='haze')d.hazeHome=HAZE.home||hazeHomeFallback();d.armor=Math.round(PL.armor||0);d.phone={models:PHONE.models.slice(),notif:PHONE.notif};d.chars={cur:CHAR.cur,looks:CHAR.list.map((c,i)=>i===CHAR.cur?null:c.look),sp:CHAR.list.map(c=>c.sp),lucia:CHAR.cur===0&&CHAR.list[1].st&&(!CHAR.list[1].st.car&&!CHAR.list[1].st.heli)?{...CHAR.list[1].st,world:CHAR.list[1].st.world}:null};
  return d}}
 /* PixelCity PSAVE v2: chave fixa do jogo, IV aleatorio e autenticacao AES-GCM.
    Preserve PSAVE_KEY_BYTES em futuras versoes para manter saves compativeis. */
@@ -20104,6 +20318,7 @@ function applySave(d){NEWS.items=Array.isArray(d.news)?d.news.filter(n=>n&&typeo
  if(typeof d.tod==='number'){DN.tod=d.tod;DN.day=d.day||0;updateDayNight(0,true)}
  let x=d.x,z=d.z;const o={x,z};circleVsWorld(o,.6);if(inWater(o.x,o.z)||!isFinite(o.x)){if(city.safe){o.x=city.safe.x;o.z=city.safe.z}}PL.x=o.x;PL.z=o.z;PL.vx=PL.vz=0;camT.x=PL.x;camT.z=PL.z;
  for(const p of pickups.slice())if(city.picked.has(p.id))removePickup(p);
+ try{skLoad(d.skates)}catch(e){console.error(e)}
  SAFE.stored=Array.isArray(d.garage)?d.garage.slice(0,2):[d.garage||null,null];SAFE.heliStored=d.safeHeli||null;SAFE.cars=[null,null];if(d.car&&VT[d.car.type]){const c=makeVehicle(d.car.type,PL.x,PL.z,d.car.a||0,d.car.color);c.hasNitro=!!d.car.nitro;c.turbo=!!d.car.turbo;if(d.car.neon){c.neon=true;c.neonCol=d.car.neon}if(d.car.plate)c.plate=normPlate(d.car.plate)||c.plate;c.hp=Math.max(25,d.car.hp||100);if(typeof d.car.fuel==='number')c.fuel=d.car.fuel;c.sleep=false;c.hand=false;if(d.car.type==='super'&&d.car.special){c.special=true;c.hasNitro=true;c.hasGlow=false}
   PL.car=c;PL.sp.visible=false;PL.sh.visible=false;$('#speed').hidden=false;$('#carbar').hidden=false;if(camMode==='fps')chasePos.set(c.x-Math.cos(c.a)*9,4,c.z-Math.sin(c.a)*9)}
  for(const p of peds.slice())if(!p.fixed)removePed(p);for(const v of vehicles.slice())if(v!==PL.car&&(v.mode==='rail'||v.ai))removeVehicle(v);buildCarHash();buildLanes();populate(true);
@@ -20401,6 +20616,7 @@ LANG_EN["Requer Chrome/Edge no PC e autorização do controle."]="Requires Chrom
 LANG_EN["USB e Bluetooth compatíveis. No Linux, o acesso WebHID pode exigir regra udev."]="USB and Bluetooth supported. On Linux, WebHID access may require a udev rule.";
 /* v78: revisão do inglês — frases que caíam em mistura PT/EN */
 Object.assign(LANG_EN,{"vindo do norte": "coming from the north", "nuvens escuras já aparecem no horizonte, ao norte": "dark clouds are already forming on the horizon, to the north", "vindo do nordeste": "coming from the northeast", "nuvens escuras já aparecem no horizonte, ao nordeste": "dark clouds are already forming on the horizon, to the northeast", "vindo do leste": "coming from the east", "nuvens escuras já aparecem no horizonte, ao leste": "dark clouds are already forming on the horizon, to the east", "vindo do sudeste": "coming from the southeast", "nuvens escuras já aparecem no horizonte, ao sudeste": "dark clouds are already forming on the horizon, to the southeast", "vindo do sul": "coming from the south", "nuvens escuras já aparecem no horizonte, ao sul": "dark clouds are already forming on the horizon, to the south", "vindo do sudoeste": "coming from the southwest", "nuvens escuras já aparecem no horizonte, ao sudoeste": "dark clouds are already forming on the horizon, to the southwest", "vindo do oeste": "coming from the west", "nuvens escuras já aparecem no horizonte, ao oeste": "dark clouds are already forming on the horizon, to the west", "vindo do noroeste": "coming from the northwest", "nuvens escuras já aparecem no horizonte, ao noroeste": "dark clouds are already forming on the horizon, to the northwest","AO VIVO": "LIVE", "Transição gradual conforme a vida do personagem ativo. Procurado: alterna branco e vermelho. Feedback desligado: azul fixo.": "Gradual shift with the active character's health. Wanted: flashes white and red. Feedback off: solid blue.", "Copie o comando e cole no terminal. Digite sua senha de administrador quando solicitada.": "Copy the command and paste it in a terminal. Enter your admin password when asked.", "2. Desconecte e reconecte o controle (USB ou Bluetooth).": "2. Unplug and reconnect the controller (USB or Bluetooth).", "3. Feche todas as janelas do navegador e abra novamente. Volte aqui e autorize o DualSense e a saída de áudio.": "3. Close every browser window and reopen it. Come back here and authorize the DualSense and audio output.", "A regra libera o acesso aos gatilhos e à luz. Para o alto-falante, prefira USB e selecione a saída de áudio do controle acima.": "The rule unlocks the triggers and light bar. For the speaker, use USB and pick the controller's audio output above.", "Pronto para jogar": "Ready to play", "Scroll do mouse ou TAB selecionam armas; no controle, B/○ alterna. Q ou ← abre o rádio. Motorista usa pistola, Magnum, metralhadora ou jammer; Nathan de carona pode usar bazuca.": "Mouse wheel or TAB picks weapons; on a controller, B/○ cycles. Q or ← opens the radio. The driver can use pistol, Magnum, SMG or jammer; Nathan as passenger can use the bazooka.", "Escolha o alto-falante do controle conectado por USB. Sem controle, o bipe toca na saída normal. A autorização de áudio pode pedir acesso ao microfone para listar as saídas; a captura é encerrada imediatamente.": "Pick the speaker of a USB-connected controller. Without one, the beep plays on the normal output. Audio authorization may ask for microphone access to list outputs; capture stops immediately.", "COPIAR COMANDO": "COPY COMMAND"," da garagem ficou livre": " in the garage is now free", " da garagem": " in the garage", " m · precisa de ": " m · needs ", " para cavar": " to dig", " · compre na Malas & Mochilas Co. do shopping": " · buy one at Malas & Mochilas Co. in the mall", " · segure TAB: roda de armas": " · hold TAB: weapon wheel", "+25 DE ENERGIA": "+25 ENERGY", "A bola está girando…": "The ball is spinning…", "A poluição é um problema urbano nas grandes cidades · nesta região, não há mancha industrial visível": "Pollution is an urban problem in big cities · this area shows no visible industrial haze", "ABERTO ATÉ TARDE": "OPEN LATE", "ACOMPANHAMENTO AÉREO": "AERIAL COVERAGE", "AEROPORTO INTERNACIONAL DE SUNSET SHORES": "SUNSET SHORES INTERNATIONAL AIRPORT", "Aeroporto Internacional de Sunset Shores": "Sunset Shores International Airport", "ALERTA METEOROLÓGICO": "WEATHER ALERT", "ALÉM DO SINAL": "BEYOND THE SIGNAL", "AMOnições clerk": "AMOnições clerk", "AMOnições · ARMAS E UPGRADES": "AMOnições · WEAPONS & UPGRADES", "AMOnições · ARMAS": "AMOnições · WEAPONS", "AMOnições · VOLTE QUANDO NÃO ESTIVER PROCURADO": "AMOnições · COME BACK WHEN YOU'RE NOT WANTED", "ANEL DO MEIO": "MIDDLE RING", "ARMA INDISPONÍVEL NESTE ASSENTO": "WEAPON UNAVAILABLE IN THIS SEAT", "ARQUIVOS DA CIDADE": "CITY FILES", "ATÉ 50% OFF": "UP TO 50% OFF", "Arma especial: sem upgrades de dano/cadência/foco nesta fase para preservar o equilíbrio dos explosivos e do jammer.": "Special weapon: no damage/fire-rate/focus upgrades, to keep explosives and the jammer balanced.", "Armas dos becos: raras e sem respawn. Cada compra de arma existente repõe munição até o limite da mochila.": "Alley weapons: rare and never respawn. Buying a weapon you own refills ammo up to your backpack limit.", "Automáticas": "Automatic", "AÇAÍ TROPICAL": "TROPICAL AÇAÍ", "BORRACHARIA · AMOnições": "TIRE SHOP · AMOnições", "Blitz da polícia: fiscalização e operações preventivas para conter criminosos e aumentar a segurança nas ruas": "Police checkpoints: inspections and preventive operations to stop criminals and make the streets safer", "CADÊNCIA": "FIRE RATE", "CARDÁPIO": "MENU", "CAVE NO CANTO: SEGURE ": "DIG IN THE CORNER: HOLD ", "CENÁRIO SÓ EM SUNSET SHORES": "SCENE CONTROLS ONLY IN SUNSET SHORES", "CENÁRIO": "SCENE", "COFRE DE NOTAS": "CASH VAULT", "COLEÇÃO VERÃO 86": "SUMMER '86 COLLECTION", "CONEXÕES & DESTINOS": "CONNECTIONS & DESTINATIONS", "CONTA DO HOSPITAL · −$": "HOSPITAL BILL · −$", "COR DO NEON TROCADA": "NEON COLOR CHANGED", "CORRIDA CONCLUÍDA · SEM PAGAMENTO": "RIDE COMPLETE · NO PAYMENT", "Cheat usado nesta partida": "Cheat used in this game", "CORRIDA DE RUA": "STREET RACE", "CUIDADO & SAÚDE": "CARE & HEALTH", "Chegue a 21 sem ultrapassar. A banca para em 17.": "Get to 21 without going over. Dealer stands on 17.", "Chuva intensa, ventania e raios · motoristas enfrentam pista escorregadia · moradores correm para se abrigar": "Heavy rain, strong winds and lightning · drivers face slippery roads · residents rush for shelter", "Conectando pessoas, turismo e negócios · o Aeroporto Internacional de Sunset Shores impulsionou a economia e valorizou a cidade": "Connecting people, tourism and business · Sunset Shores International Airport boosted the economy and the city's value", "Cor, par/ímpar ou metade: paga 2× · número exato: paga 36× · no zero, só o número 0 ganha.": "Color, odd/even or half: pays 2× · exact number: pays 36× · on zero, only number 0 wins.", "CÉU AGORA": "SKY NOW", "DELEGACIA DE": "POLICE STATION OF", "DIVERSÃO GARANTIDA": "GUARANTEED FUN", "De volta a Sunset Shores. Nada de vida nova: é a mesma cidade, a mesma casa… só que vazia.": "Back in Sunset Shores. No new life: same city, same house… only empty.", "EM BREVE · SÓ NOS CINEMAS": "COMING SOON · ONLY IN THEATERS", "ESCAPANDO DA MORTE…": "CHEATING DEATH…", "ESSÊNCIA DE MIAMI": "ESSENCE OF MIAMI", "ESTE VEÍCULO NÃO TEM MISSÃO": "THIS VEHICLE HAS NO MISSION", "Eletrônicos": "Electronics", "Escolha as cartas para manter e troque as demais.": "Pick the cards to hold and swap the rest.", "Escolha onde apostar e gire. O zero é verde e só paga no número exato.": "Choose your bet and spin. Zero is green and only pays on the exact number.", "Experimente você também!": "Try it yourself!", "FARÓIS": "HEADLIGHTS", "FATIA DO DIA!": "SLICE OF THE DAY!", "FECHE O GUARDA-ROUPA PARA TROCAR DE PERSONAGEM": "CLOSE THE WARDROBE TO SWITCH CHARACTERS", "FIVELA DO CINTO": "BELT BUCKLE", "FREAR / RÉ": "BRAKE / REVERSE", "FREIO DE MÃO": "HANDBRAKE", "Fala aí.": "Talk to me.", "Fugitiva… não. Não pode ser.": "A fugitive… no. It can't be.", "HOSPITAL DE": "HOSPITAL OF", "Há rumores de que um demogorgon escapou para nosso mundo e se esconde aqui!": "Rumor has it a demogorgon escaped into our world and is hiding here!", "Ideia de Jerico": "Dumb idea", "JOIAS · COLEÇÃO": "JEWELRY · COLLECTION", "LANTERNA DO CELULAR DESLIGADA": "PHONE FLASHLIGHT OFF", "LANTERNA DO CELULAR LIGADA": "PHONE FLASHLIGHT ON", "LANÇAMENTOS": "NEW RELEASES", "LIMITE DE MUNIÇÃO ATINGIDO": "AMMO LIMIT REACHED", "Ligar não. Se ele ouvir minha voz, vem correndo e faz besteira. Uma mensagem basta.": "No calling. If he hears my voice he'll come running and do something stupid. A text will do.", "MARÉ ALTA": "HIGH TIDE", "MISTÉRIOS DE SUNSET SHORES": "MYSTERIES OF SUNSET SHORES", "MODA · COLEÇÃO": "FASHION · COLLECTION", "Munição": "Ammo", "NENHUM TÁXI POR PERTO": "NO TAXIS NEARBY", "NEOGÁS": "NEOGAS", "NINGUÉM ATENDEU": "NO ANSWER", "NOVA FRAGRÂNCIA": "NEW FRAGRANCE", "Nenhum diálogo da história registrado ainda.": "No story dialogue recorded yet.", "Nenhum diálogo registrado ainda.": "No dialogue recorded yet.", "NÃO FOI DESSA VEZ · ": "NOT THIS TIME · ", "NÃO FOI POSSÍVEL SALVAR A FOTO": "COULD NOT SAVE THE PHOTO", "O NOVO ÁLBUM · \"NOITES DE VERÃO\"": "THE NEW ALBUM · \"SUMMER NIGHTS\"", "OPERAÇÃO PREVENTIVA": "PREVENTIVE OPERATION", "PAR DE VALETE OU MAIOR": "JACKS OR BETTER", "PAR DE VALETE+": "JACKS OR BETTER", "PISE COM ESTILO": "STEP OUT IN STYLE", "PLANTÃO": "BREAKING NEWS", "POLUIÇÃO: UM DESAFIO URBANO": "POLLUTION: AN URBAN CHALLENGE", "PORTAL DO DELOREAN ABERTO": "DELOREAN PORTAL OPEN", "PREFEITURA DE": "CITY HALL OF", "Poderia ter sido tudo diferente… 10 anos presa não é brincadeira, e já faz pelo menos 3 anos que ela tá lá.": "It could've all been different… 10 years locked up is no joke, and she's been in there at least 3 years already.", "Pular trecho atual da abertura": "Skip this part of the intro", "RIOS DA CIDADE": "CITY RIVERS", "Rios perto de áreas industriais revelam os impactos da poluição nas grandes cidades · preservar a água é cuidar da cidade": "Rivers near industrial areas show the impact of pollution in big cities · protecting the water is protecting the city", "SAIA DO LOCAL PARA TROCAR DE PERSONAGEM": "LEAVE THIS PLACE TO SWITCH CHARACTERS", "SAIA DO SHOPPING PARA TROCAR DE PERSONAGEM": "LEAVE THE MALL TO SWITCH CHARACTERS", "SALTO DE PARAQUEDAS": "PARACHUTE JUMP", "SAÍDA": "EXIT", "SEGURANÇA EM PAUTA": "SAFETY IN FOCUS", "SEM COMBINAÇÃO": "NO WIN", "SEM DINHEIRO · FIM DA CORRIDA": "OUT OF MONEY · RIDE OVER", "SEM DINHEIRO": "NO MONEY", "SEM ESPAÇO PARA POUSAR AQUI": "NO ROOM TO LAND HERE", "SEM MOCHILA · MUNIÇÃO REDUZIDA": "NO BACKPACK · REDUCED AMMO", "SEM MUDANÇAS": "NO CHANGES", "SEM MÚSICA": "NO MUSIC", "SEQUÊNCIA": "STRAIGHT", "SERÁ QUE EXISTE ALGO DE MISTERIOSO NESSAS MATAS?": "IS THERE SOMETHING MYSTERIOUS IN THESE WOODS?", "SEU CONVERSÍVEL FOI DESTRUÍDO": "YOUR CONVERTIBLE WAS DESTROYED", "SUNSET ROYALE · VIDEOPÔQUER": "SUNSET ROYALE · VIDEO POKER", "SÉPIA": "SEPIA", "SÓ FUNCIONÁRIOS": "STAFF ONLY", "TOPO DO ARRANHA-CÉU · INTERAJA NA BORDA PARA SALTAR DE PARAQUEDAS": "SKYSCRAPER ROOF · USE THE EDGE TO PARACHUTE", "TOQUE DE NOVO PARA CONFIRMAR": "TAP AGAIN TO CONFIRM", "TUBARÕES": "SHARKS", "Tamanho da cidade": "City size", "Tenho um serviço pra você.": "I've got a job for you.", "Tony: tenho um serviço pra você no porto.": "Tony: I've got a job for you at the port.", "Tudo bem. Sem pressão, sem perguntas hoje.": "It's okay. No pressure, no questions today.", "UMA NOVA VISTA DE SUNSET SHORES": "A NEW VIEW OF SUNSET SHORES", "UNIVERSIDADE DE": "UNIVERSITY OF", "VEJA O VERÃO": "SEE THE SUMMER", "VENDEDOR DE CARROS": "CAR SALESMAN", "VIDEOPÔQUER · JACKS OR BETTER": "VIDEO POKER · JACKS OR BETTER", "VISTA DE CIMA": "VIEW FROM ABOVE", "VIVA LÁ FORA": "LIVE OUT THERE", "VOCÊ GANHOU · ": "YOU WON · ", "VOCÊ NÃO TEM ": "YOU DON'T HAVE ", "VOCÊ VENCEU": "YOU WIN", "VOCÊ": "YOU", "Vitória: 2× aposta · blackjack natural: 2,5× · empate: devolução.": "Win: 2× bet · natural blackjack: 2.5× · push: bet returned.", "Você tem carro? Preciso ir pro píer!": "Got a car? I need to get to the pier!", "agenda do celular": "phone contacts", "botões": "buttons", "demogorgon da floresta": "forest demogorgon", "fantasma do cemitério": "cemetery ghost", "o botão de ação": "the action button", "olhar para tras": "look back", "reta de ": "straight of ", "segure ": "hold ", "sem bônus": "no bonus", "vindo do ": "coming from the ", "ÍMPAR": "ODD", "ÚLTIMO VEÍCULO": "LAST VEHICLE", "● OBSERVATÓRIO": "● OBSERVATORY", "● OPERAÇÃO AO VIVO": "● LIVE OPERATION", "● SOBREVOO DA FLORESTA": "● FOREST FLYOVER", "● VOCÊ ESTÁ AQUI": "● YOU ARE HERE", "NÃO": "NO", "NÓS": "US", "MAIS": "MORE", "Sombras de Postes": "Pole Shadows", "RECURSOS DO CONTROLE": "CONTROLLER FEATURES", "CONEXÃO": "CONNECTION", "ÁUDIO DO CONTROLE": "CONTROLLER AUDIO", "VOLUME NO CONTROLE": "CONTROLLER VOLUME", "Bipe no alto-falante do controle": "Beep on controller speaker", "AUTORIZAR SAÍDAS DE ÁUDIO": "AUTHORIZE AUDIO OUTPUTS", "Saída normal": "Normal output", "Bipe na saída normal.": "Beep on normal output.", "Feedback de vida e perseguição": "Health and pursuit feedback", "Incline para virar. Aceleração e freio continuam nos gatilhos ou botões.": "Tilt to steer. Throttle and brake stay on the triggers or buttons.", "Escolha a aposta para jogar.": "Choose your bet to play.", "ESC / ○ volta ao menu": "ESC / ○ back to menu", "soco (ou": "punch (or", "sem arma)": "unarmed)", "arrastando, ou": "dragging, or", "especial do personagem": "character special", "ou": "or", "Armas no veículo": "Weapons in vehicles", "Erro no carregamento do arquivo:": "Error loading file:", "Subir/descer a câmera (R/V) · inativo nas câmeras de topo e isométrica": "Raise/lower camera (R/V) · disabled in top and isometric cameras", "Altura da câmera": "Camera height", "0% = céu do momento · 100% = tempestade formada sobre a cidade": "0% = current sky · 100% = full storm over the city", "0% = lua invisível ao lado do sol · 100% = eclipse total": "0% = invisible moon beside the sun · 100% = total eclipse", "Trocar personagem (segure Alt / ↓ no controle)": "Switch character (hold Alt / ↓ on controller)", "Carregando cenário": "Loading scene", "Fechar e voltar ao jogo (Esc)": "Close and return to game (Esc)", "Versão do jogo": "Game version", "Reiniciar e voltar ao menu inicial (progresso não salvo será perdido)": "Restart and return to main menu (unsaved progress will be lost)", "Categorias de configuração": "Settings categories", "Presets de qualidade gráfica": "Graphics quality presets", "Saída do bipe do celular": "Phone beep output", "Seções de registros": "Log sections", "Veículo anterior": "Previous vehicle", "Próximo veículo": "Next vehicle", "Copiar somente o número da seed atual": "Copy only the current seed number", "Copiar as coordenadas X, Y e Z, somente números": "Copy X, Y and Z coordinates, numbers only", "Lista dos símbolos do mapa": "Map symbol list", "Progresso do carregamento": "Loading progress", "HORA": "TIME", "Água caindo": "Falling rain", "SOCO": "PUNCH", "PUNHOS": "FISTS"});
+Object.assign(LANG_EN,{"O NAVEGADOR BLOQUEOU A LEITURA": "THE BROWSER BLOCKED READING THE CLIPBOARD", "clique no campo e use Ctrl+V": "click the field and press Ctrl+V", "COLAR": "PASTE"});Object.assign(LANG_EN,{"colar X,Y,Z": "paste X,Y,Z", "TELEPORT · USE X,Y,Z OU X,Z": "TELEPORT · USE X,Y,Z OR X,Z", "cheat: save desativado": "cheat: saving disabled"});Object.assign(LANG_EN,{"SKATE · SHAPES · RODAS":"SKATE · DECKS · WHEELS","dar 1 skate da garagem na troca": "trade in 1 board from your garage", "SKATE TROCADO · −$": "BOARD TRADED IN · −$", "letras, números e símbolos · até 6": "letters, numbers and symbols · up to 6", "ATÉ 6": "UP TO 6"});Object.assign(LANG_EN,{"SUBIR NO SKATE": "HOP ON THE SKATEBOARD", "DESCER DO SKATE": "STEP OFF THE SKATEBOARD", "SKATE SHOP · SKATES $120": "SKATE SHOP · SKATEBOARDS $120", "W empurra · S freia · A/D curva · Espaço pula · F desce": "W pushes · S brakes · A/D turns · Space jumps · F steps off", "OFICINA · SKATE": "WORKSHOP · SKATEBOARD", "SEM MUDANÇAS": "NO CHANGES", "troque as cores e a estampa do seu skate": "change your board's colors and print", "o skate novo vai pra garagem da sua casa": "your new board goes to your home garage", "SKATE CUSTOMIZADO · −$": "BOARD CUSTOMIZED · −$", "SKATE COMPRADO · −$": "BOARD BOUGHT · −$", "está na garagem da sua casa": "it's in your home garage"});
 const LANG_EXACT=new Map(Object.entries(LANG_EN));
 // One-pass replacement prevents cascading translations and substitutions inside words.
 const LANG_KEYS=Object.keys(LANG_EN).filter(k=>k.trim().length>=2).sort((a,b)=>b.length-a.length);
@@ -21115,9 +21331,9 @@ function roomStageLocalTick(dt){
  heldGunTick();if(toastT>0)toastT=Math.max(0,toastT-dt);
 }
 
-function update(dt){if(POOL.on){poolTick(dt);return}if(DICE.on){diceTick(dt);return}luciaIdleTick();if(roomStageKind()&&!BENCH.active){roomStageLocalTick(dt);return}crimeRoll();if(DLG.on){dlgTick(dt);return}paraTick(dt);try{dealTick(dt)}catch(e){console.error(e)}try{storyTick();duoTick(dt);questTick(dt);sideTick(dt);forestTick(dt);jetTick(dt);vortexTick();dbTick(dt);shipTick(dt);airTick2(dt);casinoTick(dt);motelTick(dt);labTick(dt);clubFxTick(dt);bankTick(dt);empTick(dt)}catch(e){console.error(e)}try{areaHudTick(dt)}catch(e){console.error(e)}cheatTick();maskTick(dt);jammerTick(dt);updateCloseCarDetails(dt);updateIndustrialGates(dt);
+function update(dt){if(SKATE.ui)return;if(POOL.on){poolTick(dt);return}if(DICE.on){diceTick(dt);return}luciaIdleTick();if(roomStageKind()&&!BENCH.active){roomStageLocalTick(dt);return}crimeRoll();if(DLG.on){dlgTick(dt);return}paraTick(dt);try{dealTick(dt)}catch(e){console.error(e)}try{storyTick();duoTick(dt);questTick(dt);sideTick(dt);forestTick(dt);jetTick(dt);vortexTick();dbTick(dt);shipTick(dt);airTick2(dt);casinoTick(dt);motelTick(dt);labTick(dt);clubFxTick(dt);bankTick(dt);empTick(dt)}catch(e){console.error(e)}try{areaHudTick(dt)}catch(e){console.error(e)}cheatTick();maskTick(dt);jammerTick(dt);updateCloseCarDetails(dt);updateIndustrialGates(dt);
  simT+=dt;updateDayNight(dt);riverBoatsTick(dt);
- updatePlayer(dt);jailTick(dt);updateSafe(dt);heistTick(dt);v67Tick(dt);try{aqTick(dt)}catch(e){console.error(e)}try{ghostTick(dt)}catch(e){console.error(e)}misUpdate(dt);updateTune();
+ updatePlayer(dt);try{skTick(dt)}catch(e){console.error(e)}jailTick(dt);updateSafe(dt);heistTick(dt);v67Tick(dt);try{aqTick(dt)}catch(e){console.error(e)}try{ghostTick(dt)}catch(e){console.error(e)}misUpdate(dt);updateTune();
  buildCarHash();buildLanes();
  const _profTraffic=MON.on?performance.now():0;
  const ctr=BENCH.running?BENCH.focus:(TVM.on?TVM.foc:PL.car||PL),RP=72;
