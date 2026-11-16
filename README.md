@@ -27,13 +27,15 @@ Start on foot. Grab a car. Head across town.
 - **Cars, motorcycles, buses, trucks, speedboats, jet skis, helicopters**, from a humble Kipwell Zip to a Veycross Slipstream R, and a few rides you'll have to find for yourself.
 - **Buy your dream car** at the dealership, pick your plate, then make it yours at the workshop: paint, nitro, turbo, neon.
 - **Fill up at the gas station**, grab a snack at the convenience store, and try not to get too close to the tire shop's scrapyard next door.
-- **Hit a dirt jump out in the countryside**, launch from a back-alley ramp, or BASE-jump from a rooftop and aim for the target on the sand.
+- **Hit a dirt jump out in the countryside**, launch from a back-alley ramp, or **parachute from a rooftop** and aim for the target on the sand.
+- **Raise the drawbridges** from the booth, or wait for the boats to pass. Find the hidden **Neon Road**, a street that only lights up for those who know where to look.
+- **Dress the part**: shirts, prints, caps, glasses, jewelry. Put your own letter, number or symbol on your shirt.
 
 ## 💸 Make money. Make trouble.
 
 Pick up taxi fares, take on vigilante work, race at night, or survive a rampage. Spend the cash on clothes, weapons, fuel and upgrades.
 
-Try your luck at the **casino**. Dance until sunrise at the **nightclub**. Shop across two floors of the **mall**. Some businesses in town have a less respectable side, and the people running them won't hand over the keys without a fight. **Build an empire** if you can hold it.
+Try your luck at the **casino**: slots, blackjack, video poker, roulette and a **pool table** where Seu Zé is waiting for a game of *castigado* (evens vs odds, and ball 1 is the penalty). Dance until sunrise at the **nightclub**, and maybe have one drink too many: the room starts to spin, and five drinks is the limit. Shop across two floors of the **mall**, and check into the roadside **motel** if you need a place to hide. Some businesses in town have a less respectable side, and the people running them won't hand over the keys without a fight. **Build an empire** if you can hold it.
 
 And there's a bank. With a vault. Just saying.
 
@@ -48,6 +50,14 @@ Don't expect the police to look the other way. Patrol cars, checkpoints, helicop
 
 Slow down once in a while. Some discoveries don't come with an announcement.
 
+## 🌀 Beyond the city limits
+
+Sunset Shores isn't the only place you can end up.
+
+- **Parallel worlds**: a synthwave dimension drenched in neon, a dark and silent **Upside Down**, and **Point Haze**, a foggy island of dead trees out at sea, reachable by boat or helicopter.
+- **A secret military lab** is buried under Point Haze. Two floors of sealed rooms, a cargo elevator, a containment tank with something floating in it, and Tesla coils you really shouldn't get close to. Break in and see what they're hiding.
+- Some masks give more than a disguise. Ever tried running across the water?
+
 ## 🏠 A place to come home to
 
 Your safe house is where you rest, change clothes, save your progress and **watch TV**. The local channels follow what's really happening out there: police operations, storms, chases, departures from the airport, and the occasional strange report from the woods.
@@ -61,7 +71,10 @@ And some might leave you wondering whether you're still in the same city at all.
 ## 🎮 See the city your way
 
 - **First person, third person, top-down or isometric**: switch any time.
-- **Map + GPS** with route guidance, and a marker on your last vehicle so you can always find it again.
+- **Map + GPS** with route guidance, and a marker on your last vehicle so you can always find it again. Inside a building, the map switches to its floor plan.
+- **Photo mode**: change the hour, the weather and the lens, add an eclipse, hide your character and take the shot.
+- **Original soundtrack** for the tense moments, plus radio stations on the road.
+- **At night, look up**: once in a while a shooting star crosses the sky.
 - **Keyboard & mouse, controllers and touch**, with full mobile support in landscape.
 - **DualSense extras** where supported: adaptive triggers, light bar that reacts to your health or a police chase, phone notifications through the controller, and optional **tilt steering** (controller or phone).
 - **Graphics presets** to balance looks and performance on any device.

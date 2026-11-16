@@ -1,3 +1,100 @@
+## v79 · r10 — textos do itch.io e do GitHub atualizados
+- `README.md` e `ITCHIO.txt` (mesmo conteúdo, markdown × HTML): paraquedas, pontes levadiças, Neon Road, estampa de 1 caractere; cassino com sinuca "castigado" contra o Seu Zé; bebedeira na danceteria (5 doses); motel; nova seção "Beyond the city limits" (mundos paralelos — synthwave, Upside Down, Point Haze —, laboratório militar secreto sob a Point Haze, a máscara que corre na água); mapa do interior, modo foto (ocultar personagem), trilha original e estrela cadente.
+
+## v79 · r10 — caçapa sem invadir o pano
+- A peça elevada da caçapa era um quadrado com furo que entrava ~7,5 cm no pano (aparecia um "quadrado" do buraco na mesa). Agora o contorno só cobre a tabela: L nos cantos e retângulo nos meios, com o arco do furo calculado na interseção com a borda do pano (ExtrudeGeometry de contorno, sem buraco solto).
+
+## v79 · r9 — câmera 3D da sinuca no estilo dos jogos de bilhar
+- Pesquisa: jogos 3D (Pure Pool, Pool Nation) usam câmera "na tacada" colada atrás da branca + possibilidade de "levantar" pra ver a mesa; mobile (8 Ball Pool) usa vista de cima, arrastar pra mirar, roda/ajuste fino e barra de força.
+- 3D agora tem zoom contínuo (`POOL.zoom` 0–1): 0 = na tacada (baixo, 0,62 m da branca), 1 = em pé (alto, ~2 m). Roda do mouse, Q/E, +/−, PageUp/Down, pinça no toque, direcional ↑/↓ no controle. A mira continua só esquerda/direita.
+- Depois da tacada (antes ia "pra Nárnia"): a câmera sobe DO MESMO LADO da tacada (1,45 m, 1,6 m atrás) e mira entre o centro da mesa e as bolas em movimento, com transição suave (`POOL.look`); a mesa fica sempre inteira na tela. Ao parar, volta pra câmera de mira.
+- Na sinuca o radar, o kit (vida/arma), a troca de personagem, o nome da área e os avisos de contexto somem (`body.pool-mode`).
+- Ajuste fino: botões ◀ ▶ (segurar repete), Shift no teclado, direcional ←/→ no controle (0,2° por toque).
+
+## v79 · r8 — caçapas desenhadas
+- Os 4 cantos e os 2 meios das tabelas sobem pra altura da tabela (0,86 m) com o furo redondo recortado (ExtrudeGeometry com buraco), e o copo preto desce de 0,8 pra dentro — forma de caçapa de verdade; antes os cantos ficavam rebaixados e parecia que a bola ia cair da mesa.
+
+## v79 · r7 — Seu Zé mais humano
+- A máquina acerta ~40% das tacadas: 60% das vezes erra a mira de propósito (2°–6°, força variando). Antes acertava quase tudo.
+- Regra da vez conferida (simulação de partida inteira): encaçapou bola sua sem falta → joga de novo; errou → passa a vez. Mensagem agora diz "joga de novo" ou "não encaçapou · vez de …".
+- Bug: ao derrubar a ÚLTIMA bola do grupo, a jogada era julgada como se ele já estivesse no castigo ("tinha que bater no castigo") e virava falta. Agora vale o estado do início da tacada (`POOL.castAt`).
+- Animação do Zé mirando na metade da velocidade (2,8 s; taco balançando mais devagar).
+
+## v79 · r6 — sinuca: toda falta castiga
+- Qualquer falta (bater primeiro no castigo, não acertar nenhuma bola, branca na caçapa, não bater no castigo quando é a vez dele) derruba a menor bola do adversário — é o "castigado". Antes só a batida no castigo fazia isso. Mesa ainda aberta (sem grupos) não derruba nada.
+
+## v79 · r5 — sinuca "castigado" no cassino · caixa com atendente · setas fora do modo foto
+- Cassino: o bar do lado oeste saiu (balcão, estante de garrafas, copos, colisão e placa); no lugar, mesa de sinuca (área 1,12 × 2,24 m, pano a 0,8 m, eixo maior em z, `CAS.pool`), suporte de tacos na parede, luminária alta, placa SINUCA e o adversário Seu Zé (NPC) no canto. Coube sem aumentar a sala.
+- Caixa (leste): balcão raso como o da conveniência (maquininha, bandejas de fichas), estante de fichas na parede e laterais fechando o corredor; atendente NPC parado atrás (não faz nada). `casPedsSpawn`/`casPedsClear` na entrada/saída do cassino.
+- Sinuca (`POOL`): 15 bolas — a 1 é o castigo e fica longe do triângulo (14 bolas no rack, sem a do meio). Pares × ímpares: a 1ª bola encaçapada sem falta define o grupo de quem tacou. Quem acabar as suas tem que matar o castigo. Bater PRIMEIRO no castigo antes da hora = desce a menor bola do adversário. Matar o castigo antes da hora (ou com a branca junto) = entrega o jogo. Sem acertar bola / branca na caçapa = falta (passa a vez; a branca volta pra marca). Continua quem encaçapa uma bola sua sem falta.
+- Física 2D própria: bola×bola elástica, tabelas com restituição, atrito, 6 caçapas com boca nas tabelas, subpassos de 1/720 s. Bolas em alta (esfera 32×20, textura com número dos 2 lados, matcap) com rolamento; tela "CARREGANDO MESA…" ao abrir.
+- Vistas: 3D atrás da branca (mira só esquerda/direita) e de cima; linha da tacada até o 1º contato + anel da bola fantasma + direção da bola atingida; HUD embaixo diz qual bola está na mira (número, par/ímpar ou CASTIGO). Taco animado.
+- Controles: ←/→ (Shift fino) ou arrastar; de cima, aponta pro mouse/dedo; ↑/↓ ou slider = força; Espaço/TACAR; V = vista; Esc = sair. Controle: analógico mira, gatilhos força, A tacar, Y vista, B sair. Toque: arrastar + botões.
+- Máquina: procura bola+caçapa com caminho livre (bola fantasma), evita o castigo antes da hora, erro pequeno aleatório. Aposta $50, vitória paga $100; sair no meio perde a aposta.
+- Caçapas: tabelas e frisos interrompidos nas 6 caçapas e um "copo" preto descendo do pano (o buraco fica visível).
+- Modo foto: setas amarelas (portas/interiores) e o brilho no chão somem (`ARROW_MATS`, material.visible), voltam ao sair.
+- LANG_EN para todos os textos novos.
+- Testado headless: entrar no cassino, NPCs, mesa, as 2 vistas, quebra, partida automática (grupos, falta do castigo, vez da máquina) e saída; 7 seeds de regressão sem erros. NÃO testado: controle físico e celular real.
+
+## v79 · r4
+- Oficina: letreiro VELOZ E FURIOSO encostado na fachada do prédio (0,1 m; antes 0,53 m pra fora, aparecia solto de lado). Só a oficina — a garagem comum não mudou.
+- Esquinas terra × asfalto (seed 298299): a r2 tinha tirado TODAS as quinas curvas de terra nos cruzamentos rurais com rua asfaltada → aparecia o asfalto por baixo da quina arredondada do quarteirão. Agora a quina de terra volta só nos quadrantes de quarteirão rural (`isRural` no centro do quadrante); nos urbanos segue reta.
+- Ponte levadiça: pilares de volta, um em cada dobradiça, logo abaixo das engrenagens (`city.pillars` em `dbChoose`, 1,8 m × largura da pista + 0,7). O vão central continua livre.
+- Conveniência: cartaz OFERTA colado na frente da pilha de caixas (y 0,4) — antes flutuava acima.
+- Encontro Claire/Nathan na rua: só o balão; sem a legenda de baixo (`duoWorldChat` não é mais chamado na saudação).
+- Moda Pixel: estampa custom de 1 caractere (`art = 'c:X'`), campo "Aa" na seção ESTAMPA DA CAMISA; fonte 3×5 (`SHIRT_FONT`: A–Z, 0–9 e ! ? % # $ & @ + - * = < > / \ . : ^ _ ( ) " '), desenhada no sprite 2D e no 3D (conferido: J não sai espelhado). Custa $25 como as outras peças; as compradas ficam como botões e valem no guarda-roupa de casa. `wearValid` substitui `WEAR_PAL[k].includes` na validação/compra/save.
+- Shopping, praça de alimentação: clientes alternam o lado da mesa (antes o sorteio deixava quase todos virados pro mesmo lado); cada um olha pro centro da própria mesa. `rr()` continua sendo consumido.
+- Testado headless: 7 seeds de regressão sem erros; prints da ponte, cruzamentos mistos da 298299, provador com "%", atlas 3D com "J", praça de alimentação.
+
+## v79 · r3 — mapa grande dentro dos interiores + botão VER CIDADE
+- Abrir o mapa num interior (a pé) mostra a planta do lugar: mesmo flood fill pelas colisões do radar, mas em resolução maior (0,18 m/px nos pequenos, 0,3 m nos grandes), gerado só ao abrir e guardado em cache por lugar/andar/noite (`INBIG`, `interiorBigBuild`). Enquadra o contorno do lugar; zoom 1–6× pela rodinha/pinça/gatilhos e arrastar com zoom (`bigView` → `interiorBigView` quando `NAV.inMode`). Seta do jogador, título do lugar (com andar no shopping e B1/B2 no lab) e as lojas do shopping como pontos.
+- Botão "🏙 VER CIDADE" / "🏠 VER INTERIOR" (`#mapIntToggle`, canto inferior esquerdo, acima da legenda); também tecla C e Y/△ no controle. Cada modo guarda o próprio zoom. No modo interior: sem GPS/marcador (toque não marca), sem legenda e sem o cursor do controle.
+- Na vista da cidade, estando num interior, a seta do jogador fica na porta por onde ele entrou (`DOOR.from`), não nas coordenadas do interior.
+- LANG_EN para os nomes e textos novos.
+- Testado headless: shopping, conveniência, danceteria e motel (abre em 30–190 ms), zoom, ida e volta para a cidade; sem erros.
+
+## v79 · r2 (lista de debug do usuário)
+- Oficina "Veloz e Furioso": sem a barra rosa embaixo e sem o painel preto atrás do letreiro (só o texto neon); a lâmpada maior (duplicada) sai; penumbra lá dentro escurecendo do fundo pra boca (como os interiores). `city.tuneSpot` agora guarda `nx/nz`.
+- Motel e posto rural nunca ocupam 2 lotes: pontuação −100 para lote > 1,18×BS²; fallback do motel = lote único mais próximo do posto (sem sorteio). Seed 198050443: motel 60×60. Chão do lote do motel em 0,045 (carros não flutuam; conferido gy = chão).
+- Rua × terra: nó de interseção com rua urbana não desenha as quinas convexas de terra → divisa reta; corrige também o quadrado de asfalto isolado na indústria rural (198050443, ~X 219 Z 844).
+- Posto: `city.gasFc` (pátio das bombas) → `groundY` 0,29 lá dentro; some o z-fight sombra/chão.
+- Ponte levadiça: sem o pilar no meio da água (filtro de `city.pillars` em `dbChoose`). Maskara correndo na água passa POR BAIXO das pontes: fica no nível da água, ignora as muretas baixas (`.low`), some sob a laje (`PL.ubrIn`) e solta o balão "Gostoso esse concreto todo" 1x por passagem. Sem mudar física/mapa dos outros.
+- Conveniência: sem cone e cesta soltos no piso; placas das gôndolas assentadas no topo delas, viradas para os corredores; quadro LANCHE à frente dos produtos da prateleira.
+- Danceteria: placa BAR acima da estante de garrafas (y 3,72).
+- Areia: praia do farol e margens do canal do mar sem o ×1,12 → mesmo tom (o mais escuro) da praia principal.
+- Point Haze: terra num tom só — `hazeBaseCol()` (média do miolo) na borda do terreno e na faixa do `hazeShore`; o terreno ganhou a mesma textura de areia (antes liso × texturizado = 2 tons com quina reta). Sem paraquedistas, sem jet ski/lancha passando (só os atracados) e sem lanchas de rio. Jet ski encalhando sobe na altura da areia (antes afundava na praia).
+- Lab: escada de marinheiro + fundo da escotilha no teto na saída (antes as caixas iam pra malha já fechada e sumiam — seta sozinha na parede). Sala 201: painel deitado na mesa. Sala 203: estantes 0,8×2,6×1,75 m com corredores largos, gaveteiros menores. Sala 204: grade do lado da porta (z 2,2) com portão aberto, transformador e cabos no fundo; chegar a < 1,75 m das bobinas tira 25% de vida/s (`LAB.coils`, em `labCoreTick`). Elevador: funciona (1 s dentro da cabine) — conferido B1→B2.
+- Minimapa dos interiores com zoom dobrado (grandes 5,2; pequenos 7,6).
+- Arranha-céu: cada recuo ganha a mesma faixa de LED da coroa (`neonDN`, cor `mallPal().a`).
+- Céu: estrela cadente à noite, ~1 por hora de jogo (1 min real), risco com rastro no shader do céu (`METEOR`, `meteorTick`); fora no Upside Down e com céu fechado.
+- Modo foto: "Ocultar personagem" no painel CENÁRIO (`PHOTO.hidePl`); volta ao sair.
+- LANG_EN: "AI! Choque!", "Gostoso esse concreto todo", "Ocultar personagem".
+- Testado headless: seeds 716540, 473195072, 2812765640, 4242, 99, 635537, 2976794230 sem erros; prints de oficina, motel, conveniência, danceteria, arranha-céu, estrela cadente, praia, Haze (vista de cima) e salas do lab; dano das bobinas e elevador conferidos. NÃO testado: Maskara passando sob a ponte em jogo real; celular real.
+
+## v79 · r1 (início da v79)
+- Versão do jogo 79, entrega r1 (menu: "v.79 · r1"; `version.txt` = r1). Saves v78 continuam carregando (`saveVersionCompatible` aceita 79). Conteúdo igual à v78 r29 — base para a lista de correções do usuário.
+
+## v78 · Toque: objetivo laranja recolhível + "toque novamente para pular a cena"
+- Objetivo (`#storyGuide`) no toque: aparece 15 s a cada objetivo novo e vira um botão quadrado laranja com ícone de texto (`#guideBtn`, canto superior esquerdo, pulsa ao recolher); tocar mostra de novo por 15 s. O jogo continua usando `hidden` do guia como "tem objetivo"; o recolhido é só a classe `gmin`.
+- Kit (vida/arma/veículo) e radar descem para baixo do objetivo aberto ou do botão (`--kitTop`, calculado em `touchVisible`), então nada fica coberto.
+- Cenas (avião do início, final): 1º toque na tela mostra "TOQUE NOVAMENTE PARA PULAR A CENA" (3 s); 2º toque nesse prazo chama `storySkipPart()` (o mesmo PULAR do menu). Ignora toques em botões e com diálogo aberto.
+- Testado headless (Android 844×390, modo história): 1º toque mostra a dica, 2º pula (1 chamada); objetivo aberto → kit em 74 px; recolhido → botão em 10–46 e kit em 54; tocar o botão reabre. Sem erros.
+
+## v78 · GLB: luzes de preenchimento DENTRO dos cômodos (quarto do motel preto) · coqueiro da placa · troca de personagem no toque
+- Causa (motel): `glbLights` punha a luz em max(forro, piso+3,6)−0,4 → no quarto (forro 2,9 m) ficava a 3,2 m, FORA da caixa; no Cycles o quarto inteiro saía preto (só ventilador/abajures, que são unlit). Além disso o piso usava `pc.y` (não existe) → na cela o "piso" virava o topo das paredes e a luz ia a 6 m.
+- Agora (todos os interiores menos o shopping, que mantém o cálculo aprovado): piso = `PL.gy`; luz a 0,35 m abaixo do forro achado na célula, nunca abaixo de piso+2,2 m e nunca acima do ponto mais alto do interior −0,3 m.
+- Conferido headless (exportação completa, GLTFExporter + patch de emissão), seed 716540: loja de conveniência, shopping (igual antes), casa de penhores, império, banco, cassino, danceteria, loja de munição, cela, casa segura, motel — todos exportam e toda luz de preenchimento fica abaixo do teto. Mundos: Modern, Synthwave, Upside Down e Point Haze exportam ÁREA e CIDADE (Point Haze só com o sol: não tem postes). NÃO testado (não existem nessa seed): casa do assalto e laboratório; abertura no Blender.
+- Neon Road: coqueiro da placa verde 4,2 m mais longe do túnel (sentido do banco) — a placa fica visível.
+- Toque: troca de personagem ao lado do botão CÂMERA, mesmo tamanho (46 px, rostos em pixel art reduzidos, sem nome); kit no topo esquerdo e radar logo abaixo.
+
+## v78 · Neon Road: boca em rua estreita, túnel no tom, OCEAN VIEW, oficina dentro de prédio · bancos pela cidade
+- Rua "fechada" (seed 635537): a ponta encontrava uma rua ESTREITA, cuja calçada (4,1 m) fica dentro da faixa da rua, fora do quarteirão — o corte só ia até a borda do quarteirão. `nrMouthPrep` (no plano e antes do 1º chunk, lendo `city.lines`): `N.ext`/`N.mouth` por ponta; `groundY0` zera a faixa; `finishParkingRoads` corta a laje da calçada da rua estreita com quinas curvas (CR) na guia; os cantos do quarteirão ficam retos nessa ponta; a linha branca de borda da rua estreita é interrompida na boca. Avenida: igual antes. Conferido: perfil de altura aberto, sem colisor/poste/carro na boca (635537 e 99).
+- Túnel no tom do prédio vizinho: `building()` guarda a cor (`ch.bwc`) e o túnel usa a do mais próximo (o sorteio antigo continua sendo consumido).
+- OCEAN VIEW centrado a 8 m (meio do 3º andar; as faixas de acabamento ficam em 6,4 e 9,6); prédio baixo: 4,9 m.
+- Oficina: em vez de garagem solta + bloco por cima, um prédio inteiro em volta (pilares de 1 m, fundo e andares por cima até 10–17 m, platibanda e casa de máquinas; mesma cor e janelas); a boca da garagem fica aberta. Prédios vizinhos recuam (beco de ~1,6 m, formando L). Mesmo número de sorteios (`R` é por quarteirão; só esse quarteirão muda).
+- Bancos de praça em ~40% dos quarteirões de prédios (gerador próprio → não muda a seed): no pé do prédio, de costas pra fachada, longe das esquinas, com colisor baixo.
+- Testado headless: seeds 716540, 473195072, 2812765640, 4242, 99, 635537, 2976794230 — Neon Road e oficina em todas, sem erros; prints da boca, túnel, oficina e letreiro. NÃO testado: celular real.
+
 ## v78 · Tamanho só "14×14 / 7×7" + controle no menu inicial
 - Botões de tamanho só com a dimensão (fonte 20 px); o resumo do GERAR CIDADE mostra "seed · 14×14 quadras · hora".
 - Controle (padNavFocus): peso do desalinhamento 2→4 — prefere o item na mesma linha/coluna. Conferido no menu inicial: GERAR CIDADE ←→ 7×7, CARREGAR SAVE → CONFIGURAÇÕES e volta, TELA CHEIA ← HORA, INSTALAR ↑ GERAR CIDADE, ↓ de GERAR CIDADE → TELA CHEIA; hora no analógico/direcional muda a hora. Botão A no CARREGAR SAVE avisa que o seletor de arquivo só abre com mouse/toque (bloqueio do navegador).

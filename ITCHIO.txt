@@ -13,11 +13,13 @@
     <li><strong>Cars, motorcycles, buses, trucks, speedboats, jet skis, helicopters</strong>, from a humble Kipwell Zip to a Veycross Slipstream R, and a few rides you'll have to find for yourself.</li>
     <li><strong>Buy your dream car</strong> at the dealership, pick your plate, then make it yours at the workshop: paint, nitro, turbo, neon.</li>
     <li><strong>Fill up at the gas station</strong>, grab a snack at the convenience store, and try not to get too close to the tire shop's scrapyard next door.</li>
-    <li><strong>Hit a dirt jump</strong> out in the countryside, launch from a back-alley ramp, or BASE-jump from a rooftop and aim for the target on the sand.</li>
+    <li><strong>Hit a dirt jump</strong> out in the countryside, launch from a back-alley ramp, or <strong>parachute from a rooftop</strong> and aim for the target on the sand.</li>
+    <li><strong>Raise the drawbridges</strong> from the booth, or wait for the boats to pass. Find the hidden <strong>Neon Road</strong>, a street that only lights up for those who know where to look.</li>
+    <li><strong>Dress the part</strong>: shirts, prints, caps, glasses, jewelry. Put your own letter, number or symbol on your shirt.</li>
 </ul>
 <h2>Make money. Make trouble.</h2>
 <p>Pick up taxi fares, take on vigilante work, race at night, or survive a rampage. Spend the cash on clothes, weapons, fuel and upgrades.</p>
-<p>Try your luck at the <strong>casino</strong>. Dance until sunrise at the <strong>nightclub</strong>. Shop across two floors of the <strong>mall</strong>. Some businesses in town have a less respectable side, and the people running them won't hand over the keys without a fight. <strong>Build an empire</strong> if you can hold it.</p>
+<p>Try your luck at the <strong>casino</strong>: slots, blackjack, video poker, roulette and a <strong>pool table</strong> where Seu Zé is waiting for a game of <em>castigado</em> (evens vs odds, and ball 1 is the penalty). Dance until sunrise at the <strong>nightclub</strong>, and maybe have one drink too many: the room starts to spin, and five drinks is the limit. Shop across two floors of the <strong>mall</strong>, and check into the roadside <strong>motel</strong> if you need a place to hide. Some businesses in town have a less respectable side, and the people running them won't hand over the keys without a fight. <strong>Build an empire</strong> if you can hold it.</p>
 <p>And there's a bank. With a vault. Just saying.</p>
 <p>Don't expect the police to look the other way. Patrol cars, checkpoints, helicopters and local word-of-mouth can turn a quiet afternoon into a five-alarm chase.</p>
 <h2>A world that lives without you</h2>
@@ -28,6 +30,13 @@
     <li><strong>From the towers of DOWNTOWN to the beachfront of Saltwater Drive</strong>, the quiet streets of Almond Grove, the canals of Cedar Reach, the warehouses of Iron Yard and the dirt roads of Heron Acres, and places that seem to be hiding something. Cross a district line and its name rolls onto the screen, old-school style.</li>
 </ul>
 <p>Slow down once in a while. Some discoveries don't come with an announcement.</p>
+<h2>Beyond the city limits</h2>
+<p>Sunset Shores isn't the only place you can end up.</p>
+<ul>
+    <li><strong>Parallel worlds</strong>: a synthwave dimension drenched in neon, a dark and silent <strong>Upside Down</strong>, and <strong>Point Haze</strong>, a foggy island of dead trees out at sea, reachable by boat or helicopter.</li>
+    <li><strong>A secret military lab</strong> is buried under Point Haze. Two floors of sealed rooms, a cargo elevator, a containment tank with something floating in it, and Tesla coils you really shouldn't get close to. Break in and see what they're hiding.</li>
+    <li>Some masks give more than a disguise. Ever tried running across the water?</li>
+</ul>
 <h2>A place to come home to</h2>
 <p>Your safe house is where you rest, change clothes, save your progress and <strong>watch TV</strong>. The local channels follow what's really happening out there: police operations, storms, chases, departures from the airport, and the occasional strange report from the woods.</p>
 <h2>Secrets in every corner</h2>
@@ -36,7 +45,10 @@
 <h2>See the city your way</h2>
 <ul>
     <li><strong>First person, third person, top-down or isometric</strong>: switch any time.</li>
-    <li><strong>Map + GPS</strong> with route guidance, and a marker on your last vehicle so you can always find it again.</li>
+    <li><strong>Map + GPS</strong> with route guidance, and a marker on your last vehicle so you can always find it again. Inside a building, the map switches to its floor plan.</li>
+    <li><strong>Photo mode</strong>: change the hour, the weather and the lens, add an eclipse, hide your character and take the shot.</li>
+    <li><strong>Original soundtrack</strong> for the tense moments, plus radio stations on the road.</li>
+    <li><strong>At night, look up</strong>: once in a while a shooting star crosses the sky.</li>
     <li><strong>Keyboard &amp; mouse, controllers and touch</strong>, with full mobile support in landscape.</li>
     <li><strong>DualSense extras</strong> where supported: adaptive triggers, light bar that reacts to your health or a police chase, phone notifications through the controller, and optional <strong>tilt steering</strong> (controller or phone).</li>
     <li><strong>Graphics presets</strong> to balance looks and performance on any device.</li>
