@@ -1,0 +1,6 @@
+# Uma linha por arquivo (PASTA/arquivo). Usado quando o servidor não lista diretórios (ex.: itch.io).
+Mall/mall1.mp3
+Mall/mall2.mp3
+Mall/mall3.mp3
+
+# radios/OST/ = trilhas de cena (não vira rádio): OST/corredor_sem_luz.mp3
