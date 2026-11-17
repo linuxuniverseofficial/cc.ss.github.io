@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 <script>
 /* v78 · BUILD: número da entrega. Ao abrir, o jogo lê version.txt (poucos bytes, sem cache) e, se a build no servidor for outra
    (navegador/celular servindo cópia velha), recarrega uma vez. Saves e configurações (localStorage) NÃO são apagados. */
-var BUILD_TAG='r30';
+var BUILD_TAG='r34';
 (function(){try{if(!/^https?:$/.test(location.protocol))return;const k='ps_build_reload';
  fetch(new URL('version.txt?b='+Date.now(),location.href).href,{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=/^\s*(r\d+)\s*$/.exec(t||'');if(!m||m[1]===BUILD_TAG){try{sessionStorage.removeItem(k)}catch(e){}return}
   let n=0;try{n=+sessionStorage.getItem(k)||0}catch(e){}if(n>=2)return;try{sessionStorage.setItem(k,String(n+1))}catch(e){}
@@ -5826,16 +5826,20 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
   }
   const plantMB=forestOnly?forestPlants:plants;
   const v0=plantMB.p.length/3,palmy=!!palm||(night&&!forestOnly&&!isRural(x,z)); // v77: no synth, mata e zona rural voltam a ter árvores comuns (coqueiro só na cidade/praia) — os coqueiros pesavam no desenho
-  let crown=y0+4.1*s;
+  /* r32: na ROÇA a árvore comum fica 2× mais alta e com copa 2× maior (tronco 1,5× mais grosso); na cidade continua igual */
+  let T=(!palmy&&TREE_RURAL_K>1&&!city.haze&&!Number.isFinite(cap)&&isRural(x,z))?TREE_RURAL_K:1;
+  /* perto de casa/galpão a árvore fica no tamanho normal (a copa 2× invadiria o telhado) */
+  if(T>1){const rr0=1.9*s*T+1.2;for(const b of query(x,z,rr0+2)){if(!b||b.dead||!(b.kind==='bld'||b.kind==='house'||b.kind==='roof'||b.top))continue;if(Math.hypot(x-clamp(x,b.x0,b.x1),z-clamp(z,b.z0,b.z1))<rr0){T=1;break}}}
+  let crown=y0+4.1*s*T;
   if(palmy){ // palm
    crown=palmBuild(plantMB,x,y0,z,s,night,()=>rr(0,1));
   }else{
-   plantMB.geo(GEO.cyl,mtx(x,y0+1.1*s,z,.22*s,2.2*s,.22*s),COL(night?'#3a2a35':'#5a4030'));
+   const tw=.22*s*(T>1?1.5:1),S2=s*T;plantMB.geo(GEO.cyl,mtx(x,y0+1.1*S2,z,tw,2.2*S2,tw),COL(night?'#3a2a35':'#5a4030'));
    const g=COL(pick(night?['#1f5a4a','#1b4a52','#2a6a4c','#22605a']:['#3f7a2e','#4d8a34','#356b2a','#5a9440']));
-   plantMB.geo(GEO.crown,mtx(x,y0+3.1*s,z,1.9*s,1.6*s,1.9*s,rr(0,3),rr(0,3),0),g);
-   plantMB.geo(GEO.crownSmall,mtx(x+rr(-.6,.6)*s,y0+4.1*s,z+rr(-.6,.6)*s,1.3*s,1.2*s,1.3*s,rr(0,3),rr(0,3),0),shade(g.getHexString&&('#'+g.getHexString()),1.15));
+   plantMB.geo(GEO.crown,mtx(x,y0+3.1*S2,z,1.9*S2,1.6*S2,1.9*S2,rr(0,3),rr(0,3),0),g);
+   plantMB.geo(GEO.crownSmall,mtx(x+rr(-.6,.6)*S2,y0+4.1*S2,z+rr(-.6,.6)*S2,1.3*S2,1.2*S2,1.3*S2,rr(0,3),rr(0,3),0),shade(g.getHexString&&('#'+g.getHexString()),1.15));
   }
-  const tr={x,z,y0,s,v0,v1:plantMB.p.length/3,night:palmy,ch,crown,forest:forestOnly};ch.trees=ch.trees||[];ch.trees.push(tr);
+  const tr={x,z,y0,s:s*T,big:T>1,v0,v1:plantMB.p.length/3,night:palmy,ch,crown,forest:forestOnly};ch.trees=ch.trees||[];ch.trees.push(tr);
   if(noCol)return;const tc=addCol(x-.3,z-.3,x+.3,z+.3,'tree');tc.tree=tr;
  };
  const tree=(x,z,y0,...a)=>{const d=MB_DROP;if(d){const r=mbDropY(x,z,y0,y0+.01);if(r)y0=r[0];MB_DROP=null}try{return treeRaw(x,z,y0,...a)}finally{MB_DROP=d}};
@@ -8410,6 +8414,7 @@ function pylonGeom(night){const mb=new MB(),bg=new THREE.BoxGeometry(1,1,1).toNo
   const ix=sd*(L-.2);beam([ix,y,0],[ix,y-1.05,0],.07,dk);for(let d=0;d<4;d++){const yy=y-.28-d*.24;mb.box(ix-.15,yy-.04,-.15,ix+.15,yy+.04,.15,ins)}
   att.push([ix,y-1.1,0]);lights.push([sd*(L+.05),y+.12,0])}
  att.push([0,PK,0]);const me=mb.mesh(new THREE.MeshLambertMaterial({vertexColors:true}),true,true);bg.dispose();return{geo:me.geometry,mat:me.material,att,lights,hw}}
+let TREE_RURAL_K=2; /* r32: escala das árvores comuns na roça */
 const PYL_K=1.25; /* r26: ~21 m até o para-raios (≈4× uma casa da roça de 5,3 m); fase mais baixa a ~12 m; vão de 76 m com flecha ~1,5 m → cabo ≥10 m do chão (real 138 kV: torre 25–35 m, cabo ≥7 m) */
 function pylonsBuild(){city.pylons=null;if(city.haze||!city.rects||!city.rects.length)return;const N=city.N,E=city.ext,rnd=mulberry32((S.seed^0x7e1a5c3d)>>>0),cc=k=>k*P+RW/2+BS/2;
  const ruralAt=(x,z)=>{for(let i=0;i<city.rects.length;i++){const r=city.rects[i];if(x>r[0]&&x<r[2]&&z>r[1]&&z<r[3]){const f=city.info[i];return f&&f.kind==='rural'&&!f.forest&&!f.safe?i:-1}}return -1};
@@ -8460,8 +8465,13 @@ function pylonsBuild(){city.pylons=null;if(city.haze||!city.rects||!city.rects.l
  const gg=new THREE.BufferGeometry();gg.setAttribute('position',new THREE.BufferAttribute(gpos,3));const pts=new THREE.Points(gg,gm);pts.frustumCulled=false;pts.renderOrder=3;
  pts.onBeforeRender=()=>{const nf=Math.max(DN.nightF||0,typeof LAMPF==='number'?LAMPF:0);gm.opacity=(.16+.84*nf)*(.72+.28*Math.sin(performance.now()*.0022))};
  grp.add(im,lim,cl,pts);city.group.add(grp);city.pylons={towers,lines,grp};
+ /* r32: árvores 2× da roça que ficam sob a linha (copa alcançaria os cabos/braços) voltam ao tamanho normal → faixa baixa sob as torres */
+ try{const segD=(px,pz,a,b)=>{const dx=b.x-a.x,dz=b.z-a.z,L2=dx*dx+dz*dz||1,t=clamp(((px-a.x)*dx+(pz-a.z)*dz)/L2,0,1);return Math.hypot(px-(a.x+dx*t),pz-(a.z+dz*t))};
+  for(const ch of city.chunks.values())for(const tr of ch.trees||[]){if(!tr.big||tr.broken)continue;const lim=7+1.9*tr.s+1;let hit=false;for(const[a,b] of spans){if(segD(tr.x,tr.z,a,b)<lim){hit=true;break}}if(hit)treeRescale(tr,1/TREE_RURAL_K)}}catch(e){console.error(e)}
 }
 /* r26: torres no mapa como camada (antes gravadas no mapCv) */
+function treeRescale(tr,f){const src=tr.forest?tr.ch.forestTreeMesh:tr.ch.plantMesh;if(!src)return;const pa=src.geometry.attributes.position;
+ for(let i=tr.v0;i<tr.v1;i++)pa.setXYZ(i,tr.x+(pa.getX(i)-tr.x)*f,tr.y0+(pa.getY(i)-tr.y0)*f,tr.z+(pa.getZ(i)-tr.z)*f);pa.needsUpdate=true;src.geometry.computeBoundingSphere();tr.s*=f;tr.crown=tr.y0+(tr.crown-tr.y0)*f;tr.big=false}
 function pylonMap(g,sc){const P_=city.pylons;if(!P_)return;g.save();g.strokeStyle='rgba(28,28,38,.6)';g.lineWidth=1.2/sc;for(const sg of P_.lines){g.beginPath();sg.forEach((t,k)=>k?g.lineTo(t.x+MOFF,t.z+MOFF):g.moveTo(t.x+MOFF,t.z+MOFF));g.stroke()}
  const a=3.6/sc,b=1.4/sc;for(const t of P_.towers){g.fillStyle='#2e2e38';g.fillRect(t.x+MOFF-a/2,t.z+MOFF-a/2,a,a);g.fillStyle='#ff3a22';g.fillRect(t.x+MOFF-b/2,t.z+MOFF-b/2,b,b)}g.beginPath();g.restore()}
 function dropCables(l){
@@ -13149,8 +13159,14 @@ function tommyTick(dt){
   if(hit.player){PL.hp-=armorHit(9);if(PL.hp<=0)killPlayer('TOMMY');}else if(hit.car){hit.car.hp-=6;if(hit.car.hp<=0&&hit.car.alive)setOnFire(hit.car);}
  }
 }
-function spawnPed(near,at){const NR=city.rects.length;let ri=0;
- for(let tr=0;tr<6;tr++){if(near){const a=R2()*6.283,d=near.min+R2()*(near.max-near.min);ri=rectNear(near.x+Math.cos(a)*d,near.z+Math.sin(a)*d)}else ri=Math.floor(R2()*NR);if(at||(city.info[ri].kind!=='rural'&&city.info[ri].kind!=='industrial')||tr===5&&R2()<.25)break}
+/* r34: lote não-rural cercado de roça (motel, posto da roça…) era o único "aceito" no sorteio perto do jogador → juntava pedestre ali.
+   Agora conta como roça: o sorteio espalha os pedestres pelos lotes do entorno. */
+function lotRuralIsle(ri){const f=city.info[ri];if(!f)return false;if(f._rIsle!==undefined)return f._rIsle;const r=city.rects[ri],mx=(r[0]+r[2])/2,mz=(r[1]+r[3])/2,o=RW+6;let n=0;
+ for(const[x,z] of [[r[0]-o,mz],[r[2]+o,mz],[mx,r[1]-o],[mx,r[3]+o]]){const j=rectNear(x,z),g=j>=0&&city.info[j];if(g&&j!==ri&&(g.kind==='rural'||g.forest))n++}return f._rIsle=n>=2}
+function pedLotOk(ri){const f=city.info[ri];return f&&f.kind!=='rural'&&f.kind!=='industrial'&&!lotRuralIsle(ri)}
+function spawnPed(near,at){const NR=city.rects.length;let ri=0,fb=-1;
+ for(let tr=0;tr<6;tr++){if(near){const a=R2()*6.283,d=near.min+R2()*(near.max-near.min);ri=rectNear(near.x+Math.cos(a)*d,near.z+Math.sin(a)*d)}else ri=Math.floor(R2()*NR);if(at||pedLotOk(ri)||tr===5&&R2()<.25)break;if(fb<0&&city.info[ri]&&city.info[ri].kind==='rural')fb=ri}
+ if(!at&&near&&fb>=0&&!pedLotOk(ri)&&(!lotRuralIsle(ri)||R2()>.15))ri=fb; /* sem lote de calçada perto: um lote de roça comum, não a ilha */
  const ch=makeCharacter(at&&at.pal||pick2(PED_PALS));const r=perim(ri);const L=2*((r[2]-r[0])+(r[3]-r[1]));
  const p={...ch,ri,r,pitch:.8+R2()*.5,t:R2()*L,spd:1.1+R2()*.8,dir:R2()<.5?1:-1,state:'walk',timer:0,x:0,z:0,vx:0,vz:0,mx:1,mz:0,anim:R2()*10,gy:.2,rot:0};
  const pt=perimPoint(r,p.t);p.x=pt[0];p.z=pt[1];
@@ -15669,7 +15685,7 @@ function photoShot(){if(!PHOTO.on)return;photoCam();try{render()}catch(e){consol
  if(PHOTO_FILTERS[PHOTO.f].vhs){x.drawImage(canvas,0,0);vhsBake(x,w,h)}else{if(css&&'filter' in x)x.filter=css;x.drawImage(canvas,0,0);x.filter='none'}
  photoMarkDraw(x,w,h);
  const fl=$('#phFlash');fl.classList.remove('on');void fl.offsetWidth;fl.classList.add('on');
- const name='coastal-chaos-'+photoStamp()+'.png';
+ const name='coastal-chaos-seed'+S.seed+'-'+photoStamp()+'.png'; /* r33: seed no nome do arquivo */
  c.toBlob(async blob=>{if(!blob){toast(S.lang==='en'?'COULD NOT SAVE THE PHOTO':'NÃO FOI POSSÍVEL SALVAR A FOTO');return}
   try{if(TOUCH.on&&navigator.canShare){const file=new File([blob],name,{type:'image/png'});if(navigator.canShare({files:[file]})){await navigator.share({files:[file],title:'Coastal Chaos'});return}}}catch(e){if(e&&e.name==='AbortError')return}
   const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);
@@ -15757,6 +15773,8 @@ addEventListener('blur',()=>PHOTO.keys.clear());
  const up=e=>{if(P.drag&&P.drag.id===e.pointerId){P.drag=null;phMarkSave();e.stopImmediatePropagation();return}if(!P.on||!P.ptrs.has(e.pointerId))return;e.stopImmediatePropagation();P.ptrs.delete(e.pointerId);P.pinch=0;
   if(P.tap&&performance.now()-P.tap.t<300&&Math.hypot(e.clientX-P.tap.x,e.clientY-P.tap.y)<10)$('#photoUI').classList.remove('ui-off');P.tap=null};
  addEventListener('pointerup',up,true);addEventListener('pointercancel',up,true);
+ /* r31: mesma trava da sinuca — sem dedos na tela, não sobra dedo-fantasma (giro/pinça do modo foto) */
+ for(const ev of['touchend','touchcancel'])addEventListener(ev,e=>{if(P.on&&!e.touches.length&&P.ptrs.size){P.ptrs.clear();P.pinch=0}},true);
  addEventListener('wheel',e=>{if(!P.on||!isGl(e))return;e.preventDefault();e.stopImmediatePropagation();P.dist=clamp(P.dist*Math.exp(e.deltaY*.0012),2,40)},{capture:true,passive:false});
  for(const ev of ['touchstart','touchmove','mousedown','mousemove','click','contextmenu'])addEventListener(ev,e=>{if(P.on&&isGl(e)){e.stopImmediatePropagation();if(ev!=='click')try{e.preventDefault()}catch(_){}}},{capture:true,passive:false});}
 
@@ -17007,7 +17025,7 @@ function misEnd(msg){if(MIS.fare&&MIS.fare.p&&peds.includes(MIS.fare.p))removePe
  if(msg)toast(msg+(MIS.earned?'<br><small style="font-size:11px;color:#fff">total ganho: $'+MIS.earned+'</small>':''));MIS.type=null;MIS.stage=''}
 function misGPS(x,z){NAV.marker={x,z};NAV.rT=0;NAV.misMarker=true;if(!NAV.beam){const g=new THREE.CylinderGeometry(1.2,1.2,90,16,1,true);NAV.beam=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:0xffd200,transparent:true,opacity:.28,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide}));NAV.beam.renderOrder=4;scene.add(NAV.beam)}NAV.beam.visible=true;NAV.beam.position.set(x,45,z)}
 function sidewalkPoint(minD,maxD){const pc=PL.car||PL;for(let k=0;k<60;k++){const a=Math.random()*6.283,d=minD+Math.random()*(maxD-minD),ri=rectNear(pc.x+Math.cos(a)*d,pc.z+Math.sin(a)*d),f=city.info[ri];
-  if(!f||f.kind==='rural'||f.kind==='industrial')continue;const r=perim(ri),L=2*((r[2]-r[0])+(r[3]-r[1])),pt=perimPoint(r,Math.random()*L),dd=Math.hypot(pt[0]-pc.x,pt[1]-pc.z);
+  if(!f||!pedLotOk(ri))continue;const r=perim(ri),L=2*((r[2]-r[0])+(r[3]-r[1])),pt=perimPoint(r,Math.random()*L),dd=Math.hypot(pt[0]-pc.x,pt[1]-pc.z);
   if(dd<minD*.8||dd>maxD*1.2||inWater(pt[0],pt[1]))continue;return{x:pt[0],z:pt[1],ri}}return null}
 /* --- taxi --- */
 function taxiNewFare(){const sp=sidewalkPoint(70,260);if(!sp){misEnd('SEM PASSAGEIROS POR PERTO');return}
