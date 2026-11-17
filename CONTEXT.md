@@ -95,7 +95,7 @@ Estágios (`PROLOGUE`, Ctrl+Shift+F9 pula em debug): `dealer` → `driveFirst` (
 ## 7. Interiores e lugares (o que tem regra)
 
 - **Cassino em +** (centro 20×14 + alas N/W/E com MB e luz próprias): N caça-níqueis; W sinuca (Seu Zé); E Liar's Dice (Dona Cida e Tonhão, aposta $50, prêmio $150; regra do RDR1 desde a r34: faces 1–6, **sem coringa**, aposta é "pelo menos" — quem duvida de 5×4 com 6 dados 4 na mesa perde; remexer o próprio copo 1× só antes da 1ª aposta da rodada; NA MOSCA (r35): conta exata → quem chamou fica salvo e todos os outros vivos perdem 1 dado (`DICE.losers`), errou → só quem chamou perde; próxima rodada começa com quem acertou; dados perdidos ficam apagados na mesa na frente do copo; botão de vista mostra a vista de DESTINO, igual na sinuca; câmera centra na faixa livre entre os painéis com `setViewOffset` — limpar no `diceClose`). Malhas do cassino precisam ser adicionadas **antes** de `casinoObjectCount` (senão vão pra cena da boate). O código da boate repete trechos do cassino: substituições devem ser limitadas à região do cassino.
-- **Sinuca "castigado"** (`POOL`): pares × ímpares, bola 1 = castigo. Toda falta derruba a menor do adversário; matar o castigo antes da hora entrega o jogo. Seu Zé acerta ~40%. Mira: arrastar no canvas, ⏪ ⏩ rápido, ◀ ▶ fino. Câmera 3D segue do mesmo lado; som `poolClack` (porcelana seca) na tacada e bola×bola. Radar/HUD ocultos (`body.pool-mode`).
+- **Sinuca "castigado"** (`POOL`): pares × ímpares, bola 1 = castigo. Errar todas as bolas, tocar primeiro na bola do adversário ou encaçapar a branca é falta. Toda falta derruba a menor bola disponível do adversário (exceto o castigo); com mesa aberta, a menor bola disponível define o grupo do adversário; matar o castigo antes da hora entrega o jogo. Seu Zé acerta ~40%. Mira: arrastar no canvas, ⏪ ⏩ rápido, ◀ ▶ fino. Câmera 3D segue do mesmo lado; som `poolClack` (porcelana seca) na tacada e bola×bola. Radar/HUD ocultos (`body.pool-mode`).
 - **Dados** (`DICE`): física de corpo rígido; dado dormindo não é acordado por colisão; sono forçado após 4,5 s.
 - Shopping: 2 andares em cruz, 17 lojas (`MALL_SHOPS`, `MALL_LAYOUT`, `MALL_CLERK_KEYS`, `mallAct`); lojas temáticas (`MALL_THEMED`) não recebem a prateleira genérica.
 - Lab (Point Haze): bobinas tiram 25 hp/s; escada de saída é MB própria.
@@ -124,6 +124,18 @@ Estágios (`PROLOGUE`, Ctrl+Shift+F9 pula em debug): `dealer` → `driveFirst` (
 ---
 
 ## 9. Registro recente (v79 r1–r49 → v1)
+
+- **v1 r40** — O fundo do carregamento inicial mostra “Preparando menu…” até o menu ficar pronto. A troca ocorre no mesmo passo da inicialização. Sintaxe e ordem de exibição verificadas.
+
+- **v1 r39** — O menu aparecia durante o carregamento inicial, antes dos controles e da versão atual serem preenchidos. Inicia oculto no HTML e só aparece após a sincronização inicial. Removidos os rótulos fixos de versões antigas. Sintaxe e ordem de inicialização verificadas.
+
+- **v1 r38** — Seed 259054, chegada da história: o controlador da final adicionava 0,215 m ao perfil que já inclui `AIRY`. A altitude estabilizava acima do limiar de toque (AIRY + 0,10 m), então o avião ultrapassava a pista em estado final. Retirado o offset duplicado no código compartilhado do voo. Simulação da aproximação, frenagem e transição ao táxi validada; sem teste visual no navegador.
+
+- **v1 r37** — Seed 185704 (Mobile): a regra do aeroporto descartava cinco lotes secos do anel norte, mesmo com teto de 41 m. Lotes secos do anel agora são mantidos quando o limite é ≥10 m; o teto do aeroporto continua valendo no builder. A primeira torre externa fica além da faixa do anel, com os cabos passando por cima. Geração dos chunks e torres da seed reproduzida sem renderização: cinco prédios presentes, apenas um sob os cabos, cobertura a 7,39 m e equipamento mais alto com folga de 0,80 m. Sem validação visual no navegador.
+
+- **v1 r36** — Prédios do anel: durante a geração, limitar a altura pelo segmento mais baixo dos cabos que cruza a projeção do prédio, com margem de 0,75 m lateral e 0,8 m vertical. Cobertura e equipamentos descem juntos. Cada prédio do anel ganha uma caixa d’água compacta. Atualiza malhas em lote, colisor, oclusão e pedestres de sacada. Sintaxe e testes isolados de geometria aprovados. O Chromium local não iniciou; varredura visual e detector de z-fight não validados.
+
+- **v1 r35** — Sinuca: falta na mesa aberta não derrubava bola, pois ainda não havia grupo. Agora derruba a menor disponível e atribui seu grupo ao adversário. Depois da definição, a branca deve tocar primeiro numa bola do próprio grupo ou no castigo quando for a vez dele. A mesma resolução vale para o jogador e Seu Zé. Validado com cenários isolados de falta e de tacada legal; sem partida no navegador.
 
 - **v1 r34** — Pedestres amontoados no motel/posto da roça: no sorteio do `spawnPed` (e `sidewalkPoint`) só lotes não-rurais eram aceitos, e na roça o único perto era a "ilha" (motel, posto). `lotRuralIsle(ri)` (≥2 vizinhos do outro lado da rua são rurais/floresta, cache `f._rIsle`) + `pedLotOk(ri)` → ilha conta como roça; sem lote de calçada perto, o spawn vai pra um lote rural comum (`fb`), e a ilha só fica com 15% das vezes. Teste seed 716540 ao lado do motel, 60 s: motel 11–16 → 0, postos 5–9 → 1–2, total perto igual (~22).
 - **v1 r33** — Foto do modo foto sai como `coastal-chaos-seed<SEED>-<AAAAMMDD-HHMMSS>.png`.
