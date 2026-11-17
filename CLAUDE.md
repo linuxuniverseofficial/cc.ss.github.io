@@ -1,13 +1,13 @@
 # Coastal Chaos: Sunset Shores — guia rápido para edições
 
-Jogo inteiro em `index.html` (three r128, scripts inline). `CONTEXT.md` = contexto enxuto (mecânicas atuais, travas, delimitações da missão 1, regras de render, bugs que já existiram, registro da v79): **ler antes de mexer**. O histórico antigo completo (~690 KB) está em `backup/CONTEXT.historico.md`: só `grep`, nunca ler inteiro. `README.md`/`ITCHIO.txt` são textos para jogador, não especificação.
+Jogo inteiro em `index.html` (three r128, scripts inline). `CONTEXT.md` = contexto enxuto (mecânicas atuais, travas, delimitações da missão 1, regras de render, bugs que já existiram, registro recente): **ler antes de mexer**. O histórico antigo completo (~690 KB) está em `backup/CONTEXT.historico.md`: só `grep`, nunca ler inteiro. `README.md`/`ITCHIO.txt` são textos para jogador, não especificação.
 
 ## Regras do projeto
 - Responder ao usuário em português (pt-BR).
 - Toda mudança executável vai no **§9 Registro recente** do `CONTEXT.md` (causa, o que mudou, o que foi testado e o que NÃO foi). Regra nova que nasce de uma correção vai também para a seção do sistema (§2–§8).
 - Servir a pasta: `python3 -m http.server 8777 --bind 127.0.0.1` e abrir `http://127.0.0.1:8777/`. Gerar cidade: input `#seed` + `#seedPlay` e depois `#mpFree` (livre) ou modo história. Seeds de referência: 716540 (danceteria, padrão dos testes), 473195072, 2812765640 (benchmark mobile), 4242, 99, 635537, 2976794230 (regressão), 653267 (orla no canto 0,0), 509166 (fim da história).
 - Teste automático (quando houver Node + Playwright): Chromium headless com `--use-gl=swiftshader`; o jogo roda a poucos FPS e `dt` é limitado a 0,05 → para testar física/movimento chamar as funções direto (`updatePlayer(.033)`, `updatePeds(.033)`, `skTick`) em vez de esperar tempo real. Sintaxe: extrair o maior `<script>` e `node --check`.
-- Entrega: zip `coastal-chaos-v79-rN.zip` contendo a pasta `v77/` (pasta do jogo inteira).
+- Entrega: zip `coastal-chaos-v1-rN.zip` contendo a pasta `v77/` (pasta do jogo inteira; o nome da pasta ficou por causa do deploy).
 - Antes de recarregar a aba, lembrar que o usuário pode estar jogando nela; não mexer se ele pediu para parar.
 - Sem Node à mão: checar sintaxe recarregando a página e lendo o console (`city`/`PAD` indefinidos = script quebrou).
 
@@ -57,6 +57,6 @@ Jogo inteiro em `index.html` (three r128, scripts inline). `CONTEXT.md` = contex
 
 ## Onde fica cada coisa (buscar pelo nome)
 `generateCity`, `buildChunk`, `chunkLod`, `cullChunks`, `roomStageLocalTick`, `roomStageEnter`, `casinoBuild` (cassino + interior da danceteria), `clubInteriorTick`, `prologueSwitch`/`prologueCutTick`/`prologueStage` (história; estágios em `PROLOGUE`, checkpoints `MCP_STAGES`), `charSwitch` (troca no modo livre), `sceneRadioStart`, `boomUpdate` (rádio dos carros que passam), `updateAudio` (motor, `ENG_GEARS`), `padPoll`, `jailEscapeTick`, `blitzMake`, `dbTick`/`dbBuild` (pontes levadiças), `specTick`/`slowFxTick` (especiais), `buildSave`/`applySave`, `beachTick`/`updatePeds`, `mallStoreFit`/`mallStoreDecor` (lojas do shopping), `POOL`/`DICE`/`ITS`/`SKATE`/`MG` (módulos com o nome no comentário de cabeçalho).
-- Build: a cada entrega, subir `BUILD_TAG` (topo do index.html) e `version.txt` para o mesmo rN (v79 recomeçou em r1; versão = `GAME_VER`, incluir a nova em `saveVersionCompatible`) — o jogo recarrega sozinho quando o servidor tem outra build.
+- Build: a cada entrega, subir `BUILD_TAG` (topo do index.html) e `version.txt` para o mesmo rN (numeração reorganizada: depois da v79 r49 veio **v1 r1**; versão = `GAME_VER`=1 — a lista de `saveVersionCompatible` já cobre 1–79; numa v2 futura, conferir se o número novo está na lista) — o jogo recarrega sozinho quando o servidor tem outra build.
 - Backup: a cada atualização entregue, `backup/index.anterior.html` = a build estável anterior (só uma, substitui a antiga). `backup/CONTEXT.historico.md` = histórico antigo arquivado (não editar).
 - Rodar `tools/zfight-detector.js` ao criar/alterar ambiente, cenário ou objeto (meta: 0 conflitos de z-fight).

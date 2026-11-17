@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 <script>
 /* v78 · BUILD: número da entrega. Ao abrir, o jogo lê version.txt (poucos bytes, sem cache) e, se a build no servidor for outra
    (navegador/celular servindo cópia velha), recarrega uma vez. Saves e configurações (localStorage) NÃO são apagados. */
-var BUILD_TAG='r41';
+var BUILD_TAG='r1';
 (function(){try{if(!/^https?:$/.test(location.protocol))return;const k='ps_build_reload';
  fetch(new URL('version.txt?b='+Date.now(),location.href).href,{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=/^\s*(r\d+)\s*$/.exec(t||'');if(!m||m[1]===BUILD_TAG){try{sessionStorage.removeItem(k)}catch(e){}return}
   let n=0;try{n=+sessionStorage.getItem(k)||0}catch(e){}if(n>=2)return;try{sessionStorage.setItem(k,String(n+1))}catch(e){}
@@ -264,6 +264,7 @@ body.padnav :is(button,label,select,input,[tabindex]):focus{outline:3px solid #f
 #mallTag kbd{display:inline-block;min-width:16px;text-align:center;background:#ff4fa0;color:#1b0010;padding:0 5px;margin-right:5px;font-family:inherit}
 #mallTag.food{border-color:#2ad67a}#mallTag.food::after{border-top-color:#2ad67a}#mallTag.food kbd{background:#2ad67a;color:#04210f}
 #pumpTag kbd{display:inline-block;min-width:16px;text-align:center;background:#ff8a1a;color:#1b0a00;padding:0 5px;margin-right:5px;font-family:inherit}
+body.touch #ctxp.act{display:none!important} /* v79r49: no toque o aviso de tecla some; o botão INTERAGIR faz o papel (avisos informativos, sem tecla, continuam) */
 #ctxp kbd{background:var(--acc);color:var(--acc-ink);padding:1px 6px;margin-right:4px;font-family:inherit}
 .bar.fuel i{background:linear-gradient(#ffa64a,#d0600e)}.bar.fuel.low{animation:wflash .5s steps(1) infinite}
 #wzone{position:absolute;right:calc(16px + env(safe-area-inset-right,0px));top:calc(70px + env(safe-area-inset-top,0px));display:flex;gap:6px;align-items:center;font-family:var(--f-disp);font-size:11px;letter-spacing:.12em;text-shadow:2px 2px 0 #000;color:#fff}
@@ -476,7 +477,7 @@ body.touch #money{top:calc(14px + env(safe-area-inset-top,0px));left:calc(160px 
 #menu .mfoot>.row:last-child>.menu-create{display:contents}
 /* v155: SALVAR JOGO usa a mesma coluna/largura de CARREGAR SAVE;
    a distancia e ajustada em pixels de acordo com a largura real do menu. */
-#menu .mfoot>.row:first-child>#saveFile{margin-left:auto;margin-right:0;border-color:#85ec9f;background:#269a50;color:#fff;text-shadow:1px 1px #063b1e;box-sizing:border-box}
+#menu .mfoot>.row:first-child #saveFile{margin-left:auto;margin-right:0;border-color:#85ec9f;background:#269a50;color:#fff;text-shadow:1px 1px #063b1e;box-sizing:border-box}
 @media(max-width:640px){#menu .mfoot>.row:last-child>#benchBtn{margin-right:0!important}}
 /* v156: menu da partida: MONITOR permanece diretamente abaixo de CONFIGURAÇÕES.
    Não reorganizar o rodapé do menu inicial. */
@@ -694,6 +695,8 @@ select,input[type=text]{font-family:var(--f-body);font-size:20px;background:#000
 .keys kbd{font-family:var(--f-disp);font-size:11px;color:var(--ink);background:#000;border:2px solid var(--line);padding:1px 5px;margin-right:4px}
 #loading{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:15px;background:#000;font-family:var(--f-disp);font-size:18px;letter-spacing:.12em;color:var(--acc);z-index:9999;text-align:center;padding:20px}
 #loading[hidden]{display:none!important}
+#loadMap{width:min(48vmin,440px);height:auto;aspect-ratio:1/1;border:2px solid #ffffff1f;border-radius:6px;background:#05070c;box-shadow:0 10px 40px #000a;margin-bottom:6px}#loadMap[hidden]{display:none}
+@media (max-height:520px){#loadMap{width:min(52vh,300px)}#loading{gap:10px}}
 /* Abertura da campanha: tela preta real; somente camera e aviao visiveis entre fades. */
 #storyBlack{position:fixed;inset:0;z-index:10001;background:#000;opacity:1;pointer-events:none;transition:opacity .7s ease;display:grid;place-items:center}
 #storyBlack[hidden]{display:none!important}
@@ -1133,6 +1136,21 @@ body.cutscene-paused #menu.in-game #mgBtn{display:none!important}
 #menu.in-game .mfoot #backToStart{grid-row:5}
 body.cutscene-paused #menu.in-game #photoBtn{display:none!important}
 @media (max-height:520px){#menu.in-game .mfoot{grid-template-rows:48px 42px 42px 42px 38px!important}}
+/* v79r44: pausa reorganizada — 1) CONTINUAR · 2) fila de ícones 💾 📄 🎲 📷 (salvar azul, registros marrom; os escondidos somem e os outros esticam) · 3) MONITOR | CONFIGURAÇÕES · 4) VOLTAR AO MENU INICIAL */
+#menu:not(.in-game) .pz-icons{display:contents}
+#menu.in-game .mfoot{grid-template-rows:58px 52px 52px 46px!important}
+#menu.in-game .mfoot .pz-icons{grid-column:1/-1;grid-row:2;display:flex;gap:10px;min-width:0}
+#menu.in-game .mfoot .pz-icons .btn{flex:1 1 0;min-width:0;height:52px!important;font-size:22px!important;line-height:1;padding:0!important}
+#menu.in-game .mfoot .pz-icons .btn[hidden]{display:none!important}
+#menu.in-game #monBtn{grid-column:1!important;grid-row:3!important}
+#menu.in-game #cfgBtnMenu,#menu.in-game:has(#saveFile[hidden]) #cfgBtnMenu{grid-column:2!important;grid-row:3!important}
+#menu.in-game .mfoot #backToStart{grid-row:4!important}
+body.cutscene-paused #menu.in-game .mfoot{grid-template-rows:58px 52px 52px 46px!important}
+body.cutscene-paused #menu.in-game #monBtn{grid-column:1/-1!important}
+@media (max-height:520px){#menu.in-game .mfoot,body.cutscene-paused #menu.in-game .mfoot{grid-template-rows:48px 44px 42px 38px!important}#menu.in-game .mfoot .pz-icons .btn{height:44px!important;font-size:19px!important}}
+@media(max-width:420px){#menu.in-game .mfoot .pz-icons{gap:8px}}
+#menu.in-game .mfoot .pz-icons #photoBtn{padding:0 0 .2em!important}
+#menu .pz-die{width:1.12em;height:1.12em;display:block;flex:0 0 auto} /* v79r45: dado reto em SVG (o emoji 🎲 vem desenhado inclinado) */ /* v79r45: o desenho do 📷 fica ~2 px abaixo do centro da letra; sobe só ele */
 
 /* v77: coluna de ações alinhada à de opções (rótulo JOGAR na mesma linha de TAMANHO) */
 #menu .mfoot-label{font-family:var(--f-disp);font-size:11px;letter-spacing:.14em;color:var(--mute);line-height:normal}
@@ -1253,7 +1271,7 @@ body.cutscene-paused #menu.in-game #photoBtn{display:none!important}
       <p style="margin:8px 0 0;color:var(--mute);font-size:17px">Chega 1h de jogo (1 min real) depois de marcar e, deixando ligada, volta de tempos em tempos.</p></div>
     <div class="mfoot">
       <small id="menuBuildLine" aria-hidden="true">v.243</small><div class="mfoot-label" aria-hidden="true">JOGAR</div><button class="btn" type="button" id="fsBtn" hidden>TELA CHEIA</button><button class="btn" type="button" id="installApp" hidden>INSTALAR COASTAL CHAOS</button>
-      <div class="row"><button class="btn" type="button" id="cfgBtnMenu">CONFIGURAÇÕES</button><button class="btn" type="button" id="monBtn" aria-pressed="false">MONITOR</button><button class="btn" type="button" id="regBtnMenu" hidden>REGISTROS</button><button class="btn" type="button" id="photoBtn">📷 MODO FOTO</button><button class="btn" type="button" id="mgBtn">🎲 MINIGAMES</button><span id="saveInfo" style="color:var(--mute);font-size:15px;margin-left:auto;text-align:right"></span><button class="btn" type="button" id="saveFile" hidden>SALVAR JOGO</button></div>
+      <div class="row"><button class="btn" type="button" id="cfgBtnMenu">CONFIGURAÇÕES</button><button class="btn" type="button" id="monBtn" aria-pressed="false">MONITOR</button><span id="saveInfo" style="color:var(--mute);font-size:15px;margin-left:auto;text-align:right"></span><span class="pz-icons"><button class="btn" type="button" id="saveFile" hidden title="Salvar jogo" aria-label="Salvar jogo">💾</button><button class="btn" type="button" id="regBtnMenu" hidden title="Registros" aria-label="Registros">📄</button><button class="btn" type="button" id="mgBtn" title="Minigames" aria-label="Minigames"><svg class="pz-die" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="4.5" fill="#f4f2ea" stroke="#c9c1ad" stroke-width="1.2"/><circle cx="7.6" cy="7.6" r="1.9" fill="#1a1a20"/><circle cx="16.4" cy="7.6" r="1.9" fill="#1a1a20"/><circle cx="12" cy="12" r="1.9" fill="#c81e2a"/><circle cx="7.6" cy="16.4" r="1.9" fill="#1a1a20"/><circle cx="16.4" cy="16.4" r="1.9" fill="#1a1a20"/></svg></button><button class="btn" type="button" id="photoBtn" title="Modo foto" aria-label="Modo foto">📷</button></span></div>
       <div class="row" style="justify-content:flex-end">
         <button class="btn" type="button" id="menuFullscreen" hidden>DEIXAR EM TELA CHEIA</button>
         <button class="btn" type="button" id="loadSave" hidden>SAVE ANTIGO (NAVEGADOR)</button>
@@ -1607,7 +1625,7 @@ if(pixelIsMobile()&&matchMedia('(orientation: portrait)').matches)
 </script>
 <div id="psaveErrorDialog" role="alertdialog" aria-modal="true" aria-labelledby="psaveErrorTitle" aria-describedby="psaveErrorMessage" hidden><div id="psaveErrorBox"><h2 id="psaveErrorTitle">Erro no carregamento do arquivo:</h2><p id="psaveErrorMessage">Save inválido, corrompido ou adulterado detectado.</p><button type="button" class="btn" id="psaveErrorOk">OK</button></div></div>
 <div id="paraPrompt" hidden style="position:fixed;bottom:24%;left:50%;transform:translateX(-50%);padding:10px;background:#080810dd;color:#fff;z-index:12;font:700 16px system-ui;pointer-events:none"></div>
-<div id="loading" hidden><div id="loadText">GERANDO CIDADE…</div><div id="loadTrack" role="progressbar" aria-label="Progresso do carregamento" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="loadFill"></div></div><div id="loadPercent">0%</div></div>
+<div id="loading" hidden><canvas id="loadMap" width="1" height="1" hidden aria-hidden="true"></canvas><div id="loadText">GERANDO CIDADE…</div><div id="loadTrack" role="progressbar" aria-label="Progresso do carregamento" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="loadFill"></div></div><div id="loadPercent">0%</div></div>
 
 <script src="lib/three/three.min.js"></script>
 <script src="lib/three/shaders/CopyShader.js"></script>
@@ -1806,9 +1824,10 @@ const skyMat=new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,fog:
  float sAl=dot(vP.xz,stormK.xy),sN=stormK.w>.001?fbm(vP.xz/(abs(h)+.18)*1.7+vec2(time*.012,time*.005))-.5:0.,sAl2=sAl+sN*.5*smoothstep(-.02,.12,h);
  float msk=stormK.w*smoothstep(stormK.z-.2,stormK.z+.2,sAl2)*(1.-smoothstep(stormB.x-.2,stormB.x+.2,sAl2));
  c=mix(c,c*.38,msk*.8);
- if(h>.02){vec2 uv=vP.xz/(h+.15)*1.25+vec2(time*.012,time*.005);float n=fbm(uv);vec2 cq=camP.xz+vP.xz/max(h,.04)*210.;float cv=max(max(cloud,min(1.,rfc(cq)*1.5+rf(cq)*.6)),min(1.,msk*1.25));float gcl=gC.w*(1.-smoothstep(gC.z*.4,gC.z,length(cq-gC.xy)));cv=max(cv,min(1.,gcl*1.7));float cl=smoothstep(1.-cv,1.-cv+.32,n)*smoothstep(.02,.22,h);
-  vec3 cc=mix(cloudCol,cloudCol*.5,smoothstep(.45,.95,n)*cv);cc*=mix(1.,.3,msk);cc*=mix(1.,.2,gcl);c=mix(c,cc,cl*mix(.92,.99,msk));
-  if(fair>.01){vec2 fu=vP.xz/(h+.12)*3.4+vec2(time*.02,time*.008)+vec2(11.3,7.1);float fn=fbm(fu)*.75+nz(fu*3.1)*.25;float fc=.16+fair*.36;float fa=smoothstep(1.-fc-.06,1.-fc+.16,fn)*smoothstep(.03,.25,h)*(1.-cl)*.55;c=mix(c,mix(cloudCol,vec3(1.),.35)*(1.-.12*smoothstep(.5,.9,fn)),fa);}}
+ if(h>.02){vec3 sdn=normalize(sunDir);float sg=(1.-synth)*sunDim*smoothstep(-.14,-.02,sdn.y)*(1.-smoothstep(.06,.34,sdn.y));vec2 hz=vP.xz;float dd=(length(hz)>1e-4&&length(sdn.xz)>1e-4)?dot(normalize(hz),normalize(sdn.xz)):0.;float tw=dd*.5+.5;tw*=tw;vec3 stc=mix(vec3(1.,.56,.5),vec3(1.,.64,.3),tw);float lum=clamp(dot(cloudCol,vec3(.3333))+.4,.7,1.1); /* v79r42: sol baixo pinta as nuvens — laranja do lado do sol, rosa do lado oposto */
+ vec2 uv=vP.xz/(h+.15)*1.25+vec2(time*.012,time*.005);float n=fbm(uv);vec2 cq=camP.xz+vP.xz/max(h,.04)*210.;float cv=max(max(cloud,min(1.,rfc(cq)*1.5+rf(cq)*.6)),min(1.,msk*1.25));float gcl=gC.w*(1.-smoothstep(gC.z*.4,gC.z,length(cq-gC.xy)));cv=max(cv,min(1.,gcl*1.7));float cl=smoothstep(1.-cv,1.-cv+.32,n)*smoothstep(.02,.22,h);
+  vec3 cc=mix(cloudCol,cloudCol*.5,smoothstep(.45,.95,n)*cv);cc*=mix(1.,.3,msk);cc*=mix(1.,.2,gcl);{float sk=sg*(.6+.4*tw)*(1.-.7*cloud)*(1.-msk)*(1.-gcl);float edge=1.-.3*smoothstep(.45,.95,n);cc=mix(cc,stc*(.85+.4*tw)*edge*lum,sk*.9);} /* v79r43: só céu fechado (cloud) e tempestade em cima (msk/gcl) tiram a cor; nuvens de chuva ao longe também pegam o laranja */c=mix(c,cc,cl*mix(.92,.99,msk));
+  if(fair>.01){vec2 fu=vP.xz/(h+.12)*3.4+vec2(time*.02,time*.008)+vec2(11.3,7.1);float fn=fbm(fu)*.75+nz(fu*3.1)*.25;float fc=.16+fair*.36;float fa=smoothstep(1.-fc-.06,1.-fc+.16,fn)*smoothstep(.03,.25,h)*(1.-cl)*.55;c=mix(c,mix(mix(cloudCol,vec3(1.),.35),stc*(.85+.45*tw)*lum,sg*(.6+.4*tw)*.9)*(1.-.12*smoothstep(.5,.9,fn)),fa);}}
  gl_FragColor=vec4(c,1.);}`});
 const sky=new THREE.Mesh(new THREE.SphereGeometry(1500,32,16),skyMat); sky.renderOrder=10; sky.frustumCulled=false; sky.layers.set(1); scene.add(sky);
 
@@ -2829,7 +2848,7 @@ function v67Hud(dt){if(!GUN.has&&!PL.car&&played){$('#gun').hidden=false;$('#gun
  else if(CTX.mall)h=CTX.mall==='skate'?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>SKATE SHOP · SKATES $120':CTX.mall==='cafe'?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>CAFÉ $5 · +25 VIDA':CTX.mall==='pharm'?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>FARMÁCIA · REMÉDIO $60 · +100 VIDA':CTX.mall==='jewel'?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>JOIAS · COLARES E FIVELAS':CTX.mall==='optic'?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>ÓTICA · ÓCULOS':CTX.mall==='shoes'?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>SAPATOS · CALÇADOS':CTX.mall==='beach'?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>MODA PRAIA · SUNGA E BIQUÍNI':CTX.mall&&/^vd\d+$/.test(CTX.mall)?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>REFRIGERANTE $1 · +1 VIDA':CTX.mall==='music'?'LOJA DE DISCOS · fone de cortesia perto das prateleiras':CTX.mall==='bag'?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>MALAS & MOCHILAS CO. · MOCHILA':CTX.mall==='tech'?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>ELETRÔNICOS · CELULAR E HEADPHONE':CTX.mall==='wear'?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>PROVADOR · TROCAR ROUPA E ACESSÓRIOS':'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>COMPRAR LANCHE $20 · +50 VIDA';
  else if(PL.inside==='shop'&&GUN.has&&!SHOP.alarm&&SHOP.cashier&&SHOP.cashier.state!=='dead')h='<span style="color:#ff4a4a">MIRE NO CAIXA = ASSALTO</span> · <kbd>1</kbd>guarda a arma';
  else if(PL.inside==='shop'&&SHOP.alarm)h=`<span style="color:#ff4a4a">ALARME · POLÍCIA EM ${Math.max(0,Math.ceil(SHOP.alarmT))}s</span>`;
- if(cp){if(cp.hidden===!h)cp.hidden=!!h?false:true;if(h&&cp.dataset.h!==h){cp.dataset.h=h;cp.innerHTML=h}}
+ if(cp){if(cp.hidden===!!h)cp.hidden=!h;{const ak=h.indexOf('<kbd>')>=0;if(cp.classList.contains('act')!==ak)cp.classList.toggle('act',ak)} /* v79r49: lógica estava invertida desde a v77 — o aviso nunca aparecia (no PC o E funcionava às cegas; no toque o botão INTERAGIR depende dele) */if(h&&cp.dataset.h!==h){cp.dataset.h=h;cp.innerHTML=h}}
  if(h)$('#prompt').hidden=true;
  const wz=$('#wzone');if(wz){const z=WZ.cur;const show=!!z&&played;if(wz.hidden===show)wz.hidden=!show;if(show){
   wz.querySelector('.sh').classList.toggle('on',!!z.lk);wz.querySelector('.cr').classList.toggle('on',!!z.ck);
@@ -4882,12 +4901,22 @@ async function generateCity(){
  /* --- merged blocks: long ones and L shapes --- */
  const reg=[];for(let i=0;i<N;i++){reg[i]=[];for(let j=0;j<N;j++)reg[i][j]=[[i,j]]}
  const lRnd=mulberry32((S.seed^0x5a17c3e9)>>>0);
+ /* v79r47: CEMITÉRIO = SEMPRE 2 quarteirões fundidos num CANTO do fundo do mapa (oposto à praia). Funde antes dos sorteios de fusão; sem canto válido (rio etc.) cai na escolha antiga. */
+ city.cemCells=null;{const cr=mulberry32((S.seed^0x3c1e7a55)>>>0),cs=city.coast,J=N-1,far=cs===0?[[0,J],[J,J]]:cs===1?[[0,0],[J,0]]:cs===2?[[J,0],[J,J]]:[[0,0],[0,J]];if(cr()<.5)far.reverse();
+  const tries=[];for(const c of far){const ax=cs<2?[c[0]===0?1:-1,0]:[0,c[1]===0?1:-1],pp=cs<2?[0,c[1]===0?1:-1]:[c[0]===0?1:-1,0];tries.push([c,ax],[c,pp])}
+  for(const[c,dv] of tries){const b=[c[0]+dv[0],c[1]+dv[1]];if(b[0]<0||b[1]<0||b[0]>=N||b[1]>=N)continue;const cells=[c,b];
+   if(cells.some(q=>city.riv.has(q[0]*1000+q[1])))continue;if(city.isle&&cells.some(q=>q[0]===city.isle.i&&q[1]===city.isle.j))continue;if(city.bankCell&&cells.some(q=>q[0]===city.bankCell.i&&q[1]===city.bankCell.j))continue;
+   const i=Math.min(c[0],b[0]),j=Math.min(c[1],b[1]),east=dv[0]!==0,key=east?'v'+(i+1)+','+j:'h'+i+','+(j+1),n1=east?[i+1,j]:[i,j+1],n2=[i+1,j+1];if(city.segOff.has(key))continue;
+   city.segOff.add(key);if(nodeDeg(n1[0],n1[1])<2||nodeDeg(n2[0],n2[1])<2){city.segOff.delete(key);continue}
+   for(const q of cells)reg[q[0]][q[1]]=cells;city.cemCells=cells;break}}
+ const cemCell=(c)=>!!city.cemCells&&city.cemCells.some(q=>q[0]===c[0]&&q[1]===c[1]);
  for(let t=0,T=city.haze?0:Math.floor(N*N*.4);t<T;t++){const i=Math.floor(R()*N),j=Math.floor(R()*N),east=R()<.5,i2=east?i+1:i,j2=east?j:j+1;if(i2>=N||j2>=N)continue;
   const A=reg[i][j],B=reg[i2][j2];if(A===B)continue;const cells=A.concat(B);if(cells.length>3||(cells.length===3&&lRnd()>.35))continue; // v176: às vezes 3 quarteirões em L
   if(cells.some(c=>city.riv.has(c[0]*1000+c[1])))continue; // nunca fundir solo com rio
   // A micro-ilha é SEMPRE um único quarteirão, nunca parte de um bloco fundido.
   if(city.isle&&cells.some(c=>c[0]===city.isle.i&&c[1]===city.isle.j))continue;
   if(city.bankCell&&cells.some(c=>c[0]===city.bankCell.i&&c[1]===city.bankCell.j))continue;
+  if(cells.some(cemCell))continue; // v79r47: bloco do cemitério não cresce
   const xs=cells.map(c=>c[0]),zs=cells.map(c=>c[1]),w=Math.max(...xs)-Math.min(...xs)+1,h=Math.max(...zs)-Math.min(...zs)+1;
   if(!(w===1||h===1||(w===2&&h===2)))continue;if(cells.length===3&&!(w===2&&h===2))continue; // 3 quarteirões só em L
   const key=east?'v'+(i+1)+','+j:'h'+i+','+(j+1),n1=east?[i+1,j]:[i,j+1],n2=[i+1,j+1];
@@ -5014,6 +5043,7 @@ async function generateCity(){
  }
  const area=r=>(r[2]-r[0])*(r[3]-r[1]),ctrOf=r=>[(r[0]+r[2])/2,(r[1]+r[3])/2];
  const beachEdge=(r)=>{const cs=city.coast,c=ctrOf(r);return(cs===0?r[1]<P:cs===1?r[3]>E-P:cs===2?r[0]<P:r[2]>E-P)&&onBeach(c[0],c[1])};
+ const backOf=(r)=>{const cs=city.coast,c=ctrOf(r);return clamp(cs===0?c[1]/E:cs===1?1-c[1]/E:cs===2?c[0]/E:1-c[0]/E,0,1)}; /* v79r47: 0 = na praia, 1 = fundo do mapa (lado oposto ao mar) */
  if(!city.haze){
  // Reserva prioritária absoluta: aeroporto grande escolhe primeiro um terreno
  // fundido. Ele permanece protegido antes dos 11 marcos e da indústria.
@@ -5065,7 +5095,7 @@ async function generateCity(){
   // o zoneamento rural definitivo acontece apenas apos reservar os marcos.
   // A torre de 16.9m nunca pode entrar no cone do aeroporto.
   pick('cem',(f,r)=>!beachEdge(r)&&['rural','houses','bld','lot','park'].includes(f.kind)&&area(r)>BS*BS*.7&&airportHeightLimitForRect(city.air,r)>=18,
-    (f,r)=>f.d*110+Math.min(area(r),9500)/(BS*BS)*1.4+far(r,P*3)*.9);
+    (f,r)=>f.d*110+Math.min(area(r),9500)/(BS*BS)*1.4+far(r,P*3)*.9+(city.cemCells&&city.cemCells.every(q=>{const cx=(q[0]+.5)*P,cz=(q[1]+.5)*P;return cx>r[0]&&cx<r[2]&&cz>r[1]&&cz<r[3]})?1e5:0)); /* v79r47: o bloco reservado do canto */
   pick('univ',(f,r)=>ok(f,r)&&f.d>.22&&f.d<.56,(f,r)=>far(r,P*3)+area(r)/(BS*BS)*.8);
   pick('stad',(f,r)=>ok(f,r)&&f.d>.28&&f.d<.6,(f,r)=>far(r,P*3)+area(r)/(BS*BS)*1.4-Math.abs(Math.log((r[2]-r[0])/(r[3]-r[1])))*.8);
   const parks=city.info.map((f,i)=>f.kind==='park'?i:-1).filter(i=>i>=0);const nearPark=r=>{let m=1e9,bi=-1;const c=ctrOf(r);for(const i of parks){const q=ctrOf(city.rects[i]);const d=Math.hypot(q[0]-c[0],q[1]-c[1]);if(d<m){m=d;bi=i}}return[m,bi]};
@@ -5122,9 +5152,10 @@ async function generateCity(){
    for(let m=0;m<sharedCount;m++){
     // v77: o 2º posto fica LONGE do 1º; prefere um posto isolado na zona rural (longe do cemitério).
     if(m===1&&city.deals[0]){const g0=city.deals[0],cem=city.lms.find(l=>l.name==='cem'),cq=cem&&city.rects[cem.ri];let best=-1,bs=-1e9;
-     city.info.forEach((f,i)=>{if(!free(i,50,50))return;const r=city.rects[i];if(beachEdge(r)||!(f.d>=ZONE.houses))return;const cx=(r[0]+r[2])/2,cz=(r[1]+r[3])/2,dg=Math.hypot(cx-g0.cx,cz-g0.cz);if(dg<P*3)return;
+     /* v79r47: o 2º posto (borracharia + AMOnições) vai SEMPRE pro fundo do mapa, oposto à praia (antes caía nas laterais e esvaziava a roça) */
+     for(const mb of [.66,.5,0]){city.info.forEach((f,i)=>{if(!free(i,50,50))return;const r=city.rects[i];if(beachEdge(r)||!(f.d>=ZONE.houses))return;const bk=backOf(r);if(bk<mb)return;const cx=(r[0]+r[2])/2,cz=(r[1]+r[3])/2,dg=Math.hypot(cx-g0.cx,cz-g0.cz);if(dg<P*3)return;
       if(cq&&Math.hypot(cx-(cq[0]+cq[2])/2,cz-(cq[1]+cq[3])/2)<P*2.6)return;if(city.air&&airportHeightLimitForRect(city.air,r)<10)return;
-      const sc=-Math.abs(f.d-(ZONE.houses+.06))*3+Math.min(dg,P*6)/(P*6)+(area(r)<=BS*BS*1.18?.5:-100)+dr()*.12;if(sc>bs){bs=sc;best=i}}); /* v79: posto+borracharia só em quarteirão simples (grande só se não houver outro) */
+      const sc=bk*2.5-Math.abs(f.d-(ZONE.houses+.06))*1.2+Math.min(dg,P*6)/(P*6)+(area(r)<=BS*BS*1.18?.5:-100)+dr()*.3;if(sc>bs){bs=sc;best=i}});if(best>=0)break} /* v79: posto+borracharia só em quarteirão simples (grande só se não houver outro) */
      if(best>=0){selected.add(best);const f=city.info[best],r=city.rects[best];f.reservedSpecial='gas';f.kind='lm';f.lm='gas';f.plaza=false;city.lms.push({name:'gas',ri:best,x:(r[0]+r[2])/2,z:(r[1]+r[3])/2,rural:true});continue}}
     const far0=m&&city.deals[0]?(f,r)=>Math.min(Math.hypot((r[0]+r[2])/2-city.deals[0].cx,(r[1]+r[3])/2-city.deals[0].cz),P*6)/(P*6)*3:()=>0;
     const ri=choose('dealgas',56,56,(f,r)=>-Math.abs(f.d-.34)*2+Math.min(area(r),3600)/3600+far0(f,r),dr),f=city.info[ri],r=city.rects[ri];
@@ -5138,12 +5169,13 @@ async function generateCity(){
    // (o terreno do posto não comporta o L com 6 quartos + piscina, nem em 14×14)
    // v77: a AMOnições vira o escritório dos fundos da borracharia do 2º posto (ou do posto da concessionária)
    {const g3=city.lms.find(l=>l.name==='gas'&&!city.info[l.ri]?.dealgas);city.tireRi=g3?g3.ri:city.info.findIndex(f=>f.dealgas);if(city.tireRi<0)city.tireRi=null}
-   {const g2=sharedCount>1&&city.lms.find(l=>l.name==='gas'&&!city.info[l.ri]?.dealgas),g=g2?{cx:g2.x,cz:g2.z}:city.deals[sharedCount>1?1:0]||city.deals[0];if(g){let best=-1,bs=-1e9;city.info.forEach((f,i)=>{const r=city.rects[i];const cx=(r[0]+r[2])/2,cz=(r[1]+r[3])/2,dx=Math.abs(cx-g.cx),dz=Math.abs(cz-g.cz);
-     // motel é baixo (≤9m): aceita quadra sob o corredor aéreo se o limite de altura permitir
-     const air=f.airRestricted&&!(city.air&&airportHeightLimitForRect(city.air,r)>=6);if(selected.has(i)||f.isle||f.beachReserve||f.reservedSpecial||air||f.kind==='lm'||r[2]-r[0]<40||r[3]-r[1]<40)return;if(beachEdge(r))return;
-     const adj=(dx<P*.6&&Math.abs(dz-P)<P*.45)||(dz<P*.6&&Math.abs(dx-P)<P*.45),diag=Math.abs(dx-P)<P*.45&&Math.abs(dz-P)<P*.45;if(!adj&&!diag)return;const sc=(adj?2:0)-Math.abs(area(r)-2600)/2600+dr()*.1-(area(r)>BS*BS*1.18?100:0);if(sc>bs){bs=sc;best=i}}); /* v79: motel nunca em 2 terrenos (quarteirão fundido) se houver um simples */
-    if(best<0||area(city.rects[best])>BS*BS*1.18){let b2=-1,bd=1e9;city.info.forEach((f,i)=>{const r=city.rects[i];if(selected.has(i)||f.isle||f.beachReserve||f.reservedSpecial||f.kind==='lm'||r[2]-r[0]<40||r[3]-r[1]<40||area(r)>BS*BS*1.18||beachEdge(r))return;if(f.airRestricted&&!(city.air&&airportHeightLimitForRect(city.air,r)>=6))return;const d=Math.hypot((r[0]+r[2])/2-g.cx,(r[1]+r[3])/2-g.cz);if(d<P*2.4&&d<bd){bd=d;b2=i}});if(b2>=0)best=b2} /* v79: sem quarteirão simples vizinho → o simples mais perto (até ~2 quadras); só usa o fundido se não houver nenhum */
-    if(best>=0){selected.add(best);const f=city.info[best];f.kind='lot';f.motelLot=true;f.reservedSpecial='motel';city.motelRi=best}}}}
+   /* v79r48: MOTEL em qualquer quarteirão da ROÇA (sorteado, preferindo o fundo do mapa); não precisa ser vizinho do posto.
+      Quarteirão simples, sem corredor aéreo alto demais, fora da praia. 7×7 (sem roça): a faixa mais externa de casas. */
+   {const mr=mulberry32((S.seed^0x2d7e91b3)>>>0);let best=-1,bs=-1e9;
+    for(const pass of [0,1,2])if(best<0)city.info.forEach((f,i)=>{const r=city.rects[i];const air=f.airRestricted&&!(city.air&&airportHeightLimitForRect(city.air,r)>=6);if(selected.has(i)||f.isle||f.beachReserve||f.reservedSpecial||air||f.kind==='lm'||f.forest||r[2]-r[0]<40||r[3]-r[1]<40||beachEdge(r))return;
+     if(area(r)>BS*BS*1.18&&pass<2)return;const bk=backOf(r),rural=f.kind==='rural'||f.d>=ZONE.houses;if(pass===0&&!(rural&&bk>=.45))return;if(pass===1&&!(rural||bk>=.6))return;
+     const sc=bk*1.2+mr()*2.2-(area(r)>BS*BS*1.18?50:0);if(sc>bs){bs=sc;best=i}});
+    if(best>=0){selected.add(best);const f=city.info[best];f.kind='lot';f.motelLot=true;f.reservedSpecial='motel';city.motelRi=best}}}
   {const ri=choose('tune',50,50,(f,r)=>-Math.abs(f.d-.28)*3+((f.kind==='bld')?.8:0),tr),f=city.info[ri];f.kind='bld';f.low=false;f.tune=true;city.tuneRi=ri;city.tuneSpot=null;try{neonRoadPlan(ri);if(city.neonRoad)f.neon=true}catch(e){console.error('[neon road]',e);city.neonRoad=null}}
   // Casa segura reservada antes de indústria, sem sacrificar qualquer marco.
   {const ri=choose('safe',50,50,(f,r)=>((f.kind==='houses')?1:0)-Math.abs(f.d-.42)*2,sr),f=city.info[ri];f.kind='houses';f.safe=true;city.safeRi=ri;city.safe=null;}
@@ -5163,9 +5195,12 @@ async function generateCity(){
  // Indústria é desejável, porém nunca sacrifica especiais. No Mobile 1–2 quadras.
  {const ir=mulberry32((S.seed^0x6b43a9b5)>>>0),ang=ir()*6.283,byRiver=ir()<.75;let best=-1,bs=1e9;
   const available=(f,r)=>!f.isle&&!f.beachReserve&&f.kind!=='lm'&&!f.reservedSpecial&&!f.airRestricted&&!f.safe&&!f.para&&!f.tune&&!f.deal&&!f.airport&&!f.casino&&!f.club&&!f.garage&&!f.tour&&!beachEdge(r);
-  city.info.forEach((f,i)=>{const r=city.rects[i];if(!available(f,r)||f.d<.32)return;const c=ctrOf(r),a=Math.atan2(c[1]-city.core.z,c[0]-city.core.x);let da=Math.abs(a-ang);da=Math.min(da,6.283-da);let wd=1e9;for(const w of city.water||[]){const dx=Math.max(w[0]-c[0],0,c[0]-w[2]),dz=Math.max(w[1]-c[1],0,c[1]-w[3]);wd=Math.min(wd,Math.hypot(dx,dz))}const sc=da*1.2+Math.abs(f.d-.55)*4-(byRiver&&wd<P*.9?1.6:0);if(sc<bs){bs=sc;best=i}});
+  /* v79r47: indústria fica na DIVISA casas→roça (ou fim da cidade→roça), longe do centro: as casas vêm antes, a indústria depois. */
+  const indMin=ZONE.houses-.07;
+  for(const needRiver of [true,false]){if(best>=0)break; /* v79r47: SEMPRE no pé de um rio (água poluída); sem rio na divisa, cai no critério antigo */
+  city.info.forEach((f,i)=>{const r=city.rects[i];if(!available(f,r)||f.d<indMin)return;const c=ctrOf(r),a=Math.atan2(c[1]-city.core.z,c[0]-city.core.x);let da=Math.abs(a-ang);da=Math.min(da,6.283-da);let wd=1e9;for(const w of city.water||[]){const dx=Math.max(w[0]-c[0],0,c[0]-w[2]),dz=Math.max(w[1]-c[1],0,c[1]-w[3]);wd=Math.min(wd,Math.hypot(dx,dz))}if(needRiver&&!(wd<P*.75))return;const sc=da*.8+Math.abs(f.d-(ZONE.houses+.03))*6+(1-backOf(r))*2.2-(byRiver&&wd<P*.9?1.2:0)+wd/P*.8;if(sc<bs){bs=sc;best=i}})}
   if(best<0)city.info.forEach((f,i)=>{if(best<0&&available(f,city.rects[i]))best=i});
-  if(best>=0){const c0=ctrOf(city.rects[best]);const cl=city.info.map((f,i)=>[i,Math.hypot(ctrOf(city.rects[i])[0]-c0[0],ctrOf(city.rects[i])[1]-c0[1])]).filter(([i,d])=>d<P*1.7&&available(city.info[i],city.rects[i])).sort((a,b)=>a[1]-b[1]).slice(0,N===7?2:4);
+  if(best>=0){const c0=ctrOf(city.rects[best]);const cl=city.info.map((f,i)=>[i,Math.hypot(ctrOf(city.rects[i])[0]-c0[0],ctrOf(city.rects[i])[1]-c0[1])]).filter(([i,d])=>d<P*1.7&&available(city.info[i],city.rects[i])&&city.info[i].d>=indMin).sort((a,b)=>a[1]-b[1]).slice(0,N===7?2:4);
    let rr2=0;for(const[i,d] of cl){city.info[i].kind='industrial';city.info[i].plaza=false;rr2=Math.max(rr2,d+Math.max(city.rects[i][2]-city.rects[i][0],city.rects[i][3]-city.rects[i][1])/2)}
    if(cl.length){city.ind={x:c0[0],z:c0[1],r:rr2+10};let near=1e9;for(const w of city.water||[]){const dx=Math.max(w[0]-c0[0],0,c0[0]-w[2]),dz=Math.max(w[1]-c0[1],0,c0[1]-w[3]);near=Math.min(near,Math.hypot(dx,dz))}
     if(near<city.ind.r+P*1.3)city.poll={x:c0[0],z:c0[1],R:city.ind.r+120+ir()*60,ph:[ir()*6.28,ir()*6.28,ir()*6.28,ir()*6.28]}}}}
@@ -5199,7 +5234,7 @@ async function generateCity(){
   const candidates=ruralLots.length?ruralLots:lots.filter(q=>q.f.kind==='houses'&&freeRural(q)&&!beachEdge(q.r));
   let best=null,score=-Infinity;
   for(const q of candidates){const x=(q.r[0]+q.r[2])/2,z=(q.r[1]+q.r[3])/2;
-   const sc=q.f.d*4+Math.min((q.r[2]-q.r[0])*(q.r[3]-q.r[1])/(BS*BS),3)*.15+(cem?Math.min(Math.hypot(x-cem.x,z-cem.z)/P,3)*.12:0)+fr()*.35;
+   const dc=cem?Math.hypot(x-cem.x,z-cem.z)/P:9,sc=backOf(q.r)*3+q.f.d*1.5+Math.min((q.r[2]-q.r[0])*(q.r[3]-q.r[1])/(BS*BS),3)*.15+Math.min(dc,4)*.35-(dc<1.6?2.5:0)+fr()*.6; /* v79r47: fundo do mapa, mas não colada no cemitério */
    if(sc>score){score=sc;best=q}}
   city.forest=best?{ri:best.i,x:(best.r[0]+best.r[2])/2,z:(best.r[1]+best.r[3])/2,
    lootId:'forestLoot_'+S.seed,enemyId:'forestDemo_'+S.seed,loot:['jammer','magnum','smg','grenade'][Math.floor(fr()*4)]}:null;
@@ -8020,8 +8055,17 @@ function paintChunkMap(ch){if(!mapCv||ch.painted)return;ch.painted=true;const g=
  for(const ri of ch.rects){const k=city.info[ri].kind;if(k!=='bld'&&k!=='houses')continue;const r=city.rects[ri];g.fillStyle=k==='houses'?'#8fa070':m.block;g.fillRect(r[0]+SW+MOFF,r[1]+SW+MOFF,r[2]-r[0]-2*SW,r[3]-r[1]-2*SW)}
  for(const c of ch.cols){if(c.kind!=='bld')continue;const hz=city.rects.some((r,i)=>city.info[i].kind==='houses'&&c.x0>=r[0]&&c.x1<=r[2]&&c.z0>=r[1]&&c.z1<=r[3]);
   g.fillStyle=hz?'#c9a27a':m.bld;g.fillRect(c.x0+MOFF,c.z0+MOFF,c.x1-c.x0,c.z1-c.z0)}}
-async function preloadCityRegions(){const n=Math.ceil(city.N/CS),total=n*n;let done=0;
- for(let ci=0;ci<n;ci++)for(let cj=0;cj<n;cj++){if(!city.chunks.has(ci+','+cj))buildChunk(ci,cj);done++;setLoadProgress(10+Math.round(done/total*33),'CARREGANDO CIDADE · '+done+' / '+total);await nextTimeFrame()}}
+/* v79r46: tela de carregamento desenha o mapa cru da cidade (o mesmo canvas do minimapa, sem marcadores) pedaço por pedaço,
+   na ordem em que os chunks ficam prontos — o chunk recém-feito ganha contorno amarelo até o próximo. Só decorativo. */
+const LMAP={ctx:null,last:null};
+function loadMapStart(){const c=$('#loadMap');LMAP.last=null;LMAP.ctx=null;if(!c||!mapCv){if(c)c.hidden=true;return}c.width=mapCv.width;c.height=mapCv.height;const g=c.getContext('2d');g.fillStyle='#05070c';g.fillRect(0,0,c.width,c.height);LMAP.ctx=g;c.hidden=false}
+function loadMapPaint(ci,cj){const g=LMAP.ctx;if(!g||!mapCv)return;const W=mapCv.width,H=mapCv.height,cl=(v,m)=>Math.max(0,Math.min(m,v));
+ const put=r=>{if(r[2]>0&&r[3]>0)g.drawImage(mapCv,r[0],r[1],r[2],r[3],r[0],r[1],r[2],r[3])};if(LMAP.last)put(LMAP.last);
+ const b=chunkBox(ci,cj),x0=cl(Math.floor(b[0]+MOFF),W),z0=cl(Math.floor(b[1]+MOFF),H),x1=cl(Math.ceil(b[2]+MOFF),W),z1=cl(Math.ceil(b[3]+MOFF),H),r=[x0,z0,x1-x0,z1-z0];put(r);
+ const lw=Math.max(2,W/220);g.strokeStyle='#ffd23a';g.lineWidth=lw;g.strokeRect(r[0]+lw/2,r[1]+lw/2,r[2]-lw,r[3]-lw);LMAP.last=r}
+function loadMapEnd(){if(LMAP.last&&LMAP.ctx&&mapCv){const r=LMAP.last;if(r[2]>0&&r[3]>0)LMAP.ctx.drawImage(mapCv,r[0],r[1],r[2],r[3],r[0],r[1],r[2],r[3])}LMAP.last=null}
+async function preloadCityRegions(){const n=Math.ceil(city.N/CS),total=n*n;let done=0;try{loadMapStart()}catch(e){}
+ for(let ci=0;ci<n;ci++)for(let cj=0;cj<n;cj++){if(!city.chunks.has(ci+','+cj))buildChunk(ci,cj);try{loadMapPaint(ci,cj)}catch(e){}done++;setLoadProgress(10+Math.round(done/total*33),'CARREGANDO CIDADE · '+done+' / '+total);await nextTimeFrame()}try{loadMapEnd()}catch(e){}}
 // A cidade inteira fica residente na memória durante a partida (pré-carregada em generateCity).
 // Não desenhar atrás do fim da névoa. Atualiza apenas quando a distância
 // muda de faixa (8 m), inclusive em tempestades: não recalcular a projeção a cada quadro.
@@ -15529,7 +15573,7 @@ $('#backToStart').addEventListener('click',()=>{if(!played||!menuOpen)return;con
 // Aquecimento da GPU: prepara texturas e programas antes de liberar os controles.
 // A cidade residente permanece preparada durante a partida.
 function setLoadProgress(p,msg){
- const n=Math.max(0,Math.min(100,Math.round(p)));
+ const n=Math.max(0,Math.min(100,Math.round(p)));if(n<10){const lm=$('#loadMap');if(lm)lm.hidden=true}
  $('#loadFill').style.width=n+'%';$('#loadPercent').textContent=n+'%';
  $('#loadTrack').setAttribute('aria-valuenow',String(n));
  if(msg)$('#loadText').textContent=msg;
@@ -16031,7 +16075,7 @@ function prologueJail(){
 function prologueMotelTarget(){const M=city.motel;if(M)return{x:M.gps[0],z:M.gps[1]};const r=city.motelRi!=null&&city.rects[city.motelRi];return r?{x:(r[0]+r[2])/2,z:(r[1]+r[3])/2}:null}
 function prologueBlitz(){
  const c=PL.car,T=prologueMotelTarget();if(!c||!T)return false;
- const mid={x:c.x+(T.x-c.x)*.45,z:c.z+(T.z-c.z)*.45};
+ const u=.3+Math.random()*.4,mid={x:c.x+(T.x-c.x)*u,z:c.z+(T.z-c.z)*u}; /* v79r48: ponto sorteado no trajeto borracharia→motel (o motel agora pode estar longe, em qualquer lugar da roça) */
  if(!blitzMake('calm',mid))return false;
  const b=BLITZ.on;PROLOGUE.blitz=b;b.prologue=true;PROLOGUE.blitzDone=true;PROLOGUE.said=1;$('#storyGuide').hidden=true;
  prologueStage('blitz');
@@ -19922,7 +19966,7 @@ function ammoBuild(){if(!AMMO.pos)return;const X=SAFE.IN.x+165,Z=SAFE.IN.z-115,W
  B(4.4,0,4.4,5.6,.45,5.6,'#5a3a24');B(4.4,.45,5.3,5.6,1.1,5.6,'#5a3a24');
  const lights=[[X-4,H-.4,Z-2.5],[X,H-.4,Z-2.5],[X+4,H-.4,Z-2.5],[X-4,H-.4,Z+2.5],[X,H-.4,Z+2.5],[X+4,H-.4,Z+2.5]];
  const mesh=mb.mesh(roomLitMat({x0:X-W,z0:Z-D,x1:X+W,z1:Z+D,H,lights,warm:'#ffe0b0',amb:.52,pow:.75,rad:6,grime:.25},{side:THREE.DoubleSide}));mesh.castShadow=false;g.add(mesh);
- ammoSign(g,X,2.95,Z-3.9,S.lang==='en'?'GUN STORE · AMMO':'AMOnições · ARMAS',5.7,0);
+ 
  // v77: colisões do interior (antes não havia nenhuma: dava para atravessar balcão, gôndolas e armários)
  {const cc=curChunk;curChunk=null;try{for(const c of AMMO.cols||[])c.dead=true;AMMO.cols=[];
   for(const [a,b,c,d] of [[-5.75,-3.25,5.75,-2.05],[-5.85,-5.85,-5.4,-3.65],[5.4,-5.85,5.85,-3.65],[-6.9,-2.05,-5.9,3.36],[5.9,-2.05,6.9,3.36],[4.35,4.35,5.65,5.65],[-W-.5,-D-.5,W+.5,-D+.25],[-W-.5,-D,-W+.2,D],[W-.2,-D,W+.5,D]])AMMO.cols.push(addCol(X+a,Z+b,X+c,Z+d,'rock'))}finally{curChunk=cc}}
@@ -20526,7 +20570,7 @@ function loadFromFile(file){
 }
 // Versão do jogo gravada no save. Suba este número a cada atualização: saves de outra versão são recusados.
 const DOOR_NOW=()=>performance.now()/1000;
-const GAME_VER=79;
+const GAME_VER=1; /* numeração reorganizada: depois da v79 r49 vem v1 r1 (saves 1–79 continuam aceitos em saveVersionCompatible) */
 const SAVE_SERIES='pixelcity-restart-1';
 // v261 preserva saves v260 (AMOnições), v259 e v258. Nenhum dado de câmera é removido.
 function saveVersionCompatible(gv,series){return (gv===1||gv===2||gv===3||gv===4||gv===5||gv===6||gv===7||gv===8||gv===9||gv===10||gv===11||gv===12||gv===13||gv===14||gv===15||gv===16||gv===17||gv===18||gv===19||gv===20||gv===21||gv===22||gv===23||gv===24||gv===25||gv===26||gv===27||gv===28||gv===29||gv===30||gv===31||gv===32||gv===33||gv===34||gv===35||gv===36||gv===37||gv===38||gv===39||gv===40||gv===41||gv===42||gv===43||gv===44||gv===45||gv===46||gv===47||gv===48||gv===49||gv===50||gv===51||gv===52||gv===53||gv===54||gv===55||gv===56||gv===57||gv===58||gv===59||gv===60||gv===61||gv===62||gv===63||gv===64||gv===65||gv===66||gv===67||gv===68||gv===69||gv===70||gv===71||gv===72||gv===73||gv===74||gv===75||gv===76||gv===77||gv===78||gv===79)&&series===SAVE_SERIES}
@@ -20537,7 +20581,7 @@ function readSave(){try{/* save antigo do navegador (só leitura) */const d=JSON
 function alignSaveToLoad(){
  const save=$('#saveFile'),load=document.querySelector('#menu label[for="loadFile"]'),menu=$('#menu');
  if(played||save.hidden||menu.hidden||!load)return;
- const target=load.getBoundingClientRect(),top=save.parentElement.getBoundingClientRect();
+ const target=load.getBoundingClientRect(),top=save.closest('.row').getBoundingClientRect();
  if(!target.width||!top.width)return;
  save.style.width=target.width+'px';
  save.style.marginRight=Math.max(0,top.right-target.right)+'px';
