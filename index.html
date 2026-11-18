@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 <script>
 /* v78 · BUILD: número da entrega. Ao abrir, o jogo lê version.txt (poucos bytes, sem cache) e, se a build no servidor for outra
    (navegador/celular servindo cópia velha), recarrega uma vez. Saves e configurações (localStorage) NÃO são apagados. */
-var BUILD_TAG='dev r2.2';
+var BUILD_TAG='dev r2.3';
 (function(){try{if(!/^https?:$/.test(location.protocol))return;const k='ps_build_reload';
  fetch(new URL('version.txt?b='+Date.now(),location.href).href,{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=/^\s*((?:dev\s+)?r[\d.]+)\s*$/i.exec(t||'');if(!m||m[1].replace(/\s+/g,' ').toLowerCase()===BUILD_TAG.toLowerCase()){try{sessionStorage.removeItem(k)}catch(e){}return}
   let n=0;try{n=+sessionStorage.getItem(k)||0}catch(e){}if(n>=2)return;try{sessionStorage.setItem(k,String(n+1))}catch(e){}
@@ -1800,9 +1800,22 @@ function invalidateStaticShadows(){SHADOW_CACHE.gen=(SHADOW_CACHE.gen+1)|0}
   renderer.setRenderTarget(prevRT,prevFace,prevMip);
   return true;
  }
+ /* dev r2.3: sombra independente do culling da câmera. cullChunks esconde chunks atrás da câmera; de costas pro sol são
+    exatamente eles que fazem sombra na frente do jogador → a sombra sumia/voltava conforme o chunk entrava e saía do culling
+    ("trepidando"). Os dois caminhos (cache e sem cache) mostram como emissores todos os chunks perto do alvo da sombra. */
+ function shadowChunksForce(tx,tz){const sv=SHADOW_CACHE._chVis;sv.length=0;const pad=shadowSize+75;
+  for(const ch of city.chunks.values()){
+   if(ch.x1<tx-pad||ch.x0>tx+pad||ch.z1<tz-pad||ch.z0>tz+pad)continue;
+   const wasVis=ch.group.visible,wasMain=ch._shadowStateMain;
+   if(!wasVis||wasMain!==true){sv.push(ch,wasVis,wasMain);ch.group.visible=true;ch.group.updateMatrixWorld(false);ensureChunkShadowCasters(ch,true)}}}
+ function shadowChunksRestore(){const sv=SHADOW_CACHE._chVis;for(let i=0;i<sv.length;i+=3){const ch=sv[i],wv=sv[i+1],wm=sv[i+2];ch.group.visible=wv;if(wm!==undefined)ensureChunkShadowCasters(ch,wm)}sv.length=0}
+ function plainShadowRender(sm,lights,scn,cam){
+  if(scn===scene&&city.group&&city.group.visible&&city.chunks&&!ROOM_STAGE.mode&&S.shadows&&sun.castShadow&&lights.indexOf(sun)>=0&&(sm.autoUpdate||sm.needsUpdate)){
+   shadowChunksForce(sun.target.position.x,sun.target.position.z);try{return origShadowRender(lights,scn,cam)}finally{shadowChunksRestore()}}
+  return origShadowRender(lights,scn,cam)}
  renderer.shadowMap.render=function(lights,scn,cam){
   if(!SHADOW_CACHE.enabled||!renderer.capabilities.isWebGL2||scn!==scene||!city.group||!city.group.visible||!city.chunks||ROOM_STAGE.mode||ITS.on||!S.shadows||!sun.castShadow||lights.length!==1||lights[0]!==sun){
-   return origShadowRender(lights,scn,cam);
+   return plainShadowRender(this,lights,scn,cam);
   }
   if(!this.enabled||(!this.autoUpdate&&!this.needsUpdate))return;
   try{
@@ -1820,18 +1833,13 @@ function invalidateStaticShadows(){SHADOW_CACHE.gen=(SHADOW_CACHE.gen+1)|0}
    let hit=SHADOW_CACHE.key===key&&!!sun.shadow.map;
    if(hit&&!blitShadowRT(SHADOW_CACHE.rt,sun.shadow.map,w,h)){hit=false;SHADOW_CACHE.key=''}
    if(!hit){
-    const chSaved=SHADOW_CACHE._chVis;chSaved.length=0;const pad=shadowSize+75;
-    for(const ch of city.chunks.values()){
-     if(ch.x1<tx-pad||ch.x0>tx+pad||ch.z1<tz-pad||ch.z0>tz+pad)continue;
-     const wasVis=ch.group.visible,wasMain=ch._shadowStateMain;
-     if(!wasVis||wasMain!==true){chSaved.push(ch,wasVis,wasMain);ch.group.visible=true;ch.group.updateMatrixWorld(false);ensureChunkShadowCasters(ch,true)}
-    }
+    shadowChunksForce(tx,tz);
     const visSaved=SHADOW_CACHE._vis;visSaved.length=0;const chs=scene.children;
     for(let i=0;i<chs.length;i++){const o=chs[i];if(o!==city.group&&o!==sun&&o!==sun.target&&o.visible){visSaved.push(o);o.visible=false}}
     const c0=renderer.info.render.calls;
     try{this.needsUpdate=true;sun.shadow.needsUpdate=true;origShadowRender(lights,scn,cam)}finally{
      for(let i=0;i<visSaved.length;i++)visSaved[i].visible=true;
-     for(let i=0;i<chSaved.length;i+=3){const ch=chSaved[i],wv=chSaved[i+1],wm=chSaved[i+2];ch.group.visible=wv;if(wm!==undefined)ensureChunkShadowCasters(ch,wm)}
+     shadowChunksRestore();
     }
     SHADOW_CACHE.lastStaticCalls=renderer.info.render.calls-c0;
     if(!sun.shadow.map||!blitShadowRT(sun.shadow.map,SHADOW_CACHE.rt,w,h)){SHADOW_CACHE.enabled=false;return}
@@ -1843,7 +1851,7 @@ function invalidateStaticShadows(){SHADOW_CACHE.gen=(SHADOW_CACHE.gen+1)|0}
    city.group.visible=false;renderer.clear=noopClear;
    try{this.needsUpdate=true;sun.shadow.needsUpdate=true;origShadowRender(lights,scn,cam)}finally{renderer.clear=origClear;city.group.visible=true}
    SHADOW_CACHE.lastDynCalls=renderer.info.render.calls-c1;
-  }catch(e){console.warn('shadow cache fallback',e);SHADOW_CACHE.enabled=false;return origShadowRender(lights,scn,cam)}
+  }catch(e){console.warn('shadow cache fallback',e);SHADOW_CACHE.enabled=false;try{shadowChunksRestore()}catch(_){}return plainShadowRender(this,lights,scn,cam)}
  };
 })();
 
@@ -2089,6 +2097,8 @@ function zfPost(P,p0,plain,idx,i0){ // anti z-fight depois de girar/mover: quads
   if(a){const u=(a.ax+1)%3,w=(a.ax+2)%3;let u0=1e9,u1=-1e9,w0=1e9,w1=-1e9;for(let q=t;q<t+n;q+=3){const U=P[q+u],W=P[q+w];if(U<u0)u0=U;if(U>u1)u1=U;if(W<w0)w0=W;if(W>w1)w1=W}
    const off=zfFix(a.ax,a.sg,a.c,u0,u1,w0,w1,null,!plain);if(off)for(let q=t;q<t+n;q+=3)P[q+a.ax]+=off}
   t+=n}}
+/* dev r2.3: trava de consistência — p/n/c/u precisam ter o MESMO número de vértices. Código que grava por deslocamento fixo (ex.: 6 vértices por quad) desalinha tudo que vem depois no lote. Corta o excedente e avisa uma vez. */
+let MB_WARN=0;function mbCheck(m){const n=m.p.length/3;if(m.n.length===n*3&&m.c.length===n*3&&m.u.length===n*2)return;if(MB_WARN++<3)console.warn('MB desalinhado',{p:n,n:m.n.length/3,c:m.c.length/3,u:m.u.length/2},new Error().stack);m.n.length=Math.min(m.n.length,n*3);m.c.length=Math.min(m.c.length,n*3);m.u.length=Math.min(m.u.length,n*2)}
 class MB{constructor(indexed=true){this.p=[];this.n=[];this.u=[];this.c=[];this.idx=indexed===false?null:[];this.ab=0}
  quad(a,b,c,d,nx,ny,nz,uv,col){if(ZF.on&&col&&!this._nz){const ax=Math.abs(nx)>.999?0:Math.abs(ny)>.999?1:Math.abs(nz)>.999?2:-1;
    if(ax>=0){const u=(ax+1)%3,w=(ax+2)%3,sg=ax===0?Math.sign(nx):ax===1?Math.sign(ny):Math.sign(nz);
@@ -2146,7 +2156,7 @@ class MB{constructor(indexed=true){this.p=[];this.n=[];this.u=[];this.c=[];this.
   const rs=[ring(x0,c),ring(x0+c,0),ring(x1-c,0),ring(x1,c)];
   for(let r=0;r<3;r++)for(let i=0;i<8;i++){const j=(i+1)%8;this.qa(rs[r][i],rs[r][j],rs[r+1][j],rs[r+1][i],col,ref)}
   for(const r of [0,3]){const cc=[rs[r][0][0],yc,zc];for(let i=0;i<8;i++){const j=(i+1)%8;this.qa(cc,rs[r][i],rs[r][j],rs[r][j],col,ref)}}}
- mesh(mat,cast=true,recv=true){if(!this.p.length)return null;const g=new THREE.BufferGeometry();
+ mesh(mat,cast=true,recv=true){if(!this.p.length)return null;mbCheck(this);const g=new THREE.BufferGeometry();
   g.setAttribute('position',new THREE.Float32BufferAttribute(this.p,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(this.n,3));
   g.setAttribute('uv',new THREE.Float32BufferAttribute(this.u,2));g.setAttribute('color',new THREE.Float32BufferAttribute(this.c,3));
   if(this.idx)g.setIndex(this.idx);
@@ -3257,7 +3267,7 @@ function mallStoreFit(g,mb,X,Z,x0,s,key,up,cols){
    // Slatted feature wall and two lounge tables; central entry remains open.
    for(let n=0;n<16;n++)B(4+n*.32,.2,11.44,4.1+n*.32,3.1,11.57,'#805a3e');
    for(const [x,z] of [[5.5,9.3],[7.9,10.5]]){
-    for(let k=0;k<12;k++){const a=k*Math.PI/6,b=(k+1)*Math.PI/6,p=[X+x0+x,.054,Z+s*z],q=[p[0]+Math.cos(a)*.85,.054,p[2]+Math.sin(a)*.85],r=[p[0]+Math.cos(b)*.85,.054,p[2]+Math.sin(b)*.85];const base=mb.c.length;mb.quad(p,r,q,q,0,1,0,[0,0,1,1],COL('#bd976d'));for(const j of [0,3]){const c=COL('#e9c78c');mb.c[base+j*3]=c.r;mb.c[base+j*3+1]=c.g;mb.c[base+j*3+2]=c.b}}
+    for(let k=0;k<12;k++){const a=k*Math.PI/6,b=(k+1)*Math.PI/6,p=[X+x0+x,.054,Z+s*z],q=[p[0]+Math.cos(a)*.85,.054,p[2]+Math.sin(a)*.85],r=[p[0]+Math.cos(b)*.85,.054,p[2]+Math.sin(b)*.85];const base=mb.p.length;mb.quad(p,r,q,q,0,1,0,[0,0,1,1],COL('#bd976d'));{const c=COL('#e9c78c');for(let k=base;k<mb.p.length;k+=3)if(mb.p[k]===p[0]&&mb.p[k+2]===p[2]){mb.c[k]=c.r;mb.c[k+1]=c.g;mb.c[k+2]=c.b}} /* dev r2.3: pinta o centro pela posição (MB indexado: o leque vira 3 vértices; índice fixo [0,3] gravava cor além do fim) */}
     B(x-.48,.68,z-.38,x+.48,.78,z+.38,'#b67f4e');B(x-.08,0,z-.08,x+.08,.68,z+.08,'#363c39');block(x-.5,z-.4,x+.5,z+.4);
     for(const d of [-.85,.85]){B(x-.38,.18,z+d-.3,x+.38,.48,z+d+.3,'#815944');B(x-.38,.48,z+d+(d>0?.2:-.3),x+.38,.95,z+d+(d>0?.3:-.2),'#c18f5d');block(x-.38,z+d-.3,x+.38,z+d+.3)}
     B(x-.12,.78,z-.12,x+.08,.94,z+.08,'#f8ead0');
@@ -4655,10 +4665,10 @@ function beachSand(mb,s,t0,t1,col){const us=[SAND0,SAND_FLAT];for(let u=SAND_FLA
   for(let i=0;i<us.length-1;i++){const u=us[i],v=Math.min(SHORE-.5,us[i+1]);if(u>=v)break;mb.qa(P3(t,u,beachProfile(u)),P3(t,v,beachProfile(v)),P3(t,v,.2),P3(t,u,.2),wall,P3(t+(t-inside),(u+v)/2,0))}}}
 function worldLighthouse(K){const L=city.lh,{det,neon,hwin,sandMb,signs,night}=K,s=L.s,wt=(t,u)=>wTU(s,t,u);
  const sandC=COL(night?'#5a4a62':'#e3cf9a'),skirt=sandC,Y=.18; /* v79r2: mesmo tom da praia principal (sem o ×1,12 que deixava a areia clara) */
- const sandFace=(a,b,c,d)=>{const start=sandMb.p.length,uvStart=sandMb.u.length;
+ const sandFace=(a,b,c,d)=>{const start=sandMb.p.length;
   const up=(b[2]-a[2])*(c[0]-a[0])-(b[0]-a[0])*(c[2]-a[2]);
   if(up<0)sandMb.quad(a,d,c,b,0,1,0,[0,0,1,1],sandC);else sandMb.quad(a,b,c,d,0,1,0,[0,0,1,1],sandC);
-  for(let i=0;i<6;i++){sandMb.u[uvStart+i*2]=sandMb.p[start+i*3]/9;sandMb.u[uvStart+i*2+1]=sandMb.p[start+i*3+2]/9}
+  for(let k=start;k<sandMb.p.length;k+=3){const q=k/3;sandMb.u[q*2]=sandMb.p[k]/9;sandMb.u[q*2+1]=sandMb.p[k+2]/9} /* dev r2.3: por vértice (MB indexado: quad = 4 vértices, não 6) */
  };
  // barra de areia + ponta redonda (com saia inclinada até o fundo)
  {const sk=3.5,stp=1.25,rr2=mulberry32((S.seed^0x2b0c4e11)>>>0),rockC=[COL(night?'#5a566e':'#8a8a8e'),COL(night?'#4a465e':'#6e6e72'),COL(night?'#6a6680':'#a2a09a')];
