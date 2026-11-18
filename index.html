@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 <script>
 /* v78 · BUILD: número da entrega. Ao abrir, o jogo lê version.txt (poucos bytes, sem cache) e, se a build no servidor for outra
    (navegador/celular servindo cópia velha), recarrega uma vez. Saves e configurações (localStorage) NÃO são apagados. */
-var BUILD_TAG='r3';
+var BUILD_TAG='r4';
 (function(){try{if(!/^https?:$/.test(location.protocol))return;const k='ps_build_reload';
  fetch(new URL('version.txt?b='+Date.now(),location.href).href,{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=/^\s*((?:dev\s+)?r[\d.]+)\s*$/i.exec(t||'');if(!m||m[1].replace(/\s+/g,' ').toLowerCase()===BUILD_TAG.toLowerCase()){try{sessionStorage.removeItem(k)}catch(e){}return}
   let n=0;try{n=+sessionStorage.getItem(k)||0}catch(e){}if(n>=2)return;try{sessionStorage.setItem(k,String(n+1))}catch(e){}
@@ -14943,7 +14943,7 @@ function transitionAudioStop(){
 function updateAudio(dt){hornTick();updateRadio();if(!AC)return;const t=AC.currentTime;syncSpatialListener();boomUpdate(dt||0);sirenUpdate();
  if(menuOpen){// pausado: os ticks de helicóptero/avião não rodam, então zera os loops aqui
   const mute=s=>{if(s&&s.g)s.g.gain.setTargetAtTime(0,t,.05)};for(const h of HELI.list)mute(h.snd);if(HELI.cur)mute(HELI.cur.snd);if(typeof COPH!=='undefined'&&COPH.h)mute(COPH.h.snd);for(const sl of SKY.slots)if(sl.o)mute(sl.o.snd);for(const v of vehicles)mute(v.snd)}
- if(PL.car&&!menuOpen){const c=PL.car,E=engProf(c),sp=Math.abs(c.fwd),vt=c.vt||(c.vt=soundVary(1,.06,(((c.id*2654435761)>>>0)%1000)/1000));
+ if(PL.car&&!menuOpen&&!TIMEJUMP.mute){const c=PL.car,E=engProf(c),sp=Math.abs(c.fwd),vt=c.vt||(c.vt=soundVary(1,.06,(((c.id*2654435761)>>>0)%1000)/1000));
   let gear=0,rpm;{const G=ENG_GEARS,gs=Math.max(2.5,c.t.vmax*.14);gear=Math.min(G-1,Math.floor(sp/gs));rpm=(sp-gear*gs)/gs;if(gear===G-1)rpm=Math.min(1.6,rpm)} /* v79r14: todo veículo (carro, moto, lancha, jet ski, hovercraft) troca 5 marchas até ~70% da vel. máx.; a 6ª fica contínua */
   const a=c._audio284||(c._audio284={load:0,gear,ramp:0});a.load+=(Math.max(0,c.thr)-a.load)*(1-Math.exp(-Math.min(.1,dt||0)*9));if(a.gear!==gear){a.gear=gear;a.ramp=.14}a.ramp=Math.max(0,a.ramp-(dt||0));const load=a.load,idle=sp<1.2?Math.sin(t*7.2+c.id)*1.35:0,f=c.alive?(E.base+rpm*E.rk+gear*E.gk+load*E.ld+idle)*vt*(c.turbo?1.06:1)*(c.nitro?1.12:1):0;
   const kind=ENG_OF[c.type]||'car';if(engineWaveKind!==kind){engineWaveKind=kind;engO1.setPeriodicWave(engineWave(kind,0));engO2.setPeriodicWave(engineWave(kind,1))}
@@ -16605,6 +16605,7 @@ function timeFlash(x,z){
  for(let i=0;i<30;i++){const a=Math.random()*6.28,v=6+Math.random()*12;emit(x,1,z,Math.cos(a)*v,4+Math.random()*8,Math.sin(a)*v,.8,.3,.08,0xffd070,true,1)}
  shake=Math.max(shake,1.6);rumble(1,.8,500);boomSound(0);
 }
+function engineCut(){if(!AC)return;const t=AC.currentTime;for(const g of[engG,scrG]){try{g.gain.cancelScheduledValues(t);g.gain.setValueAtTime(g.gain.value,t);g.gain.setTargetAtTime(0,t,.03)}catch(e){}}}
 async function timeJump(){
  const c=PL.car;
  if(S.style==='inverted'||TIMEJUMP.busy||TIMEJUMP.cool>0||!running||!played||!c||c.type!=='super'||!c.special||!c.alive||PL.dead)return;
@@ -16618,12 +16619,18 @@ async function timeJump(){
   musicTravelOut();
   // 0 ms: explosão normal VISUAL, sem o dano da blastAt; a cena continua renderizando.
   timeFlash(from.x,from.z);
+  /* v2 r3.1: motor (e chiado de pneu) calam na explosão e só voltam quando o carro reaparece na outra ponta;
+     durante o carregamento o loop não roda updateAudio e o ganho ficava preso no último valor */
+  TIMEJUMP.mute=true;engineCut();
   await delayTimeJump(100);
   // 100 ms: o Top Secret desaparece, incluindo barras e esfera branca.
   if(c.g)c.g.visible=false;
   if(c.timeGlow)for(const b of c.timeGlow)b.visible=false;
   if(c.timeBall)c.timeBall.visible=false;
   HEAD.spot.intensity=0;HEAD.beam.visible=false;
+  /* v2 r3.1: com TIMEJUMP.busy o loop não roda update() → simT parado → o mapa de sombra não era refeito e a sombra do carro
+     ficava no chão depois que ele sumia. Força uma atualização agora (a chegada já roda update normalmente). */
+  renderer.shadowMap.needsUpdate=true;shadowRefreshAt=-1;
   // 1000 ms após a explosão: iniciar fade in preto, com a explosão ainda animando até lá.
   await delayTimeJump(900);
   timeFadeTo(true);
@@ -16672,7 +16679,7 @@ async function timeJump(){
    timeFlash(PL.car===arrived?arrived.x:arrived.x,arrived.z);
    // Primeiros 100 ms: apenas a explosão, ainda sem carro.
    await delayTimeJump(100);
-   {const H=TIMEJUMP.hold;TIMEJUMP.hold=null;if(H){arrived.vx=H.vx;arrived.vz=H.vz;arrived.fwd=H.fwd}}TIMEJUMP.show=true;if(arrived.g)arrived.g.visible=true;
+   {const H=TIMEJUMP.hold;TIMEJUMP.hold=null;if(H){arrived.vx=H.vx;arrived.vz=H.vz;arrived.fwd=H.fwd}}TIMEJUMP.show=true;TIMEJUMP.mute=false;if(arrived.g)arrived.g.visible=true;
    // A reaparição não reativa as barras/esfera da viagem anterior.
    if(arrived.timeGlow)for(const bar of arrived.timeGlow)bar.visible=false;
    if(arrived.timeBall)arrived.timeBall.visible=false;
@@ -16687,7 +16694,7 @@ async function timeJump(){
   if(PL.car&&PL.car.g)PL.car.g.visible=true;
   loading.hidden=true;fade.hidden=true;fade.style.opacity='0';
   toast('ERRO NA VIAGEM TEMPORAL · VEJA O CONSOLE');
- }finally{TIMEJUMP.hold=null;TIMEJUMP.hide=false;TIMEJUMP.show=false;TIMEJUMP.busy=false;TIMEJUMP.loading=false;TIMEJUMP.cool=Math.max(TIMEJUMP.cool,4)}
+ }finally{TIMEJUMP.mute=false;TIMEJUMP.hold=null;TIMEJUMP.hide=false;TIMEJUMP.show=false;TIMEJUMP.busy=false;TIMEJUMP.loading=false;TIMEJUMP.cool=Math.max(TIMEJUMP.cool,4)}
 }
 function timeJumpTick(dt){{const H=TIMEJUMP.hold;if(H&&H.c){const c=H.c;c.x=H.x;c.z=H.z;c.a=H.a;c.vx=c.vz=0;c.fwd=0;if(c===PL.car){PL.x=c.x;PL.z=c.z}}}
  TIMEJUMP.cool=Math.max(0,TIMEJUMP.cool-dt);
@@ -21891,7 +21898,10 @@ function itsFor(o,obj){if(!o)return o;if(o.userData&&o.userData.its)return o;let
 function itsSwap(obj){if(!(obj.isMesh||obj.isSprite||obj.isPoints||obj.isLine))return;const m=obj.material;if(!m)return;
  if(Array.isArray(m)){if(m.every(x=>x&&x.userData&&x.userData.its))return;if(!obj.userData.itsOrig||obj.userData.itsOrig!==m)obj.userData.itsOrig=m;obj.material=m.map(x=>itsFor(x,obj));ITS.objs.add(obj);return}
  if(m.userData&&m.userData.its)return;obj.userData.itsOrig=m;obj.material=itsFor(m,obj);ITS.objs.add(obj)}
-function itsSync(){if(!ITS.on)return;ITS.K.value=2*Math.tan(THREE.MathUtils.degToRad(camera.fov)/2)/Math.max(1,renderer.domElement.height)*1.25;DN.tod=720;
+function itsSync(){if(!ITS.on)return;ITS.K.value=2*Math.tan(THREE.MathUtils.degToRad(camera.fov)/2)/Math.max(1,renderer.domElement.height)*1.25;
+ /* v2 r3.1: relógio de verdade continua andando por baixo do meio-dia forçado. Salto grande = alguém acertou a hora (troca de mundo:
+    Fenda, Point Haze, DeLorean) → adota a hora nova; antes, ao desligar depois de trocar de mundo, voltava a hora do mundo anterior. */
+ {const d=DN.tod-720;if(ITS.save){if(Math.abs(d)>5)ITS.save.tod=DN.tod;else ITS.save.tod=((ITS.save.tod+d)%1440+1440)%1440}}DN.tod=720;
  scene.traverse(itsSwap); /* v79r13: varre TODO quadro, logo antes do render — carro/ped que nasce já aparece com o chiado (antes piscava colorido até a varredura de 0,4 s) */const now=performance.now();if(now-ITS.t>400){ITS.t=now;for(const o of ITS.objs){const or=o.userData.itsOrig;if(or&&!Array.isArray(or)&&or.map!==undefined){const n=ITS.cache.get(or);if(n&&n!==ITS.hide&&n.map!==(or.map||null))n.map=or.map||null}}}}
 function itsToggle(){ITS.on=!ITS.on;
  if(ITS.on){ITS.save={shadow:renderer.shadowMap.enabled,bg:scene.background,fog:scene.fog,tod:DN.tod};renderer.shadowMap.enabled=false;scene.background=new THREE.Color(0x808080);scene.fog=null;ITS.t=0;itsSync();toast('IMPOSSIBLE TO SEE<br><small style="font-size:11px;color:#fff">só o que se move aparece · digite de novo para sair</small>')}
