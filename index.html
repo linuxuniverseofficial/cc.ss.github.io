@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 <script>
 /* v78 · BUILD: número da entrega. Ao abrir, o jogo lê version.txt (poucos bytes, sem cache) e, se a build no servidor for outra
    (navegador/celular servindo cópia velha), recarrega uma vez. Saves e configurações (localStorage) NÃO são apagados. */
-var BUILD_TAG='dev r1';
+var BUILD_TAG='dev r2.1';
 (function(){try{if(!/^https?:$/.test(location.protocol))return;const k='ps_build_reload';
  fetch(new URL('version.txt?b='+Date.now(),location.href).href,{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=/^\s*((?:dev\s+)?r[\d.]+)\s*$/i.exec(t||'');if(!m||m[1].replace(/\s+/g,' ').toLowerCase()===BUILD_TAG.toLowerCase()){try{sessionStorage.removeItem(k)}catch(e){}return}
   let n=0;try{n=+sessionStorage.getItem(k)||0}catch(e){}if(n>=2)return;try{sessionStorage.setItem(k,String(n+1))}catch(e){}
@@ -8372,7 +8372,7 @@ function chunkLod(ch,d,immediate=false){
   };
   ch._shadowStateMain=undefined;ch._shadowStateDetails=undefined;ch._shadowStatePoles=undefined;
  }
- const shadowReach=shadowDistanceMeters();
+ const shadowReach=Math.max(shadowDistanceMeters(),shadowSize*1.35);
  const mainCast=d<shadowReach;
  // Never cast a full hard shadow from dither-faded / invisible ornaments.
  const detailCast=S.detailedShadows===true&&mainCast;
@@ -14735,22 +14735,28 @@ if(DEAL.open&&city.deal){dealCam(dt);return}if(TVM.on){tvCam(dt);return}switchCa
  if(JUMP.active&&PL.car&&JUMP.cam){const c=PL.car;JUMP.t+=dt;camera.up.set(0,1,0);setLens(55,.3);camera.position.set(JUMP.cam[0],JUMP.cam[1],JUMP.cam[2]);camera.lookAt(c.x,c.gy+(c.airY||0)+1,c.z);if(JUMP.t>3.2){JUMP.active=false;TS=1}}
  if(!snapCamera&&(DRUNK.level>0||DRUNK.coma>0)){const sway=Math.max(DRUNK.level,DRUNK.coma>0?1:0),roll=(Math.sin(DRUNK.ph*1.3)+Math.sin(DRUNK.ph*2.7)*.45)*.045*sway;camera.rotation.z+=roll;if(camMode==='top'&&!VIEW.orbit)camera.position.x+=Math.sin(DRUNK.ph*.9)*.18*sway;else camera.position.y+=Math.sin(DRUNK.ph*.9)*.08*sway}
  sky.position.copy(camera.position);
- const st=STYLES[S.style];let sz=camMode==='top'?Math.max(40,camH*.95):85;
- // Na camera elevada pelo helicoptero/paraquedas, o solo visivel e bem maior.
- // Se o shadow camera continuar com a janela de solo, suas bordas retangulares
- // passam a aparecer no enquadramento como um quadrado que acompanha o jogador.
- if(camMode==='top'&&(PL.heli||PARA.active)){
-  const viewH=Math.max(0,camera.position.y-groundY(fx,fz));
-  const half=viewH*Math.tan(camera.fov*Math.PI/360),aspect=Math.max(1,camera.aspect);
-  const orbitShift=Math.hypot(camera.position.x-fx,camera.position.z-fz);
-  sz=Math.max(sz,Math.hypot(half*aspect,half)*1.2+orbitShift+18);
+ const st=STYLES[S.style];let sz;
+ if(camMode==='top'){sz=Math.max(40,camH*.95);
+  if(PL.heli||PARA.active){
+   const viewH=Math.max(0,camera.position.y-groundY(fx,fz));
+   const half=viewH*Math.tan(camera.fov*Math.PI/360),aspect=Math.max(1,camera.aspect);
+   const orbitShift=Math.hypot(camera.position.x-fx,camera.position.z-fz);
+   sz=Math.max(sz,Math.hypot(half*aspect,half)*1.2+orbitShift+18);
+  }
+ }else{
+  const sd=shadowDistanceMeters(),front=clamp(sd*.82,24,112),rear=clamp(sd*.34,18,38);
+  sz=(front+rear)*.5;const bias=(front-rear)*.5;
+  if(PL.heli||PARA.active){const alt=Math.max(0,camera.position.y-groundY(fx,fz));if(alt>16)sz=Math.max(sz,clamp(alt*.85+32,48,96))}
+  if(!(JUMP.active&&PL.car)){const q=camera.quaternion,vx=-2*(q.x*q.z+q.w*q.y),vz=-(1-2*(q.x*q.x+q.y*q.y)),hl=Math.hypot(vx,vz);if(hl>1e-4){fx+=vx/hl*bias;fz+=vz/hl*bias}}
  }
  if(Math.abs(sz-shadowSize)>Math.max(1,shadowSize*.05)){
   shadowSize=sz;const sc=sun.shadow.camera;sc.left=-sz;sc.right=sz;sc.top=sz;sc.bottom=-sz;sc.updateProjectionMatrix();renderer.shadowMap.needsUpdate=true;shadowRefreshAt=-1;
  }
- // Antes usava 2048 fixos: em GPUs com mapa 512/1024 causava shimmering.
- const snap=Math.max(.001,shadowSize*2/Math.max(1,sun.shadow.mapSize.x));fx=Math.round(fx/snap)*snap;fz=Math.round(fz/snap)*snap;
- const so=city.sunOff||st.sunOff;sun.position.set(fx+so[0],so[1],fz+so[2]);sun.target.position.set(fx,0,fz);
+ const so=city.sunOff||st.sunOff,texel=Math.max(.001,shadowSize*2/Math.max(1,sun.shadow.mapSize.x)),sh=Math.hypot(so[0],so[2]);
+ if(sh>1e-4){const hx=so[0]/sh,hz=so[2]/sh,rx=hz,rz=-hx,zy=Math.max(.15,so[1]/Math.hypot(sh,so[1]));
+  const u=Math.round((fx*rx+fz*rz)/texel)*texel,vh=Math.round((fx*hx+fz*hz)*zy/texel)*(texel/zy);fx=u*rx+vh*hx;fz=u*rz+vh*hz}
+ else{fx=Math.round(fx/texel)*texel;fz=Math.round(fz/texel)*texel}
+ sun.position.set(fx+so[0],so[1],fz+so[2]);sun.target.position.set(fx,0,fz);
 }
 
 /* ================= INPUT ================= */
