@@ -125,6 +125,36 @@ Estágios (`PROLOGUE`, Ctrl+Shift+F9 pula em debug): `dealer` → `driveFirst` (
 
 ## 9. Registro recente (v79 r1–r49 → v1)
 
+- **v1 r54** — Roda de armas com seis fatias. Pistolas, pesadas, explosivos e itens têm páginas independentes. Ao abrir, a fatia da arma equipada mostra a página ativa.
+- **v1 r53** — Bazuca detona veículos próximos pelo mesmo caminho de granadas e C4. Lança-chamas de curto alcance vendido na AMOnições. NPC atingido perde vida por queimadura, com barra e escurecimento progressivos, até morrer.
+- **v1 r52** — Rótulos de versão do menu e monitor exibem `v1` sem ponto.
+- **v1 r51** — Carro e skate do jogador passam pelas cancelas físicas e usam o impulso das rampas de beco ao cruzar a ponta da ponte levadiça. A lógica de parada do tráfego e a verificação de ocupação anterior à subida foram preservadas.
+- **v1 r50** — Trombar a pé ou de skate com um skatista da orla, ou acertar um soco, derruba o NPC e solta a prancha pela rotina de pickup já existente. Teste isolado de contato e soco, sem renderização.
+- **v1 r49** — Na areia da praia, skate do jogador roda a 25% da velocidade normal. A desaceleração acontece na entrada e o skate volta a acelerar normalmente ao sair. Teste isolado compara areia e piso firme, sem renderização.
+- **v1 r48** — Viaturas de perseguição saem com dois policiais e o incêndio desembarca somente quem ainda estiver a bordo. Helicóptero policial aparece no mapa e radar e usa a queda com impacto ao ser abatido.
+
+
+- **v1 r47** — Trânsito e pedestres nos presets: LOW 25%, MEDIUM e HIGH 50%. Os sliders continuam ajustáveis até 100%. Benchmark usa as mesmas densidades.
+
+
+- **v1 r46** — Mureta entre calçadão e gramado da praia ganha colisor baixo com a mesma projeção da malha, respeitando os trechos livres nas cabeceiras.
+
+
+- **v1 r45** — Piso do shopping: o tratamento de sobreposição passa a rodar apenas depois de rotacionar cada corredor. No quadro de montagem temporário, corredores diferentes ocupavam as mesmas coordenadas, causando deslocamentos indevidos de peças do piso.
+
+
+- **v1 r44** — Cercas da roça com colisão baixa e abertura de 6 m. Multiplicador de 0,5 no alvo de tráfego comum das vias rurais. AMMU: Comprar tudo preenche a munição da arma selecionada pelo preço proporcional.
+
+
+- **v1 r43** — AMMU: preço proporcional nas recargas parciais, motivos de bloqueio nos botões, Tab contido no diálogo, confirmação sem repetição de tecla e cabeçalho fixo com botões de toque de 44 px.
+
+
+- **v1 r42** — AMMU: recomprar munição da arma equipada era cobrado, mas o seletor restaurava o valor antigo. Sincroniza a munição antes da seleção e cobra somente quando a compra adiciona munição. A correção também cobre concessões de munição à arma equipada fora da loja.
+
+
+- **v1 r41** — Lixeiras residenciais e objetos de lixo dos becos registram o colisor a partir da própria malha. A colisão com carros mede a sobreposição das duas formas, e o salto considera a altura do lixo. Caçambas continuam exigindo impacto de carro para tombar.
+
+
 - **v1 r40** — O fundo do carregamento inicial mostra “Preparando menu…” até o menu ficar pronto. A troca ocorre no mesmo passo da inicialização. Sintaxe e ordem de exibição verificadas.
 
 - **v1 r39** — O menu aparecia durante o carregamento inicial, antes dos controles e da versão atual serem preenchidos. Inicia oculto no HTML e só aparece após a sincronização inicial. Removidos os rótulos fixos de versões antigas. Sintaxe e ordem de inicialização verificadas.

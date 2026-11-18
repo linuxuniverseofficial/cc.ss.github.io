@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 <script>
 /* v78 · BUILD: número da entrega. Ao abrir, o jogo lê version.txt (poucos bytes, sem cache) e, se a build no servidor for outra
    (navegador/celular servindo cópia velha), recarrega uma vez. Saves e configurações (localStorage) NÃO são apagados. */
-var BUILD_TAG='r40';
+var BUILD_TAG='r54';
 (function(){try{if(!/^https?:$/.test(location.protocol))return;const k='ps_build_reload';
  fetch(new URL('version.txt?b='+Date.now(),location.href).href,{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=/^\s*(r\d+)\s*$/.exec(t||'');if(!m||m[1]===BUILD_TAG){try{sessionStorage.removeItem(k)}catch(e){}return}
   let n=0;try{n=+sessionStorage.getItem(k)||0}catch(e){}if(n>=2)return;try{sessionStorage.setItem(k,String(n+1))}catch(e){}
@@ -2444,7 +2444,7 @@ function punchPed(q,d){if(q.hp===undefined)q.hp=3;q.hp-=1;punchSnd();ouch(q.x,q.
  if(q.cop)return;dropUmbrella(q);q.strip=null;
  if(q.shopkeep){q.jy=.25;return}
  q.fixed=false;q.mate=null;
- if(q.hp===1){q.state='down';q.timer=2.6;q.rot=(R2()<.5?1:-1)*Math.PI/2;q.vx=d[0]*5;q.vz=d[1]*5;q.sp.material.alphaTest=.02;q.sp.material.needsUpdate=true}
+ if(q.state==='bskate'||q.hp===1)knockPedDown(q,d[0],d[1]);
  else{q.state='flee';q.timer=4+R2()*3;q.vx=d[0]*5.2;q.vz=d[1]*5.2;q.rot=0}}
 function meleeTick(dt){MELEE.cd=Math.max(0,MELEE.cd-dt);if(MELEE.t>0){MELEE.t-=dt;if(!PL.car&&!PL.dead){const k=Math.sin(Math.max(0,MELEE.t)/.22*Math.PI)*.35;PL.sp.position.x+=MELEE.d[0]*k;PL.sp.position.z+=MELEE.d[1]*k;setFrame(PL.tex,pickDir(MELEE.d[0],MELEE.d[1],PL.x,PL.z),1)}}
  /* v1r19: arma na primeira pessoa (pixel art no estilo do punho): pistola, metralhadora, magnum e bazuca; balança ao andar, tranco + clarão no tiro */
@@ -2465,15 +2465,40 @@ function vehicleWeaponAllowed(w){if(!PL.car)return true;
 function gunTry(w){if(!GUN.inv[w]){toast('VOCÊ NÃO TEM '+WPN[w].name);return}
  if(!vehicleWeaponAllowed(w)){toast('ARMA INDISPONÍVEL NESTE ASSENTO');return}gunSelect(w)}
 /* ---------- rodas (armas / rádio) ---------- */
-const WHL={open:null,src:null,sel:-1,vx:0,vy:0,items:[],t0:0,moved:false,pg:0};
-const WICON={fist:'<path d="M6 10h12v3h2v6h-2v2H8v-2H6z M8 7h2v3H8z M11 6h2v4h-2z M14 6h2v4h-2z M17 7h2v4h-2z"/>',
+const WHL={open:null,src:null,sel:-1,vx:0,vy:0,items:[],t0:0,moved:false,weaponPages:{}};
+const WICON={flame:'<path d="M3 9h14v2h4v2h-7v5H8v-5H3z M20 6q4 2 1 4q-3 0-1-4z"/>',fist:'<path d="M6 10h12v3h2v6h-2v2H8v-2H6z M8 7h2v3H8z M11 6h2v4h-2z M14 6h2v4h-2z M17 7h2v4h-2z"/>',
  pistol:'<path d="M3 8h17v4H11v2H9l-1 6H4l1-6H3z"/>',magnum:'<path d="M2 9h19v3H13v1h-2v-1h-1l-1 7H5l1-6H3V9z M10 7h4v2h-4z"/>',
  smg:'<path d="M2 9h20v3H14v2h-3v6H8v-6H6l-1 4H2l1-6H2z M12 12h2v6h-2z"/>',grenade:'<path d="M9 3h6v3h-6z M15 2h4v2h-4z M8 7h8v2h-8z M6 11q0-3 4-3h4q4 0 4 3v7q0 4-6 4t-6-4z"/>',remote:'<path d="M3 7h18v13H3z M6 9h12v8H6z M9 4h6v3H9z M9 12h2v2H9z M14 12h3v2h-3z"/>',jammer:'<path d="M5 5h14v16H5z M8 8h8v5H8z M8 15h2v2H8z M13 15h3v2h-3z M12 5V2h1v3z"/>',rpg:'<path d="M1 9h18v4H1z M19 8l4 3-4 3z M7 13h3v6H7z"/>',
  radio:'<path d="M4 9h16v11H4z M6 4l10 5 M8 12a3 3 0 1 0 0.1 0z M14 12h4v2h-4z M14 16h4v2h-4z" fill="none" stroke="currentColor" stroke-width="2"/>',
  off:'<path d="M5 5l14 14 M19 5L5 19" stroke="currentColor" stroke-width="3"/>',
  mask:'<path d="M3 8q9-5 18 0v4q-1 6-9 8q-8-2-9-8z M6 10v2h4v-2z M14 10v2h4v-2z M9 16q3 2 6 0v1q-3 2-6 0z" fill-rule="evenodd"/>'};
-function wheelItems(kind){if(kind==='wpn')return[['fist','PUNHOS'],['pistol','PISTOLA'],['magnum','COLT MAGNUM'],['smg','METRALHADORA'],['rpg','BAZUCA'],['grenade','GRANADA'],['remote','BOMBA PROGRAMADA'],['jammer','JAMMER']].map(([k,n])=>{const it={k,n,ic:k,ok:(k==='fist'||!!GUN.inv[k])&&vehicleWeaponAllowed(k),sub:k==='fist'?'SOCO':GUN.inv[k]?String(k===GUN.w&&GUN.has?GUN.ammo:GUN.inv[k].ammo):'—'};
-  if(k==='jammer'&&MASK.have&&CHAR.cur===0){it.pages=[{...it},{k:'mask',n:'MASKARA',ic:'mask',ok:!PL.dead,sub:MASK.original&&!MASK.off?'VESTIDA':'GUARDADA'}];Object.assign(it,it.pages[WHL.pg%2])}return it}); /* v78: fatia do JAMMER com 2 páginas (JAMMER 1/2 · MASKARA 2/2) */
+const WEAPON_WHEEL_GROUPS=[
+ ['fist'],
+ ['pistol','magnum'],
+ ['smg'],
+ ['rpg','flame'],
+ ['grenade','remote'],
+ ['jammer']
+];
+function weaponWheelItems(){
+ const equipped=GUN.has?GUN.w:'fist';
+ return WEAPON_WHEEL_GROUPS.map(group=>{
+  const pages=group.map(k=>{
+   const owned=GUN.inv[k],fist=k==='fist';
+   return {k,n:fist?'PUNHOS':WPN[k].name,ic:k,ok:(fist||!!owned)&&vehicleWeaponAllowed(k),
+    sub:fist?'SOCO':owned?String(k===equipped?GUN.ammo:owned.ammo):'—'};
+  });
+  const id=group[0];
+  if(id==='jammer'&&MASK.have&&CHAR.cur===0){
+   pages.push({k:'mask',n:'MASKARA',ic:'mask',ok:!PL.dead,sub:MASK.original&&!MASK.off?'VESTIDA':'GUARDADA'});
+  }
+  const active=pages.findIndex(it=>it.ok&&it.k===equipped);
+  const remembered=pages.findIndex(it=>it.ok&&it.k===WHL.weaponPages[id]);
+  const page=active>=0?active:remembered>=0?remembered:Math.max(0,pages.findIndex(it=>it.ok));
+  return {...pages[page],id,page,pages:pages.length>1?pages:null};
+ });
+}
+function wheelItems(kind){if(kind==='wpn')return weaponWheelItems();
  const out=[{k:-1,n:'DESLIGADO',ic:'off',ok:true,sub:''}];
  if(radioLive()){out.push({k:'live',n:'KRFM',ic:'radio',ok:true,sub:'AO VIVO'});return out}
  const N=RADIO.list.length,M=Math.min(N,10),c=Math.max(0,RADIO.idx);let s=N>M?c-Math.floor(M/2):0;
@@ -2485,10 +2510,10 @@ function wheelOpen(kind,src){if(missionUiBlocked('wheel'))return;if(RADIO.sceneA
  WHL.items.forEach((it,i)=>{const a=-Math.PI/2+i/n*Math.PI*2,d=document.createElement('div');d.style.left=`calc(50% + ${Math.cos(a)*R0}px)`;d.style.top=`calc(50% + ${Math.sin(a)*R0}px)`;wheelSlotHTML(d,it,i);ring.appendChild(d)});
  $('#whlT').textContent=kind==='wpn'?'ARMAS':'RÁDIO';el.hidden=false;wheelPaint()}
 function wheelSlotHTML(d,it,i){d.className='ws'+(it.ok?'':' no')+(it.pages?' pg':'');
- d.innerHTML=`<svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor">${WICON[it.ic]||''}</svg><span>${it.n.length>14?it.n.slice(0,13)+'…':it.n}</span>${it.sub?'<b>'+it.sub+'</b>':''}${it.pages?`<em class="wpg"><a data-p="-1">‹</a>${WHL.pg%it.pages.length+1}/${it.pages.length}<a data-p="1">›</a></em>`:''}`;
+ d.innerHTML=`<svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor">${WICON[it.ic]||''}</svg><span>${it.n.length>14?it.n.slice(0,13)+'…':it.n}</span>${it.sub?'<b>'+it.sub+'</b>':''}${it.pages?`<em class="wpg"><a data-p="-1">‹</a>${it.page+1}/${it.pages.length}<a data-p="1">›</a></em>`:''}`;
  if(it.pages)for(const el of d.querySelectorAll('.wpg a'))el.onpointerdown=e=>{e.preventDefault();e.stopPropagation();WHL.sel=i;wheelPage(+el.dataset.p)}}
 /* troca a página da fatia selecionada (setas ‹ ›, A/D, ←/→, rodinha do mouse, direcional do controle) */
-function wheelPage(dir){if(!WHL.open||WHL.open!=='wpn')return false;const it=WHL.items[WHL.sel];if(!it||!it.pages)return false;const N=it.pages.length;WHL.pg=((WHL.pg+dir)%N+N)%N;Object.assign(it,it.pages[WHL.pg]);
+function wheelPage(dir){if(!WHL.open||WHL.open!=='wpn')return false;const it=WHL.items[WHL.sel];if(!it||!it.pages)return false;const N=it.pages.length;it.page=((it.page+dir)%N+N)%N;Object.assign(it,it.pages[it.page]);WHL.moved=true;if(it.ok)WHL.weaponPages[it.id]=it.k;
  const el=$('#whlRing').children[WHL.sel];if(el)wheelSlotHTML(el,it,WHL.sel);clang(.06);wheelPaint();return true}
 function wheelPaint(){const els=$('#whlRing').children;for(let i=0;i<els.length;i++)els[i].classList.toggle('on',i===WHL.sel);const it=WHL.items[WHL.sel];$('#whlName').textContent=it?it.n:'';
  const song=it&&WHL.open==='radio'&&typeof it.k==='number'&&it.k>=0?radioSong(RADIO.list[it.k]):null;
@@ -3723,7 +3748,11 @@ function mallLevel(g,mb,X,Z,lv){MALL._vdn=0;const C=h=>COL(h).lerp(COL('#91868f'
  MALL_LAYOUT[lv].forEach((cfg,w)=>{const wm=new MB(),wn=new MB(),wh=new MB(),wt={},wg=new THREE.Group(),wc=[],tm0=MALL._tm;
   MALL._tm=new Proxy(wt,{get:(o,k)=>o[k]||(o[k]=new MB())});
   const keys0=new Set(Object.keys(MALL).filter(q=>/(G|U)$/.test(q)&&MALL[q]&&MALL[q].clerk));
-  mallWing(wg,wm,wn,wh,X,Z,lv,w,cfg,wc,C);
+  // Todos os braços usam o mesmo quadro temporário. Só verificar faces
+  // sobrepostas depois de rotacioná-las para a posição real, em mallMergeRot.
+  const checkFaces=ZF.on;
+  ZF.on=false;
+  try{mallWing(wg,wm,wn,wh,X,Z,lv,w,cfg,wc,C)}finally{ZF.on=checkFaces}
   MALL._tm=tm0;mallMergeRot(mb,wm,R,w);mallMergeRot(MALL._nb,wn,R,w);mallMergeRot(MALL._hb,wh,R,w);for(const k of Object.keys(wt))mallMergeRot(MALL._tm[k],wt[k],R,w);
   const q=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),w*Math.PI/2);for(const m of wg.children.slice()){const p=mallRot(R,w,m.position.x,m.position.z);m.position.x=p[0];m.position.z=p[1];m.quaternion.premultiply(q);g.add(m)}
   for(const c of wc)cols.push(mallColRot(c,R,w));
@@ -4841,6 +4870,8 @@ function buildRiverArches(group){
  }
 }
 async function generateCity(){
+ if(COPH.h?.o){heliSnd(COPH.h,false);heliDropModel(COPH.h)}
+ COPH.h=null;COPH.respawnAt=0;
  roomStageExit();
  // Um novo mundo invalida os pontos costeiros cacheados, mesmo com seed/tamanho iguais.
  city.worldNo=(city.worldNo||0)+1;
@@ -6081,6 +6112,18 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
  }
 
  });
+ // Register the visible footprint and the vertex range used by knockBin together.
+ const registerBin=(x,z,v0,col,big=false)=>{
+  let x0=Infinity,z0=Infinity,y0=Infinity,x1=-Infinity,z1=-Infinity,y1=-Infinity;
+  for(let i=v0*3;i<bins.p.length;i+=3){
+   const [px,py,pz]=[bins.p[i],bins.p[i+1],bins.p[i+2]];
+   x0=Math.min(x0,px);x1=Math.max(x1,px);
+   y0=Math.min(y0,py);y1=Math.max(y1,py);
+   z0=Math.min(z0,pz);z1=Math.max(z1,pz);
+  }
+  const collider=addCol(x0,z0,x1,z1,'bin');
+  collider.bin={x,z,v0,v1:bins.p.length/3,ch,col,big,height:y1-y0};
+ };
  const alley=(x0,z0,x1,z1,opts={})=>{const along=(x1-x0)<(z1-z0),site={x0,z0,x1,z1,along,bins:[],ramp:false,weapon:false,interior:!!opts.interior,ri:curRi};
   {const ah=mulberry32(((Math.round(x0*3)*73856093)^(Math.round(z0*3)*19349663)^S.seed^0x5bd1)>>>0);if(!opts.interior&&ah()<.4){const len=along?z1-z0:x1-x0;if(len>24){const back=ah()<.5,id='A'+Math.round(x0)+','+Math.round(z0);
    site.ramp=true;if(!city.ramps.some(r=>r.id===id)){const cx=(x0+x1)/2,cz=(z0+z1)/2,L=6,dx=along?0:(back?-1:1),dz=along?(back?-1:1):0,sx=along?cx:(back?x1-1-L:x0+1),sz=along?(back?z1-1-L:z0+1):cz;
@@ -6097,8 +6140,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
    const v0=bins.p.length/3;
    bins.box(cx-hx,.2,cz-hz,cx+hx,1.4,cz+hz,dc2);
    bins.box(cx-hx-.05,1.4,cz-hz-.05,cx+hx+.05,1.5,cz+hz+.05,dc2.clone().multiplyScalar(.7));
-   const bc=addCol(cx-hx,cz-hz,cx+hx,cz+hz,'bin');
-   bc.bin={x:cx,z:cz,v0,v1:bins.p.length/3,ch,col:dc2,big:true};site.bins.push({x:cx,z:cz,r:Math.max(hx,hz)+.58});
+   registerBin(cx,cz,v0,dc2,true);site.bins.push({x:cx,z:cz,r:Math.max(hx,hz)+.58});
   }
   const bagCount=opts.interior?1+Math.floor(br()*3):3;
   for(let k=0;k<bagCount;k++){
@@ -6106,8 +6148,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
    if(site.bins.some(b=>Math.hypot(b.x-bx,b.z-bz)<b.r+2.0))continue;
    const sz=rr(.29,.48),bagC=COL(pick(['#1c1c1e','#262629','#343337','#40413d']));
    bins.geo(GEO.ico,mtx(bx,.2+sz*.48,bz,sz,sz*.95,sz,rr(0,3),rr(0,3),0),bagC);
-   const bc=addCol(bx-sz,bz-sz,bx+sz,bz+sz,'bin');
-   bc.bin={x:bx,z:bz,v0,v1:bins.p.length/3,ch,col:bagC};site.bins.push({x:bx,z:bz,r:sz+.58});
+   registerBin(bx,bz,v0,bagC);site.bins.push({x:bx,z:bz,r:sz+.58});
   }
   {const pr=mulberry32(((Math.round(x0*5)*83492791)^(Math.round(z0*5)*19349663)^S.seed^0x7e57)>>>0),pr2=(a,b)=>a+pr()*(b-a),len=along?z1-z0:x1-x0,cnt=opts.interior?2+Math.floor(pr()*Math.min(6,1+len/5)):5+Math.floor(pr()*Math.min(9,len/4));
    for(let k=0;k<cnt;k++){const side=pr()<.5?0:1,t=pr2(.08,.92),e=.55;const px=along?(side?x1-e:x0+e):x0+(x1-x0)*t,pz=along?z0+(z1-z0)*t:(side?z1-e:z0+e);
@@ -6117,7 +6158,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
     else if(kind<.72){col=COL('#1a1a1c');for(let j=0,nn=1+Math.floor(pr()*3);j<nn;j++)bins.geo(GEO.cyl16,mtx(px,.32+j*.24,pz,.36,.22,.36),col);r0=.36}
     else if(kind<.86){col=COL(pick(['#3a5a8a','#8a3a2a','#3a6a3a','#6a6a6a']));bins.geo(GEO.cyl16,mtx(px,.65,pz,.32,.9,.32),col);bins.geo(GEO.cyl16,mtx(px,1.11,pz,.33,.04,.33),col.clone().multiplyScalar(.7));r0=.33}
     else{col=COL('#8a6a44');bins.box(px-.6,.2,pz-.5,px+.6,.36,pz+.5,col);for(let j=-1;j<=1;j++)bins.box(px-.62,.2,pz+j*.4-.06,px+.62,.24,pz+j*.4+.06,col.clone().multiplyScalar(.75));r0=.6}
-    const bc=addCol(px-r0,pz-r0,px+r0,pz+r0,'bin');bc.bin={x:px,z:pz,v0,v1:bins.p.length/3,ch,col};site.bins.push({x:px,z:pz,r:r0+.5})}}
+    registerBin(px,pz,v0,col);site.bins.push({x:px,z:pz,r:r0+.5})}}
   if(night&&R()<.5){const cx=(x0+x1)/2,cz=(z0+z1)/2;glow.flat(cx-4,cz-4,cx+4,cz+4,.24,COL(pick(st.neon)).multiplyScalar(.35))}
   let gR=1;if(!site.ramp&&(gR=R())<.2){const id=ch.key+':g'+(gunN++),am=Math.floor(R()*101);if(!city.picked.has(id)){ /* v1r18: arma em metade dos becos — mesmo número de sorteios (seed intacta), só cria se gR<.1 */
    // Cada beco tem pontos candidatos ao longo do comprimento (não só nas saídas).
@@ -6369,7 +6410,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
     const p0=ns?[off,face==='s'?z1+1.1:z0-1.1]:[face==='e'?x1+1.1:x0-1.1,off];
     for(let k=0;k<(hr()<.4?2:1);k++){const bx=p0[0]+(ns?k*.75:0),bz=p0[1]+(ns?0:k*.75);const v0=bins.p.length/3;
      bins.geo(GEO.cyl,mtx(bx,.65,bz,.3,.9,.3),cv0);bins.geo(GEO.cyl,mtx(bx,1.13,bz,.33,.07,.33),cv0.clone().multiplyScalar(.75));
-     const bc=addCol(bx-.3,bz-.3,bx+.3,bz+.3,'bin');bc.bin={x:bx,z:bz,v0,v1:bins.p.length/3,ch,col:cv0}}}}
+     registerBin(bx,bz,v0,cv0);}}}
   if(R()<.45&&!gar&&(!city.info[curRi]?.denseHouse||mulberry32(((Math.round(x0*37)*73856093)^(Math.round(z0*37)*19349663)^S.seed^0x32323232)>>>0)()<.24)){const spot=houseTreeSpot(x0,z0,x1,z1,hx0,hz0,hx1,hz1,face,dU);if(spot)tree(spot[0],spot[1],.24,rr(.8,1.1))}if(plan)worldPoolBuild({det,side,wat,neon},plan,face,x0,z0,x1,z1,hx0,hz0,hx1,hz1);if(safe===true)safeYardBuild({det,side,wat,tree},face,x0,z0,x1,z1,hx0,hz0,hx1,hz1);});
  const parkCar=(x,z,a,id)=>{const type=pick(['sedan','taxi','sports','van','pickup','sedan','hatch','suv','conv','hatch','wagon','crossover','mini','roadster']);if(city.taken.has(id))return;const v=makeVehicle(type,x,z,a,parkedCityColor(type,id));v.hand=true;v.sleep=true;v.spotId=id;ch.cars.push(v)};
  // Acesso real: rasgo de 4,8m no passeio + pista asfaltada da rua ate a vaga.
@@ -7099,9 +7140,9 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
    return;
   }
   if(info.kind==='rural'){sideSlab(side,bx0,0,bz0,bx1,0.2,bz1,cGrass);lawn(bx0+1,bz0+1,bx1-1,bz1-1,.204,.5);
-   const fc=COL(night?'#3a2e3a':'#7a5a3a');for(const[ax,az,bxx,bzz] of [[bx0+1,bz0+1,bx1-1,bz0+1],[bx0+1,bz1-1,bx1-1,bz1-1],[bx0+1,bz0+1,bx0+1,bz1-1],[bx1-1,bz0+1,bx1-1,bz1-1]]){if(R()<.3)continue;const L=Math.hypot(bxx-ax,bzz-az),ux=(bxx-ax)/L,uz=(bzz-az)/L;
-    for(let t=0;t<=L;t+=3.2){const px=ax+ux*t,pz=az+uz*t;det.box(px-.08,.2,pz-.08,px+.08,1.25,pz+.08,fc)}
-    for(const y of [.6,1.05]){if(ux)det.box(ax,y,az-.04,bxx,y+.09,az+.04,fc);else det.box(ax-.04,y,az,ax+.04,y+.09,bzz,fc)}}
+   const edges=[[bx0+1,bz0+1,bx1-1,bz0+1,0,-1],[bx0+1,bz1-1,bx1-1,bz1-1,0,1],
+                [bx0+1,bz0+1,bx0+1,bz1-1,-1,0],[bx1-1,bz0+1,bx1-1,bz1-1,1,0]];
+   const fenced=edges.map(()=>R()>=.3);
    let hl=null;if(R()<.5){const faces=[['s',bz1+8.5,(bx0+bx1)/2,true],['n',bz0-8.5,(bx0+bx1)/2,true],['e',(bz0+bz1)/2,bx1+8.5,false],['w',(bz0+bz1)/2,bx0-8.5,false]].filter(f=>f[3]?roadAt(f[2],f[1]):roadAt(f[2],f[1]));
     if(faces.length){const f=faces[Math.floor(R()*faces.length)][0],w=rr(15,19),d=rr(15,18),u=rr(.15,.55);
      hl=f==='s'?[bx0+2+(BW-w-4)*u,bz1-2-d,bx0+2+(BW-w-4)*u+w,bz1-2]:f==='n'?[bx0+2+(BW-w-4)*u,bz0+2,bx0+2+(BW-w-4)*u+w,bz0+2+d]:f==='e'?[bx1-2-d,bz0+2+(BH-w-4)*u,bx1-2,bz0+2+(BH-w-4)*u+w]:[bx0+2,bz0+2+(BH-w-4)*u,bx0+2+d,bz0+2+(BH-w-4)*u+w];
@@ -7111,6 +7152,39 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
    for(let k=0;k<nT;k++){let x,z;if(k%2){x=cl[0]+rr(-14,14);z=cl[1]+rr(-14,14)}else{x=rr(bx0+3,bx1-3);z=rr(bz0+3,bz1-3)}x=clamp(x,bx0+2.5,bx1-2.5);z=clamp(z,bz0+2.5,bz1-2.5);
     if(hl&&x>hl[0]-2&&x<hl[2]+2&&z>hl[1]-2&&z<hl[3]+2)continue;tree(x,z,.2,rr(.9,1.5))}
    for(let k=0,kn=1+Math.floor(R()*3);k<kn;k++){const x=rr(bx0+5,bx1-5),z=rr(bz0+5,bz1-5);if(hl&&x>hl[0]-3&&x<hl[2]+3&&z>hl[1]-3&&z<hl[3]+3)continue;const sz=rr(1.2,2.4);rock(x,z+0,sz);addCol(x-sz*.8,z-sz*.8,x+sz*.8,z+sz*.8,'rock')}
+   const wood=COL(night?'#3a2e3a':'#7a5a3a');
+   let gateSide=-1,gateAt=0,best=-1;
+   for(let i=0;i<edges.length;i++){
+    const [x,z,endX,endZ,nx,nz]=edges[i],len=Math.hypot(endX-x,endZ-z);
+    const ux=(endX-x)/len,uz=(endZ-z)/len;
+    if(len<8)continue;
+    for(const f of [.5,.3,.7,.2,.8]){
+     const at=clamp(len*f,4,len-4),gx=x+ux*at,gz=z+uz*at;
+     const road=roadAt(gx+nx*9.5,gz+nz*9.5);
+     const clear=!query(gx-nx*2,gz-nz*2,7).some(c=>!c.dead&&
+      c.x0<gx+(ux?3.25:5)&&c.x1>gx-(ux?3.25:5)&&
+      c.z0<gz+(uz?3.25:5)&&c.z1>gz-(uz?3.25:5));
+     const score=(road?4:0)+(clear?8:0)+(fenced[i]?1:0);
+     if(score>best){best=score;gateSide=i;gateAt=at}
+    }
+   }
+   for(let i=0;i<edges.length;i++){
+    if(!fenced[i])continue;
+    const [x,z,endX,endZ]=edges[i],len=Math.hypot(endX-x,endZ-z),ux=(endX-x)/len,uz=(endZ-z)/len;
+    const spans=i===gateSide?[[0,gateAt-3.1],[gateAt+3.1,len]]:[[0,len]];
+    for(const [start,end] of spans){
+     const count=Math.ceil((end-start)/3.2);
+     for(let k=0;k<=count;k++){
+      const t=start+(end-start)*k/count;
+      // Each corner post belongs to the horizontal side when both sides are fenced.
+      if(i>=2&&((t===0&&fenced[0])||(t===len&&fenced[1])))continue;
+      const px=x+ux*t,pz=z+uz*t;det.box(px-.08,.2,pz-.08,px+.08,1.25,pz+.08,wood);
+     }
+     const ax=x+ux*start,az=z+uz*start,bx=x+ux*end,bz=z+uz*end;
+     for(const y of [.6,1.05])det.box(ax-(uz?.04:0),y,az-(ux?.04:0),bx+(uz?.04:0),y+.09,bz+(ux?.04:0),wood);
+     addCol(ax-.08,az-.08,bx+.08,bz+.08,'rock').low=1.25;
+    }
+   }
    return}
   const blockSideCol=info.kind!=='industrial'?cSide.clone().multiplyScalar(rr(.95,1.03)):null;
   if(info.kind==='industrial')rr(.95,1.03);
@@ -7813,7 +7887,9 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
      plants.qa([x-ux,.254,z-uz],[x+ux,.254,z+uz],[x+ux*.2,.24+h,z+uz*.2],[x-ux*.2,.24+h,z-uz*.2],col,[x,.32,z]);
     }
    }beachSand(sandMb,s,sa,sb,sand.clone().multiplyScalar(1.12));
-   bx(sa,sb,o+5,o+5.35,.2,.6,mur,det);
+   const curb=rTU(s,sa,sb,o+5,o+5.35),curbTop=.6;
+   det.box(curb[0],.2,curb[1],curb[2],curbTop,curb[3],mur,{});
+   addCol(...curb,'rock').low=curbTop;
    for(let t=t0l;t<sb;t+=24){if(t<sa)continue;const p=TU(s,t,o+.8);lamp(p[0],p[1],dI[0],dI[1])}
    for(let t=sa+4;t<sb-2;t+=rr(9,16)){const p=TU(s,t,o+8);tree(p[0],p[1],.24,rr(.9,1.25),true)}
    // beach kiosks (barracas)
@@ -8699,19 +8775,30 @@ function jammerMaterial(mat){mat.onBeforeCompile=sh=>{
  };return mat}
 /* ================= WEAPON ================= */
 const FP_SK='#e0ac69',FP_SKD='#b88452';
-const FP_GUN_SVG={ /* 16×16, visto por trás/da direita, cano pra dentro da tela */
+const FP_GUN_SVG={
+ flame:'<svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="#22232c" d="M7 1h3v4h2v9H4V7h3z"/><path fill="#ba4727" d="M5 7h4v6H5z"/><path fill="#f4a23a" d="M7 2h3v2H7z"/></svg>', /* 16×16, visto por trás/da direita, cano pra dentro da tela */
  pistol:'<svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path class="fl" fill="#ffd23a" d="M6 0h4v1h1v1H5V1h1z"/><path fill="#1c1c22" d="M6 2h4v8H6z"/><path fill="#3a3a44" d="M7 2h2v7H7z"/><path fill="#55555f" d="M7 1h2v1H7z"/><path fill="#2a2a30" d="M5 9h6v2H5z"/><path fill="#141418" d="M6 11h4v5H6z"/><path fill="'+FP_SK+'" d="M4 10h2v6H4z M10 11h2v4h-2z M5 14h6v2H5z"/><path fill="'+FP_SKD+'" d="M4 15h1v1H4z M10 14h2v1h-2z M5 13h1v1H5z"/></svg>',
  smg:'<svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path class="fl" fill="#ffd23a" d="M6 0h4v1h1v1H5V1h1z"/><path fill="#26262c" d="M7 1h2v3H7z"/><path fill="#1c1c22" d="M5 3h6v8H5z"/><path fill="#3a3a44" d="M6 4h1v6H6z M9 4h1v6H9z"/><path fill="#55555f" d="M7 4h2v1H7z"/><path fill="#121216" d="M7 11h2v5H7z"/><path fill="'+FP_SK+'" d="M3 8h2v6H3z M11 9h2v5h-2z M4 14h3v2H4z M9 14h3v2H9z"/><path fill="'+FP_SKD+'" d="M3 13h2v1H3z M11 13h2v1h-2z"/></svg>',
  magnum:'<svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path class="fl" fill="#ffd23a" d="M5 0h6v1h1v1H4V1h1z"/><path fill="#c8ccd4" d="M7 1h2v6H7z"/><path fill="#8a9098" d="M7 6h2v1H7z"/><path fill="#9aa0aa" d="M5 6h6v4H5z"/><path fill="#6a7078" d="M6 7h1v2H6z M9 7h1v2H9z M5 9h6v1H5z"/><path fill="#6a4020" d="M6 10h4v6H6z"/><path fill="#4a2a14" d="M7 11h1v4H7z"/><path fill="'+FP_SK+'" d="M4 10h2v6H4z M10 10h2v5h-2z M5 15h6v1H5z"/><path fill="'+FP_SKD+'" d="M4 15h1v1H4z M11 14h1v1h-1z"/></svg>',
  rpg:'<svg viewBox="0 0 16 16" shape-rendering="crispEdges"><path class="fl" fill="#ff8a1a" d="M5 0h6v2H5z"/><path fill="#6a7a3a" d="M6 1h4v2H6z"/><path fill="#2a3018" d="M3 3h10v2H3z"/><path fill="#4a5a2a" d="M4 5h8v11H4z"/><path fill="#5a6c34" d="M5 5h2v11H5z"/><path fill="#2a3018" d="M4 9h8v1H4z"/><path fill="#1c1c22" d="M8 12h3v4H8z"/><path fill="'+FP_SK+'" d="M2 10h2v5H2z M11 12h3v4h-3z"/><path fill="'+FP_SKD+'" d="M2 14h2v1H2z"/></svg>'};
-const WPN={pistol:{name:'PISTOLA',cd:.22,dmg:9,spread:.014,key:'1'},smg:{name:'METRALHADORA',cd:.075,dmg:5,spread:.055,key:'2'},rpg:{name:'BAZUCA',cd:1.1,dmg:0,spread:.009,key:'3'},magnum:{name:'COLT MAGNUM',cd:.55,dmg:26,spread:.012,key:'4'},grenade:{name:'GRANADA',cd:.85,dmg:0,spread:.022,key:'6'},remote:{name:'BOMBA PROGRAMADA',cd:.6,dmg:0,spread:0,key:'7'},jammer:{name:'JAMMER',cd:.8,dmg:0,spread:0,key:'8'}};
+const WPN={pistol:{name:'PISTOLA',cd:.22,dmg:9,spread:.014,key:'1'},smg:{name:'METRALHADORA',cd:.075,dmg:5,spread:.055,key:'2'},rpg:{name:'BAZUCA',cd:1.1,dmg:0,spread:.009,key:'3'},magnum:{name:'COLT MAGNUM',cd:.55,dmg:26,spread:.012,key:'4'},grenade:{name:'GRANADA',cd:.85,dmg:0,spread:.022,key:'6'},remote:{name:'BOMBA PROGRAMADA',cd:.6,dmg:0,spread:0,key:'7'},jammer:{name:'JAMMER',cd:.8,dmg:0,spread:0,key:'8'},flame:{name:'LANÇA-CHAMAS',cd:.12,dmg:5,spread:0,key:'9'}};
 const GUN={has:false,ammo:0,cd:0,firing:false,w:'pistol',inv:{}};
 function gunReset(){GUN.has=false;GUN.ammo=0;GUN.w='pistol';GUN.inv={}}
 function gunSelect(w,quiet){if(!GUN.inv[w])return false;if(GUN.has&&GUN.inv[GUN.w])GUN.inv[GUN.w].ammo=GUN.ammo;GUN.w=w;GUN.ammo=GUN.inv[w].ammo;GUN.has=true;GUN.cd=Math.max(GUN.cd,.15);if(!quiet)toast(WPN[w].name+' · '+GUN.ammo);return true}
-function gunCycle(dir){const ks=['fist','pistol','magnum','smg','rpg','grenade','remote','jammer'].filter(k=>(k==='fist'||GUN.inv[k])&&vehicleWeaponAllowed(k));if(ks.length<2)return;const i=ks.indexOf(GUN.has?GUN.w:'fist');const k=ks[((i+dir)%ks.length+ks.length)%ks.length];if(k==='fist')gunHolster();else gunSelect(k)}
+function gunCycle(dir){const ks=['fist','pistol','magnum','smg','rpg','grenade','remote','jammer','flame'].filter(k=>(k==='fist'||GUN.inv[k])&&vehicleWeaponAllowed(k));if(ks.length<2)return;const i=ks.indexOf(GUN.has?GUN.w:'fist');const k=ks[((i+dir)%ks.length+ks.length)%ks.length];if(k==='fist')gunHolster();else gunSelect(k)}
 function ammoCap(w){if(w==='jammer')return PLAYER_PAL.bag?50:3;return (w==='rpg'||w==='grenade'||w==='remote')?(PLAYER_PAL.bag?30:3):(PLAYER_PAL.bag?1500:150)}
 function ammoClamp(){if(CHEAT.ammo)return;if(GUN.has&&GUN.inv[GUN.w])GUN.inv[GUN.w].ammo=GUN.ammo;let cut=false;for(const w in GUN.inv){const m=ammoCap(w);if(GUN.inv[w].ammo>m){GUN.inv[w].ammo=m;cut=true}}if(GUN.has&&GUN.inv[GUN.w])GUN.ammo=GUN.inv[GUN.w].ammo;if(cut)toast('SEM MOCHILA · MUNIÇÃO REDUZIDA')}
-function gunGive(w,n){if(!CHEAT.ammo){const cur=GUN.inv[w]?(GUN.has&&GUN.w===w?GUN.ammo:GUN.inv[w].ammo):0;n=Math.max(0,Math.min(n,ammoCap(w)-cur))}if(GUN.has&&GUN.inv[GUN.w])GUN.inv[GUN.w].ammo=GUN.ammo;GUN.inv[w]=GUN.inv[w]||{ammo:0};GUN.inv[w].ammo+=n;gunSelect(w,true)}
+function gunGive(w,n){
+ const equipped=GUN.has&&GUN.w===w;
+ const current=equipped?GUN.ammo:(GUN.inv[w]?.ammo??0);
+ const added=CHEAT.ammo?n:Math.max(0,Math.min(n,ammoCap(w)-current));
+ const slot=GUN.inv[w]||(GUN.inv[w]={ammo:0});
+ slot.ammo=current+added;
+ // gunSelect saves the equipped ammo before switching. Keep it in sync.
+ if(equipped)GUN.ammo=slot.ammo;
+ gunSelect(w,true);
+ return added;
+}
 function pickKind(id){let h=2166136261;for(let i=0;i<id.length;i++)h=Math.imul(h^id.charCodeAt(i),16777619);const r=((h>>>0)%1000)/1000;return r<.46?'gun':r<.58?'magnum':r<.79?'smg':r<.905?'rpg':r<.953?'grenade':r<.982?'remote':'jammer'}
 // Granada de mão ovalada: geometrias e materiais reutilizados pelo coletável,
 // mão do personagem e projéteis, sem texturas externas ou material por quadro.
@@ -8933,10 +9020,10 @@ function vinylTick(dt){if(VINYL.got.size<VINYL.N||city.haze||S.style==='inverted
 
 function heldGunTick(){const show=GUN.has&&!PL.car&&!PL.heli&&!PL.dead&&!PL.down&&!PARA.active&&!TVM.on&&(camMode==='top'||VIEW.tp)&&running;
  if(!show||HELD.w!==GUN.w){if(HELD.g){scene.remove(HELD.g);HELD.g.traverse(o=>{if(o.userData.shared)return;if(o.geometry&&!o.isSprite)o.geometry.dispose();if(o.material)o.material.dispose()});HELD.g=null;HELD.w=null}if(!show)return}
- if(!HELD.g){const p=makePickup('__held',0,0,0,{pickups:[]},GUN.w==='pistol'?'gun':GUN.w);const i=pickups.indexOf(p);if(i>=0)pickups.splice(i,1);
+ if(!HELD.g){const p=GUN.w==='flame'?{g:ammoShowcaseWeapon('flame')}:makePickup('__held',0,0,0,{pickups:[]},GUN.w==='pistol'?'gun':GUN.w);const i=pickups.indexOf(p);if(i>=0)pickups.splice(i,1);
   // O brilho agora é independente da arma/ícone: não deve seguir a mão do jogador.
   removePickupGlow(p);
-  const inner=new THREE.Group();while(p.g.children.length)inner.add(p.g.children[0]);p.g.add(inner);p.g.scale.setScalar(GUN.w==='rpg'?.42:.3);p.g.traverse(o=>{if(o.isMesh)o.castShadow=false;o.layers.set(1)});HELD.g=p.g;HELD.w=GUN.w}
+  const inner=new THREE.Group();while(p.g.children.length)inner.add(p.g.children[0]);p.g.add(inner);p.g.scale.setScalar(GUN.w==='rpg'?.42:.3);p.g.traverse(o=>{if(o.isMesh)o.castShadow=false;o.layers.set(1)});HELD.g=p.g;HELD.w=GUN.w;if(!p.g.parent)scene.add(p.g)}
  let ax,az,ay=0;if(camMode==='top'){ax=PL.face[0];az=PL.face[1]}else{const cp=Math.cos(PL.pitch);ax=-Math.sin(PL.yaw)*cp;az=-Math.cos(PL.yaw)*cp;ay=Math.sin(PL.pitch)}
  const l=Math.hypot(ax,az)||1,nx=ax/l,nz=az/l,top=camMode==='top';
  const lat=top?1.05:.52,fw=top?.2:.35;HELD.g.position.set(PL.x+nx*fw-nz*lat,PL.gy+(PL.jy||0)+(top?2.4:.98),PL.z+nz*fw+nx*lat);HELD.g.scale.setScalar((GUN.w==='rpg'?.42:.3)*(top?2.6:1));HELD.g.rotation.set(0,Math.atan2(-nz,nx),top?0:Math.asin(clamp(ay,-1,1))*.8)}
@@ -8958,7 +9045,7 @@ function aircraftTargets(){
  const targets=[];
  for(const slot of SKY.slots)if(slot.o&&slot.o.g){
   const a=slot.o;targets.push({type:'sky',owner:slot,x:a.x,y:a.g.position.y,z:a.z,r:slot.kind==='heli'?2.5:4.3})}
- if(COPH.h&&COPH.h.o&&COPH.h.o.g){const a=COPH.h;targets.push({type:'police',owner:a,x:a.x,y:a.o.g.position.y,z:a.z,r:2.5})}
+ if(COPH.h&&COPH.h.state!=='falling'&&COPH.h.o&&COPH.h.o.g){const a=COPH.h;targets.push({type:'police',owner:a,x:a.x,y:a.o.g.position.y,z:a.z,r:2.5})}
  for(const a of HELI.list)if(a.o&&a.o.g&&a.state!=='dead'&&a.state!=='falling'&&a!==HELI.cur)
   targets.push({type:'parked',owner:a,x:a.x,y:a.o.g.position.y,z:a.z,r:2.5});
  return targets;
@@ -9003,14 +9090,15 @@ function airBurst(x,y,z){
 }
 function aircraftDamage(a,dmg,pt){
  if(!a)return;
- const obj=a.owner,body=a.type==='sky'?obj.o:a.type==='police'?obj.o:obj.o;
+ const obj=a.owner;if(obj.state==='falling')return;
  const defaultHP=a.type==='sky'?(obj.kind==='plane'?130:55):a.type==='police'?90:65;
  obj.hp=(obj.hp??defaultHP)-dmg;
  if(obj.hp>0){for(let i=0;i<5;i++)emit(pt.x,pt.y,pt.z,(Math.random()-.5)*2,Math.random()*2,(Math.random()-.5)*2,.2,.25,.06,0xffd17c,true,1);return}
  airBurst(a.x,a.y,a.z);
  if(a.type==='sky'){skyDrop(obj);obj.t=60+Math.random()*60}
  else if(a.type==='police'){
-  scene.remove(body.g);disposeGroup(body.g);heliSnd(obj,false);COPH.h=null;COPH.respawnAt=simT+(POL.wanted&&(POL.level||1)>=3?8:45); /* v78: nível 3 = um helicóptero novo para cada abatido */
+  Object.assign(obj,{state:'falling',fvx:obj.vx||0,fvz:obj.vz||0,fvy:0,spin:1.8});
+  heliSnd(obj,false);
   if(POL.wanted)toast((POL.level||1)>=3?'HELICÓPTERO DA POLÍCIA ABATIDO<br><small style="font-size:11px;color:#fff">'+translatePlain('outro já está a caminho')+'</small>':'HELICÓPTERO DA POLÍCIA ABATIDO');
  }else{
   obj.state='falling';obj.fvx=0;obj.fvz=0;obj.fvy=0;obj.spin=1+Math.random()*2;
@@ -9060,6 +9148,7 @@ function playerShoot(useFace){if(!GUN.has||PL.dead||menuOpen||GUN.cd>0)return;
  else{camera.getWorldDirection(d);o.copy(camera.position);o.addScaledVector(d,PL.car?(VIEW.tp?7:2.5):(VIEW.tp?4:.4));if(!PL.car){PL.yaw=Math.atan2(-d.x,-d.z)}}
  if(PL.car&&camMode==='fps')LOOK.t=0;
  if(W.spread){const spread=W.spread*(1-.20*ammoUpgrade(GUN.w,'focus'));d.x+=(Math.random()-.5)*spread*2;d.y+=(Math.random()-.5)*spread;d.z+=(Math.random()-.5)*spread*2;d.normalize()}
+ if(GUN.w==='flame'){fireFlame(src,by,d);return}
  if(GUN.w==='grenade'){throwGrenade(d);GUN.firing=false;return}
  if(GUN.w==='remote'){remotePlant(d);GUN.firing=false;return}
  if(GUN.w==='rpg'){const s0=PL.car?o.clone().addScaledVector(d,1):(camMode==='top'?new THREE.Vector3(src.x+d.x*1.2,by+.2,src.z+d.z*1.2):o.clone().addScaledVector(d,.8));fireRocket(s0,d);return}
@@ -9073,6 +9162,50 @@ function playerShoot(useFace){if(!GUN.has||PL.dead||menuOpen||GUN.cd>0)return;
   if(head)toast('TIRO NA CABEÇA');if(q.hp<=0){killPed(q);registerKill(q,true)}else if(!q.cop&&!q.demo&&!q.gang&&!q.balcony&&q.tommy===undefined){const dx=q.x-src.x,dz=q.z-src.z,l=Math.hypot(dx,dz)||1;q.strip=null;q.fixed=false;q.state='flee';q.timer=5+R2()*3;q.vx=dx/l*4.8;q.vz=dz/l*4.8;q.rot=0;dropUmbrella(q);ouch(q.x,q.z,q.pitch);if(Math.random()<.45)say(q,SAY.hurt,2)}}
  if(!POL.wanted&&copSees(src.x,src.z))startWanted()}
 const rockets=[];const RKT={geo:new THREE.CylinderGeometry(.09,.09,.7,8),mat:new THREE.MeshStandardMaterial({color:0x5a6a3a,emissive:0x331100})};
+function fireFlame(src,y,d){
+ const o=new THREE.Vector3(src.x,y+(PL.jy||0),src.z),h=rayHit(o,d,8,null,null),reach=o.distanceTo(h.pt);
+ for(let i=0;i<14;i++){
+  const t=Math.min(reach,.35+(i+.4)*reach/14),w=.08+t*.052;
+  emit(o.x+d.x*t+(Math.random()-.5)*w,o.y+d.y*t+(Math.random()-.5)*w,o.z+d.z*t+(Math.random()-.5)*w,
+   d.x*2,1+t*.1,d.z*2,.16+t*.012,.8,.18+t*.048,i%3?0xff7b24:0xffdc56,true,.86);
+ }
+ const p=h.ped;
+ if(p&&p.state!=='dead'&&p.state!=='inside'&&!p.inCar&&!p.hidden){
+  p.hp??=3;
+  if(!p.flameBurn){
+   p.flameBurn={max:Math.max(3,p.hp),fx:0,tint:p.sp.userData.actorTint?.clone()};
+   if(p.state==='bskate')knockPedDown(p,d.x,d.z);
+  }
+  p.hp=Math.max(0,p.hp-.18);
+  if(p.cop)startWanted();
+ }
+ if(h.car?.alive){h.car.hp-=WPN.flame.dmg;h.car.sleep=false;if(h.car.hp<=0){h.car.fireByPlayer=true;setOnFire(h.car)}if(policeTrafficCar(h.car))startWanted()}
+ if(!POL.wanted&&copSees(src.x,src.z))startWanted();
+}
+function clearBurnBar(p){
+ if(!p.flameBurn?.bar)return;
+ for(const sprite of p.flameBurn.bar)scene.remove(sprite);
+ p.flameBurn.bar=null;
+}
+let burnBarMaterials;
+function pedBurnTick(p,dt){
+ const burn=p.flameBurn;
+ if(p.state==='dead'){clearBurnBar(p);return}
+ p.hp=Math.max(0,p.hp-dt*1.2);
+ const life=clamp(p.hp/burn.max,0,1),tint=p.sp.userData.actorTint;
+ if(tint&&burn.tint)tint.copy(burn.tint).multiplyScalar(.16+.84*life);
+ if(p.hp===0){clearBurnBar(p);killPed(p);registerKill(p,true);return}
+ if(!burn.bar){
+  burnBarMaterials??=[0x241923,0xff6943].map(color=>new THREE.SpriteMaterial({color,depthWrite:false}));
+  burn.bar=burnBarMaterials.map((material,i)=>{const sp=new THREE.Sprite(material);sp.renderOrder=i;scene.add(sp);return sp});
+ }
+ const [back,fill]=burn.bar,y=p.gy+(p.jy||0)+2.12;
+ back.position.set(p.x,y,p.z);back.scale.set(.84,.105,1);
+ fill.position.copy(back.position);fill.scale.set(.77*life,.065,1);
+ const right=camera.matrixWorld.elements;fill.position.x-=right[0]*.385*(1-life);fill.position.y-=right[1]*.385*(1-life);fill.position.z-=right[2]*.385*(1-life);
+ burn.fx-=dt;
+ if(burn.fx<=0){burn.fx=.09;emit(p.x+(Math.random()-.5)*.65,p.gy+.65+Math.random()*.75,p.z+(Math.random()-.5)*.65,0,1.4,0,.25,.75,.28,0xff7421,true,.8)}
+}
 function fireRocket(o,d){const m=new THREE.Mesh(RKT.geo,RKT.mat);m.position.copy(o);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d);scene.add(m);rockets.push({p:o.clone(),d:d.clone(),m,life:6.3,ign:PL.car});
  emit(o.x,o.y,o.z,-d.x*4,.5,-d.z*4,.25,1.6,.4,0xffa040,true,1);for(let i=0;i<6;i++)emit(o.x,o.y,o.z,-d.x*3+(Math.random()-.5)*2,Math.random(),-d.z*3+(Math.random()-.5)*2,1.2,.8,2.4,0x9a9690,false,.5);
  if(AC){const t=AC.currentTime,s=AC.createBufferSource();s.buffer=AC._noise;const f=AC.createBiquadFilter();f.type='bandpass';f.frequency.setValueAtTime(600,t);f.frequency.exponentialRampToValueAtTime(2400,t+.5);const g=AC.createGain();g.gain.setValueAtTime(.5,t);g.gain.exponentialRampToValueAtTime(.001,t+.7);s.connect(f);f.connect(g);g.connect(master);s.start(t);s.stop(t+.75)}
@@ -9081,9 +9214,9 @@ function updateRockets(dt){for(const r of rockets.slice()){const step=46*dt;r.li
   if(Math.random()<.9){emit(r.p.x-r.d.x*.4,r.p.y,r.p.z-r.d.z*.4,(Math.random()-.5)*.6,.3,(Math.random()-.5)*.6,.18,.9,.2,Math.random()<.5?0xff8a1a:0xffd050,true,1);emit(r.p.x-r.d.x*.6,r.p.y,r.p.z-r.d.z*.6,(Math.random()-.5)*.5,.6,(Math.random()-.5)*.5,1.4,.5,2.2,0x8a8682,false,.45)}
   if(h.air||h.car||h.ped||hd<step+.25||r.life<=0){const pt=h.air||h.car||h.ped||hd<step+.25?h.pt:r.p;scene.remove(r.m);rockets.splice(rockets.indexOf(r),1);
    if(h.air){aircraftDamage(h.air,160,pt);if(h.air.owner.hp>0)airBurst(pt.x,pt.y,pt.z)}
-   else if(h.car&&h.car.alive){const c=h.car;if(policeTrafficCar(c))startWanted();setOnFire(c);c.fuse=0;explode(c,true)}
+   else if(h.car&&h.car.alive){const c=h.car;if(policeTrafficCar(c))startWanted();setOnFire(c);c.fuse=0;explode(c,true,true)}
    else if(h.wall&&pt.y>5)airBurst(pt.x,pt.y,pt.z); // explosao na fachada ALTA, nao no chao
-   else blastAt(pt.x,pt.z,h.car||null,true);continue}
+   else blastAt(pt.x,pt.z,h.car||null,true,true);continue}
   r.p.addScaledVector(r.d,step);r.m.position.copy(r.p)}}
 /* A mesma fuga usada por panicTick (arma à mostra) serve para a granada.
    O ponto de ameaça pode ser o jogador ou uma granada, sem criar outra IA. */
@@ -9264,9 +9397,19 @@ function killPed(p){if(p.state==='dead')return;if(p.tommy===undefined&&!p.demo&&
  if(p.cop&&p.car&&p.car.copsOut){p.car.copsOut=p.car.copsOut.filter(q=>q!==p)}}
 /* --- cops on foot --- */
 const COP_PAL={cap:'#1a2a5a',capDark:'#0e1630',skin:'#e0ac69',hair:'#2a1a10',shirt:'#2a4a8a',pants:'#1a2440',shoes:'#111',belt:'#111',stripe:'#d8d8d8'};
-function deployCops(c){c.copsOut=[];const n=1+(R2()<.6?1:0);const ca=Math.cos(c.a),sa=Math.sin(c.a);
- for(let k=0;k<n;k++){const sd=k?-1:1;const x=c.x-sa*sd*(c.t.W/2+.9),z=c.z+ca*sd*(c.t.W/2+.9);const p=spawnPed(null,{x,z,vx:0,vz:0,pal:COP_PAL});
-  p.cop=true;p.fixed=true;p.state='cop';p.hp=3;p.car=c;p.shootT=.9+R2()*.6;c.copsOut.push(p)}}
+function deployCops(c,bail=false){
+ const out=c.copsOut||(c.copsOut=[]);
+ const seats=c.copsAboard??(c.playerStolen||PL.car===c?0:2);
+ const ca=Math.cos(c.a),sa=Math.sin(c.a);
+ c.copsAboard=seats;
+ for(let k=0;k<seats;k++){
+  const side=k?-1:1,d=c.t.W/2+.9;
+  const p=spawnPed(null,{x:c.x-sa*side*d,z:c.z+ca*side*d,vx:0,vz:0,pal:COP_PAL});
+  if(!p)continue;
+  Object.assign(p,{cop:true,fixed:true,state:'cop',hp:3,car:c,bail,bailT:0,shootT:.9+R2()*.6});
+  c.copsAboard--;out.push(p);
+ }
+}
 // Entradas do shopping por andar (mesmos pontos de chegada do jogador).
 function mallCopSpot(lvl){return lvl?{x:MALL.U.x+MALL_V+1.6,z:MALL.U.z+2.4}:{x:MALL.G.x-mallEntryL()+2.5,z:MALL.G.z}}
 function mallCopEnter(p,lvl){const s=mallCopSpot(lvl);p.x=s.x;p.z=s.z;p.vx=p.vz=0;p.mallCop=true;p.lvl=lvl;p.followT=0;if(p.car&&p.car.copsOut)p.car.copsOut=p.car.copsOut.filter(q=>q!==p);p.car=null}
@@ -9277,11 +9420,14 @@ function updateMallCop(p,dt){
  if(d>1.6){p.vx=dx/d*3.6;p.vz=dz/d*3.6}else p.vx=p.vz=0;
  p.x+=p.vx*dt;p.z+=p.vz*dt;circleVsWorld(p,.35)}
 /* v1r20: viatura pegou fogo → os policiais saltam, se afastam do fogo e, com procurado ativo, perseguem a pé atirando no jogador */
-function copBail(c){if(c.bailed)return;c.bailed=true;const live=(c.copsOut||[]).filter(q=>peds.includes(q)&&q.state!=='dead');for(const q of live){q.bail=true;q.bailT=.7}
- if(live.length)return;c.copsOut=[];const n=1+(Math.random()<.6?1:0),ca=Math.cos(c.a),sa=Math.sin(c.a);
- for(let k=0;k<n;k++){const sd=k?-1:1,x=c.x-sa*sd*(c.t.W/2+.9),z=c.z+ca*sd*(c.t.W/2+.9);const p=spawnPed(null,{x,z,vx:0,vz:0,pal:COP_PAL});if(!p)continue;
-  p.cop=true;p.fixed=true;p.state='cop';p.hp=3;p.car=c;p.bail=true;p.bailT=0;p.shootT=1.1+Math.random()*.6;c.copsOut.push(p)}
- if(c.copsOut[0])say(c.copsOut[0],POL.wanted?['VAI PAGAR POR ISSO!','PARADO AÍ!','PEGA ELE!']:['FOGO! SAI DO CARRO!','SAI, SAI!'],2.2)}
+function copBail(c){
+ if(c.bailed)return;
+ c.bailed=true;
+ c.copsOut=(c.copsOut||[]).filter(p=>peds.includes(p)&&p.state!=='dead');
+ for(const p of c.copsOut){p.bail=true;p.bailT=0}
+ deployCops(c,true);
+ if(c.copsOut[0])say(c.copsOut[0],POL.wanted?'PARADO AÍ!':'FOGO! SAI DO CARRO!',2.2);
+}
 function updateCopBail(p,dt){const c=p.car,dx=PL.x-p.x,dz=PL.z-p.z,d=Math.hypot(dx,dz)||1;p.bailT=(p.bailT||0)+dt;
  if(d>90||(!POL.wanted&&p.bailT>25&&d>30)){removePed(p);if(c&&c.copsOut)c.copsOut=c.copsOut.filter(q=>q!==p);return}
  if(p.bailT<.75&&c){const ax=p.x-c.x,az=p.z-c.z,ad=Math.hypot(ax,az)||1;p.vx=ax/ad*5.5;p.vz=az/ad*5.5;p.mx=ax/ad;p.mz=az/ad}
@@ -9302,7 +9448,7 @@ function updateCop(p,dt){if(p.mallCop){updateMallCop(p,dt);return}if(p.bail){upd
  if(!back&&PL.inside==='mall'&&MALL.out){tx=MALL.out.x;tz=MALL.out.z;spd=4.2;if(Math.hypot(tx-p.x,tz-p.z)<2.2){mallCopEnter(p,MALL.lvl);return}}
  if(back){if(!c||!c.alive){p.vx=p.vz=0;return}tx=c.x;tz=c.z;spd=6}
  const dx=tx-p.x,dz=tz-p.z,d=Math.hypot(dx,dz)||1;
- if(back&&d<2.4){removePed(p);c.copsOut=c.copsOut.filter(q=>q!==p);return}
+ if(back&&d<2.4){c.copsAboard=Math.min(2,(c.copsAboard??0)+1);removePed(p);c.copsOut=c.copsOut.filter(q=>q!==p);return}
  if(back||d>9||PL.inside==='mall'){p.vx=dx/d*spd;p.vz=dz/d*spd;p.mx=dx/d;p.mz=dz/d}else{p.vx=p.vz=0;p.mx=dx/d;p.mz=dz/d}
  p.x+=p.vx*dt;p.z+=p.vz*dt;circleVsWorld(p,.35);
  if(!back&&PL.inside!=='mall'){p.shootT-=dt;if(p.shootT<=0&&d<30){p.shootT=1+R2()*.8;copShoot(p)}}}
@@ -9477,7 +9623,7 @@ function aheadNode(c){const N=city.N,ca=Math.cos(c.a),sa=Math.sin(c.a),kx=Math.r
 function policeDrive(c,dt){if(!c.alive){c.thr=0;return}
   if(c.playerStolen){c.thr=0;c.hand=true;c.steerT=0;return} // v78k: viatura roubada pelo jogador fica parada quando ele desce
  if(c.copsOut&&c.copsOut.length){c.thr=0;c.hand=true;c.steerT=0;return}
- {const pt=polTgt();if(!c.target&&!PL.car&&!PL.dead&&Math.hypot(pt.x-c.x,pt.z-c.z)<17&&Math.abs(c.fwd)<3.5&&simT>(c.nextDeploy||0)){c.nextDeploy=simT+20;deployCops(c);c.thr=0;c.hand=true;return}}
+ {const pt=polTgt();if((c.copsAboard??2)>0&&!c.target&&!PL.car&&!PL.dead&&Math.hypot(pt.x-c.x,pt.z-c.z)<17&&Math.abs(c.fwd)<3.5&&simT>(c.nextDeploy||0)){c.nextDeploy=simT+20;deployCops(c);c.thr=0;c.hand=true;return}}
  if(c.target&&(!c.target.alive||!vehicles.includes(c.target))){c.chase=false;c.target=null;c.thr=0;c.hand=true;return}const tgt=c.target||polTgt(),tx=tgt.x+(tgt.vx||0)*.5,tz=tgt.z+(tgt.vz||0)*.5,dist=Math.hypot(tx-c.x,tz-c.z);let wx=tx,wz=tz,turnAhead=0;
  const ca=Math.cos(c.a),sa=Math.sin(c.a);
  if(dist>30){c.pathT-=dt;if(c.pathT<=0||!c.path||!c.path.length){c.pathT=.8;const a=aheadNode(c);c.path=bfsNext(a,nodeOf(tx,tz))||[a]}
@@ -9643,15 +9789,15 @@ function fireTick(c,dt){const ca=Math.cos(c.a),sa=Math.sin(c.a);const hx=c.x+ca*
  if(!c.exploded){c.fuse-=dt;const k=c.fuse<1.2?2:1;
   if(Math.random()<dt*22*k)emit(hx+(Math.random()-.5)*1.2,c.gy+1.1,hz+(Math.random()-.5)*1.2,(Math.random()-.5)*.8,2+Math.random()*2,(Math.random()-.5)*.8,.55,1.1*k,.3,Math.random()<.5?0xff6a1a:0xffb02a,true,.95);
   if(Math.random()<dt*6)emit(hx,c.gy+2,hz,(Math.random()-.5),2+Math.random(),(Math.random()-.5),2.2,1.2,5,0x2a2426,false,.5);
-  if(c.fuse<=0)explode(c)}
+  if(c.fuse<=0)explode(c,c.fireByPlayer)}
  else if(c.burn>0){c.burn-=dt;if(Math.random()<dt*10)emit(c.x+(Math.random()-.5)*c.t.L*.7,c.gy+.9,c.z+(Math.random()-.5)*1.5,0,1.5+Math.random()*1.5,0,.6,.9,.2,Math.random()<.5?0xff5a14:0xffa02a,true,.85);
   if(Math.random()<dt*5)emit(c.x,c.gy+2,c.z,(Math.random()-.5),2,(Math.random()-.5),2.8,1.5,6,0x1e1a1c,false,.55)}}
-function explode(c,byP){if(c&&c===PL.car){NEWS.boomT=simT;NEWS.veh=vehicleModelName(c);if(maskOn())newsAdd('maskboom',{veh:NEWS.veh})}if(byP&&POL.wanted&&!c.boomW){c.boomW=true;POL.boomW=(POL.boomW||0)+1;if(POL.boomW>=3&&(POL.level||1)<3)wantedUp((POL.level||1)+1)}if(byP&&!c.police&&!c.boomCounted){c.boomCounted=true;POL.booms=(POL.booms||0)+1;if(POL.booms>=CRIME_ROLL.cars){POL.booms=0;if(!POL.wanted){setTimeout(()=>{startWanted(true);toast('A POLÍCIA FOI CHAMADA')},400)}}}if(c.mode==='rail')toPhys(c);c.alive=false;c.hp=0;c.ai=null;c.chase=false;c.thr=0;c.wreckAt=Number.isFinite(c.wreckAt)?c.wreckAt:simT;if(!c.g)buildCarMesh(c);c.exploded=true;c.burn=8;c.hopV=6+Math.random()*3;c.w+=(Math.random()-.5)*5;c.sleep=false;c.sleepT=0;
+function explode(c,byP,vehicleDetonate=false){if(c&&c===PL.car){NEWS.boomT=simT;NEWS.veh=vehicleModelName(c);if(maskOn())newsAdd('maskboom',{veh:NEWS.veh})}if(byP&&POL.wanted&&!c.boomW){c.boomW=true;POL.boomW=(POL.boomW||0)+1;if(POL.boomW>=3&&(POL.level||1)<3)wantedUp((POL.level||1)+1)}if(byP&&!c.police&&!c.boomCounted){c.boomCounted=true;POL.booms=(POL.booms||0)+1;if(POL.booms>=CRIME_ROLL.cars){POL.booms=0;if(!POL.wanted){setTimeout(()=>{startWanted(true);toast('A POLÍCIA FOI CHAMADA')},400)}}}if(c.mode==='rail')toPhys(c);c.alive=false;c.hp=0;c.ai=null;c.chase=false;c.thr=0;c.wreckAt=Number.isFinite(c.wreckAt)?c.wreckAt:simT;if(!c.g)buildCarMesh(c);c.exploded=true;c.burn=8;c.hopV=6+Math.random()*3;c.w+=(Math.random()-.5)*5;c.sleep=false;c.sleepT=0;
  c.g.traverse(o=>{if(!o.isMesh)return;if(o.material===carBodyMat)o.material=burntMat;else if(o.material&&o.material.userData.carBody)o.material=carHoleMat(c,true);else if(o.material===carLightMat)o.visible=false;else if(o.material&&o.material.blending===THREE.AdditiveBlending)o.visible=false});
- blastAt(c.x,c.z,c,!!byP)}
+ blastAt(c.x,c.z,c,!!byP,vehicleDetonate)}
 function blastAt(cx,cz,c,byPlayer,vehicleDetonate=false){c=c||{x:cx,z:cz};GAS.by=GAS.by||byPlayer;gasNearBlast(cx,cz);
  boomLight.position.set(cx,4,cz);boomLight.intensity=10;boomT=.7;
- for(let i=0;i<34;i++){const a=Math.random()*6.28,s=Math.random()*9;emit(cx,1+Math.random()*1.5,c.z,Math.cos(a)*s,2+Math.random()*7,Math.sin(a)*s,.6+Math.random()*.5,2.6,5.5,Math.random()<.5?0xff7a1a:0xffc040,true,.95)}
+ for(let i=0;i<34;i++){const a=Math.random()*6.28,s=Math.random()*9;emit(cx,1+Math.random()*1.5,cz,Math.cos(a)*s,2+Math.random()*7,Math.sin(a)*s,.6+Math.random()*.5,2.6,5.5,Math.random()<.5?0xff7a1a:0xffc040,true,.95)}
  for(let i=0;i<22;i++){const a=Math.random()*6.28,s=Math.random()*4;emit(cx,2,cz,Math.cos(a)*s,1.5+Math.random()*3,Math.sin(a)*s,2.4+Math.random(),2.5,8,0x1c1818,false,.75)}
  for(let i=0;i<30;i++){const a=Math.random()*6.28,s=6+Math.random()*12;emit(cx,1,cz,Math.cos(a)*s,4+Math.random()*8,Math.sin(a)*s,.8,.3,.08,0xffd070,true,1)}
  const RB=14;
@@ -9661,7 +9807,7 @@ function blastAt(cx,cz,c,byPlayer,vehicleDetonate=false){c=c||{x:cx,z:cz};GAS.by
   // Granada e C4 devem destruir inclusive motocicletas, independente do HP.
   // A explosão do veículo ocorre em fireTick no próximo frame, evitando recursão
   // imediata enquanto blastAt ainda itera a lista de tráfego.
-  if(vehicleDetonate&&d<=11&&!v.exploded){if(v.alive)setOnFire(v);if(!v.sunk)v.fuse=Math.min(v.fuse||.02,.02)}
+  if(vehicleDetonate&&d<=11&&!v.exploded){if(v.alive)setOnFire(v);if(!v.sunk){v.fireByPlayer=v.fireByPlayer||byPlayer;v.fuse=Math.min(v.fuse||.02,.02)}}
   else if(v.hp<=0&&v.alive){setOnFire(v);v.fuse=.5+Math.random()*1.3}}
  for(const p of peds){const dx=p.x-c.x,dz=p.z-c.z,d=Math.hypot(dx,dz);if(d>11)continue;const f=1-d/11;if(p.state!=='dead'){ouch(p.x,p.z,p.pitch);if(byPlayer)registerKill(p,true)}p.sp.material.alphaTest=.02;p.sp.material.needsUpdate=true;p.state='dead';p.timer=9;p.vx=dx/(d||1)*f*14;p.vz=dz/(d||1)*f*14;p.rot=(Math.random()<.5?1:-1)*Math.PI/2}
  if(PL.car===c){enterExit();killPlayer()}
@@ -9970,6 +10116,7 @@ function gasIconPath(g,x,y,r){
 }
 // v285: pictogramas originais em grade 24px; caminhos compartilhados por radar/mapa/legenda.
 const MAP_ICON_DEFS={"motel":{"c":"#ff8a6a","p":"M2 5H5.5V11.5H22V20H18.8V17.2H5.2V20H2Z","d":"M6.6 11.5V8.6Q6.6 7.8 7.4 7.8H11.8Q12.6 7.8 12.6 8.6V11.5M14 11.5V9.6H20.4Q21.2 9.6 21.2 10.6V11.5"},"safe":{"c":"#8ed6ac","p":"M2 11 L12 2 22 11 19 11 19 21 5 21 5 11Z","d":"M10 21V14H14V21"},"tune":{"c":"#ec89ba","p":"M16 2L13 6 16 9 20 6Q23 13 16 14L7 22 2 17 11 9Q9 2 16 2Z","d":"M5 17L7 19"},"deal":{"c":"#87bcdf","p":"M2 11L5 5H19L22 11V19H19V21H16V19H8V21H5V19H2Z","d":"M5 11L7 7H17L19 11ZM5 15H8M16 15H19"},"casino":{"c":"#ec89ba","p":"M5 2H19Q21 2 21 4V20Q21 22 19 22H5Q3 22 3 20V4Q3 2 5 2Z","d":"M7 6H8V7H7ZM16 6H17V7H16ZM11 11H13V13H11ZM7 17H8V18H7ZM16 17H17V18H16Z"},"club":{"c":"#ec89ba","p":"M2 3H22L14 12V19H19V22H5V19H10V12Z","d":"M6 6H18"},"hosp":{"c":"#e77b7f","p":"M8 2H16V8H22V16H16V22H8V16H2V8H8Z","d":""},"pol":{"c":"#87bcdf","p":"M12 2L21 5V12Q20 18 12 22Q4 18 3 12V5Z","d":"M12 6L13.5 10 18 10 14.5 13 16 17 12 14.5 8 17 9.5 13 6 10 10.5 10Z"},"mall":{"c":"#ec89ba","p":"M4 8H20L22 22H2Z","d":"","e":"M8 9V6Q8 1 12 2Q16 1 16 6V9"},"bank":{"c":"#e8c477","p":"M2 7L12 2 22 7V10H2ZM3 20H21V23H3ZM5 10H8V20H5ZM11 10H14V20H11ZM17 10H20V20H17Z","d":""},"pawn":{"c":"#e8c477","p":"M12 2L21 7V17L12 22 3 17V7Z","d":"M15 7H10Q7 7 8 10L16 14Q17 17 13 17H8M12 5V19"},"ammo":{"c":"#f2e7ce","p":"M2 5H22V11H13L11 21H5L7 11H2Z","d":"M14 7H20M9 12H13V16H11"},"mkt":{"c":"#8ed6ac","p":"M2 3H6L8 7H22L19 16H8L5 6H2ZM8 19A2 2 0 1 0 12 19A2 2 0 1 0 8 19ZM17 19A2 2 0 1 0 21 19A2 2 0 1 0 17 19Z","d":"M10 10H18"},"gas":{"c":"#e8c477","p":"M3 2H14V20H16V23H1V20H3ZM14 8H17L20 11V17Q23 18 23 15V7L19 3 17 5 20 8V15H19V10H14Z","d":"M6 5H11V10H6Z"},"hall":{"c":"#f2e7ce","p":"M10 2H14V6H18V10H21V22H3V10H6V6H10Z","d":"M12 5V8M9 13H15V22M6 13V17M18 13V17"},"univ":{"c":"#87bcdf","p":"M1 8L12 3 23 8 12 13ZM5 12L12 15 19 12V18Q12 23 5 18Z","d":"","e":"M22 9V18"},"stad":{"c":"#8ed6ac","p":"M5 2H19V6H23V10Q23 15 17 15L14 18V20H19V23H5V20H10V18L7 15Q1 15 1 10V6H5Z","d":"M5 7V12M19 7V12"},"cem":{"c":"#f2e7ce","p":"M5 21V9Q5 1 12 1Q19 1 19 9V21H22V23H2V21Z","d":"M12 6V17M8 10H16"},"sky":{"c":"#87bcdf","p":"M3 22V9H9V2H16V7H21V22Z","d":"M12 5V8M12 11V14M6 12V15M6 18V20M17 11V14M17 18V20"},"ind":{"c":"#e8c477","p":"M2 22V12L9 8V12L16 8V12H19L18 2H22V22Z","d":"M5 17H8M11 17H14M17 17H20"},"air":{"c":"#87bcdf","p":"M11 1H13L15 9 23 14V17L14 14V19L18 21V23L12 22 6 23V21L10 19V14L1 17V14L9 9Z","d":""},"beach":{"c":"#8ed6ac","p":"M11 8Q3 11 1 7Q4 3 10 5Q7 1 12 1Q16 2 15 5Q21 2 23 7Q20 10 15 8L13 19H20V22H4V19H9Z","d":""},"parachute":{"c":"#e8c477","p":"M1 11Q2 1 12 1Q22 1 23 11L19 10 15 11 12 10 8 11 5 10Z","d":"","e":"M2 11L10 19H14L22 11M8 11L11 19M16 11L13 19M10 19V22H14V19"},"rift":{"c":"#e77b7f","p":"M12 1Q23 6 21 15Q19 21 12 23Q2 19 3 10Q4 4 12 1Z","d":"M14 5L9 10 15 13 10 19"},"gps":{"c":"#ffd200","p":"M12 23L4 12Q-1 2 12 1Q25 2 20 12Z","d":"M9 8A3 3 0 1 0 15 8A3 3 0 1 0 9 8Z"},"quest":{"c":"#ffd200","p":"M8 1H16L14 15H10ZM9 18H15V23H9Z","d":""},"unknown":{"c":"#e8c477","p":"M4 7Q4 1 12 1Q21 1 21 7Q21 11 15 13V16H9V11Q15 8 15 6Q12 3 9 7ZM9 19H15V23H9Z","d":""},"skull":{"c":"#f2e7ce","p":"M4 16Q0 12 2 6Q4 1 12 1Q20 1 22 6Q24 12 20 16V22H4Z","d":"M6 8H9V12H6ZM15 8H18V12H15ZM10 16L12 13 14 16M9 19V22M15 19V22"},"race":{"c":"#f2e7ce","p":"M3 23V2H22V16H6V23Z","d":"M7 3H12V8H7ZM12 8H17V13H12ZM17 3H21V8H17Z"},"drag":{"c":"#ec89ba","p":"M3 23V2H22V16H6V23Z","d":"M15 3L9 9H14L11 14 20 7H15Z"},"db":{"c":"#e8c477","p":"M1 22V12H5V22ZM19 22V12H23V22ZM5 16L10 5 13 7 8 18ZM16 18L11 7 14 5 19 16Z","d":""},"dbx":{"c":"#e77b7f","p":"M1 22V12H5V22ZM19 22V12H23V22ZM5 16L10 5 13 7 8 18ZM16 18L11 7 14 5 19 16Z","d":"","e":"M2 2L7 7M7 2L2 7"},"heist":{"c":"#f2e7ce","p":"M9 12A3 3 0 1 0 15 12A3 3 0 1 0 9 12Z","d":""},"wz":{"c":"#e77b7f","p":"M12 2A10 10 0 1 0 12 22A10 10 0 1 0 12 2ZM12 6A6 6 0 1 1 12 18A6 6 0 1 1 12 6Z","d":""},"chase":{"c":"#e77b7f","p":"M12 2L21 5V12Q20 18 12 22Q4 18 3 12V5Z","d":"M12 6L17 15H7ZM12 9V12"},"rain":{"c":"#87bcdf","p":"M5 14Q0 14 1 9Q2 6 6 7Q6 1 12 2Q17 2 18 7Q24 6 23 11Q23 14 19 14Z","d":"","e":"M6 17L4 22M13 17L11 22M20 17L18 22"}};
+MAP_ICON_DEFS.copHeli={c:'#87bcdf',p:'M6 9H15Q19 9 19 13V15H7L4 13H2V10H4L6 12Z',e:'M4 5H21M12 5V9M8 16V19M16 16V19M6 19H18'};
 MAP_ICON_DEFS.mycar={c:'#55dfcf',p:MAP_ICON_DEFS.deal.p,d:MAP_ICON_DEFS.deal.d};
 const MAP_ICON_PATHS=new Map();
 // v78: volta o comportamento simples — ícones NÃO desviam mais; quando se sobrepõem, o mais perto do jogador fica por cima
@@ -9997,6 +10144,9 @@ function drawMapIcon0(g,kind,x,z,r=6,a=0,emp){
 function drawMissionIcons(g,sc,mini,pRef,rot=0){const size=mini?13/sc:17/sc;for(const q of missionTargets()){if(mini&&pRef&&(Math.abs(q.x-pRef.x)>140||Math.abs(q.z-pRef.z)>140))continue;drawMapIcon(g,'quest',q.x+MOFF,q.z+MOFF,size,rot)}}
 function lastVehicleForMap(){const c=PL.lastCar;return c&&c!==PL.car&&c.alive&&!c.sunk&&vehicles.includes(c)?c:null;}
 function drawPOISet(g,sc,mini,pRef,rot=0){const size=mini?11.5/sc:14/sc;
+ const heli=COPH.h;
+ if(heli?.o&&POL.wanted&&!city.haze&&S.style!=='inverted'&&(!mini||!pRef||Math.hypot(heli.x-pRef.x,heli.z-pRef.z)<=135))
+  drawMapIcon(g,'copHeli',heli.x+MOFF,heli.z+MOFF,size,rot);
  const last=lastVehicleForMap();if(last&&(!mini||!pRef||(Math.abs(last.x-pRef.x)<=135&&Math.abs(last.z-pRef.z)<=135)))drawMapIcon(g,'mycar',last.x+MOFF,last.z+MOFF,mini?13/sc:17/sc,rot);
 for(const q of mapPoiEntries()){if(q.k==='quest')continue;if(!storyMap(q.k))continue;if(mini&&pRef&&(Math.abs(q.x-pRef.x)>135||Math.abs(q.z-pRef.z)>135))continue;drawMapIcon(g,q.k,q.x+MOFF,q.z+MOFF,size,rot,q.emp||null)} }
 function mapInfoLayout(W,H,v){
@@ -11393,6 +11543,26 @@ function pedSkTick(p,dt){const B=BEACH,o=RW/2,lo=o+1.5,hi=o+4.4,ah=B.TU(p.bt+p.b
  if(p.skb){const vis=!PL.inside&&(p.fin===undefined||p.fin>.3);p.skb.visible=vis;p.skb.position.set(p.x,p.gy,p.z);p.skb.rotation.set(0,-Math.atan2(tz,tx),0);const side=(B.TU(p.bt,p.bu+1)[0]-q[0])*tz-(B.TU(p.bt,p.bu+1)[1]-q[1])*tx;p.skb.rotateX(clamp(dt>0?st/dt/1.6:0,-1,1)*.15*Math.sign(side||1))}}
 function pedSkDrop(p){const L=p.skLook,g=p.skb;p.skb=null;p.jy=0;skDisposeG(g);if(!L||!peds.includes(p)||p.state==='bskate')return;
  const loose=SKATE.items.filter(it=>!skInGarage(it)).length;if(loose>=6)return;const a=Math.random()*6.283,o={x:p.x+Math.cos(a)*1.1,z:p.z+Math.sin(a)*1.1};circleVsWorld(o,.3);if(inWater(o.x,o.z))return;skAdd(o.x,o.z,Math.random()*6.283,L,true)}
+function knockPedDown(p,dx,dz){
+ const skater=p.state==='bskate';
+ p.state='down';p.timer=2.6;p.fixed=false;p.rot=(R2()<.5?1:-1)*Math.PI/2;
+ p.vx=dx*5;p.vz=dz*5;p.sp.material.alphaTest=.02;p.sp.material.needsUpdate=true;
+ if(skater)pedSkDrop(p);
+}
+function bumpBeachSkater(x,z){
+ if(PL.inside||!BEACH.skaters?.length)return;
+ const dx=PL.x-x,dz=PL.z-z,len=Math.hypot(dx,dz);
+ if(len<.001)return;
+ const ux=dx/len,uz=dz/len;
+ for(const p of BEACH.skaters){
+  if(p.state!=='bskate'||Math.abs(PL.gy+(PL.jy||0)-p.gy)>1.3)continue;
+  const px=p.x-x,pz=p.z-z,along=px*ux+pz*uz;
+  if(along<0)continue;
+  const t=Math.min(len,along);
+  if(Math.hypot(px-ux*t,pz-uz*t)>.74)continue;
+  knockPedDown(p,ux,uz);ouch(p.x,p.z,p.pitch);
+ }
+}
 /* ================= CÉU: helicóptero e avião passando ================= */
 // faixas de altitude separadas (heli ~135-150 m, avião ~240-280 m): os dois nunca colidem nem atravessam prédios
 // Três fluxos independentes por tipo: 3× o tráfego, sem sincronizar horários ou rotas.
@@ -12213,13 +12383,16 @@ function safeHelipadHintTick(){
  SAFE_HELIPAD_HINT.shown=true;
  toast('VOCÊ PODE GUARDAR UM HELICÓPTERO AQUI','camwarn',6);
 }
-function heliTick(dt){if(!city.ext)return;safeHelipadHintTick();for(const h of HELI.list){
- if(h.state==='falling'){h.fvy-=24*dt;h.y+=h.fvy*dt;h.x+=h.fvx*dt;h.z+=h.fvz*dt;h.fvx*=Math.exp(-dt*.3);h.fvz*=Math.exp(-dt*.3);h.yaw+=h.spin*dt;
+function heliFallTick(h,dt){h.fvy-=24*dt;h.y+=h.fvy*dt;h.x+=h.fvx*dt;h.z+=h.fvz*dt;h.fvx*=Math.exp(-dt*.3);h.fvz*=Math.exp(-dt*.3);h.yaw+=h.spin*dt;
   const g=h.o.g;g.position.set(h.x,h.y,h.z);g.rotation.set(0,-h.yaw,0);g.rotateZ(-.5);g.rotateX(Math.sin(simT*3)*.3);h.o.rot.rotation.y+=dt*8;
   if(Math.random()<dt*25)emit(h.x,h.y+.5,h.z,(Math.random()-.5)*2,1+Math.random()*2,(Math.random()-.5)*2,1.6,1.5,4,0x2a2626,false,.7);
   const gy=groundY(h.x,h.z);if(h.y<=gy+1.2){if(inWater(h.x,h.z)){for(let i=0;i<30;i++)emit(h.x,SEA_Y+.4,h.z,(Math.random()-.5)*7,3+Math.random()*6,(Math.random()-.5)*7,1,.7,.25,0xd8ecff,false,.9)}else{blastAt(h.x,h.z,null,true);shake=Math.max(shake,.9)}
-   heliDropModel(h);h.state='dead';h.respawn=120}}
- else if(h.state==='dead'){h.respawn-=dt;if(!h.noRespawn&&h.respawn<=0&&Math.hypot(PL.x-h.pad.x,PL.z-h.pad.z)>140)heliSpawnAt(h)}
+   heliDropModel(h);h.state='dead';h.respawn=120;return true}
+ return false;
+}
+
+function heliTick(dt){if(!city.ext)return;safeHelipadHintTick();for(const h of HELI.list){
+ if(h.state==='falling')heliFallTick(h,dt); else if(h.state==='dead'){h.respawn-=dt;if(!h.noRespawn&&h.respawn<=0&&Math.hypot(PL.x-h.pad.x,PL.z-h.pad.z)>140)heliSpawnAt(h)}
  else if(h.state==='parked'&&h.o)h.o.bl.visible=false;
  else if(h.state==='idle'&&h.o)heliPose(h,dt,0)}}
 function skyTick(dt){if(!city.ext)return;if(S.style==='haze'){for(const slot of SKY.slots)if(slot.o)skyDrop(slot);return}const pc=TVM.on?TVM.foc:(PL.car||PL);
@@ -12806,9 +12979,18 @@ function carVsWorld(c){
  const near=query(c.x,c.z,t.R+1);
  for(let q=0;q<near.length;q++){const b=near[q];
   if(b.dead||c.x+t.R<b.x0||c.x-t.R>b.x1||c.z+t.R<b.z0||c.z-t.R>b.z1)continue;
-  if(c.airY>.8&&(b.kind==='pole'||b.kind==='tree'||b.kind==='bin'||b.kind==='tlight'||(b.low&&c.airY>b.low-.25)))continue;
+  if(b.drawbridgeGate&&c===PL.car)continue;
+  if(c.airY>.8&&(b.kind==='pole'||b.kind==='tree'||(b.kind==='bin'&&c.airY>(b.bin?.height??.8))||b.kind==='tlight'||(b.low&&c.airY>b.low-.25)))continue;
   if(b.kind==='tlight'&&b.tl){const px=(b.x0+b.x1)/2-c.x,pz=(b.z0+b.z1)/2-c.z,lx=px*ca+pz*sa,lz=-px*sa+pz*ca;if(Math.abs(lx)<hl+.35&&Math.abs(lz)<hw+.35&&Math.hypot(c.vx,c.vz)>3.6){breakTL(b,c);if(c.alive){c.hp-=Math.min(Math.hypot(c.vx,c.vz),35)*.65;if(c.hp<=0)setOnFire(c)}if(c===PL.car)shake=Math.max(shake,.25);continue}}
-  if(b.kind==='bin'){const px=(b.x0+b.x1)/2-c.x,pz=(b.z0+b.z1)/2-c.z,lx=px*ca+pz*sa,lz=-px*sa+pz*ca;if(Math.abs(lx)<hl+.4&&Math.abs(lz)<hw+.4&&!(b.bin&&b.bin.big&&Math.hypot(c.vx,c.vz)<4)){knockBin(b,c.vx,c.vz);continue}}
+  if(b.kind==='bin'&&(!b.bin?.big||Math.hypot(c.vx,c.vz)>=4)){
+   const dx=(b.x0+b.x1)/2-c.x,dz=(b.z0+b.z1)/2-c.z;
+   const bx=(b.x1-b.x0)/2,bz=(b.z1-b.z0)/2,ac=Math.abs(ca),as=Math.abs(sa);
+   // Separating axes of the car and the bin: contact works at the ends of wide dumpsters.
+   if(Math.abs(dx)<bx+hl*ac+hw*as&&Math.abs(dz)<bz+hl*as+hw*ac&&
+      Math.abs(dx*ca+dz*sa)<hl+bx*ac+bz*as&&Math.abs(-dx*sa+dz*ca)<hw+bx*as+bz*ac){
+    knockBin(b,c.vx,c.vz);continue;
+   }
+  }
   if(b.kind==='pole'||b.kind==='tree'){const px=(b.x0+b.x1)/2-c.x,pz=(b.z0+b.z1)/2-c.z;const lx=px*ca+pz*sa,lz=-px*sa+pz*ca;const sp=Math.hypot(c.vx,c.vz),isT=b.kind==='tree';
    if(Math.abs(lx)<hl+.35&&Math.abs(lz)<hw+.35&&sp>(isT?4.5:3.6)){if(isT)breakTree(b,c);else breakPole(b,c);
     if(c.alive){c.hp-=Math.min(sp,35)*(isT?.85:.65);if(c.hp<=0)setOnFire(c)}if(c===PL.car)shake=Math.max(shake,.25);continue}}
@@ -12863,6 +13045,7 @@ function syncCar(c,dt){
   Sp.v+=(K*(mean-c.gy)-D*Sp.v)*st;c.gy+=Sp.v*st;Sp.pv+=(K*(pt-Sp.p)-D*Sp.pv)*st;Sp.p+=Sp.pv*st;Sp.rv+=(K*(rt-Sp.r)-D*Sp.rv)*st;Sp.r+=Sp.rv*st;
   // fim de curso: se alguma roda passaria do topo do arco, a carroceria é empurrada pra cima (como bater no batente) em vez da roda entrar na lataria
   {const A=t.arch;if(A){let ex=0;for(let k=0;k<4;k++){const xl=k<2?t.wb:-t.wb,zl=(k%2?1:-1)*tw,cyk=xl*Math.sin((c.pitch||0)+Sp.p)-zl*Math.sin((c.roll||0)+Sp.r),cap=k<2?A.capF:A.capR,up=Math.min(A.r0-t.wr,(cap>5?9:cap)-2*t.wr)-.012;ex=Math.max(ex,H[k]-c.gy-cyk-up)}if(ex>0){c.gy+=ex;if(Sp.v<0)Sp.v=0}}}}
+ else if(c.air?.bridge){c.gy=0;c.susp=null;c.wh=null;c.whs=null}
  else if(dt===0&&c.susp){}
  else{c.susp=null;c.wh=null;c.whs=null;c.gy+=((c.sunk?-3.4:groundY(c.x,c.z))-c.gy)*Math.min(1,dt*(c.sunk?.7:10))}
  if(c.hopV||c.hopY>0){c.hopY=(c.hopY||0);c.hopV-=22*dt;c.hopY+=c.hopV*dt;if(c.hopY<0){c.hopY=0;c.hopV=c.hopV<-3?-c.hopV*.3:0}}
@@ -13094,20 +13277,30 @@ var TRAFFIC_CALM=null;
 function trafficCalm(x,z,r,sec){TRAFFIC_CALM={x,z,r,until:simT+sec};for(const c of vehicles.slice()){if(c===PL.car||c.police||c.keep||c.owned||c.stashed||c.blitz||c===PL.lastCar||(SAFE.cars||[]).includes(c))continue;if(!(c.mode==='rail'||c.ai||c.parkedNpc||c.tempPark))continue;if(Math.hypot(c.x-x,c.z-z)<r)removeVehicle(c)}
  const B=typeof BLITZ!=='undefined'&&BLITZ.on;if(B&&B.serving&&!vehicles.includes(B.serving)){B.serving=null;B.npcPhase=null}}
 function trafficCalmAt(x,z){const T=TRAFFIC_CALM;if(!T)return false;if(simT>T.until){TRAFFIC_CALM=null;return false}return Math.hypot(x-T.x,z-T.z)<T.r}
+function roadTrafficFactor(x,z,dx,dz){
+ const side=RW/2+2;
+ return isRural(x+dz*side,z-dx*side)||isRural(x-dz*side,z+dx*side)?.5:1;
+}
 function populate(initial){const ctr=TVM.on?TVM.foc:PL.car||PL;const Rp=3*P;const viewR=camMode==='top'?camH*1.3+25:150;
  const want=trafficDensity()*(SEG_END-RW/2);let budget=initial?100000:90;
  // Limite efetivo por regiao, proporcional a densidade configurada e a frota acumulada.
- const region=trafficRegionIndex(),regionRadius=P*.8,regionLimit=Math.max(2,Math.ceil(want*7));
+ const region=trafficRegionIndex(),regionRadius=P*.8;
  if(!POL.wanted&&!WZ.list.length&&vehicles.filter(c=>c.police&&!c.stationParked&&c.alive&&Math.hypot(c.x-ctr.x,c.z-ctr.z)<Rp).length<policeTarget())spawnPoliceCar(initial?40:viewR+20,Rp);
  for(const c of vehicles.slice()){
   if(c.fleeAbandoned&&simT-c.fleeAbandoned>20&&Math.hypot(c.x-ctr.x,c.z-ctr.z)>120){removeVehicle(c);continue}
   if(c===PL.car||c.chase||(c.g&&!c.police))continue;if(!(c.mode==='rail'||c.ai))continue;if(Math.hypot(c.x-ctr.x,c.z-ctr.z)>Rp+45)removeVehicle(c)}
- if(!initial)for(const a of laneMap.values()){let extra=a.length-(Math.ceil(want)+1);for(let i=a.length-1;i>=0&&extra>0;i--){const c=a[i];if(c.mode!=='rail'||c.police||!vehicles.includes(c))continue;if(Math.hypot(c.x-ctr.x,c.z-ctr.z)<viewR+15)continue;removeVehicle(c);extra--}}
+ if(!initial)for(const a of laneMap.values()){
+  const rail=a.find(c=>c.rail)?.rail;if(!rail)continue;
+  const {kx,kz,d}=rail,dir=D[d];
+  const factor=dir?roadTrafficFactor(kx*P+dir[0]*P/2,kz*P+dir[1]*P/2,dir[0],dir[1]):1;
+  let extra=a.length-(Math.ceil(want*factor)+1);for(let i=a.length-1;i>=0&&extra>0;i--){const c=a[i];if(c.mode!=='rail'||c.police||!vehicles.includes(c))continue;if(Math.hypot(c.x-ctr.x,c.z-ctr.z)<viewR+15)continue;removeVehicle(c);extra--}}
  const N=city.N,k0x=Math.max(0,Math.floor((ctr.x-Rp)/P)),k1x=Math.min(N,Math.ceil((ctr.x+Rp)/P)),k0z=Math.max(0,Math.floor((ctr.z-Rp)/P)),k1z=Math.min(N,Math.ceil((ctr.z+Rp)/P));
  for(let kx=k0x;kx<=k1x;kx++)for(let kz=k0z;kz<=k1z;kz++)for(let d=0;d<4;d++){if(!segExists(kx,kz,d))continue;
   const mx=kx*P+D[d][0]*P/2,mz=kz*P+D[d][1]*P/2;const md=Math.hypot(mx-ctr.x,mz-ctr.z);if(md>Rp)continue;
+  const localWant=want*roadTrafficFactor(mx,mz,D[d][0],D[d][1]);
+  const regionLimit=Math.max(2,Math.ceil(localWant*7));
   for(let li=0;li<2;li++){if(budget<=0)return;if(!laneValid(kx,kz,d,li))continue;const a=laneMap.get(laneKey(kx,kz,d,li));const ss=a?a.map(o=>o._s):[];
-   let need=Math.floor(want-ss.length+R2());if(need<=0)continue;let sites;
+   let need=Math.floor(localWant-ss.length+R2());if(need<=0)continue;let sites;
    if(initial||md>viewR+30)sites=null;else{const ep=lanePt(kx,kz,d,li,RW/2+3);if(Math.hypot(ep[0]-ctr.x,ep[1]-ctr.z)<viewR)continue;sites=[RW/2+3];need=1}
    for(let n=0;n<need&&budget>0;n++){const s=sites?sites[0]:RW/2+3+R2()*(SEG_END-RW/2-9);if(ss.some(o=>Math.abs(o-s)<9))continue;
     const p=lanePt(kx,kz,d,li,s);if(Math.hypot(p[0]-PL.x,p[1]-PL.z)<9||trafficCalmAt(p[0],p[1]))continue;if(carsNear(p[0],p[1],5).some(o=>Math.hypot(o.x-p[0],o.z-p[1])<6))continue;
@@ -13280,10 +13473,10 @@ function pedZoneK(){const now=simT||0;if(now-PEDZ.t<2)return PEDZ.k;PEDZ.t=now;c
 function pedTarget(){if(S.style==='inverted'||S.style==='haze')return 0;return Math.max(1,Math.round(S.peds*(50/75)*1.25*(1+(city.pedRatio||0))*pedZoneK()))}
 function pedPoint(p){if(!p.strip)return perimPoint(p.r,p.t);const q=p.strip,L=Math.hypot(q[2]-q[0],q[3]-q[1]);if(p.t>L){p.t=L;p.dir=-1}else if(p.t<0){p.t=0;p.dir=1}
  const ux=(q[2]-q[0])/L,uz=(q[3]-q[1])/L;return[q[0]+ux*p.t,q[1]+uz*p.t,ux,uz]}
-function removePed(p){if(p.skb){skDisposeG(p.skb);p.skb=null}{const V=p.sp&&p.sp.userData.reliefV;if(V){for(let i=1;i<V.length;i++)if(V[i])V[i].dispose();p.sp.userData.reliefV=null}}releasePatioGuest(p);for(const ch of city.chunks.values()){const i=(ch.peds||[]).indexOf(p);if(i>=0)ch.peds.splice(i,1)}if(p.poseMesh){scene.remove(p.poseMesh);p.poseMesh.geometry.dispose();p.poseMesh.material.dispose();p.poseMesh=null}dropUmbrella(p);scene.remove(p.sp);scene.remove(p.sh);p.sp.material.dispose();charTexRelease(p.tex);p.sh.geometry.dispose();p.sh.material.dispose();const k=peds.indexOf(p);if(k>=0)peds.splice(k,1)}
+function removePed(p){clearBurnBar(p);if(p.skb){skDisposeG(p.skb);p.skb=null}{const V=p.sp&&p.sp.userData.reliefV;if(V){for(let i=1;i<V.length;i++)if(V[i])V[i].dispose();p.sp.userData.reliefV=null}}releasePatioGuest(p);for(const ch of city.chunks.values()){const i=(ch.peds||[]).indexOf(p);if(i>=0)ch.peds.splice(i,1)}if(p.poseMesh){scene.remove(p.poseMesh);p.poseMesh.geometry.dispose();p.poseMesh.material.dispose();p.poseMesh=null}dropUmbrella(p);scene.remove(p.sp);scene.remove(p.sh);p.sp.material.dispose();charTexRelease(p.tex);p.sh.geometry.dispose();p.sh.material.dispose();const k=peds.indexOf(p);if(k>=0)peds.splice(k,1)}
 function clearPeds(){while(peds.length)removePed(peds[0])}
 function circleVsWorld(o,r){const near=query(o.x,o.z,r+1);
- const jy=o.jy||0;for(const b of near){if(b.dead)continue;if(o===PL&&b.kind==='bin'&&b.bin&&!b.bin.big&&o.x>b.x0-.45&&o.x<b.x1+.45&&o.z>b.z0-.45&&o.z<b.z1+.45){const bx=(b.x0+b.x1)/2-o.x,bz=(b.z0+b.z1)/2-o.z,l=Math.hypot(bx,bz)||1;knockBin(b,bx/l*5,bz/l*5);continue}if(o===PL&&PL.ubr&&b.low)continue;if(jy>0&&((b.kind==='bin'&&jy>.9)||(b.low&&jy>b.low-.15)))continue;const cx=clamp(o.x,b.x0,b.x1),cz=clamp(o.z,b.z0,b.z1);let dx=o.x-cx,dz=o.z-cz;const d=Math.hypot(dx,dz);
+ const jy=o.jy||0;for(const b of near){if(b.dead||(b.drawbridgeGate&&o===PL&&SKATE.ride))continue;if(b.kind==='bin'&&jy>(b.bin?.height??.9))continue;if(o===PL&&b.kind==='bin'&&b.bin&&!b.bin.big&&Math.hypot(o.x-clamp(o.x,b.x0,b.x1),o.z-clamp(o.z,b.z0,b.z1))<r){const bx=(b.x0+b.x1)/2-o.x,bz=(b.z0+b.z1)/2-o.z,l=Math.hypot(bx,bz)||1;knockBin(b,bx/l*5,bz/l*5);continue}if(o===PL&&PL.ubr&&b.low)continue;if(jy>0&&b.low&&jy>b.low-.15)continue;const cx=clamp(o.x,b.x0,b.x1),cz=clamp(o.z,b.z0,b.z1);let dx=o.x-cx,dz=o.z-cz;const d=Math.hypot(dx,dz);
   if(d<r){if(d>1e-5){o.x=cx+dx/d*r;o.z=cz+dz/d*r;const vn=(o.vx||0)*dx/d+(o.vz||0)*dz/d;if(vn<0&&o.vx!==undefined){o.vx-=vn*dx/d*1.5;o.vz-=vn*dz/d*1.5}}
    else{const d0=o.x-b.x0,d1=b.x1-o.x,d2=o.z-b.z0,d3=b.z1-o.z,m=Math.min(d0,d1,d2,d3);if(m===d0)o.x=b.x0-r;else if(m===d1)o.x=b.x1+r;else if(m===d2)o.z=b.z0-r;else o.z=b.z1+r}}}}
 function circleVsCars(o,r,isPlayer){let hit=0,hc=null;const jy=o.jy||0;
@@ -13315,6 +13508,7 @@ function updatePeds(dt){try{ped3dJobTick()}catch(e){console.error(e);PED3JOB.cur
  const anyRain=CELLS.length>0;
  const frameDt=dt,focal=TVM.on?TVM.foc:PL.car||PL;
  for(const p of peds.slice()){
+  if(p.flameBurn)pedBurnTick(p,frameDt);
   const dryX=p.x,dryZ=p.z;dt=frameDt;const dist2=(p.x-focal.x)**2+(p.z-focal.z)**2;
   const ambient=!p.fixed&&!p.cop&&(p.state==='walk'||p.state==='idle'||p.state==='talk'||p.state==='gaze'||p.state==='bwalk')&&(p.fin===undefined||p.fin>=1);
   const interval=ambient?(dist2>140*140?.12:dist2>80*80?.066:dist2>42*42?.033:0):0; /* v78: >42 m a 30 Hz, >80 m a 15 Hz, >140 m a 8 Hz */
@@ -13713,10 +13907,13 @@ function updatePlayer(dt){
   if(l){PL.face=[mx/l,mz/l];PL.anim+=dt*(spd>5?11:7)}else PL.anim=0;
   const bx=PL.x,bz=PL.z;PL.x+=PL.vx*dt;PL.z+=PL.vz*dt;circleVsWorld(PL,.4);shipPlayerVsContainers(PL,.38);
   if(!PL.inside)dbWallActor(PL,bx,bz,dt,.36);
+  bumpBeachSkater(bx,bz);
  }
  if(PL.jy>0||PL.jv>0){PL.jv-=16*dt;PL.jy+=PL.jv*dt;let fl=0;
   for(const c of carsNear(PL.x,PL.z,8)){if(c===PL.car)continue;const dx=PL.x-c.x,dz=PL.z-c.z,ca=Math.cos(c.a),sa=Math.sin(c.a),lx=dx*ca+dz*sa,lz=-dx*sa+dz*ca;if(Math.abs(lx)<c.t.L/2-.1&&Math.abs(lz)<c.t.W/2-.05&&PL.jy>c.t.H-.5)fl=Math.max(fl,c.t.H*.95)}
-  if(PL.jy<=fl){PL.jy=fl;if(PL.jv<0){if(fl>0&&PL.jv<-4)thud(3);PL.jv=0}}}
+  const bridgeFlight=SKATE.ride?.dbFlight;
+  if(bridgeFlight&&PL.jv<=0&&!inWater(PL.x,PL.z))fl=Math.max(fl,groundY(PL.x,PL.z));
+  if(PL.jy<=fl){if(bridgeFlight){SKATE.ride.dbFlight=false;PL.gy=fl+SK_UP;fl=0}PL.jy=fl;if(PL.jv<0){if(fl>0&&PL.jv<-4)thud(3);PL.jv=0}}}
  if(!PL.dead){const h=circleVsCars(PL,.4,true);if(h&&h.v>4.2&&!h.front){PL.vx=h.nx*3.5;PL.vz=h.nz*3.5}
   else if(h&&h.v>4.2&&maskSafe()){PL.down=2.4;PL.maskKO=true;PL.vx=h.pvx*.8+h.nx*4;PL.vz=h.pvz*.8+h.nz*4;PL.rot=Math.PI/2;thud(h.v);if(h.c.ai&&h.v>6)h.c.ai.stun=1.2;$('#ko').textContent=translatePlain('OLHA MÃE, FUI ATROPELADO! HA HA!');$('#ko').hidden=false} /* v78: Maskara atropelada não se machuca: cai, ri e levanta */
   else if(h&&h.v>4.2){const dmg=Math.round((h.v-3)*4.5);PL.hp-=armorHit(dmg);rumble(.8,.8,300);PL.down=1.4;PL.vx=h.pvx*.8+h.nx*4;PL.vz=h.pvz*.8+h.nz*4;PL.rot=Math.PI/2;thud(h.v);
@@ -13725,7 +13922,7 @@ function updatePlayer(dt){
  const es=maskOn()?null:estuaryAt(PL.x,PL.z);if(es&&!PL.car&&!PL.dead){PL.x+=es.dx*(1-es.edge)*5*dt;PL.z+=es.dz*(1-es.edge)*5*dt;if(es.edge<.22)drown()}if(!worldPlGy(dt)){let sy=shipAt(PL.x,PL.z)?shipSupportY(PL.x,PL.z,PL.gy+PL.jy):groundY(PL.x,PL.z);{ /* v79r2: Maskara correndo na água passa POR BAIXO das pontes — segue no nível da água, ignora a mureta baixa e some sob a laje (balão 1x por passagem) */
   const mk=maskOn()&&!PL.car&&!PL.inside,wet=mk&&inWater(PL.x,PL.z),dk=(m)=>(city.decks||[]).some(r=>PL.x>r[0]-m&&PL.x<r[2]+m&&PL.z>r[1]-m&&PL.z<r[3]+m);
   PL.ubr=mk&&!wet&&PL.gy<-1&&dk(1.2);PL.ubrIn=PL.ubr&&dk(-.3);if(PL.ubrIn&&!PL.ubrSaid){PL.ubrSaid=true;think(PL,'Gostoso esse concreto todo',2.6)}if(!PL.ubr&&!dk(3))PL.ubrSaid=false;
-  if(wet||PL.ubr)sy=waterLevel(PL.x,PL.z)+.02} /* v78: só fora de interiores (o lab fica em coordenada de mar) */ /* v78: Maskara corre por cima de rio e mar */if(SKATE.ride)sy+=SK_UP;PL.gy+=(sy-PL.gy)*Math.min(1,dt*10)}
+  if(wet||PL.ubr)sy=waterLevel(PL.x,PL.z)+.02} /* v78: só fora de interiores (o lab fica em coordenada de mar) */ /* v78: Maskara corre por cima de rio e mar */if(SKATE.ride)sy=SKATE.ride.dbFlight?SK_UP:sy+SK_UP;PL.gy+=(sy-PL.gy)*Math.min(1,dt*10)}
  const moving=Math.hypot(PL.vx,PL.vz)>.5&&PL.down<=0;const ph=Math.floor(PL.anim)%4;const fr=PL.jy>.05?1:moving?(ph===1?1:ph===3?2:0):0;
  setFrame(PL.tex,pickDir(PL.face[0],PL.face[1],PL.x,PL.z),fr);
  placeSprite(PL);const vis=(camMode!=='fps'||VIEW.tp)&&!PL.ubrIn&&!(typeof PHOTO!=='undefined'&&PHOTO.hidePl);PL.sp.visible=vis;PL.sh.visible=vis;
@@ -14519,7 +14716,7 @@ addEventListener('keydown',e=>{
  if(e.code==='KeyF'){if(!taxiHoldStart('kb')){enterExit();radioKick()}}
  if(e.code==='KeyG')taxiCall();
  if(e.code==='Space')plJump();
- if(e.code==='Digit1')gunHolster();if(e.code==='Digit2')gunTry('pistol');if(e.code==='Digit3')gunTry('magnum');if(e.code==='Digit4')gunTry('smg');if(e.code==='Digit5')gunTry('rpg');if(e.code==='Digit6')gunTry('grenade');if(e.code==='Digit7')gunTry('remote');if(e.code==='Digit8')gunTry('jammer');
+ if(e.code==='Digit1')gunHolster();if(e.code==='Digit2')gunTry('pistol');if(e.code==='Digit3')gunTry('magnum');if(e.code==='Digit4')gunTry('smg');if(e.code==='Digit5')gunTry('rpg');if(e.code==='Digit6')gunTry('grenade');if(e.code==='Digit7')gunTry('remote');if(e.code==='Digit8')gunTry('jammer');if(e.code==='Digit9')gunTry('flame');
  if(e.code==='KeyV')cycleView();
  if(e.code==='Equal'||e.code==='NumpadAdd')ORB.d=Math.max(16,ORB.d-4);if(e.code==='Minus'||e.code==='NumpadSubtract')ORB.d=Math.min(70,ORB.d+4);
  if(e.code==='Escape')openMenu();
@@ -15143,7 +15340,7 @@ function monRam(pm){const R=MON.ram||(MON.ram={ua:null,uaT:0,last:-1,lastT:perfo
 function monKV(id,rows){const el=$('#'+id);if(!el)return;const h=rows.map(r=>'<div><span>'+r[0]+'</span><b'+(r[2]?' class="'+r[2]+'"':'')+'>'+r[1]+'</b></div>').join('');if(el.dataset.h!==h){el.dataset.h=h;el.innerHTML=h}}
 function monPanels(ri,trMs,pdMs,skip,iv,A){
  const worst=A.max||iv;MON.hist=MON.hist||[];MON.hist.push([iv,worst]);if(MON.hist.length>64)MON.hist.shift();
- $('#mWorst').textContent=worst.toFixed(0)+' ms';$('#mHitch').textContent=String(A.hitch||0);$('#mBuild').textContent='v.'+GAME_VER+' · '+(typeof BUILD_TAG!=='undefined'?BUILD_TAG:'');
+ $('#mWorst').textContent=worst.toFixed(0)+' ms';$('#mHitch').textContent=String(A.hitch||0);$('#mBuild').textContent='v'+GAME_VER+' · '+(typeof BUILD_TAG!=='undefined'?BUILD_TAG:'');
  {const c=$('#mSpark'),g=c.getContext('2d'),W=c.width,H=c.height,n=MON.hist.length,bw=W/64;g.clearRect(0,0,W,H);
   const y=ms=>H-Math.min(H,ms/50*H);g.fillStyle='#ffffff12';for(const ms of[16.7,33.3])g.fillRect(0,y(ms),W,1);
   MON.hist.forEach((h,k)=>{const x=W-(n-k)*bw;g.fillStyle=h[1]>50?'#ff5a5a':h[1]>33.4?'#ffc23a':'#4ad66d55';g.fillRect(x,y(h[1]),bw-1,H-y(h[1]));g.fillStyle=h[0]>33.4?'#ffc23a':'#4ad66d';g.fillRect(x,y(h[0]),bw-1,H-y(h[0]))});
@@ -15185,9 +15382,11 @@ function benchStats(k){const a=BENCH.samples?.[k];return a&&a.n?{min:a.min,mean:
 function benchNum(n,unit){return n===null||!Number.isFinite(n)?'N/D':(unit==='FPS'?n.toFixed(1):n.toFixed(1))+' '+unit}
 function benchPreset(name){
  const pc={...CFG_DEF,mv2:1,iv2:1,vol:{...VOL}};
- if(name==='LOW')Object.assign(pc,{shadows:false,shadowQuality:1,bloom:false,refl:false,traffic:0,peds:0,renderScale:0,drawDistance:0,objectDistance:0,shadowDistance:0,detailedShadows:false,lampLighting:false,lampCount:1});
- if(name==='HIGH')Object.assign(pc,{shadows:true,shadowQuality:4,bloom:true,refl:true,traffic:100,peds:100,renderScale:100,drawDistance:100,objectDistance:100,shadowDistance:100,detailedShadows:true,lampLighting:true,lampCount:4});
- if(name==='MEDIUM')Object.assign(pc,{shadows:true,shadowQuality:1,bloom:true,refl:true,traffic:50,peds:50,renderScale:100,drawDistance:50,objectDistance:50,shadowDistance:50,detailedShadows:false,lampLighting:true,lampCount:4});
+ if(name==='LOW')Object.assign(pc,{shadows:false,shadowQuality:1,bloom:false,refl:false,renderScale:0,drawDistance:0,objectDistance:0,shadowDistance:0,detailedShadows:false,lampLighting:false,lampCount:1});
+ if(name==='HIGH')Object.assign(pc,{shadows:true,shadowQuality:4,bloom:true,refl:true,renderScale:100,drawDistance:100,objectDistance:100,shadowDistance:100,detailedShadows:true,lampLighting:true,lampCount:4});
+ if(name==='MEDIUM')Object.assign(pc,{shadows:true,shadowQuality:1,bloom:true,refl:true,renderScale:100,drawDistance:50,objectDistance:50,shadowDistance:50,detailedShadows:false,lampLighting:true,lampCount:4});
+ const density=GRAPHICS_PRESETS[name];
+ if(density){pc.traffic=density.traffic;pc.peds=density.peds}
  // FPS ilimitado em todos os perfis, para a comparação medir capacidade real.
  pc.fpsLimit=0;pc.showHud=false;pc.showMinimap=false;
  return pc;
@@ -15517,11 +15716,11 @@ $('#optPoleShadows').addEventListener('change',e=>{S.poleShadows=e.target.checke
 // e interrompe todo o menu (seed vazia, botoes sem eventos).
 const IS_MOBILE=pixelIsMobile();
 const GRAPHICS_PRESETS={
- LOW:{traffic:0,peds:0,drawDistance:0,objectDistance:0,shadowDistance:0,renderScale:40,
+ LOW:{traffic:25,peds:25,drawDistance:0,objectDistance:0,shadowDistance:0,renderScale:40,
       shadows:false,shadowQuality:1,detailedShadows:false,poleShadows:false,bloom:false,refl:false,lampLighting:false,lampCount:1,sprite8:false},
  MEDIUM:{traffic:50,peds:50,drawDistance:150,objectDistance:25,shadowDistance:0,renderScale:90,
        shadows:true,shadowQuality:1,detailedShadows:true,poleShadows:false,bloom:true,refl:true,lampLighting:!IS_MOBILE,lampCount:4,sprite8:false},
- HIGH:{traffic:100,peds:100,drawDistance:200,objectDistance:100,shadowDistance:100,renderScale:100,
+ HIGH:{traffic:50,peds:50,drawDistance:200,objectDistance:100,shadowDistance:100,renderScale:100,
       shadows:true,shadowQuality:4,detailedShadows:true,poleShadows:true,bloom:true,refl:true,lampLighting:true,lampCount:4,sprite8:true}
 };
 function graphicsPresetSelected(){
@@ -17053,15 +17252,17 @@ function rampMesh(r,det,neon,marks){const{x,z,dx,dz,L,w,h}=r,px=-dz,pz=dx,P3=(s,
  if(r.kind!=='dirt'){for(let k=1;k<5;k++){const s=k/5*L,y=h*s/L+.02;det.qa(P3(s,-w/2,y),P3(s,w/2,y),P3(s+.25,w/2,y+h*.25/L),P3(s+.25,-w/2,y+h*.25/L),r.insane?COL('#f4f4f0'):COL('#e8c020'),P3(s,0,y-5))}}
  if(r.insane){for(let k=1;k<=3;k++){const s=-k*5;const t0=P3(s,0,.03),a1=P3(s-1.6,-1.3,.03),a2=P3(s-1.6,1.3,.03);marks.qa(t0,a1,a2,a2,COL('#ffd200'),[t0[0],-5,t0[2]]);marks.flat(...(()=>{const q=P3(s-3.4,0,0);return[q[0]-.35,q[2]-.35,q[0]+.35,q[2]+.35]})(),.03,COL('#ffd200'))}
   if(DN&&city.st.night)neon.box(...(()=>{const q=P3(L,0,h);return[q[0]-.1,h,q[2]-.1,q[0]+.1,h+.1,q[2]+.1]})(),COL('#ffd200'))}}
+function rampImpulse(speed,slope){return speed*slope*1.05+1.2}
 function rampTick(c,dt){if(c.airY>0||c.airV>0||!city.ramps)return;let on=null;
  for(const r of city.ramps){if(Math.abs(c.x-r.x)>r.L+6||Math.abs(c.z-r.z)>r.L+6)continue;const rx=c.x-r.x,rz=c.z-r.z,s=rx*r.dx+rz*r.dz,l=-rx*r.dz+rz*r.dx;if(Math.abs(l)<r.w/2+.3&&s>-.5&&s<r.L+3){on=[r,s];break}}
  if(!on){c.rampY=0;c.rs=null;return}const[r,s]=on,v=c.vx*r.dx+c.vz*r.dz;
  if(v>2&&s>=0&&s<=r.L)c.rampY=r.h*s/r.L;else if(s<0)c.rampY=0;
- if(s>=r.L-v*dt*1.1&&s<r.L+2.5&&(c.rs===null||c.rs===undefined||c.rs<r.L)&&s>0&&v>5){c.airY=r.h;c.rampY=0;c.airV=v*(r.h/r.L)*1.05+1.2;c.air={r,x0:c.x,z0:c.z,t:0};c.rs=null;
+ if(s>=r.L-v*dt*1.1&&s<r.L+2.5&&(c.rs===null||c.rs===undefined||c.rs<r.L)&&s>0&&v>5){c.airY=r.h;c.rampY=0;c.airV=rampImpulse(v,r.h/r.L);c.air={r,x0:c.x,z0:c.z,t:0};c.rs=null;
   if(c===PL.car&&r.insane&&v>12){JUMP.active=true;JUMP.r=r;JUMP.t=0;TS=.4;const px=-r.dz,pz=r.dx;JUMP.cam=[c.x+r.dx*14+px*24,9+r.h,c.z+r.dz*14+pz*24]}return}
  c.rs=s}
 function airTick(c,dt){if(!(c.airY>0||c.airV>0))return;c.air&&(c.air.t+=dt);c.airV-=14*dt;c.airY+=c.airV*dt;
- if(c.airY<=0){const vy=-c.airV;c.airY=0;c.airV=0;const a=c.air;c.air=null;c.hopV=Math.min(4,vy*.2);
+ const bridge=!!c.air?.bridge,floor=bridge&&!inWater(c.x,c.z)?groundY(c.x,c.z):0;
+ if(c.airV<=0&&c.airY<=floor){const vy=-c.airV;if(bridge)c.gy=floor;c.airY=0;c.airV=0;const a=c.air;c.air=null;c.hopV=Math.min(4,vy*.2);
   if(c===PL.car||Math.hypot(c.x-PL.x,c.z-PL.z)<60){thud(Math.min(20,vy*1.4));for(let i=0;i<10;i++)emit(c.x+(Math.random()-.5)*c.t.L,.3,c.z+(Math.random()-.5)*c.t.W,(Math.random()-.5)*4,1+Math.random()*2,(Math.random()-.5)*4,.4,.5,.1,0xffb030,true,1)}
   if(c===PL.car){shake=Math.max(shake,Math.min(1.2,vy/14));rumble(clamp(vy/15,.2,1),clamp(vy/11,.2,1),Math.min(380,120+vy*14))}
   if(vy>9&&c.alive){c.hp-=(vy-9)*3.2;if(c.hp<=0)setOnFire(c)}
@@ -17543,9 +17744,14 @@ const COPH={h:null,respawnAt:0};
 function polDecayTick(dt){if(!played||!POL.wanted||menuOpen){if(!POL.wanted)POL.lvT=0;return}POL.lvT=(POL.lvT||0)+dt;if((POL.level||1)>1&&POL.lvT>=600){POL.lvT=0;POL.level--;POL.boomW=0;toast('<span style="color:#ffd200">'+'★'.repeat(POL.level)+'</span> '+translatePlain('NÍVEL')+' '+POL.level+'<br><small style="font-size:11px;color:#fff">'+translatePlain('você sobreviveu · a polícia afrouxou o cerco')+'</small>')}}
 function copHeliTick(dt){polDecayTick(dt);const want=played&&POL.wanted&&(POL.level||1)>=3&&!city.haze&&!PL.dead,pc=PL.heli||PL.car||PL;let H=COPH.h;
  if(!H){if(!want||PL.inside||simT<COPH.respawnAt)return;const a=Math.random()*6.283;H=COPH.h={o:skyHeli('police'),x:pc.x+Math.cos(a)*170,z:pc.z+Math.sin(a)*170,y:60,yaw:0,shootT:3,leave:0,ang:Math.random()*6.283};scene.add(H.o.g);initAudio();H.snd=heliSound();toast('<span style="color:#4aa8ff">HELICÓPTERO DA POLÍCIA</span> NO AR!')}
+ if(H.state==='falling'){
+  if(heliFallTick(H,dt)){COPH.h=null;COPH.respawnAt=simT+(want?8:45)}
+  return;
+ }
+ H.vx=H.vz=0;
  if(!want){H.leave+=dt;H.y+=dt*12}else H.leave=0;
  H.ang+=dt*.35;const ty0=PL.heli?PL.heli.y+8:Math.max(groundY(pc.x,pc.z)+30,30),tx=pc.x+Math.cos(H.ang)*20,tz=pc.z+Math.sin(H.ang)*20;
- if(H.leave<=0){const dx=tx-H.x,dz=tz-H.z,d=Math.hypot(dx,dz),sp=Math.min(34,d*1.4);if(d>.1){H.x+=dx/d*sp*dt;H.z+=dz/d*sp*dt}H.y+=(ty0-H.y)*Math.min(1,dt*1.2)}
+ if(H.leave<=0){const dx=tx-H.x,dz=tz-H.z,d=Math.hypot(dx,dz),sp=Math.min(34,d*1.4);if(d>.1){H.vx=dx/d*sp;H.vz=dz/d*sp;H.x+=H.vx*dt;H.z+=H.vz*dt}H.y+=(ty0-H.y)*Math.min(1,dt*1.2)}
  H.yaw=Math.atan2(pc.z-H.z,pc.x-H.x);const g=H.o.g;g.position.set(H.x,H.y,H.z);g.rotation.set(0,-H.yaw,0);g.rotateZ(-.12);H.o.rot.rotation.y+=dt*30;H.o.tr.rotation.y+=dt*42;
  if(H.o.pl){const f=Math.floor(simT*6)%2;H.o.pl[0].visible=!!f;H.o.pl[1].visible=!f}
  if(H.snd){const d=Math.hypot(H.x-PL.x,H.z-PL.z);H.snd.g.gain.setTargetAtTime(menuOpen||!S.sound?0:Math.max(0,.8-d/220),AC.currentTime,.2)}
@@ -18474,17 +18680,34 @@ function skBlocked(){const R=SKATE.ride,ca=Math.cos(R.a),sa=Math.sin(R.a);
 /* chamado no lugar da caminhada (updatePlayer) */
 function skMove(dt){const R=SKATE.ride;let thr=((keys.KeyW||keys.ArrowUp)?1:0)-((keys.KeyS||keys.ArrowDown)?1:0),st=((keys.KeyD||keys.ArrowRight)?1:0)-((keys.KeyA||keys.ArrowLeft)?1:0);
  if(PAD.on){thr=clamp(thr+(PAD.r2||0)-(PAD.l2||0)-(Math.abs(PAD.ly)>.3?PAD.ly:0),-1,1);if(Math.abs(PAD.lx)>.12)st=clamp(st+PAD.lx,-1,1)}
- const air=PL.jy>.03;if(!air){if(thr>0)R.v+=8.4*thr*dt*Math.max(0,1-R.v/SK_VMAX);else if(thr<0)R.v-=12*dt*(-thr);R.v-=(.3+R.v*.035)*dt;R.v=clamp(R.v,0,SK_VMAX)} /* v79r39: velocidade final 2× de novo (~15,8 → ~31,6 m/s = SK_TOP; 28 m/s em ~8 s) */
+ const air=PL.jy>.03;
+ if(!air){
+  const u=outDist(PL.x,PL.z);
+  const sand=u>SAND0&&u<=SHORE+.4&&coastGround(PL.x,PL.z)!==null&&
+    !(city.lh&&lhLand(PL.x,PL.z))&&pierY(PL.x,PL.z)===null;
+  const scale=sand?.25:1,limit=SK_VMAX*scale;
+  if(sand&&!R.onSand)R.v*=scale;
+  R.onSand=sand;
+  if(thr>0)R.v+=8.4*scale*thr*dt*Math.max(0,1-R.v/limit);
+  else if(thr<0)R.v-=12*dt*(-thr);
+  R.v-=(.3*scale+R.v*.035)*dt;
+  R.v=clamp(R.v,0,limit);
+ }
  skFlipTick(R,air,dt);if(!SKATE.ride)return;
  R.a+=SK_TURN*st*(1.9-Math.min(1.05,R.v*.11))*dt*(R.v>.2?1:.45)*(air?.35:1);
  R.lean+=((st*Math.min(1,R.v/4.5))*.2-R.lean)*Math.min(1,dt*6);
  const ca=Math.cos(R.a),sa=Math.sin(R.a);PL.vx=ca*R.v;PL.vz=sa*R.v;PL.face=[-sa,ca];PL.anim=0; /* v79r24: de lado na prancha (peito virado pra direita do movimento) */
  if(camMode!=='top'){const ty=Math.atan2(-ca,-sa);let d=ty-PL.yaw;d=Math.atan2(Math.sin(d),Math.cos(d));PL.yaw+=d*Math.min(1,dt*3.2)}
- const bx=PL.x,bz=PL.z,ex=PL.vx*dt,ez=PL.vz*dt;PL.x+=ex;PL.z+=ez;circleVsWorld(PL,.4);shipPlayerVsContainers(PL,.38);if(!PL.inside)dbWallActor(PL,bx,bz,dt,.36);
+ const bx=PL.x,bz=PL.z,ex=PL.vx*dt,ez=PL.vz*dt;PL.x+=ex;PL.z+=ez;circleVsWorld(PL,.4);shipPlayerVsContainers(PL,.38);
+ if(!air&&!PL.inside){
+  const j=dbRampExit(bx,bz,PL.x,PL.z,PL.vx,PL.vz);
+  if(j){R.dbFlight=true;PL.gy=SK_UP;PL.jy=j.height;PL.jv=j.impulse}
+ }
+ bumpBeachSkater(bx,bz);
  const want=Math.hypot(ex,ez),got=Math.hypot(PL.x-bx,PL.z-bz);
  if(R.v>2.2&&want>1e-4&&got<want*.5){R.crash+=dt;if(R.crash>.03){skCrash();return}}else{R.crash=0;if(got<want*.9)R.v*=Math.max(.6,1-dt*2)} /* raspou de lado na parede: perde velocidade, não cai */
  if(R.v>2.2&&skBlocked()){skCrash();return}
- if(!inWater(PL.x,PL.z))R.dry={x:PL.x,z:PL.z};else if(!maskOn()){skCrash();return}}
+ if(!inWater(PL.x,PL.z))R.dry={x:PL.x,z:PL.z};else if(!R.dbFlight&&!maskOn()){skCrash();return}}
 var SK_TURN=1;
 function skJump(){if(PL.jy>.03||PL.jv>0||PL.down>0)return;const R=SKATE.ride,top=!!R&&R.v>=SK_TOP*.88;PL.jv=top?6.2:5.4;PL.jy=.001;if(R){R.flip=0;R.fv=0;R.trick=top;R.air=false}try{clang(.05)}catch(e){}}
 /* v79r39: KICKFLIP — na velocidade máxima, SEGURAR o pulo gira a prancha no eixo do comprimento; soltou, ela termina a volta sozinha.
@@ -19151,10 +19374,32 @@ function dbLocal(d,x,z){const dx=x-d.cx,dz=z-d.cz;return[dx*d.ux+dz*d.uz,-dx*d.u
 function dbAt(x,z){for(const d of city.dbs){const[s,l]=dbLocal(d,x,z);if(Math.abs(s)<DB_G&&Math.abs(l)<RW/2)return[d,s,l]}return null}
 function dbGround(x,z){const h=dbAt(x,z);if(!h)return null;const[d,s]=h,a=d.ang;if(a<.004)return null;const dd=s<0?s+DB_G:DB_G-s;if(dd<=DB_G*Math.cos(a))return dd*Math.tan(a);return 0}
 function dbHole(x,z){const h=dbAt(x,z);if(!h)return false;const[d,s]=h,a=d.ang;if(a<.03)return false;const dd=s<0?s+DB_G:DB_G-s;return dd>DB_G*Math.cos(a)+.05}
+// Cruzamento da ponta da folha, comparando sua posição antes e depois do movimento.
+function dbRampExit(x0,z0,x,z,vx,vz){
+ for(const d of city.dbs||[]){
+  if(d.ang<.03)continue;
+  const [s0,l0]=dbLocal(d,x0,z0),[s,l]=dbLocal(d,x,z);
+  const side=s0<0?-1:1,from=DB_G-s0*side,to=DB_G-s*side;
+  if(Math.abs(l0)>=RW/2||Math.abs(l)>=RW/2)continue;
+  const run=DB_G*Math.cos(d.ang),oldRun=DB_G*Math.cos(d.prevAng??d.ang);
+  if(from<-.05||from>Math.max(run,oldRun)+.05||to<=run||to>DB_G*2)continue;
+  const speed=-side*(vx*d.ux+vz*d.uz);
+  if(speed<=0)continue;
+  return {height:DB_G*Math.sin(d.ang),impulse:speed>5?rampImpulse(speed,Math.tan(d.ang)):0};
+ }
+ return null;
+}
+function dbPlayerCarRamp(c){
+ if(!c.alive||c.sunk||c.air||c.t.boat||c.wet)return;
+ const j=dbRampExit(c.px,c.pz,c.x,c.z,c.vx,c.vz);
+ if(!j)return;
+ c.gy=0;c.rampY=0;c.airY=j.height;c.airV=j.impulse;
+ c.air={bridge:true,t:0};
+}
 function dbCar(c,dt){if(!city.dbs||!city.dbs.length||c.airY>0||c.t.boat)return;const h=dbAt(c.x,c.z);if(!h){c.dbOn=false;return}const[d,s]=h,a=d.ang;if(a<.01){c.dbOn=false;return}
  const dd=s<0?s+DB_G:DB_G-s,ext=DB_G*Math.cos(a),out=s<0?1:-1,ux=d.ux*out,uz=d.uz*out,v=c.vx*ux+c.vz*uz;
  if(dd<=ext){c.dbOn=true;const gk=9.81*Math.sin(a)*dt;c.vx-=ux*gk;c.vz-=uz*gk;c.sleep=false}
- else{if(c.dbOn&&v>5){c.airY=Math.max(.3,ext*Math.tan(a));c.airV=v*Math.sin(a)+1;c.air={x0:c.x,z0:c.z,t:0};if(c===PL.car)shake=Math.max(shake,.3)}c.dbOn=false}}
+ else{if(c!==PL.car&&c.dbOn&&v>5){c.airY=Math.max(.3,ext*Math.tan(a));c.airV=v*Math.sin(a)+1;c.air={x0:c.x,z0:c.z,t:0};if(c===PL.car)shake=Math.max(shake,.3)}c.dbOn=false}}
 // Folha quase a 45 graus: colisao de parede em vez de rampa.
 // Quem ficou sobre a folha durante a subida continua escorregando em
 // direcao a dobradica (nao e teleportado para o fim da ponte).
@@ -19330,7 +19575,7 @@ function dbBuild(d){const g=new THREE.Group(),st=STYLES[S.style],C=c=>new THREE.
         p1x=d.cx+d.ux*sAt-d.uz*mx,p1z=d.cz+d.uz*sAt+d.ux*mx;
   const col=addCol(Math.min(p0x,p1x)-.11,Math.min(p0z,p1z)-.11,
                    Math.max(p0x,p1x)+.11,Math.max(p0z,p1z)+.11,'rock');
-  col.dead=true;
+  col.dead=true;col.drawbridgeGate=true;
   d.gates.push({sd,pivot,col,angle:1.4,lamp});
  }
  scene.add(g);d.g=g;DB.groups.push(g)}
@@ -19378,6 +19623,7 @@ function dbTick(dt){if(!played||!city.dbs)return;const k=S.seed+':'+S.style;if(D
     if(d.reopen||d.forced)dbBeginWarning(d)}
    else{dbBeginWarning(d)}
   }
+  d.prevAng=d.ang;
   d.ang=d.state==='rising'?DB_ANG*(1-Math.max(0,d.t)/DB_T.rising):
    d.state==='open'?DB_ANG:d.state==='lowering'?DB_ANG*Math.max(0,d.t)/DB_T.lowering:0;
   // Braços abrem primeiro após a descida; descem antes da subida.
@@ -20198,16 +20444,16 @@ function isleTick(dt){if(!city.isle||!played)return;const T=ISLE.toll,pc=PL.car|
    Toda a vitrine usa malha estática de cenário, sem sprites novos.
    ============================================================ */
 const AMMO={pos:null,grp:null,IN:null,arrow:null,inArrow:null,clerk:null,lock:0,uiOpen:false,panel:null,up:{},sel:'pistol'};
-const AMMO_PRICES={pistol:450,smg:1700,magnum:2300,rpg:12500,grenade:1000,remote:2300,jammer:3800};
-const AMMO_BATCH={pistol:50,smg:50,magnum:50,rpg:3,grenade:3,remote:3,jammer:1};
-const AMMO_CATS={pistol:'Pistolas',smg:'Automáticas',magnum:'Pistolas',rpg:'Pesadas',grenade:'Explosivos',remote:'Explosivos',jammer:'Eletrônicos'};
+const AMMO_PRICES={pistol:450,smg:1700,magnum:2300,rpg:12500,grenade:1000,remote:2300,jammer:3800,flame:2400};
+const AMMO_BATCH={pistol:50,smg:50,magnum:50,rpg:3,grenade:3,remote:3,jammer:1,flame:50};
+const AMMO_CATS={pistol:'Pistolas',smg:'Automáticas',magnum:'Pistolas',rpg:'Pesadas',grenade:'Explosivos',remote:'Explosivos',jammer:'Eletrônicos',flame:'Pesadas'};
 const AMMO_UPGRADABLE=new Set(['pistol','smg','magnum']);
 function ammoUpgrade(w,k){const x=AMMO.up[w];return x?Math.min(3,Math.max(0,x[k]|0)):0}
 function ammoUpgradeCost(w,k){const n=ammoUpgrade(w,k),factor=k==='damage'?1:k==='rate'?1.15:1.05;
  return Math.round((300+AMMO_PRICES[w]*.30)*(1+n*.9)*factor/10)*10}
 function ammoMsg(br,en){return S.lang==='en'?en:br}
 function ammoBalance(){return '$'+Math.max(0,PL.money||0).toLocaleString(S.lang==='en'?'en-US':'pt-BR')}
-function ammoText(w){return S.lang==='en'?({pistol:'PISTOL',smg:'SMG',magnum:'COLT MAGNUM',rpg:'ROCKET LAUNCHER',grenade:'GRENADE',remote:'REMOTE CHARGE',jammer:'JAMMER'}[w]):WPN[w].name}
+function ammoText(w){return S.lang==='en'?({pistol:'PISTOL',smg:'SMG',magnum:'COLT MAGNUM',rpg:'ROCKET LAUNCHER',grenade:'GRENADE',remote:'REMOTE CHARGE',jammer:'JAMMER',flame:'FLAMETHROWER'}[w]):WPN[w].name}
 function ammoResetView(){if(AMMO.guy&&peds.includes(AMMO.guy))removePed(AMMO.guy);AMMO.guy=null;if(AMMO.panel)AMMO.panel.hidden=true;AMMO.uiOpen=false;AMMO.lock=0;
  if(AMMO.clerk&&peds.includes(AMMO.clerk))removePed(AMMO.clerk);AMMO.clerk=null;
  for(const k of ['arrow','inArrow'])if(AMMO[k]){scene.remove(AMMO[k]);disposeGroup(AMMO[k]);AMMO[k]=null}
@@ -20242,6 +20488,12 @@ function ammoSign(g,x,y,z,txt,width,rot){const can=cv(512,96),c=can.getContext('
 // v267: modelos exatamente iguais aos colecionaveis de rua, mas sem registro em
 // pickups, sem halo, sem colisao ou interacao. A compra continua SOMENTE no balcao.
 function ammoShowcaseWeapon(kind){const g=new THREE.Group();
+ if(kind==='flame'){
+  const dark=new THREE.MeshStandardMaterial({color:0x24252e}),tank=new THREE.MeshStandardMaterial({color:0xa54025});
+  const barrel=new THREE.Mesh(new THREE.CylinderGeometry(.075,.075,1.22,8),dark);barrel.rotation.z=Math.PI/2;barrel.position.x=.23;
+  const fuel=new THREE.Mesh(new THREE.CylinderGeometry(.16,.16,.68,10),tank);fuel.rotation.z=Math.PI/2;fuel.position.set(-.22,-.21,0);
+  g.add(barrel,fuel);return g;
+ }
  if(kind==='grenade'||kind==='remote'){const gm=kind==='grenade'?grenadeMesh():remoteMesh();while(gm.children.length)g.add(gm.children[0])}
  else if(kind==='jammer'){const body=new THREE.MeshStandardMaterial({color:0x303b31,roughness:.72}),screen=new THREE.MeshStandardMaterial({color:0x78b69c,emissive:0x0c3530,emissiveIntensity:.32});g.add(new THREE.Mesh(new THREE.BoxGeometry(.43,.65,.15),body));const m=new THREE.Mesh(new THREE.BoxGeometry(.3,.24,.16),screen);m.position.y=.1;g.add(m);const ant=new THREE.Mesh(new THREE.BoxGeometry(.035,.35,.035),body);ant.position.set(.15,.46,0);g.add(ant)}
  else if(kind==='smg'){const gm=new THREE.MeshStandardMaterial({color:0x26262a,metalness:.6,roughness:.35});
@@ -20367,28 +20619,53 @@ function ammoTick(dt){AMMO.lock=Math.max(0,AMMO.lock-dt);
  const hp=$('#heistp');if(hp){const near=ammoCounterNear(),msg=near?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>'+ammoMsg('AMOnições · ARMAS E UPGRADES','GUN STORE · WEAPONS & UPGRADES'):'';
   if(hp.dataset.h!==msg){hp.dataset.h=msg;hp.innerHTML=msg}hp.hidden=!near}
 }
-function ammoPanel(){if(AMMO.panel)return AMMO.panel;const root=document.createElement('div');root.id='ammoStore';root.hidden=true;
+function ammoPanel(){if(AMMO.panel)return AMMO.panel;const root=document.createElement('div');root.id='ammoStore';root.hidden=true;root.setAttribute('role','dialog');root.setAttribute('aria-modal','true');root.setAttribute('aria-labelledby','ammoStoreTitle');
  root.style.cssText='position:fixed;inset:0;z-index:10000;background:rgba(3,5,10,.85);display:flex;align-items:center;justify-content:center;padding:12px;box-sizing:border-box;';
- const pane=document.createElement('div');pane.style.cssText='width:min(940px,98vw);max-height:90vh;overflow:auto;background:#171b21;color:#f4f0e5;border:2px solid #dfb852;border-radius:12px;padding:18px;font:14px/1.45 Arial,sans-serif;box-shadow:0 12px 60px #000;';
+ const pane=document.createElement('div');pane.style.cssText='width:min(940px,98vw);max-height:90vh;max-height:calc(100dvh - 24px);box-sizing:border-box;overflow:auto;overscroll-behavior:contain;scroll-padding-top:65px;background:#171b21;color:#f4f0e5;border:2px solid #dfb852;border-radius:12px;padding:18px;font:14px/1.45 Arial,sans-serif;box-shadow:0 12px 60px #000;';
  root.appendChild(pane);root.addEventListener('click',ev=>{if(ev.target===root)ammoClose();const b=ev.target.closest('button[data-action]');if(!b)return;
   if(b.disabled)return;ev.preventDefault();ev.stopPropagation();const a=b.dataset.action,w=b.dataset.weapon,k=b.dataset.field;if(a==='close')ammoClose();if(a==='select'&&WPN[w]){AMMO.sel=w;ammoRender()}
-  if(a==='buy'&&WPN[w])ammoBuy(w);if(a==='upgrade'&&WPN[w])ammoBuyUpgrade(w,k)});
+  if((a==='buy'||a==='buyAll')&&WPN[w])ammoBuy(w,a==='buyAll');if(a==='upgrade'&&WPN[w])ammoBuyUpgrade(w,k)});
  document.body.appendChild(root);AMMO.panel=root;AMMO.pane=pane;
- const sty=document.createElement('style');sty.textContent='#ammoStore[hidden]{display:none!important}#ammoStore button{border:1px solid #947b3b;border-radius:6px;background:#30353d;color:#f6deb0;padding:8px 12px;margin:3px;cursor:pointer;font:600 13px Arial}#ammoStore button:hover,#ammoStore button:focus{background:#66552b;outline:1px solid #fff}#ammoStore button:disabled{opacity:.35;cursor:default}#ammoStore button.selected{background:#7e6330}#ammoStore .arow{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:6px 8px;border-bottom:1px solid #454139}#ammoStore .astat{color:#adb8be;font-size:12px}';
+ const sty=document.createElement('style');sty.textContent='#ammoStore[hidden]{display:none!important}#ammoStore button{border:1px solid #947b3b;border-radius:6px;background:#30353d;color:#f6deb0;padding:8px 12px;margin:3px;cursor:pointer;font:600 13px Arial}#ammoStore button:hover,#ammoStore button:focus{background:#66552b;outline:1px solid #fff}#ammoStore button:disabled{opacity:.35;cursor:default}#ammoStore button.selected{background:#7e6330}#ammoStore .arow{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:6px 8px;border-bottom:1px solid #454139}#ammoStore .astat{color:#adb8be;font-size:12px}#ammoStore header{position:sticky;top:-18px;z-index:1;background:#171b21;padding:8px 0}body.touch #ammoStore button{min-height:44px;touch-action:manipulation}@media (pointer:coarse){#ammoStore button{min-height:44px;touch-action:manipulation}}';
  document.head.appendChild(sty);
  // Captura teclado da UI antes do listener de jogabilidade, sem mexer no motor.
- document.addEventListener('keydown',ev=>{if(!AMMO.uiOpen)return;if(ev.key==='Escape'){ammoClose();ev.preventDefault()}else if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(ev.code)){padNavFocus(root,['ArrowDown','ArrowRight'].includes(ev.code)?1:-1,{ArrowDown:[0,1],ArrowUp:[0,-1],ArrowRight:[1,0],ArrowLeft:[-1,0]}[ev.code]);ev.preventDefault();}else if(ev.code==='Enter'||ev.code==='Space'){const b=document.activeElement;if(root.contains(b)&&b.tagName==='BUTTON'&&!b.disabled)b.click();ev.preventDefault();}ev.stopImmediatePropagation()},true);
+ document.addEventListener('keydown',ev=>{
+  if(!AMMO.uiOpen)return;
+  const arrow={ArrowDown:[0,1],ArrowUp:[0,-1],ArrowRight:[1,0],ArrowLeft:[-1,0]}[ev.code];
+  if(ev.code==='Escape'){if(!ev.repeat)ammoClose();ev.preventDefault()}
+  else if(ev.code==='Tab'){
+   const buttons=[...root.querySelectorAll('button:not(:disabled)')];
+   const dir=ev.shiftKey?-1:1,i=buttons.indexOf(document.activeElement);
+   const next=i<0?(ev.shiftKey?buttons.at(-1):buttons[0]):buttons[(i+dir+buttons.length)%buttons.length];
+   next?.focus();ev.preventDefault();
+  }else if(arrow){padNavFocus(root,arrow[0]+arrow[1],arrow);ev.preventDefault()}
+  else if(ev.code==='Enter'||ev.code==='NumpadEnter'||ev.code==='Space'){
+   const button=document.activeElement;
+   if(!ev.repeat&&root.contains(button)&&button.tagName==='BUTTON'&&!button.disabled)button.click();
+   ev.preventDefault();
+  }
+  ev.stopImmediatePropagation();
+ },true);
  return root}
 function ammoOpen(){if(!ammoCounterNear()||!AMMO.pos||AMMO.uiOpen)return;ammoPanel();AMMO.uiOpen=true;AMMO.panel.hidden=false;
  for(const k in keys)keys[k]=false;GUN.firing=false;if(document.pointerLockElement)document.exitPointerLock();ammoRender();
  const btn=AMMO.panel.querySelector('button.selected');if(btn)btn.focus()}
 function ammoClose(){AMMO.uiOpen=false;if(AMMO.panel)AMMO.panel.hidden=true}
-function ammoBuy(w){if(!AMMO.uiOpen||!WPN[w])return;const price=AMMO_PRICES[w],amount=AMMO_BATCH[w],inv=GUN.inv[w];
- const current=inv?(GUN.has&&GUN.w===w?GUN.ammo:inv.ammo):0,free=Math.max(0,ammoCap(w)-current);
- if(free<=0){toast(ammoMsg('LIMITE DE MUNIÇÃO ATINGIDO','AMMO LIMIT REACHED'));return}
+function ammoOffer(w,all=false){
+ const owned=!!GUN.inv[w],cap=ammoCap(w),batch=AMMO_BATCH[w];
+ const current=owned?(GUN.has&&GUN.w===w?GUN.ammo:GUN.inv[w].ammo):0;
+ const amount=Math.max(0,Math.min(all?cap:batch,cap-current));
+ const price=Math.ceil(AMMO_PRICES[w]*amount/batch);
+ return {owned,cap,current,amount,price};
+}
+function ammoBuy(w,all=false){if(!AMMO.uiOpen||!WPN[w])return;
+ const {amount,price}=ammoOffer(w,all);
+ if(!amount){toast(ammoMsg('LIMITE DE MUNIÇÃO ATINGIDO','AMMO LIMIT REACHED'));return}
  if((PL.money||0)<price){toast(ammoMsg('DINHEIRO INSUFICIENTE','NOT ENOUGH MONEY')+' · $'+price);return}
- money(-price);gunGive(w,Math.min(free,amount));clang(.25);if(PROLOGUE.active&&PROLOGUE.stage==='ammo'){PROLOGUE.gun=true;toast('<span style="color:#7dff8a">ARMADO</span><br><small style="font-size:11px;color:#fff">agora saia e vá ao Motel Miragem</small>')}
- toast(ammoText(w)+' · +'+Math.min(free,amount)+' · -$'+price);ammoRender()}
+ const added=gunGive(w,amount);
+ if(added<=0){toast(ammoMsg('LIMITE DE MUNIÇÃO ATINGIDO','AMMO LIMIT REACHED'));return}
+ money(-price);clang(.25);if(PROLOGUE.active&&PROLOGUE.stage==='ammo'){PROLOGUE.gun=true;toast('<span style="color:#7dff8a">ARMADO</span><br><small style="font-size:11px;color:#fff">agora saia e vá ao Motel Miragem</small>')}
+ toast(ammoText(w)+' · +'+added+' · -$'+price);ammoRender()}
 function ammoBuyUpgrade(w,k){if(!AMMO.uiOpen||!AMMO_UPGRADABLE.has(w)||!['damage','rate','focus'].includes(k)||!GUN.inv[w])return;
  const n=ammoUpgrade(w,k);if(n>=3)return;const price=ammoUpgradeCost(w,k);
  if((PL.money||0)<price){toast(ammoMsg('DINHEIRO INSUFICIENTE','NOT ENOUGH MONEY')+' · $'+price);return}
@@ -20396,14 +20673,20 @@ function ammoBuyUpgrade(w,k){if(!AMMO.uiOpen||!AMMO_UPGRADABLE.has(w)||!['damage
  clang(.4);toast(ammoText(w)+' · '+k.toUpperCase()+' '+(n+1)+'/3');ammoRender()}
 function ammoRender(){if(!AMMO.panel||!AMMO.pane)return;const ae=document.activeElement,focus=AMMO.panel.contains(ae)?{...ae.dataset}:null;const en=S.lang==='en',tr=(b,e)=>en?e:b;
  const labels={damage:tr('DANO','DAMAGE'),rate:tr('CADÊNCIA','FIRE RATE'),focus:tr('FOCO','FOCUS')};
- const w=AMMO.sel,owned=!!GUN.inv[w],lv=AMMO.up[w]||{};
+ const w=AMMO.sel;
+ const {owned,cap,current,amount,price:cost}=ammoOffer(w);
+ const cash=PL.money||0;
+ const fill=ammoOffer(w,true);
+ const fillButton=fill.amount>amount?
+  '<button data-action="buyAll" data-weapon="'+w+'" '+(cash<fill.price?'disabled':'')+'>'+
+  (cash<fill.price?tr('SALDO INSUFICIENTE','NOT ENOUGH MONEY'):tr('COMPRAR TUDO','BUY ALL')+' +'+fill.amount)+' · $'+fill.price+'</button>':'';
+ const buyLabel=!amount?tr('MUNIÇÃO CHEIA','AMMO FULL'):cash<cost?tr('SALDO INSUFICIENTE','NOT ENOUGH MONEY')+' · $'+cost:(owned?tr('COMPRAR +','BUY +'):tr('COMPRAR ARMA +','BUY WEAPON +'))+amount+' · $'+cost;
  const buttons=Object.keys(WPN).map(k=>'<button data-action="select" data-weapon="'+k+'" class="'+(k===w?'selected':'')+'">'+ammoText(k)+'</button>').join('');
- const current=owned?(GUN.has&&GUN.w===w?GUN.ammo:GUN.inv[w].ammo):0,free=Math.max(0,ammoCap(w)-current),cost=AMMO_PRICES[w],amt=AMMO_BATCH[w];
  const upgrades=AMMO_UPGRADABLE.has(w)?Object.keys(labels).map(k=>{const level=ammoUpgrade(w,k),price=ammoUpgradeCost(w,k);
-  return '<div class="arow"><span>'+labels[k]+' <b>'+level+'/3</b></span><span class="astat">'+(k==='damage'?'+'+(level*10)+'%':k==='rate'?'+'+Math.round((1/(1-.10*level)-1)*100)+'%':tr('desvio','spread')+' -'+(level*20)+'%')+'</span><button data-action="upgrade" data-weapon="'+w+'" data-field="'+k+'" '+(!owned||level===3||PL.money<price?'disabled':'')+'>'+ (level===3?tr('MÁXIMO','MAX'):tr('MELHORAR','UPGRADE')+' · $'+price)+'</button></div>'}).join(''):
- '<div class="astat" style="margin:12px 0">'+tr('Arma especial: sem upgrades de dano/cadência/foco nesta fase para preservar o equilíbrio dos explosivos e do jammer.','Special weapon: no upgrades for explosive weapons or jammer in this release.')+'</div>';
- AMMO.pane.innerHTML='<header style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div><h2 style="color:#f8cf62;margin:0;font:900 26px Arial">AMOnições</h2><small>'+tr('ARMAS · MUNIÇÃO · UPGRADES','WEAPONS · AMMO · UPGRADES')+'</small></div><div style="text-align:right"><b>'+ammoBalance()+'</b><button data-action="close">'+tr('FECHAR ✕','CLOSE ✕')+'</button></div></header>'+
- '<div style="padding:8px 0">'+buttons+'</div><div class="arow"><div><b>'+ammoText(w)+'</b><div class="astat">'+tr('Categoria: ','Category: ')+(en?({pistol:'Pistols',smg:'Automatic',magnum:'Pistols',rpg:'Heavy',grenade:'Explosives',remote:'Explosives',jammer:'Electronic'}[w]):AMMO_CATS[w])+' · '+tr('Munição','Ammo')+': '+current+'/'+ammoCap(w)+'</div></div><button data-action="buy" data-weapon="'+w+'" '+(!free||PL.money<cost?'disabled':'')+'>'+ (owned?tr('COMPRAR +','BUY +'):tr('COMPRAR ARMA +','BUY WEAPON +'))+Math.min(free,amt)+' · $'+cost+'</button></div>'+
+  return '<div class="arow"><span>'+labels[k]+' <b>'+level+'/3</b></span><span class="astat">'+(k==='damage'?'+'+(level*10)+'%':k==='rate'?'+'+Math.round((1/(1-.10*level)-1)*100)+'%':tr('desvio','spread')+' -'+(level*20)+'%')+'</span><button data-action="upgrade" data-weapon="'+w+'" data-field="'+k+'" '+(!owned||level===3||cash<price?'disabled':'')+'>'+ (level===3?tr('MÁXIMO','MAX'):!owned?tr('COMPRE A ARMA','BUY THE WEAPON'):(cash<price?tr('SALDO INSUFICIENTE','NOT ENOUGH MONEY'):tr('MELHORAR','UPGRADE'))+' · $'+price)+'</button></div>'}).join(''):
+ '<div class="astat" style="margin:12px 0">'+tr('Arma especial sem melhorias permanentes.','Special weapon with no permanent upgrades.')+'</div>';
+ AMMO.pane.innerHTML='<header style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div><h2 id="ammoStoreTitle" style="color:#f8cf62;margin:0;font:900 26px Arial">AMOnições</h2><small>'+tr('ARMAS · MUNIÇÃO · UPGRADES','WEAPONS · AMMO · UPGRADES')+'</small></div><div style="text-align:right"><b>'+ammoBalance()+'</b><button data-action="close">'+tr('FECHAR ✕','CLOSE ✕')+'</button></div></header>'+
+ '<div style="padding:8px 0">'+buttons+'</div><div class="arow"><div><b>'+ammoText(w)+'</b><div class="astat">'+tr('Categoria: ','Category: ')+(en?({pistol:'Pistols',smg:'Automatic',magnum:'Pistols',rpg:'Heavy',grenade:'Explosives',remote:'Explosives',jammer:'Electronic',flame:'Heavy'}[w]):AMMO_CATS[w])+' · '+tr('Munição','Ammo')+': ' +current+'/'+cap+'</div></div><button data-action="buy" data-weapon="'+w+'" '+(!amount||cash<cost?'disabled':'')+'>'+buyLabel+'</button>'+fillButton+'</div>'+
  '<h3 style="color:#f8cf62;margin-bottom:6px">'+tr('MELHORIAS PERMANENTES','PERMANENT UPGRADES')+'</h3>'+upgrades+'<p class="astat">'+tr('Armas dos becos: raras e sem respawn. Cada compra de arma existente repõe munição até o limite da mochila.','Alley weapons: rare with no respawns. Buying an owned weapon replenishes ammo up to backpack capacity.')+'</p>';
  const buttonsNow=[...AMMO.panel.querySelectorAll('button')];
  if(focus){const next=buttonsNow.find(b=>!b.disabled&&b.dataset.action===focus.action&&b.dataset.weapon===focus.weapon&&b.dataset.field===focus.field)||buttonsNow.find(b=>!b.disabled&&b.dataset.action==='buy')||buttonsNow.find(b=>b.classList.contains('selected'))||buttonsNow[0];if(next){next.focus({preventScroll:true});next.scrollIntoView({block:'nearest'});}}
@@ -20923,7 +21206,7 @@ const GAME_VER=1; /* numeração reorganizada: depois da v79 r49 vem v1 r1 (save
 const SAVE_SERIES='pixelcity-restart-1';
 // v261 preserva saves v260 (AMOnições), v259 e v258. Nenhum dado de câmera é removido.
 function saveVersionCompatible(gv,series){return (gv===1||gv===2||gv===3||gv===4||gv===5||gv===6||gv===7||gv===8||gv===9||gv===10||gv===11||gv===12||gv===13||gv===14||gv===15||gv===16||gv===17||gv===18||gv===19||gv===20||gv===21||gv===22||gv===23||gv===24||gv===25||gv===26||gv===27||gv===28||gv===29||gv===30||gv===31||gv===32||gv===33||gv===34||gv===35||gv===36||gv===37||gv===38||gv===39||gv===40||gv===41||gv===42||gv===43||gv===44||gv===45||gv===46||gv===47||gv===48||gv===49||gv===50||gv===51||gv===52||gv===53||gv===54||gv===55||gv===56||gv===57||gv===58||gv===59||gv===60||gv===61||gv===62||gv===63||gv===64||gv===65||gv===66||gv===67||gv===68||gv===69||gv===70||gv===71||gv===72||gv===73||gv===74||gv===75||gv===76||gv===77||gv===78||gv===79)&&series===SAVE_SERIES}
-const menuBuildEl=document.getElementById('menuBuild');if(menuBuildEl)menuBuildEl.textContent='v.'+GAME_VER+' · '+BUILD_TAG;const menuBuildLine=document.getElementById('menuBuildLine');if(menuBuildLine)menuBuildLine.textContent='v.'+GAME_VER+' · '+BUILD_TAG; /* v78: rótulo da entrega (rN) para conferir qual build está aberta */
+const menuBuildEl=document.getElementById('menuBuild');if(menuBuildEl)menuBuildEl.textContent='v'+GAME_VER+' · '+BUILD_TAG;const menuBuildLine=document.getElementById('menuBuildLine');if(menuBuildLine)menuBuildLine.textContent='v'+GAME_VER+' · '+BUILD_TAG; /* v78: rótulo da entrega (rN) para conferir qual build está aberta */
 function readSave(){try{/* save antigo do navegador (só leitura) */const d=JSON.parse(localStorage.getItem('ps_save')||'null');return d&&d.v===1&&saveVersionCompatible(d.gv,d.saveSeries)&&supportedCitySize(d.size||14)?d:null}catch(e){return null}}
 /* Alinha SALVAR (linha superior) exatamente sobre CARREGAR (linha inferior),
    sem usar porcentagens que variam com o viewport. */
@@ -21071,7 +21354,7 @@ function maskFxClear(){if(MASK.fx){scene.remove(MASK.fx);MASK.geom.dispose();MAS
 function maskReset(){const wasFx=!!MASK.fx;maskFxClear();MASK.t=0;if(MASK.off)maskRestore();else if(wasFx&&MASK.original){Object.assign(PLAYER_PAL,MASK_SUIT,{handSkin:MASK.original.skin});applyPlayerLook()}} // v78: troca de cidade/ilha não perde a Maskara vestida
 function maskNosClear(){for(const v of vehicles)if(v._maskNos){v.hasNitro=false;v._maskNos=false}}
 // v78: com a Maskara, TODAS as armas com munição infinita; ao tirar, volta o arsenal de antes e o Nathan fica com 15% de vida e colete.
-const MASK_GUNS=['pistol','magnum','smg','rpg','grenade','remote','jammer'];
+const MASK_GUNS=['pistol','magnum','smg','rpg','grenade','remote','jammer','flame'];
 // v78: em área de busca (fugiu da perseguição, polícia procurando), vestir ou tirar a Maskara é um disfarce perfeito: zera a busca.
 function maskSearchClear(){if(POL.wanted||!(WZ.list.length||vehicles.some(c=>c.zonePatrol)))return;WZ.list.length=0;WZ.crime=null;WZ.fromZone=null;WZ.cur=null;WZ.susT=0;POL.truce=Math.max(POL.truce,simT+20);for(const c of vehicles)if(c.zonePatrol){c.zonePatrol=null;c.sirenOn=false} /* viaturas de busca voltam à ronda normal, sem sumir na frente do jogador */toast(translatePlain('DISFARCE PERFEITO · BUSCA ENCERRADA'))}
 function maskKitSave(){if(MASK.kit)return;if(GUN.has&&GUN.inv[GUN.w])GUN.inv[GUN.w].ammo=GUN.ammo;MASK.kit={inv:JSON.parse(JSON.stringify(GUN.inv||{})),w:GUN.w}}
@@ -21262,7 +21545,7 @@ LANG_EN["TESTAR GATILHOS"]="TEST TRIGGERS";
 LANG_EN["Requer Chrome/Edge no PC e autorização do controle."]="Requires Chrome/Edge on desktop and controller authorization.";
 LANG_EN["USB e Bluetooth compatíveis. No Linux, o acesso WebHID pode exigir regra udev."]="USB and Bluetooth supported. On Linux, WebHID access may require a udev rule.";
 /* v78: revisão do inglês — frases que caíam em mistura PT/EN */
-Object.assign(LANG_EN,{"vindo do norte": "coming from the north", "nuvens escuras já aparecem no horizonte, ao norte": "dark clouds are already forming on the horizon, to the north", "vindo do nordeste": "coming from the northeast", "nuvens escuras já aparecem no horizonte, ao nordeste": "dark clouds are already forming on the horizon, to the northeast", "vindo do leste": "coming from the east", "nuvens escuras já aparecem no horizonte, ao leste": "dark clouds are already forming on the horizon, to the east", "vindo do sudeste": "coming from the southeast", "nuvens escuras já aparecem no horizonte, ao sudeste": "dark clouds are already forming on the horizon, to the southeast", "vindo do sul": "coming from the south", "nuvens escuras já aparecem no horizonte, ao sul": "dark clouds are already forming on the horizon, to the south", "vindo do sudoeste": "coming from the southwest", "nuvens escuras já aparecem no horizonte, ao sudoeste": "dark clouds are already forming on the horizon, to the southwest", "vindo do oeste": "coming from the west", "nuvens escuras já aparecem no horizonte, ao oeste": "dark clouds are already forming on the horizon, to the west", "vindo do noroeste": "coming from the northwest", "nuvens escuras já aparecem no horizonte, ao noroeste": "dark clouds are already forming on the horizon, to the northwest","AO VIVO": "LIVE", "Transição gradual conforme a vida do personagem ativo. Procurado: alterna branco e vermelho. Feedback desligado: azul fixo.": "Gradual shift with the active character's health. Wanted: flashes white and red. Feedback off: solid blue.", "Copie o comando e cole no terminal. Digite sua senha de administrador quando solicitada.": "Copy the command and paste it in a terminal. Enter your admin password when asked.", "2. Desconecte e reconecte o controle (USB ou Bluetooth).": "2. Unplug and reconnect the controller (USB or Bluetooth).", "3. Feche todas as janelas do navegador e abra novamente. Volte aqui e autorize o DualSense e a saída de áudio.": "3. Close every browser window and reopen it. Come back here and authorize the DualSense and audio output.", "A regra libera o acesso aos gatilhos e à luz. Para o alto-falante, prefira USB e selecione a saída de áudio do controle acima.": "The rule unlocks the triggers and light bar. For the speaker, use USB and pick the controller's audio output above.", "Pronto para jogar": "Ready to play", "Scroll do mouse ou TAB selecionam armas; no controle, B/○ alterna. Q ou ← abre o rádio. Motorista usa pistola, Magnum, metralhadora ou jammer; Nathan de carona pode usar bazuca.": "Mouse wheel or TAB picks weapons; on a controller, B/○ cycles. Q or ← opens the radio. The driver can use pistol, Magnum, SMG or jammer; Nathan as passenger can use the bazooka.", "Escolha o alto-falante do controle conectado por USB. Sem controle, o bipe toca na saída normal. A autorização de áudio pode pedir acesso ao microfone para listar as saídas; a captura é encerrada imediatamente.": "Pick the speaker of a USB-connected controller. Without one, the beep plays on the normal output. Audio authorization may ask for microphone access to list outputs; capture stops immediately.", "COPIAR COMANDO": "COPY COMMAND"," da garagem ficou livre": " in the garage is now free", " da garagem": " in the garage", " m · precisa de ": " m · needs ", " para cavar": " to dig", " · compre na Malas & Mochilas Co. do shopping": " · buy one at Malas & Mochilas Co. in the mall", " · segure TAB: roda de armas": " · hold TAB: weapon wheel", "+25 DE ENERGIA": "+25 ENERGY", "A bola está girando…": "The ball is spinning…", "A poluição é um problema urbano nas grandes cidades · nesta região, não há mancha industrial visível": "Pollution is an urban problem in big cities · this area shows no visible industrial haze", "ABERTO ATÉ TARDE": "OPEN LATE", "ACOMPANHAMENTO AÉREO": "AERIAL COVERAGE", "AEROPORTO INTERNACIONAL DE SUNSET SHORES": "SUNSET SHORES INTERNATIONAL AIRPORT", "Aeroporto Internacional de Sunset Shores": "Sunset Shores International Airport", "ALERTA METEOROLÓGICO": "WEATHER ALERT", "ALÉM DO SINAL": "BEYOND THE SIGNAL", "AMOnições clerk": "AMOnições clerk", "AMOnições · ARMAS E UPGRADES": "AMOnições · WEAPONS & UPGRADES", "AMOnições · ARMAS": "AMOnições · WEAPONS", "AMOnições · VOLTE QUANDO NÃO ESTIVER PROCURADO": "AMOnições · COME BACK WHEN YOU'RE NOT WANTED", "ANEL DO MEIO": "MIDDLE RING", "ARMA INDISPONÍVEL NESTE ASSENTO": "WEAPON UNAVAILABLE IN THIS SEAT", "ARQUIVOS DA CIDADE": "CITY FILES", "ATÉ 50% OFF": "UP TO 50% OFF", "Arma especial: sem upgrades de dano/cadência/foco nesta fase para preservar o equilíbrio dos explosivos e do jammer.": "Special weapon: no damage/fire-rate/focus upgrades, to keep explosives and the jammer balanced.", "Armas dos becos: raras e sem respawn. Cada compra de arma existente repõe munição até o limite da mochila.": "Alley weapons: rare and never respawn. Buying a weapon you own refills ammo up to your backpack limit.", "Automáticas": "Automatic", "AÇAÍ TROPICAL": "TROPICAL AÇAÍ", "BORRACHARIA · AMOnições": "TIRE SHOP · AMOnições", "Blitz da polícia: fiscalização e operações preventivas para conter criminosos e aumentar a segurança nas ruas": "Police checkpoints: inspections and preventive operations to stop criminals and make the streets safer", "CADÊNCIA": "FIRE RATE", "CARDÁPIO": "MENU", "CAVE NO CANTO: SEGURE ": "DIG IN THE CORNER: HOLD ", "CENÁRIO SÓ EM SUNSET SHORES": "SCENE CONTROLS ONLY IN SUNSET SHORES", "CENÁRIO": "SCENE", "COFRE DE NOTAS": "CASH VAULT", "COLEÇÃO VERÃO 86": "SUMMER '86 COLLECTION", "CONEXÕES & DESTINOS": "CONNECTIONS & DESTINATIONS", "CONTA DO HOSPITAL · −$": "HOSPITAL BILL · −$", "COR DO NEON TROCADA": "NEON COLOR CHANGED", "CORRIDA CONCLUÍDA · SEM PAGAMENTO": "RIDE COMPLETE · NO PAYMENT", "Cheat usado nesta partida": "Cheat used in this game", "CORRIDA DE RUA": "STREET RACE", "CUIDADO & SAÚDE": "CARE & HEALTH", "Chegue a 21 sem ultrapassar. A banca para em 17.": "Get to 21 without going over. Dealer stands on 17.", "Chuva intensa, ventania e raios · motoristas enfrentam pista escorregadia · moradores correm para se abrigar": "Heavy rain, strong winds and lightning · drivers face slippery roads · residents rush for shelter", "Conectando pessoas, turismo e negócios · o Aeroporto Internacional de Sunset Shores impulsionou a economia e valorizou a cidade": "Connecting people, tourism and business · Sunset Shores International Airport boosted the economy and the city's value", "Cor, par/ímpar ou metade: paga 2× · número exato: paga 36× · no zero, só o número 0 ganha.": "Color, odd/even or half: pays 2× · exact number: pays 36× · on zero, only number 0 wins.", "CÉU AGORA": "SKY NOW", "DELEGACIA DE": "POLICE STATION OF", "DIVERSÃO GARANTIDA": "GUARANTEED FUN", "De volta a Sunset Shores. Nada de vida nova: é a mesma cidade, a mesma casa… só que vazia.": "Back in Sunset Shores. No new life: same city, same house… only empty.", "EM BREVE · SÓ NOS CINEMAS": "COMING SOON · ONLY IN THEATERS", "ESCAPANDO DA MORTE…": "CHEATING DEATH…", "ESSÊNCIA DE MIAMI": "ESSENCE OF MIAMI", "ESTE VEÍCULO NÃO TEM MISSÃO": "THIS VEHICLE HAS NO MISSION", "Eletrônicos": "Electronics", "Escolha as cartas para manter e troque as demais.": "Pick the cards to hold and swap the rest.", "Escolha onde apostar e gire. O zero é verde e só paga no número exato.": "Choose your bet and spin. Zero is green and only pays on the exact number.", "Experimente você também!": "Try it yourself!", "FARÓIS": "HEADLIGHTS", "FATIA DO DIA!": "SLICE OF THE DAY!", "FECHE O GUARDA-ROUPA PARA TROCAR DE PERSONAGEM": "CLOSE THE WARDROBE TO SWITCH CHARACTERS", "FIVELA DO CINTO": "BELT BUCKLE", "FREAR / RÉ": "BRAKE / REVERSE", "FREIO DE MÃO": "HANDBRAKE", "Fala aí.": "Talk to me.", "Fugitiva… não. Não pode ser.": "A fugitive… no. It can't be.", "HOSPITAL DE": "HOSPITAL OF", "Há rumores de que um demogorgon escapou para nosso mundo e se esconde aqui!": "Rumor has it a demogorgon escaped into our world and is hiding here!", "Ideia de Jerico": "Dumb idea", "JOIAS · COLEÇÃO": "JEWELRY · COLLECTION", "LANTERNA DO CELULAR DESLIGADA": "PHONE FLASHLIGHT OFF", "LANTERNA DO CELULAR LIGADA": "PHONE FLASHLIGHT ON", "LANÇAMENTOS": "NEW RELEASES", "LIMITE DE MUNIÇÃO ATINGIDO": "AMMO LIMIT REACHED", "Ligar não. Se ele ouvir minha voz, vem correndo e faz besteira. Uma mensagem basta.": "No calling. If he hears my voice he'll come running and do something stupid. A text will do.", "MARÉ ALTA": "HIGH TIDE", "MISTÉRIOS DE SUNSET SHORES": "MYSTERIES OF SUNSET SHORES", "MODA · COLEÇÃO": "FASHION · COLLECTION", "Munição": "Ammo", "NENHUM TÁXI POR PERTO": "NO TAXIS NEARBY", "NEOGÁS": "NEOGAS", "NINGUÉM ATENDEU": "NO ANSWER", "NOVA FRAGRÂNCIA": "NEW FRAGRANCE", "Nenhum diálogo da história registrado ainda.": "No story dialogue recorded yet.", "Nenhum diálogo registrado ainda.": "No dialogue recorded yet.", "NÃO FOI DESSA VEZ · ": "NOT THIS TIME · ", "NÃO FOI POSSÍVEL SALVAR A FOTO": "COULD NOT SAVE THE PHOTO", "O NOVO ÁLBUM · \"NOITES DE VERÃO\"": "THE NEW ALBUM · \"SUMMER NIGHTS\"", "OPERAÇÃO PREVENTIVA": "PREVENTIVE OPERATION", "PAR DE VALETE OU MAIOR": "JACKS OR BETTER", "PAR DE VALETE+": "JACKS OR BETTER", "PISE COM ESTILO": "STEP OUT IN STYLE", "PLANTÃO": "BREAKING NEWS", "POLUIÇÃO: UM DESAFIO URBANO": "POLLUTION: AN URBAN CHALLENGE", "PORTAL DO DELOREAN ABERTO": "DELOREAN PORTAL OPEN", "PREFEITURA DE": "CITY HALL OF", "Poderia ter sido tudo diferente… 10 anos presa não é brincadeira, e já faz pelo menos 3 anos que ela tá lá.": "It could've all been different… 10 years locked up is no joke, and she's been in there at least 3 years already.", "Pular trecho atual da abertura": "Skip this part of the intro", "RIOS DA CIDADE": "CITY RIVERS", "Rios perto de áreas industriais revelam os impactos da poluição nas grandes cidades · preservar a água é cuidar da cidade": "Rivers near industrial areas show the impact of pollution in big cities · protecting the water is protecting the city", "SAIA DO LOCAL PARA TROCAR DE PERSONAGEM": "LEAVE THIS PLACE TO SWITCH CHARACTERS", "SAIA DO SHOPPING PARA TROCAR DE PERSONAGEM": "LEAVE THE MALL TO SWITCH CHARACTERS", "SALTO DE PARAQUEDAS": "PARACHUTE JUMP", "SAÍDA": "EXIT", "SEGURANÇA EM PAUTA": "SAFETY IN FOCUS", "SEM COMBINAÇÃO": "NO WIN", "SEM DINHEIRO · FIM DA CORRIDA": "OUT OF MONEY · RIDE OVER", "SEM DINHEIRO": "NO MONEY", "SEM ESPAÇO PARA POUSAR AQUI": "NO ROOM TO LAND HERE", "SEM MOCHILA · MUNIÇÃO REDUZIDA": "NO BACKPACK · REDUCED AMMO", "SEM MUDANÇAS": "NO CHANGES", "SEM MÚSICA": "NO MUSIC", "SEQUÊNCIA": "STRAIGHT", "SERÁ QUE EXISTE ALGO DE MISTERIOSO NESSAS MATAS?": "IS THERE SOMETHING MYSTERIOUS IN THESE WOODS?", "SEU CONVERSÍVEL FOI DESTRUÍDO": "YOUR CONVERTIBLE WAS DESTROYED", "SUNSET ROYALE · VIDEOPÔQUER": "SUNSET ROYALE · VIDEO POKER", "SÉPIA": "SEPIA", "SÓ FUNCIONÁRIOS": "STAFF ONLY", "TOPO DO ARRANHA-CÉU · INTERAJA NA BORDA PARA SALTAR DE PARAQUEDAS": "SKYSCRAPER ROOF · USE THE EDGE TO PARACHUTE", "TOQUE DE NOVO PARA CONFIRMAR": "TAP AGAIN TO CONFIRM", "TUBARÕES": "SHARKS", "Tamanho da cidade": "City size", "Tenho um serviço pra você.": "I've got a job for you.", "Tony: tenho um serviço pra você no porto.": "Tony: I've got a job for you at the port.", "Tudo bem. Sem pressão, sem perguntas hoje.": "It's okay. No pressure, no questions today.", "UMA NOVA VISTA DE SUNSET SHORES": "A NEW VIEW OF SUNSET SHORES", "UNIVERSIDADE DE": "UNIVERSITY OF", "VEJA O VERÃO": "SEE THE SUMMER", "VENDEDOR DE CARROS": "CAR SALESMAN", "VIDEOPÔQUER · JACKS OR BETTER": "VIDEO POKER · JACKS OR BETTER", "VISTA DE CIMA": "VIEW FROM ABOVE", "VIVA LÁ FORA": "LIVE OUT THERE", "VOCÊ GANHOU · ": "YOU WON · ", "VOCÊ NÃO TEM ": "YOU DON'T HAVE ", "VOCÊ VENCEU": "YOU WIN", "VOCÊ": "YOU", "Vitória: 2× aposta · blackjack natural: 2,5× · empate: devolução.": "Win: 2× bet · natural blackjack: 2.5× · push: bet returned.", "Você tem carro? Preciso ir pro píer!": "Got a car? I need to get to the pier!", "agenda do celular": "phone contacts", "botões": "buttons", "demogorgon da floresta": "forest demogorgon", "fantasma do cemitério": "cemetery ghost", "o botão de ação": "the action button", "olhar para tras": "look back", "reta de ": "straight of ", "segure ": "hold ", "sem bônus": "no bonus", "vindo do ": "coming from the ", "ÍMPAR": "ODD", "ÚLTIMO VEÍCULO": "LAST VEHICLE", "● OBSERVATÓRIO": "● OBSERVATORY", "● OPERAÇÃO AO VIVO": "● LIVE OPERATION", "● SOBREVOO DA FLORESTA": "● FOREST FLYOVER", "● VOCÊ ESTÁ AQUI": "● YOU ARE HERE", "NÃO": "NO", "NÓS": "US", "MAIS": "MORE", "Sombras de Postes": "Pole Shadows", "RECURSOS DO CONTROLE": "CONTROLLER FEATURES", "CONEXÃO": "CONNECTION", "ÁUDIO DO CONTROLE": "CONTROLLER AUDIO", "VOLUME NO CONTROLE": "CONTROLLER VOLUME", "Bipe no alto-falante do controle": "Beep on controller speaker", "AUTORIZAR SAÍDAS DE ÁUDIO": "AUTHORIZE AUDIO OUTPUTS", "Saída normal": "Normal output", "Bipe na saída normal.": "Beep on normal output.", "Feedback de vida e perseguição": "Health and pursuit feedback", "Incline para virar. Aceleração e freio continuam nos gatilhos ou botões.": "Tilt to steer. Throttle and brake stay on the triggers or buttons.", "Escolha a aposta para jogar.": "Choose your bet to play.", "ESC / ○ volta ao menu": "ESC / ○ back to menu", "soco (ou": "punch (or", "sem arma)": "unarmed)", "arrastando, ou": "dragging, or", "especial do personagem": "character special", "ou": "or", "Armas no veículo": "Weapons in vehicles", "Erro no carregamento do arquivo:": "Error loading file:", "Subir/descer a câmera (R/V) · inativo nas câmeras de topo e isométrica": "Raise/lower camera (R/V) · disabled in top and isometric cameras", "Altura da câmera": "Camera height", "0% = céu do momento · 100% = tempestade formada sobre a cidade": "0% = current sky · 100% = full storm over the city", "0% = lua invisível ao lado do sol · 100% = eclipse total": "0% = invisible moon beside the sun · 100% = total eclipse", "Trocar personagem (segure Alt / ↓ no controle)": "Switch character (hold Alt / ↓ on controller)", "Carregando cenário": "Loading scene", "Fechar e voltar ao jogo (Esc)": "Close and return to game (Esc)", "Versão do jogo": "Game version", "Reiniciar e voltar ao menu inicial (progresso não salvo será perdido)": "Restart and return to main menu (unsaved progress will be lost)", "Categorias de configuração": "Settings categories", "Presets de qualidade gráfica": "Graphics quality presets", "Saída do bipe do celular": "Phone beep output", "Seções de registros": "Log sections", "Veículo anterior": "Previous vehicle", "Próximo veículo": "Next vehicle", "Copiar somente o número da seed atual": "Copy only the current seed number", "Copiar as coordenadas X, Y e Z, somente números": "Copy X, Y and Z coordinates, numbers only", "Lista dos símbolos do mapa": "Map symbol list", "Progresso do carregamento": "Loading progress", "HORA": "TIME", "Água caindo": "Falling rain", "SOCO": "PUNCH", "PUNHOS": "FISTS"});
+Object.assign(LANG_EN,{"vindo do norte": "coming from the north", "nuvens escuras já aparecem no horizonte, ao norte": "dark clouds are already forming on the horizon, to the north", "vindo do nordeste": "coming from the northeast", "nuvens escuras já aparecem no horizonte, ao nordeste": "dark clouds are already forming on the horizon, to the northeast", "vindo do leste": "coming from the east", "nuvens escuras já aparecem no horizonte, ao leste": "dark clouds are already forming on the horizon, to the east", "vindo do sudeste": "coming from the southeast", "nuvens escuras já aparecem no horizonte, ao sudeste": "dark clouds are already forming on the horizon, to the southeast", "vindo do sul": "coming from the south", "nuvens escuras já aparecem no horizonte, ao sul": "dark clouds are already forming on the horizon, to the south", "vindo do sudoeste": "coming from the southwest", "nuvens escuras já aparecem no horizonte, ao sudoeste": "dark clouds are already forming on the horizon, to the southwest", "vindo do oeste": "coming from the west", "nuvens escuras já aparecem no horizonte, ao oeste": "dark clouds are already forming on the horizon, to the west", "vindo do noroeste": "coming from the northwest", "nuvens escuras já aparecem no horizonte, ao noroeste": "dark clouds are already forming on the horizon, to the northwest","AO VIVO": "LIVE", "Transição gradual conforme a vida do personagem ativo. Procurado: alterna branco e vermelho. Feedback desligado: azul fixo.": "Gradual shift with the active character's health. Wanted: flashes white and red. Feedback off: solid blue.", "Copie o comando e cole no terminal. Digite sua senha de administrador quando solicitada.": "Copy the command and paste it in a terminal. Enter your admin password when asked.", "2. Desconecte e reconecte o controle (USB ou Bluetooth).": "2. Unplug and reconnect the controller (USB or Bluetooth).", "3. Feche todas as janelas do navegador e abra novamente. Volte aqui e autorize o DualSense e a saída de áudio.": "3. Close every browser window and reopen it. Come back here and authorize the DualSense and audio output.", "A regra libera o acesso aos gatilhos e à luz. Para o alto-falante, prefira USB e selecione a saída de áudio do controle acima.": "The rule unlocks the triggers and light bar. For the speaker, use USB and pick the controller's audio output above.", "Pronto para jogar": "Ready to play", "Scroll do mouse ou TAB selecionam armas; no controle, B/○ alterna. Q ou ← abre o rádio. Motorista usa pistola, Magnum, metralhadora ou jammer; Nathan de carona pode usar bazuca.": "Mouse wheel or TAB picks weapons; on a controller, B/○ cycles. Q or ← opens the radio. The driver can use pistol, Magnum, SMG or jammer; Nathan as passenger can use the bazooka.", "Escolha o alto-falante do controle conectado por USB. Sem controle, o bipe toca na saída normal. A autorização de áudio pode pedir acesso ao microfone para listar as saídas; a captura é encerrada imediatamente.": "Pick the speaker of a USB-connected controller. Without one, the beep plays on the normal output. Audio authorization may ask for microphone access to list outputs; capture stops immediately.", "COPIAR COMANDO": "COPY COMMAND"," da garagem ficou livre": " in the garage is now free", " da garagem": " in the garage", " m · precisa de ": " m · needs ", " para cavar": " to dig", " · compre na Malas & Mochilas Co. do shopping": " · buy one at Malas & Mochilas Co. in the mall", " · segure TAB: roda de armas": " · hold TAB: weapon wheel", "+25 DE ENERGIA": "+25 ENERGY", "A bola está girando…": "The ball is spinning…", "A poluição é um problema urbano nas grandes cidades · nesta região, não há mancha industrial visível": "Pollution is an urban problem in big cities · this area shows no visible industrial haze", "ABERTO ATÉ TARDE": "OPEN LATE", "ACOMPANHAMENTO AÉREO": "AERIAL COVERAGE", "AEROPORTO INTERNACIONAL DE SUNSET SHORES": "SUNSET SHORES INTERNATIONAL AIRPORT", "Aeroporto Internacional de Sunset Shores": "Sunset Shores International Airport", "ALERTA METEOROLÓGICO": "WEATHER ALERT", "ALÉM DO SINAL": "BEYOND THE SIGNAL", "AMOnições clerk": "AMOnições clerk", "AMOnições · ARMAS E UPGRADES": "AMOnições · WEAPONS & UPGRADES", "AMOnições · ARMAS": "AMOnições · WEAPONS", "AMOnições · VOLTE QUANDO NÃO ESTIVER PROCURADO": "AMOnições · COME BACK WHEN YOU'RE NOT WANTED", "ANEL DO MEIO": "MIDDLE RING", "ARMA INDISPONÍVEL NESTE ASSENTO": "WEAPON UNAVAILABLE IN THIS SEAT", "ARQUIVOS DA CIDADE": "CITY FILES", "ATÉ 50% OFF": "UP TO 50% OFF", "Arma especial sem melhorias permanentes.": "Special weapon: no damage/fire-rate/focus upgrades, to keep explosives and the jammer balanced.", "Armas dos becos: raras e sem respawn. Cada compra de arma existente repõe munição até o limite da mochila.": "Alley weapons: rare and never respawn. Buying a weapon you own refills ammo up to your backpack limit.", "Automáticas": "Automatic", "AÇAÍ TROPICAL": "TROPICAL AÇAÍ", "BORRACHARIA · AMOnições": "TIRE SHOP · AMOnições", "Blitz da polícia: fiscalização e operações preventivas para conter criminosos e aumentar a segurança nas ruas": "Police checkpoints: inspections and preventive operations to stop criminals and make the streets safer", "CADÊNCIA": "FIRE RATE", "CARDÁPIO": "MENU", "CAVE NO CANTO: SEGURE ": "DIG IN THE CORNER: HOLD ", "CENÁRIO SÓ EM SUNSET SHORES": "SCENE CONTROLS ONLY IN SUNSET SHORES", "CENÁRIO": "SCENE", "COFRE DE NOTAS": "CASH VAULT", "COLEÇÃO VERÃO 86": "SUMMER '86 COLLECTION", "CONEXÕES & DESTINOS": "CONNECTIONS & DESTINATIONS", "CONTA DO HOSPITAL · −$": "HOSPITAL BILL · −$", "COR DO NEON TROCADA": "NEON COLOR CHANGED", "CORRIDA CONCLUÍDA · SEM PAGAMENTO": "RIDE COMPLETE · NO PAYMENT", "Cheat usado nesta partida": "Cheat used in this game", "CORRIDA DE RUA": "STREET RACE", "CUIDADO & SAÚDE": "CARE & HEALTH", "Chegue a 21 sem ultrapassar. A banca para em 17.": "Get to 21 without going over. Dealer stands on 17.", "Chuva intensa, ventania e raios · motoristas enfrentam pista escorregadia · moradores correm para se abrigar": "Heavy rain, strong winds and lightning · drivers face slippery roads · residents rush for shelter", "Conectando pessoas, turismo e negócios · o Aeroporto Internacional de Sunset Shores impulsionou a economia e valorizou a cidade": "Connecting people, tourism and business · Sunset Shores International Airport boosted the economy and the city's value", "Cor, par/ímpar ou metade: paga 2× · número exato: paga 36× · no zero, só o número 0 ganha.": "Color, odd/even or half: pays 2× · exact number: pays 36× · on zero, only number 0 wins.", "CÉU AGORA": "SKY NOW", "DELEGACIA DE": "POLICE STATION OF", "DIVERSÃO GARANTIDA": "GUARANTEED FUN", "De volta a Sunset Shores. Nada de vida nova: é a mesma cidade, a mesma casa… só que vazia.": "Back in Sunset Shores. No new life: same city, same house… only empty.", "EM BREVE · SÓ NOS CINEMAS": "COMING SOON · ONLY IN THEATERS", "ESCAPANDO DA MORTE…": "CHEATING DEATH…", "ESSÊNCIA DE MIAMI": "ESSENCE OF MIAMI", "ESTE VEÍCULO NÃO TEM MISSÃO": "THIS VEHICLE HAS NO MISSION", "Eletrônicos": "Electronics", "Escolha as cartas para manter e troque as demais.": "Pick the cards to hold and swap the rest.", "Escolha onde apostar e gire. O zero é verde e só paga no número exato.": "Choose your bet and spin. Zero is green and only pays on the exact number.", "Experimente você também!": "Try it yourself!", "FARÓIS": "HEADLIGHTS", "FATIA DO DIA!": "SLICE OF THE DAY!", "FECHE O GUARDA-ROUPA PARA TROCAR DE PERSONAGEM": "CLOSE THE WARDROBE TO SWITCH CHARACTERS", "FIVELA DO CINTO": "BELT BUCKLE", "FREAR / RÉ": "BRAKE / REVERSE", "FREIO DE MÃO": "HANDBRAKE", "Fala aí.": "Talk to me.", "Fugitiva… não. Não pode ser.": "A fugitive… no. It can't be.", "HOSPITAL DE": "HOSPITAL OF", "Há rumores de que um demogorgon escapou para nosso mundo e se esconde aqui!": "Rumor has it a demogorgon escaped into our world and is hiding here!", "Ideia de Jerico": "Dumb idea", "JOIAS · COLEÇÃO": "JEWELRY · COLLECTION", "LANTERNA DO CELULAR DESLIGADA": "PHONE FLASHLIGHT OFF", "LANTERNA DO CELULAR LIGADA": "PHONE FLASHLIGHT ON", "LANÇAMENTOS": "NEW RELEASES", "LIMITE DE MUNIÇÃO ATINGIDO": "AMMO LIMIT REACHED", "Ligar não. Se ele ouvir minha voz, vem correndo e faz besteira. Uma mensagem basta.": "No calling. If he hears my voice he'll come running and do something stupid. A text will do.", "MARÉ ALTA": "HIGH TIDE", "MISTÉRIOS DE SUNSET SHORES": "MYSTERIES OF SUNSET SHORES", "MODA · COLEÇÃO": "FASHION · COLLECTION", "Munição": "Ammo", "NENHUM TÁXI POR PERTO": "NO TAXIS NEARBY", "NEOGÁS": "NEOGAS", "NINGUÉM ATENDEU": "NO ANSWER", "NOVA FRAGRÂNCIA": "NEW FRAGRANCE", "Nenhum diálogo da história registrado ainda.": "No story dialogue recorded yet.", "Nenhum diálogo registrado ainda.": "No dialogue recorded yet.", "NÃO FOI DESSA VEZ · ": "NOT THIS TIME · ", "NÃO FOI POSSÍVEL SALVAR A FOTO": "COULD NOT SAVE THE PHOTO", "O NOVO ÁLBUM · \"NOITES DE VERÃO\"": "THE NEW ALBUM · \"SUMMER NIGHTS\"", "OPERAÇÃO PREVENTIVA": "PREVENTIVE OPERATION", "PAR DE VALETE OU MAIOR": "JACKS OR BETTER", "PAR DE VALETE+": "JACKS OR BETTER", "PISE COM ESTILO": "STEP OUT IN STYLE", "PLANTÃO": "BREAKING NEWS", "POLUIÇÃO: UM DESAFIO URBANO": "POLLUTION: AN URBAN CHALLENGE", "PORTAL DO DELOREAN ABERTO": "DELOREAN PORTAL OPEN", "PREFEITURA DE": "CITY HALL OF", "Poderia ter sido tudo diferente… 10 anos presa não é brincadeira, e já faz pelo menos 3 anos que ela tá lá.": "It could've all been different… 10 years locked up is no joke, and she's been in there at least 3 years already.", "Pular trecho atual da abertura": "Skip this part of the intro", "RIOS DA CIDADE": "CITY RIVERS", "Rios perto de áreas industriais revelam os impactos da poluição nas grandes cidades · preservar a água é cuidar da cidade": "Rivers near industrial areas show the impact of pollution in big cities · protecting the water is protecting the city", "SAIA DO LOCAL PARA TROCAR DE PERSONAGEM": "LEAVE THIS PLACE TO SWITCH CHARACTERS", "SAIA DO SHOPPING PARA TROCAR DE PERSONAGEM": "LEAVE THE MALL TO SWITCH CHARACTERS", "SALTO DE PARAQUEDAS": "PARACHUTE JUMP", "SAÍDA": "EXIT", "SEGURANÇA EM PAUTA": "SAFETY IN FOCUS", "SEM COMBINAÇÃO": "NO WIN", "SEM DINHEIRO · FIM DA CORRIDA": "OUT OF MONEY · RIDE OVER", "SEM DINHEIRO": "NO MONEY", "SEM ESPAÇO PARA POUSAR AQUI": "NO ROOM TO LAND HERE", "SEM MOCHILA · MUNIÇÃO REDUZIDA": "NO BACKPACK · REDUCED AMMO", "SEM MUDANÇAS": "NO CHANGES", "SEM MÚSICA": "NO MUSIC", "SEQUÊNCIA": "STRAIGHT", "SERÁ QUE EXISTE ALGO DE MISTERIOSO NESSAS MATAS?": "IS THERE SOMETHING MYSTERIOUS IN THESE WOODS?", "SEU CONVERSÍVEL FOI DESTRUÍDO": "YOUR CONVERTIBLE WAS DESTROYED", "SUNSET ROYALE · VIDEOPÔQUER": "SUNSET ROYALE · VIDEO POKER", "SÉPIA": "SEPIA", "SÓ FUNCIONÁRIOS": "STAFF ONLY", "TOPO DO ARRANHA-CÉU · INTERAJA NA BORDA PARA SALTAR DE PARAQUEDAS": "SKYSCRAPER ROOF · USE THE EDGE TO PARACHUTE", "TOQUE DE NOVO PARA CONFIRMAR": "TAP AGAIN TO CONFIRM", "TUBARÕES": "SHARKS", "Tamanho da cidade": "City size", "Tenho um serviço pra você.": "I've got a job for you.", "Tony: tenho um serviço pra você no porto.": "Tony: I've got a job for you at the port.", "Tudo bem. Sem pressão, sem perguntas hoje.": "It's okay. No pressure, no questions today.", "UMA NOVA VISTA DE SUNSET SHORES": "A NEW VIEW OF SUNSET SHORES", "UNIVERSIDADE DE": "UNIVERSITY OF", "VEJA O VERÃO": "SEE THE SUMMER", "VENDEDOR DE CARROS": "CAR SALESMAN", "VIDEOPÔQUER · JACKS OR BETTER": "VIDEO POKER · JACKS OR BETTER", "VISTA DE CIMA": "VIEW FROM ABOVE", "VIVA LÁ FORA": "LIVE OUT THERE", "VOCÊ GANHOU · ": "YOU WON · ", "VOCÊ NÃO TEM ": "YOU DON'T HAVE ", "VOCÊ VENCEU": "YOU WIN", "VOCÊ": "YOU", "Vitória: 2× aposta · blackjack natural: 2,5× · empate: devolução.": "Win: 2× bet · natural blackjack: 2.5× · push: bet returned.", "Você tem carro? Preciso ir pro píer!": "Got a car? I need to get to the pier!", "agenda do celular": "phone contacts", "botões": "buttons", "demogorgon da floresta": "forest demogorgon", "fantasma do cemitério": "cemetery ghost", "o botão de ação": "the action button", "olhar para tras": "look back", "reta de ": "straight of ", "segure ": "hold ", "sem bônus": "no bonus", "vindo do ": "coming from the ", "ÍMPAR": "ODD", "ÚLTIMO VEÍCULO": "LAST VEHICLE", "● OBSERVATÓRIO": "● OBSERVATORY", "● OPERAÇÃO AO VIVO": "● LIVE OPERATION", "● SOBREVOO DA FLORESTA": "● FOREST FLYOVER", "● VOCÊ ESTÁ AQUI": "● YOU ARE HERE", "NÃO": "NO", "NÓS": "US", "MAIS": "MORE", "Sombras de Postes": "Pole Shadows", "RECURSOS DO CONTROLE": "CONTROLLER FEATURES", "CONEXÃO": "CONNECTION", "ÁUDIO DO CONTROLE": "CONTROLLER AUDIO", "VOLUME NO CONTROLE": "CONTROLLER VOLUME", "Bipe no alto-falante do controle": "Beep on controller speaker", "AUTORIZAR SAÍDAS DE ÁUDIO": "AUTHORIZE AUDIO OUTPUTS", "Saída normal": "Normal output", "Bipe na saída normal.": "Beep on normal output.", "Feedback de vida e perseguição": "Health and pursuit feedback", "Incline para virar. Aceleração e freio continuam nos gatilhos ou botões.": "Tilt to steer. Throttle and brake stay on the triggers or buttons.", "Escolha a aposta para jogar.": "Choose your bet to play.", "ESC / ○ volta ao menu": "ESC / ○ back to menu", "soco (ou": "punch (or", "sem arma)": "unarmed)", "arrastando, ou": "dragging, or", "especial do personagem": "character special", "ou": "or", "Armas no veículo": "Weapons in vehicles", "Erro no carregamento do arquivo:": "Error loading file:", "Subir/descer a câmera (R/V) · inativo nas câmeras de topo e isométrica": "Raise/lower camera (R/V) · disabled in top and isometric cameras", "Altura da câmera": "Camera height", "0% = céu do momento · 100% = tempestade formada sobre a cidade": "0% = current sky · 100% = full storm over the city", "0% = lua invisível ao lado do sol · 100% = eclipse total": "0% = invisible moon beside the sun · 100% = total eclipse", "Trocar personagem (segure Alt / ↓ no controle)": "Switch character (hold Alt / ↓ on controller)", "Carregando cenário": "Loading scene", "Fechar e voltar ao jogo (Esc)": "Close and return to game (Esc)", "Versão do jogo": "Game version", "Reiniciar e voltar ao menu inicial (progresso não salvo será perdido)": "Restart and return to main menu (unsaved progress will be lost)", "Categorias de configuração": "Settings categories", "Presets de qualidade gráfica": "Graphics quality presets", "Saída do bipe do celular": "Phone beep output", "Seções de registros": "Log sections", "Veículo anterior": "Previous vehicle", "Próximo veículo": "Next vehicle", "Copiar somente o número da seed atual": "Copy only the current seed number", "Copiar as coordenadas X, Y e Z, somente números": "Copy X, Y and Z coordinates, numbers only", "Lista dos símbolos do mapa": "Map symbol list", "Progresso do carregamento": "Loading progress", "HORA": "TIME", "Água caindo": "Falling rain", "SOCO": "PUNCH", "PUNHOS": "FISTS"});
 Object.assign(LANG_EN,{"O NAVEGADOR BLOQUEOU A LEITURA": "THE BROWSER BLOCKED READING THE CLIPBOARD", "clique no campo e use Ctrl+V": "click the field and press Ctrl+V", "COLAR": "PASTE"});Object.assign(LANG_EN,{"colar X,Y,Z": "paste X,Y,Z", "TELEPORT · USE X,Y,Z OU X,Z": "TELEPORT · USE X,Y,Z OR X,Z", "cheat: save desativado": "cheat: saving disabled"});Object.assign(LANG_EN,{"carros atrás de você · junte $10.000 pra quitar": "cars after you · get $10,000 to pay it off","PEGAR EMPRÉSTIMO": "TAKE A LOAN", "prazo de 10 horas": "10-hour deadline", "PAGAR O AGIOTA": "PAY THE LOAN SHARK", "DÍVIDA COM O AGIOTA": "DEBT TO THE LOAN SHARK", "vence em": "due in", "VENCIDA · cobradores na rua": "OVERDUE · collectors on the street", "EMPRÉSTIMO · $10.000": "LOAN · $10,000", "Você tem 10 horas para pagar o que deve ao agiota, ou ele mandará seus associados lhe fazerem uma visita para cobrar a dívida de uma maneira.... dolorosa.": "You have 10 hours to pay back the loan shark, or he'll send his associates to pay you a visit and collect the debt in a rather... painful way.", "PAGAR O AGIOTA?": "PAY THE LOAN SHARK?", "Quitar agora os $10.000 da dívida.": "Pay off the $10,000 debt now.", "EMPRÉSTIMO PAGO": "LOAN PAID", "DÍVIDA QUITADA": "DEBT CLEARED", "O agiota recebeu os $10.000. Negócio fechado.": "The loan shark got his $10,000. Deal closed.", "O agiota recebeu os $10.000. Os associados dele foram embora.": "The loan shark got his $10,000. His associates are gone.", "O AGIOTA NÃO ESPEROU": "THE LOAN SHARK DIDN'T WAIT", "Você não tem os $10.000. Os associados dele estão chegando — e vão continuar vindo até a dívida ser paga.": "You don't have the $10,000. His associates are on their way, and they'll keep coming until the debt is paid.", "COBRADORES DO AGIOTA": "LOAN SHARK COLLECTORS", "AGIOTA · faltam 5 horas pra pagar": "LOAN SHARK · 5 hours left to pay", "AGIOTA · falta 1 hora pra pagar": "LOAN SHARK · 1 hour left to pay", "COBRADO PELO AGIOTA": "COLLECTED BY THE LOAN SHARK", "EMPRÉSTIMO · +$10.000": "LOAN · +$10,000", "AGIOTA · −$10.000": "LOAN SHARK · −$10,000"});Object.assign(LANG_EN,{"ROLETA": "ROULETTE","MINIGAMES BLOQUEADOS · ": "MINIGAMES LOCKED · ", "SAIA DO INTERIOR PRIMEIRO": "LEAVE THE BUILDING FIRST", "aposta mínima": "minimum bet", "Cassino Sunset Royale · joga com o dinheiro da conta e volta pra onde estava": "Sunset Royale Casino · play with your account money and come back where you were", "VÍDEO PÔQUER": "VIDEO POKER", "CAÇA-NÍQUEL": "SLOT MACHINE", "SINUCA (CASTIGADO)": "POOL (CASTIGADO)"});Object.assign(LANG_EN,{"SKATE · SHAPES · RODAS":"SKATE · DECKS · WHEELS","dar 1 skate da garagem na troca": "trade in 1 board from your garage", "SKATE TROCADO · −$": "BOARD TRADED IN · −$", "letras, números e símbolos · até 6": "letters, numbers and symbols · up to 6", "ATÉ 6": "UP TO 6"});Object.assign(LANG_EN,{"SUBIR NO SKATE": "HOP ON THE SKATEBOARD", "DESCER DO SKATE": "STEP OFF THE SKATEBOARD", "SKATE SHOP · SKATES $120": "SKATE SHOP · SKATEBOARDS $120", "W empurra · S freia · A/D curva · Espaço pula · F desce": "W pushes · S brakes · A/D turns · Space jumps · F steps off", "na velocidade máxima, SEGURE Espaço no pulo: kickflip (solte a tempo de alinhar antes do pouso)": "at top speed, HOLD Space while jumping: kickflip (let go in time to line up before landing)", "PRANCHA TORTA NO POUSO · CAIU": "BOARD NOT LINED UP ON LANDING · BAILED", "OFICINA · SKATE": "WORKSHOP · SKATEBOARD", "SEM MUDANÇAS": "NO CHANGES", "troque as cores e a estampa do seu skate": "change your board's colors and print", "o skate novo vai pra garagem da sua casa": "your new board goes to your home garage", "SKATE CUSTOMIZADO · −$": "BOARD CUSTOMIZED · −$", "SKATE COMPRADO · −$": "BOARD BOUGHT · −$", "está na garagem da sua casa": "it's in your home garage"});Object.assign(LANG_EN,{"VAI PAGAR POR ISSO!": "YOU'LL PAY FOR THAT!", "PARADO AÍ!": "FREEZE!", "PEGA ELE!": "GET HIM!", "FOGO! SAI DO CARRO!": "FIRE! GET OUT OF THE CAR!", "SAI, SAI!": "OUT, OUT!"});Object.assign(LANG_EN,{"CENTRALIZAR NA TELA": "CENTER ON SCREEN"});Object.assign(LANG_EN,{"RECARREGAR AGORA": "RELOAD NOW", "A placa de vídeo caiu várias vezes seguidas.": "The graphics card crashed several times in a row.", "Jogo salvo. Feche outras abas pesadas e recarregue; se continuar, reinicie o navegador.": "Game saved. Close other heavy tabs and reload; if it keeps happening, restart the browser.", "A placa de vídeo reiniciou.": "The graphics card restarted.", "Jogo salvo · recarregando em": "Game saved · reloading in", "Feche outras abas pesadas e recarregue; se continuar, reinicie o navegador.": "Close other heavy tabs and reload; if it keeps happening, restart the browser.", "Recarregando em": "Reloading in", "A placa de vídeo reiniciou · jogo retomado": "The graphics card restarted · game resumed"});Object.assign(LANG_EN,{"Que sono....": "So sleepy...."});Object.assign(LANG_EN,{"TEM UM X9 NA ÁREA!": "THERE'S A SNITCH AROUND!", "ele tá ligando pra polícia · 10 s pra calar ele": "he's calling the cops · 10 s to shut him up", "X9 SILENCIADO": "SNITCH SILENCED", "O X9 CHAMOU A POLÍCIA": "THE SNITCH CALLED THE COPS", "ALÔ, POLÍCIA? TEM UM MALUCO AQUI!": "HELLO, POLICE? THERE'S A MANIAC HERE!", "ALÔ? 190? CORRE PRA CÁ!": "HELLO? 911? GET OVER HERE!", "ELE TÁ MATANDO TODO MUNDO!": "HE'S KILLING EVERYBODY!", "TÔ VENDO ELE AGORA, MOÇO!": "I CAN SEE HIM RIGHT NOW, OFFICER!", "ANOTA A PLACA AÍ, SEU GUARDA!": "WRITE DOWN THE PLATE, OFFICER!"});
 const LANG_EXACT=new Map(Object.entries(LANG_EN));
 // One-pass replacement prevents cascading translations and substitutions inside words.
@@ -22021,7 +22304,7 @@ function update(dt){if(SKATE.ui)return;if(POOL.on){poolTick(dt);return}if(DICE.o
  const SUB=4,h=dt/SUB;
  for(let s=0;s<SUB;s++){
   for(const c of act){c.px=c.x;c.pz=c.z;c.pa=c.a;c.wet=c.t.hover&&inWater(c.x,c.z);if(c.t.boat||c.wet)boatStep(c,h);else carStep(c,h)}
-  for(const c of act)if(!c.t.boat&&!c.wet){carVsWorld(c);if((c.airY||0)<=.01)dbWallActor(c,c.px,c.pz,h,Math.max(.7,c.t.L*.46))}
+  for(const c of act)if(!c.t.boat&&!c.wet){carVsWorld(c);if(c===PL.car)dbPlayerCarRamp(c);else if((c.airY||0)<=.01)dbWallActor(c,c.px,c.pz,h,Math.max(.7,c.t.L*.46))}
   for(const A of act)for(const B of carsNear(A.x,A.z,A.t.R+9)){if(B===A||B.mode!=='phys')continue;if(!B.sleep&&B.id<A.id)continue;carVsCar(A,B)}
  }
  clubDriveTick(dt);
@@ -22053,7 +22336,7 @@ function update(dt){if(SKATE.ui)return;if(POOL.on){poolTick(dt);return}if(DICE.o
  const _profPeds=MON.on?performance.now():0;
  updatePeds(dt);npcMingleTick(dt);pedevTick(dt);if(MON.on){PERF.peds+=performance.now()-_profPeds;PERF.frames++}updateFallers(dt);newsTick();updatePickups(dt);
  weaponTick(dt);updateGrenades(dt);remoteTick(dt);updateDecals(dt);myTick(dt);
- if(!PL.dead&&!PL.car&&!PL.heli&&!PARA.active&&!PL.inside&&!LH.fall&&inWater(PL.x,PL.z))drown();
+ if(!PL.dead&&!PL.car&&!PL.heli&&!PARA.active&&!PL.inside&&!LH.fall&&!SKATE.ride?.dbFlight&&inWater(PL.x,PL.z))drown();
  if(boomT>0){boomT-=dt;boomLight.intensity=Math.max(0,boomT/.7)*10}
  updateVehicleWrecks(dt);
  popT-=dt;if(popT<=0&&(!PL.inside||TVM.on)){popT=.35;const pp=BENCH.running?BENCH.focus:(TVM.on?TVM.foc:PL.car||PL);
@@ -22141,7 +22424,11 @@ function recoverBenchmarkHUD(c){
   {shadows:true,shadowQuality:1,bloom:true,refl:true,traffic:50,peds:50,renderScale:100,lampLighting:true,lampCount:4},
   {shadows:true,shadowQuality:4,bloom:true,refl:true,traffic:100,peds:100,renderScale:100,lampLighting:true,lampCount:4}
  ];
- if(!sample.some(p=>Object.keys(p).every(k=>c[k]===p[k])))return c;
+ if(!sample.some((p,i)=>Object.keys(p).every(k=>{
+  if(k!=='traffic'&&k!=='peds')return c[k]===p[k];
+  const preset=GRAPHICS_PRESETS[['LOW','MEDIUM','HIGH'][i]];
+  return (c.traffic===p.traffic&&c.peds===p.peds)||(c.traffic===preset.traffic&&c.peds===preset.peds);
+ })))return c;
  const fixed={...c,showHud:true,showMinimap:true};
  try{localStorage.setItem('ps_cfg',JSON.stringify(fixed))}catch(e){}
  console.info('PixelCity: HUD/minimapa restaurados após preset de benchmark antigo');
