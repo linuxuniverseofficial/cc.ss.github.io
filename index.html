@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 <script>
 /* v78 · BUILD: número da entrega. Ao abrir, o jogo lê version.txt (poucos bytes, sem cache) e, se a build no servidor for outra
    (navegador/celular servindo cópia velha), recarrega uma vez. Saves e configurações (localStorage) NÃO são apagados. */
-var BUILD_TAG='r54';
+var BUILD_TAG='r55';
 (function(){try{if(!/^https?:$/.test(location.protocol))return;const k='ps_build_reload';
  fetch(new URL('version.txt?b='+Date.now(),location.href).href,{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=/^\s*(r\d+)\s*$/.exec(t||'');if(!m||m[1]===BUILD_TAG){try{sessionStorage.removeItem(k)}catch(e){}return}
   let n=0;try{n=+sessionStorage.getItem(k)||0}catch(e){}if(n>=2)return;try{sessionStorage.setItem(k,String(n+1))}catch(e){}
@@ -1741,8 +1741,8 @@ const scene=new THREE.Scene();
 const camera=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,0.1,2500);camera.layers.enable(1);
 camera.position.set(0,60,0);
 let composer=null,bloomPass=null;
-/* Synthwave: bloom em meia resolucao (bloomHalf -1 = recalcular) */
-let bloomHalf=-1;function bloomResFit(){if(!composer||!bloomPass)return;const h=(STYLES[S.style]&&STYLES[S.style].synth)?1:0;if(h===bloomHalf)return;bloomHalf=h;const pr=renderer.getPixelRatio(),k=h?.5:1;bloomPass.setSize(Math.max(1,Math.round(innerWidth*pr*k)),Math.max(1,Math.round(innerHeight*pr*k)))}
+/* Bloom sempre em meia resolucao (reduz ~75% do fill-rate dos 11 passes sem perda perceptivel; bloomHalf -1 = recalcular) */
+let bloomHalf=-1;function bloomResFit(){if(!composer||!bloomPass)return;const pr=renderer.getPixelRatio(),w=Math.max(1,Math.round(innerWidth*pr*.5)),h=Math.max(1,Math.round(innerHeight*pr*.5)),key=w*65536+h;if(key===bloomHalf)return;bloomHalf=key;bloomPass.setSize(w,h)}
 function renderScale01(){return Math.max(.12,(S.renderScale??100)/100)}
 function applyRenderScale(){
   const sc=renderScale01(),pr=Math.max(.18,BASE_PIXEL_RATIO*sc);
@@ -1757,11 +1757,11 @@ function applyRenderScale(){
 }
 applyRenderScale();
 try{ if(THREE.EffectComposer&&THREE.UnrealBloomPass&&THREE.RenderPass){
-  const rt=new THREE.WebGLRenderTarget(innerWidth*renderer.getPixelRatio(),innerHeight*renderer.getPixelRatio(),{minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,format:THREE.RGBAFormat,depthBuffer:true,stencilBuffer:true});
+  const rt=new THREE.WebGLRenderTarget(innerWidth*renderer.getPixelRatio(),innerHeight*renderer.getPixelRatio(),{minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,format:THREE.RGBAFormat,depthBuffer:true,stencilBuffer:false});
   composer=new THREE.EffectComposer(renderer,rt);composer.setPixelRatio(renderer.getPixelRatio());composer.setSize(innerWidth,innerHeight);
   composer.addPass(new THREE.RenderPass(scene,camera));
-  bloomPass=new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),0.95,0.55,0.5);
-  composer.addPass(bloomPass);
+  bloomPass=new THREE.UnrealBloomPass(new THREE.Vector2(Math.max(1,Math.round(innerWidth*renderer.getPixelRatio()*.5)),Math.max(1,Math.round(innerHeight*renderer.getPixelRatio()*.5))),0.95,0.55,0.5);
+  composer.addPass(bloomPass);bloomResFit();
 }}catch(e){composer=null;console.warn('bloom off',e)}
 addEventListener('resize',()=>{applyRenderScale()});
 
@@ -3233,9 +3233,9 @@ vec3 cityAge(){if(uAgeK<.01)return vec3(1.);vec3 w=vAgW;float dist=distance(w,ca
   else if(n.y>.5&&w.y<1.){float st=smoothstep(.5,.82,agN(w.xz*.3)*.7+agN(w.xz*.9)*.3)*(.55+.45*agN(w.xz*1.3));mt=mix(vec3(1.),mix(vec3(.62,.58,.46),vec3(.5,.52,.3),smoothstep(.4,.7,agN(w.xz*.07+5.))),st*.4);}
   col*=mix(vec3(1.),mt,(1.-smoothstep(120.,190.,dist)));}
  // indústria: fuligem preta no topo das chaminés e depósito escuro em volta (lajes e paredes até ~45 m) — vale em toda a cidade
- float soot=0.;for(int i=0;i<8;i++){vec4 c=uSoot[i];if(c.w<.5)continue;float hd=distance(w.xz,c.xy);
+ float soot=0.,sootN=-1.;for(int i=0;i<8;i++){vec4 c=uSoot[i];if(c.w<.5)continue;float hd=distance(w.xz,c.xy);
   if(hd<c.w+.4){float dt=c.z-w.y;soot=max(soot,(1.-smoothstep(1.,10.+agN(vec2(atan(w.z-c.y,w.x-c.x)*3.,1.))*8.,dt))*.85);}
-  else soot=max(soot,(1.-smoothstep(8.,45.,hd))*(n.y>.6?.45:.3)*(.55+.45*agN(w.xz*.3)));}
+  else if(hd<45.){if(sootN<0.)sootN=.55+.45*agN(w.xz*.3);soot=max(soot,(1.-smoothstep(8.,45.,hd))*(n.y>.6?.45:.3)*sootN);}}
  return col*mix(vec3(1.),vec3(.24,.22,.21),soot*fd);}`;
 function cityAgeMat(mat){if(!mat||mat.userData.cityAge)return mat;mat.userData.cityAge=true;const old=mat.onBeforeCompile,key=mat.customProgramCacheKey();
  mat.onBeforeCompile=(sh,r)=>{old.call(mat,sh,r);sh.uniforms.uAgeK=CITY_AGE.k;sh.uniforms.uSoot=CITY_AGE.soot;sh.uniforms.uAgeBox=CITY_AGE.box;sh.uniforms.uAgeBoxH=CITY_AGE.boxH;
@@ -4869,6 +4869,7 @@ function buildRiverArches(group){
   city.riverArches.push({x:c.mx,z:c.mz,span,apex:baseY+rise});
  }
 }
+function skipHiddenMatrixWorld(g){if(g)g.updateMatrixWorld=function(force){if(!this.visible&&!force)return;THREE.Object3D.prototype.updateMatrixWorld.call(this,force)};return g}
 async function generateCity(){
  if(COPH.h?.o){heliSnd(COPH.h,false);heliDropModel(COPH.h)}
  COPH.h=null;COPH.respawnAt=0;
@@ -4991,7 +4992,7 @@ async function generateCity(){
   if(LV&&LV.t!=='ave'&&segExists(k,b,1))for(const sg of [-6,6])city.strips.push([k*P+sg,b*P+RW/2+1,k*P+sg,(b+1)*P-RW/2-1])}
  {const per=city.rects.reduce((a,r)=>a+2*((r[2]-r[0])+(r[3]-r[1])),0);city.pedRatio=per?city.strips.length*(P-RW-2)/per:0}
  city.catSpots=[];animalsClear();petsClear();jammerReset();maskReset();AMBS.list.length=0;AMBS.t=30;TAXI.c=null;TAXI.state=null;TAXI.hold=0;if(typeof PL!=='undefined'&&PL.taxi){PL.taxi=null;PL.sp.visible=true}heliClear();clearVehicles();clearPeds();clearSkids();clearPickups();NAV.marker=null;NAV.route=null;if(NAV.beam)NAV.beam.visible=false;POL.wanted=false;POL.escT=0;GAS.list.clear();GAS.q.length=0;MALL.door=null;if(typeof GHOST!=='undefined'){ghostKill();GHOST.cool=30}WZ.list.length=0;WZ.crime=null;WZ.cur=null;WZ.fromZone=null;WZ.susT=0;AMMO.reset();gunReset();clearRockets();clearDecals();if(typeof MIS!=='undefined'&&MIS.type)misEnd();PL.money=0;buildInstancing(st);simT=0;
- const grp=new THREE.Group();city.group=grp;scene.add(grp);
+ const grp=skipHiddenMatrixWorld(new THREE.Group());city.group=grp;scene.add(grp);
  document.body.classList.toggle('synth',!!st.synth);document.body.classList.toggle('inverted',S.style==='inverted');
  scene.fog=new THREE.Fog(st.fog,st.fogNear,st.fogFar);scene.background=new THREE.Color(st.bg);captureDrawFogBase();syncFogDrawDistance();
  hemi.color.setHex(st.hemi[0]);hemi.groundColor.setHex(st.hemi[1]);hemi.intensity=st.hemi[2];
@@ -5543,9 +5544,10 @@ function proceduralFootprint(kind,X0,Z0,X1,Z1){const w=X1-X0,d=Z1-Z0,one=Math.ma
  let nw=Math.min(w,lim),nd=Math.min(d,lim);const maxSide=kind==='cem'?(2*P-RW-2*SW):one,areaCap=kind==='cem'?(2*BS*BS):(BS*BS*.98);
  const scale=Math.min(1,maxSide/Math.max(nw,nd),Math.sqrt(areaCap/Math.max(1,nw*nd)));nw*=scale;nd*=scale;const x=(X0+X1-nw)/2,z=(Z0+Z1-nd)/2;return[x,z,x+nw,z+nd]}
 /* Isometric occlusion: per-building IDs retain the existing combined geometry/draw calls. */
-const ISOFADE={items:[null],active:new Set(),scan:0,data:new Uint8Array(128*64*4).fill(255),tex:null,enabled:{value:0}};
+const ISOFADE={items:[null],active:new Set(),scan:0,data:new Uint8Array(128*64*4).fill(255),tex:null,enabled:{value:0},mats:new Set(),compileOn:false};
 ISOFADE.tex=new THREE.DataTexture(ISOFADE.data,128,64,THREE.RGBAFormat);ISOFADE.tex.minFilter=ISOFADE.tex.magFilter=THREE.NearestFilter;ISOFADE.tex.generateMipmaps=false;ISOFADE.tex.needsUpdate=true;
-function isoFadeReset(){ISOFADE.items=[null];ISOFADE.nrN=0;ISOFADE.active.clear();ISOFADE.scan=0;ISOFADE.data.fill(255);ISOFADE.tex.needsUpdate=true;ISOFADE.enabled.value=0}
+function isoFadeReset(){ISOFADE.items=[null];ISOFADE.nrN=0;ISOFADE.active.clear();ISOFADE.scan=0;ISOFADE.data.fill(255);ISOFADE.tex.needsUpdate=true;ISOFADE.enabled.value=0;ISOFADE.mats.clear();ISOFADE.compileOn=false}
+function isoFadeSetCompile(on){const b=!!on;if(ISOFADE.compileOn===b)return;ISOFADE.compileOn=b;for(const m of ISOFADE.mats)m.needsUpdate=true}
 function isoRecord(builders,starts){
  let x0=Infinity,y0=Infinity,z0=Infinity,x1=-Infinity,y1=-Infinity,z1=-Infinity;
  for(let k=0;k<builders.length;k++){const b=builders[k];for(let i=starts[k];i<b.p.length;i+=3){if(b.iso&&b.iso[i/3])continue;const x=b.p[i],y=b.p[i+1],z=b.p[i+2];if(y<.7)continue;x0=Math.min(x0,x);y0=Math.min(y0,y);z0=Math.min(z0,z);x1=Math.max(x1,x);y1=Math.max(y1,y);z1=Math.max(z1,z)}}
@@ -5554,12 +5556,12 @@ function isoRecord(builders,starts){
  for(let k=0;k<builders.length;k++){const b=builders[k];if(!b.iso)b.iso=[];for(let i=starts[k]/3;i<b.p.length/3;i++)if(!b.iso[i])b.iso[i]=id}
 }
 function isoFadeMaterial(mat){
- if(mat.userData.isoFade)return;const original=mat.onBeforeCompile,cache=mat.customProgramCacheKey();mat.userData.isoFade=true;
- mat.onBeforeCompile=sh=>{if(original)original.call(mat,sh);sh.uniforms.isoFadeMap={value:ISOFADE.tex};sh.uniforms.isoFadeOn=ISOFADE.enabled;
+ if(!mat)return;ISOFADE.mats.add(mat);if(mat.userData.isoFade)return;const original=mat.onBeforeCompile,cache=mat.customProgramCacheKey();mat.userData.isoFade=true;
+ mat.onBeforeCompile=(sh,r)=>{if(original)original.call(mat,sh,r);if(!ISOFADE.compileOn)return;sh.uniforms.isoFadeMap={value:ISOFADE.tex};sh.uniforms.isoFadeOn=ISOFADE.enabled;
  sh.vertexShader='attribute float isoId;uniform sampler2D isoFadeMap;uniform float isoFadeOn;varying float vIsoAlpha;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\n vIsoAlpha=1.;if(isoFadeOn>.5&&isoId>.5){vec2 fadeUV=(vec2(mod(isoId,128.),floor(isoId/128.))+.5)/vec2(128.,64.);vIsoAlpha=texture2D(isoFadeMap,fadeUV).r;}');
  // Stable screen-door coverage avoids transparent-sort errors between batched facades.
  sh.fragmentShader='varying float vIsoAlpha;\n'+sh.fragmentShader.replace('#include <alphatest_fragment>','#include <alphatest_fragment>\n if(vIsoAlpha<.999){vec2 cell=mod(floor(gl_FragCoord.xy),4.);float threshold=fract(sin(dot(cell,vec2(12.9898,78.233)))*43758.5453);if(threshold>vIsoAlpha)discard;}');
- };mat.customProgramCacheKey=()=>cache+'|isoFade-v1';mat.needsUpdate=true;
+ };mat.customProgramCacheKey=()=>cache+(ISOFADE.compileOn?'|isoFade-v1':'|isoFade-off');mat.needsUpdate=true;
 }
 function isoAttach(mesh,mb){if(!mesh||!mb.iso)return;const a=new Float32Array(mesh.geometry.attributes.position.count);for(let i=0;i<a.length;i++)a[i]=mb.iso[i]||0;mesh.geometry.setAttribute('isoId',new THREE.BufferAttribute(a,1));isoFadeMaterial(mesh.material)}
 function isoRayBox(from,to,b,pad){let lo=0,hi=.985;for(const [key,mn,mx]of [['x','x0','x1'],['y','y0','y1'],['z','z0','z1']]){const d=to[key]-from[key],low=b[mn]-(key==='y'?0:pad),high=b[mx]+(key==='y'?0:pad);if(Math.abs(d)<1e-6){if(from[key]<low||from[key]>high)return false;continue}let a=(low-from[key])/d,c=(high-from[key])/d;if(a>c){const q=a;a=c;c=q}lo=Math.max(lo,a);hi=Math.min(hi,c);if(lo>hi)return false}return hi>=0&&lo<.985}
@@ -5614,9 +5616,9 @@ function bridgeViewTick(dt){
 function bridgeVisualMaterial(mat,wet=false){
  if(mat.userData.bridgeVisual)return;
  mat.userData.bridgeVisual=true;
- const old=mat.onBeforeCompile,key=mat.customProgramCacheKey();
- mat.onBeforeCompile=shader=>{
-  old.call(mat,shader);
+ const old=mat.onBeforeCompile,keyFn=mat.customProgramCacheKey.bind(mat);
+ mat.onBeforeCompile=(shader,r)=>{
+  old.call(mat,shader,r);
   Object.assign(shader.uniforms,{boatFocus:bridgeView.focus,deckBounds:bridgeView.bounds,deckReveal:bridgeView.strength,dbGapA:DBU.a,dbGapB:DBU.b});
   if(!wet)shader.vertexShader='varying vec3 deckWorld;\n'+shader.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\n deckWorld=(modelMatrix*vec4(transformed,1.)).xyz;');
   const world=wet?'vW':'deckWorld';
@@ -5631,12 +5633,12 @@ function bridgeVisualMaterial(mat,wet=false){
       if(fract(dot(mod(floor(gl_FragCoord.xy),4.),vec2(.3125,.1875)))<.95*cut)discard;
      }
     }`);
- };mat.customProgramCacheKey=()=>key+'|boatBridge';mat.needsUpdate=true;
+ };mat.customProgramCacheKey=()=>keyFn()+'|boatBridge';mat.needsUpdate=true;
 }
 function isoFadeTick(dt){
  bridgeViewTick(dt);updateRoomCutaway(dt);
  /* v78: na VISTA DE CIMA (sem órbita) só o prédio-túnel do Neon Road some; na giratória, todos como antes */
- const orbitOn=camMode==='top'&&VIEW.orbit&&!PL.inside&&!TVM.on,on=orbitOn||(camMode==='top'&&!VIEW.orbit&&!PL.inside&&!TVM.on&&!PHOTO.on&&ISOFADE.nrN>0); /* modo foto: túnel nunca some */ISOFADE.enabled.value=on?1:0;
+ const orbitOn=camMode==='top'&&VIEW.orbit&&!PL.inside&&!TVM.on,on=orbitOn||(camMode==='top'&&!VIEW.orbit&&!PL.inside&&!TVM.on&&!PHOTO.on&&ISOFADE.nrN>0); /* modo foto: túnel nunca some */ISOFADE.enabled.value=on?1:0;isoFadeSetCompile(on);
  if(!on){if(ISOFADE.active.size){for(const b of ISOFADE.active){b.a=b.want=1;if(b.nrMeshes)for(const m of b.nrMeshes)m.visible=true;ISOFADE.data.fill(255,b.id*4,b.id*4+4)}ISOFADE.active.clear();ISOFADE.tex.needsUpdate=true}ISOFADE.scan=0;return}
  ISOFADE.scan-=dt;if(ISOFADE.scan<=0){ISOFADE.scan=.08;for(const b of ISOFADE.active)b.want=1;
   const p=PL.car||PL,y=(p.gy||0)+(p.airY||0)+(p.rampY||0)+(PL.car?1.1:1.3)+(PL.car?0:PL.jy||0),r=PL.car?Math.min(1.4,p.t.W*.5):.5;
@@ -5687,7 +5689,7 @@ function adsAtlas(){if(ADS.mat)return ADS.mat;const W=1024,H=512,c=cv(W,H),g=c.g
   g.restore();g.textAlign='left';g.textBaseline='middle';g.fillStyle=a[4];fitFill(g,translatePlain(a[0]),x+14,y+50,228,40,'Fredoka, Arial Black, sans-serif');
   g.globalAlpha=.9;fitFill(g,translatePlain(a[1]),x+16,y+90,200,20,'Fredoka, Arial, sans-serif');g.globalAlpha=1;
   g.strokeStyle='rgba(0,0,0,.35)';g.lineWidth=4;g.strokeRect(x+2,y+2,252,124)});
- const t=new THREE.CanvasTexture(c);t.anisotropy=4;ADS.tex=t;ADS.mat=dnSignMat(t,.55);ADS.mat.side=THREE.DoubleSide;return ADS.mat}
+ const t=new THREE.CanvasTexture(c);t.anisotropy=4;ADS.tex=t;ADS.mat=dnSignMat(t,.55);ADS.mat.side=THREE.DoubleSide;ADS.mat.userData.cached=true;return ADS.mat}
 function adsMesh(list){if(!list||!list.length)return null;const pos=[],uv=[],idx=[];list.forEach((q,n)=>{const i=q.tile,u0=(i%4)/4,u1=u0+.25,v1=1-Math.floor(i/4)/4,v0=v1-.25;
   for(const p of q.pts)pos.push(...p);uv.push(u0,v0,u1,v0,u1,v1,u0,v1);const b=n*4;idx.push(b,b+1,b+2,b,b+2,b+3)});
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();
@@ -8193,7 +8195,10 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
    if([tb.min.x,tb.min.y,tb.min.z,tb.max.x,tb.max.y,tb.max.z].every(Number.isFinite))bb.union(tb)}});
   if(!bb.isEmpty()){ch.x0=Math.min(ch.x0,bb.min.x);ch.z0=Math.min(ch.z0,bb.min.z);ch.x1=Math.max(ch.x1,bb.max.x);ch.z1=Math.max(ch.z1,bb.max.z);ch.y1=bb.max.y}}
  paintChunkMap(ch);
- city.group.add(ch.group);curChunk=null;R=Rsave;
+ city.group.add(ch.group);
+ {const dyn=new Set();for(const t of ch.tls)if(t.signGroup)t.signGroup.traverse(x=>dyn.add(x));for(const g of ch.industryGates||[])if(g.pivot)g.pivot.traverse(x=>dyn.add(x));
+  ch.group.updateMatrixWorld(true);ch.group.traverse(o=>{if(!dyn.has(o))o.matrixAutoUpdate=false});skipHiddenMatrixWorld(ch.group)}
+ curChunk=null;R=Rsave;
 }
 function paintChunkMap(ch){if(!mapCv||ch.painted)return;ch.painted=true;const g=mapCv.getContext('2d'),m=city.st.map;
  for(const ri of ch.rects){const k=city.info[ri].kind;if(k!=='bld'&&k!=='houses')continue;const r=city.rects[ri];g.fillStyle=k==='houses'?'#8fa070':m.block;g.fillRect(r[0]+SW+MOFF,r[1]+SW+MOFF,r[2]-r[0]-2*SW,r[3]-r[1]-2*SW)}
@@ -8254,7 +8259,7 @@ function syncFarMaterials(){
 // Cada malha combinada mantém seu próprio uniform (programa GLSL compartilhado).
 function lodSoftBind(mesh,initAlpha,reverse=false){
  if(!mesh||!mesh.material)return null;
- const src=mesh.material,mat=src.clone(),before=src.onBeforeCompile,key=src.customProgramCacheKey();
+ const src=mesh.material,mat=src.clone(),before=src.onBeforeCompile;
  const uni={value:initAlpha},rev={value:reverse?1:0};
  mat.onBeforeCompile=function(sh,renderer){
   if(before)before.call(this,sh,renderer);
@@ -8267,22 +8272,30 @@ function lodSoftBind(mesh,initAlpha,reverse=false){
     if(cell>pcLodVis)discard;
    }`);
  };
- mat.customProgramCacheKey=()=>key+'|chunkDither-v241';
+ mat.customProgramCacheKey=()=>src.customProgramCacheKey()+'|chunkDither-v241';
+ if(src.userData&&src.userData.isoFade)ISOFADE.mats.add(mat);
  // v78: o clone do LOD perdia o acender da noite — neonDN divide a MESMA cor animada; placas dnSign entram no DN_SIGNS
  if(city.M&&src===city.M.neonDN)mat.color=src.color;
  if(DN_SIGNS.has(src)){mat.userData.dnClone=true;DN_SIGNS.add(mat)}
- mesh.material=mat;mesh.userData.pcLodSoft=true;
+ mesh.userData.pcLodSoft=true;
  city.mats.push(mat);
- mesh.visible=initAlpha>0.004;
- return {mesh,uni,alpha:initAlpha,target:initAlpha};
+ const vis=initAlpha>0.004;mesh.visible=vis;
+ mesh.material=initAlpha>=0.999?src:mat;
+ return {mesh,srcMat:src,ditherMat:mat,uni,alpha:initAlpha,target:initAlpha};
 }
 const lodSmooth=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t)};
+function lodSoftAssignMat(mesh,m){
+ if(typeof ITS!=='undefined'&&ITS.on&&mesh.material&&mesh.material.userData&&mesh.material.userData.its){if(mesh.userData.itsOrig!==m){mesh.userData.itsOrig=m;mesh.material=itsFor(m,mesh)}}
+ else if(mesh.material!==m)mesh.material=m;
+}
 function lodSoftStep(s,target,k){
  if(!s)return;
  if(Math.abs(target-s.alpha)<.006)s.alpha=target;
  else s.alpha+=(target-s.alpha)*k;
  s.uni.value=s.alpha;
- s.mesh.visible=s.alpha>.004;
+ const vis=s.alpha>.004;
+ if(s.mesh.visible!==vis)s.mesh.visible=vis;
+ if(vis)lodSoftAssignMat(s.mesh,s.alpha>=.999?s.srcMat:s.ditherMat);
 }
 function chunkLod(ch,d,immediate=false){
  // v241: mantém a grade 2x2 e os limites da v240.
@@ -8310,7 +8323,7 @@ function chunkLod(ch,d,immediate=false){
   ch._lodFadeT=performance.now();
   ch._geoShadow=undefined;
  }
- if(ch._far!==farMat){for(const e of ch._lodMeshes)e.o.material=farMat?farMaterial(e.near):e.near;ch._far=farMat}
+ if(ch._far!==farMat){for(const e of ch._lodMeshes)lodSoftAssignMat(e.o,farMat?farMaterial(e.near):e.near);ch._far=farMat}
  const t=performance.now(),dt=clamp((t-ch._lodFadeT)/1000,0,.05);ch._lodFadeT=t;
  // Aproximadamente 0,3 s para acompanhar a nova faixa, até em teleporte.
  const k=immediate?1:1-Math.exp(-11*dt);
@@ -8705,13 +8718,13 @@ function debrisRestore(f){const r=f.ref,ch=r&&r.ch;if(!ch||!city.chunks||![...ci
   try{if(r.toy)r.toy.visible=true}catch(e){}r.broken=false}
  else if(f.kind==='tl'){const pos=f.g.children[0]&&f.g.children[0].geometry.attributes.position;if(ch.tlpMesh&&pos){const pa=ch.tlpMesh.geometry.attributes.position;for(let k=0;k<r.v1-r.v0;k++)pa.setXYZ(r.v0+k,pos.getX(k)+r.px,pos.getY(k)+.2,pos.getZ(k)+r.pz);pa.needsUpdate=true}
   if(ch.tlIMs&&r._mx){ch.tlIMs.forEach((m,k)=>{if(r._mx[k]){m.setMatrixAt(r.i,r._mx[k]);m.instanceMatrix.needsUpdate=true}})}
-  if(r.signGroup&&r._sg){f.g.remove(r.signGroup);r.signGroup.position.copy(r._sg.p);ch.group.add(r.signGroup)}
+  if(r.signGroup&&r._sg){if(f.fade)for(const s2 of f.fade)lodSoftStep(s2,1,1);f.g.remove(r.signGroup);r.signGroup.position.copy(r._sg.p);ch.group.add(r.signGroup)}
   r.broken=false;city.brokenTL.delete(r.tk);const key=r.kx*1000+r.kz;let other=false;for(const c2 of city.chunks.values())for(const t2 of c2.tls||[])if(t2.broken&&t2.kx*1000+t2.kz===key)other=true;if(!other)city.broken.delete(key)}
  if(f.b)f.b.dead=false}
 function debrisTick(dt){SKCLK.t+=dt;SKCLK.u.value=SKCLK.t;
  for(let i=fallers.length-1;i>=0;i--){const f=fallers[i];if(f.age==null)continue;f.age+=dt;
   if(f.age>50&&!f.fade){f.fade=[];f.g.traverse(o=>{if(o.isMesh){o.castShadow=false;const s2=lodSoftBind(o,1);if(s2)f.fade.push(s2)}})}
-  if(f.fade){const a=clamp(1-(f.age-50)/10,0,1);for(const s2 of f.fade){s2.uni.value=a;s2.mesh.visible=a>.004}}
+  if(f.fade){const a=clamp(1-(f.age-50)/10,0,1);for(const s2 of f.fade)lodSoftStep(s2,a,1)}
   if(f.age>=60){fallers.splice(i,1);debrisGone(f)}}
  if((DEBRIS.chk-=dt)<=0&&DEBRIS.restore.length){DEBRIS.chk=1;const pc=PL.car||PL;
   DEBRIS.restore=DEBRIS.restore.filter(f=>{const r=f.ref,x=r.px??r.x,z=r.pz??r.z;if(Math.hypot(x-pc.x,z-pc.z)<70)return true;try{debrisRestore(f)}catch(e){console.warn('[debris]',e)}return false})}}
@@ -9886,7 +9899,7 @@ function drawMinimap0(){if(!mapCv)return;if((MINI_F=(MINI_F||0)+1)%60===1)miniRe
  {const tg=-Math.PI/2-ang;if(MINI.rot===undefined)MINI.rot=tg;let d=tg-MINI.rot;d=Math.atan2(Math.sin(d),Math.cos(d));MINI.rot+=d*.25}const rot=MINI.rot,cr=Math.cos(rot),sr=Math.sin(rot);
  // v77: dentro de interiores o radar mostra a planta do lugar (paredes/móveis pela colisão) em vez do cinza da cidade
  if(PL.inside&&!PL.car&&!HELI.cur){let ok=false;try{ok=interiorMiniMap(mctx,p,rot,w,h)}catch(e){console.error(e)}if(ok){drawNorth(mctx,w-19,21,14,rot);mctx.save();mctx.translate(w/2,h/2);mctx.rotate(ang+rot);mctx.fillStyle='#ff3030';mctx.strokeStyle='#000';mctx.lineWidth=2;mctx.beginPath();mctx.moveTo(8,0);mctx.lineTo(-6,-6);mctx.lineTo(-3,0);mctx.lineTo(-6,6);mctx.closePath();mctx.fill();mctx.stroke();mctx.restore();return}}
- mctx.save();mctx.translate(w/2,h/2);mctx.rotate(rot);mctx.scale(sc,sc);mctx.translate(-(p.x+MOFF),-(p.z+MOFF));mctx.imageSmoothingEnabled=false;mapBack(mctx);mctx.drawImage(mapCv,0,0);
+ mctx.save();mctx.translate(w/2,h/2);mctx.rotate(rot);mctx.scale(sc,sc);mctx.translate(-(p.x+MOFF),-(p.z+MOFF));mctx.imageSmoothingEnabled=false;mapBack(mctx);{const cx=p.x+MOFF,cz=p.z+MOFF,mw=mapCv.width,mh=mapCv.height,sx=clamp(Math.floor(cx-178),0,mw),sy=clamp(Math.floor(cz-178),0,mh),sw=clamp(Math.ceil(cx+178),0,mw)-sx,sh=clamp(Math.ceil(cz+178),0,mh)-sy;if(sw>0&&sh>0)mctx.drawImage(mapCv,sx,sy,sw,sh,sx,sy,sw,sh)}
  if(S.style==='inverted'){
   drawPOISet(mctx,sc,true,p,rot);drawTommyRadar(mctx,sc,p);
   drawNav(mctx,sc,3,rot); // GPS amarelo também no minimapa invertido
@@ -15113,7 +15126,7 @@ function buildWet(st){if(WET.mesh){scene.remove(WET.mesh);WET.mesh.geometry.disp
    float lum=max(col.r,max(col.g,col.b));float hot=max(lum-.45,0.);col+=max(col-.5,0.)*1.5;float a=clamp(aRoad*(1.+hot*4.),0.,.96)*fog*on;if(a<.004)discard;gl_FragColor=vec4(col,a);}
 #endif
 `});
- const geo=new THREE.PlaneGeometry(S0,S0);geo.rotateX(-Math.PI/2);bridgeVisualMaterial(mat,true);WET.mesh=new THREE.Mesh(geo,mat);WET.mesh.position.set(E/2,.018,E/2);/* acima do decalque da estrada de terra (.015), senão a lama ficava escondida */WET.mesh.renderOrder=2;WET.mesh.frustumCulled=false;WET.mesh.visible=false;scene.add(WET.mesh);
+ const geo=new THREE.PlaneGeometry(356,356);geo.rotateX(-Math.PI/2);bridgeVisualMaterial(mat,true);WET.mesh=new THREE.Mesh(geo,mat);WET.mesh.position.set(E/2,.018,E/2);/* acima do decalque da estrada de terra (.015), senão a lama ficava escondida */WET.mesh.renderOrder=2;WET.mesh.frustumCulled=false;WET.mesh.visible=false;scene.add(WET.mesh);
  // calçadas: segunda malha (mesma geometria e uniforms compartilhados) na altura da calçada, só pixels B da máscara
  const mat2=new THREE.ShaderMaterial({transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-4,uniforms:mat.uniforms,defines:{WALK:1,WET_LIGHTS:IS_MOBILE?6:8},vertexShader:mat.vertexShader,fragmentShader:mat.fragmentShader});
  WET.mesh2=new THREE.Mesh(geo,mat2);WET.mesh2.position.set(E/2,.212,E/2);WET.mesh2.renderOrder=2;WET.mesh2.frustumCulled=false;WET.mesh2.visible=false;scene.add(WET.mesh2)}
@@ -15143,20 +15156,21 @@ function skyReflectionVisibility(){
  return clamp((1-cover)*(1-fair)*(1-.18*clamp(WX.ind||0,0,1)),.10,1);
 }
 // Com o reflexo desligado, a malha continua só para a lama das estradas de terra (as poças da rua e da calçada somem como antes).
-function renderReflection(){const m=WET.mesh;if(!m)return;const refl=S.refl!==false,on=WET.max>.02&&(!PL.inside||TVM.on)&&!NAV.open&&!city.haze; /* v78: Point Haze tem relevo — plano plano de chuva atravessaria os morros e marcava a grade das ruas */m.visible=on;if(WET.mesh2)WET.mesh2.visible=on&&refl;
+function renderReflection(){const m=WET.mesh;if(!m)return;const cp=camera.position,inRange=Math.abs(cp.y-.1)<=175.5,refl=S.refl!==false,on=WET.max>.02&&(!PL.inside||TVM.on)&&!NAV.open&&!city.haze; /* v78: Point Haze tem relevo — plano plano de chuva atravessaria os morros e marcava a grade das ruas */m.visible=on&&inRange;if(WET.mesh2)WET.mesh2.visible=on&&refl&&inRange;
  // Filmes das folhas acompanham a visibilidade da película de chuva global.
  for(const d of city.dbs||[])for(const film of d.wetSurfaces||[])film.visible=on;
  if(!on)return;
- const u=m.material.uniforms;u.roadOn.value=refl?1:0;u.time.value=simT;u.camP.value.copy(camera.position);
+ if(inRange){m.position.x=cp.x;m.position.z=cp.z;if(WET.mesh2){WET.mesh2.position.x=cp.x;WET.mesh2.position.z=cp.z}}
+ const u=m.material.uniforms;u.roadOn.value=refl?1:0;u.time.value=simT;u.camP.value.copy(cp);
  camera.getWorldDirection(u.camF.value);
  u.camUp.value.set(0,1,0).applyQuaternion(camera.quaternion);
  u.on.value=.5*(city.st.night?1:.48+.52*Math.max(DN.nightF||0,clamp((WX.f||0)*1.6,0,1)));u.skyK.value=skyReflectionVisibility();u.nightK.value=DN.nightF||0;if(scene.fog){u.fogN.value=scene.fog.near*.9;u.fogF.value=scene.fog.far*.95}
+ u.fake.value=WET.fake===false?0:1;u.skyA.value.copy(skyMat.uniforms.top.value).multiplyScalar(.8);u.skyB.value.copy(skyMat.uniforms.hor.value).multiplyScalar(.8);if(u.fake.value||!refl||!inRange)return;
  const sz=renderer.getDrawingBufferSize(WET.v2||(WET.v2=new THREE.Vector2())),q=camMode==='top'?.3:.36,w=Math.max(64,Math.floor(sz.x*q)),h=Math.max(64,Math.floor(sz.y*q));if(WET.rt.width!==w||WET.rt.height!==h)WET.rt.setSize(w,h);
- const c=WET.cam,cp=camera.position;camera.updateMatrixWorld();c.fov=camera.fov;c.aspect=camera.aspect;c.near=camera.near;c.far=camera.far;c.updateProjectionMatrix();
- const fw=new THREE.Vector3();camera.getWorldDirection(fw);const up=new THREE.Vector3(0,1,0).applyQuaternion(camera.quaternion);
+ const c=WET.cam;camera.updateMatrixWorld();c.fov=camera.fov;c.aspect=camera.aspect;c.near=camera.near;c.far=camera.far;c.updateProjectionMatrix();
+ const fw=(WET._fw||(WET._fw=new THREE.Vector3()));camera.getWorldDirection(fw);const up=(WET._up||(WET._up=new THREE.Vector3())).set(0,1,0).applyQuaternion(camera.quaternion);
  c.position.set(cp.x,-cp.y,cp.z);c.up.set(up.x,-up.y,up.z);c.lookAt(cp.x+fw.x,-(cp.y+fw.y),cp.z+fw.z);c.updateMatrixWorld();
  WET.tm.copy(WET.bias).multiply(c.projectionMatrix).multiply(c.matrixWorldInverse);
- u.fake.value=WET.fake===false?0:1;u.skyA.value.copy(skyMat.uniforms.top.value).multiplyScalar(.8);u.skyB.value.copy(skyMat.uniforms.hor.value).multiplyScalar(.8);if(u.fake.value||!refl)return;
  const sp=sky.position.clone(),sm=renderer.shadowMap.autoUpdate,rv=rain.visible;sky.position.copy(c.position);m.visible=false;if(WET.mesh2)WET.mesh2.visible=false;
  // Reflexo planar não deve enxergar a própria película (evita realimentação).
  for(const d of city.dbs||[])for(const film of d.wetSurfaces||[])film.visible=false;
@@ -16091,15 +16105,12 @@ async function warmCityGPU(){
    DN.tod=23*60;try{updateDayNight(0,true)}catch(e){}renderer.compile(scene,camera);if(composer){try{composer.render()}catch(e){console.warn('Bloom warmup:',e)}}DN.tod=tod;try{updateDayNight(0,true)}catch(e){}}catch(err){console.warn('FX warmup:',err)}finally{scene.remove(rk);for(const o of hid)o.visible=false}}
  const chunks=[...city.chunks.values()];
  setLoadProgress(65,'PREPARANDO MATERIAIS PRÓXIMOS E DISTANTES…');await nextTimeFrame();
- // Compilação em TODAS as faixas do fade durante o carregamento, sem esperar a primeira visita.
+ // Compilação em TODAS as faixas do fade (clean + dither + isoFade off/on) durante o carregamento, sem esperar a primeira visita.
  try{
-  for(const ch of chunks)chunkLod(ch,1e6,true);
-  if(typeof renderer.compileAsync==='function')await renderer.compileAsync(scene,camera);else renderer.compile(scene,camera);
-  for(const ch of chunks)chunkLod(ch,IS_MOBILE?60:85,true);
-  if(typeof renderer.compileAsync==='function')await renderer.compileAsync(scene,camera);else renderer.compile(scene,camera);
-  for(const ch of chunks)chunkLod(ch,0,true);
-  if(typeof renderer.compileAsync==='function')await renderer.compileAsync(scene,camera);else renderer.compile(scene,camera);
- }catch(err){console.warn('Shader warmup:',err)}finally{for(const ch of chunks)chunkLod(ch,0,true)}
+  const warmPass=async()=>{if(typeof renderer.compileAsync==='function')await renderer.compileAsync(scene,camera);else renderer.compile(scene,camera)};
+  for(const isoOn of [true,false]){isoFadeSetCompile(isoOn);
+   for(const d of [1e6,IS_MOBILE?80:100,IS_MOBILE?40:70,IS_MOBILE?16:50,0]){for(const ch of chunks)chunkLod(ch,d,true);await warmPass()}}
+ }catch(err){console.warn('Shader warmup:',err)}finally{isoFadeSetCompile(false);for(const ch of chunks)chunkLod(ch,0,true)}
  // ============================================================================
  // >>> NÃO ALTERAR AQUI <<<  GPU WARMUP / drawRange DOS SPRITES — v258
  // Não aplicar setDrawRange(0,0) a THREE.Sprite nem deixar o drawRange alterado
@@ -16137,6 +16148,8 @@ async function warmInitialViews(){
  writeInstances();updatePeds(0);updateDayNight(0,true);
  camT.x=focus.x;camT.z=focus.z;updateCamera(1);
  updateWeather(0);updateHeadlights();updateNearbyLampLights(0);
+ const settleAllLod=()=>{for(const ch of city.chunks.values())chunkLod(ch,Math.hypot(Math.max(ch.x0-camera.position.x,0,camera.position.x-ch.x1),Math.max(ch.z0-camera.position.z,0,camera.position.z-ch.z1)),true);cullChunks()};
+ settleAllLod();
  const position=camera.position.clone(),quaternion=camera.quaternion.clone(),up=camera.up.clone();
  const distance=Math.max(8,Math.min(70,Math.hypot(position.x-focus.x,position.z-focus.z)));
  try{
@@ -16150,7 +16163,7 @@ async function warmInitialViews(){
    await nextTimeFrame();
   }
  }finally{
-  camera.position.copy(position);camera.quaternion.copy(quaternion);camera.up.copy(up);
+  camera.position.copy(position);camera.quaternion.copy(quaternion);camera.up.copy(up);settleAllLod();
  }
  render();
  // Wait for submitted GPU work, rather than a fixed timeout.
