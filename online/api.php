@@ -9,6 +9,7 @@
    r14: tick também leva ws (versão do mundo que o cliente já tem) e recebe w (carros do servidor, coletáveis pegos, drops).
    Eventos novos: car {id, drv|dead, t,col,pl,x,z,a}, pk {id}, drop {x,z,w,am,m}, loot {id} (o primeiro leva), jack {to}, ride {to}.
    r16: join leva pass (mín. 6) e devolve acct (dados salvos) + new; tick aceita save {..} (vai para a conta); evento pay {to,m}.
+   r18: login {name,pass} → {acct,new} (passo 1 da tela); join aceita preset {look,car} e grava na conta.
    r17: join devolve house (0..23, -1 = sem casa).
    r15: wx {d} = estado do clima do jogador de menor id (os outros copiam).
    A cidade inteira sai da seed (igual para todos); o servidor só guarda jogadores e eventos (chat, dano, mortes). */
@@ -58,6 +59,24 @@ function db(): PDO {
   $cols = array_column($pdo->query('PRAGMA table_info(accounts)')->fetchAll(), 'name'); if (!in_array('house', $cols, true)) $pdo->exec('ALTER TABLE accounts ADD COLUMN house INTEGER DEFAULT -1');
   return $pdo;
 }
+/* conta: nome + senha. Existe → confere; não existe → cria com o dinheiro inicial. Chamar dentro de transação. */
+function acctAuth(PDO $db, array $b): array {
+  $name = trim(preg_replace('/\s+/u', ' ', (string)($b['name'] ?? '')));
+  if (mb_strlen($name) < 3 || mb_strlen($name) > 16 || !preg_match('/^[\p{L}\p{N} _.\-]+$/u', $name)) { txRollback($db); fail('NOME INVÁLIDO · 3 A 16 LETRAS/NÚMEROS'); }
+  $pass = (string)($b['pass'] ?? ''); if (mb_strlen($pass) < PASS_MIN || mb_strlen($pass) > 64) { txRollback($db); fail('SENHA · MÍNIMO 6 CARACTERES'); }
+  $lc = mb_strtolower($name);
+  $q = $db->prepare('SELECT * FROM accounts WHERE name_lc = ?'); $q->execute([$lc]); $acc = $q->fetch();
+  if ($acc) { if (!password_verify($pass, (string)$acc['pass'])) { txRollback($db); fail('SENHA ERRADA · ESSE NOME JÁ TEM DONO', 403); } $isNew = false; $name = (string)$acc['name']; /* nome como foi criado (maiúsculas) */ }
+  else { $acc = ['data' => json_encode(['m' => START_MONEY])]; $db->prepare('INSERT INTO accounts(name_lc,name,pass,data,created,seen,house) VALUES(?,?,?,?,?,?,-1)')->execute([$lc, $name, password_hash($pass, PASSWORD_DEFAULT), $acc['data'], now(), now()]); $isNew = true; }
+  $db->prepare('UPDATE accounts SET seen=?, name=? WHERE name_lc=?')->execute([now(), $name, $lc]);
+  return [$name, $lc, $acc, $isNew];
+}
+/* r21: transação de escrita já reservada (BEGIN IMMEDIATE). Com BEGIN comum (deferred) o SQLite em WAL devolve
+   "database is locked" na hora de passar de leitura para escrita se outro jogador gravou nesse meio-tempo — o busy_timeout
+   não ajuda nesse caso. Era o "erro no servidor" ao criar conta (Edge) com outro jogador (Chrome) já jogando. */
+function txBegin(PDO $db): void { $db->exec('BEGIN IMMEDIATE'); }
+function txCommit(PDO $db): void { $db->exec('COMMIT'); }
+function txRollback(PDO $db): void { try { $db->exec('ROLLBACK'); } catch (Throwable $e) { } }
 function nextV(PDO $db): int {
   $u = $db->prepare("UPDATE meta SET v=v+1 WHERE k='wv'"); $u->execute();
   if ($u->rowCount() === 0) $db->exec("INSERT INTO meta(k,v) VALUES('wv',1)");
@@ -129,20 +148,22 @@ try {
     $n = (int)$db->query('SELECT COUNT(*) n FROM players')->fetch()['n'];
     out(['ok' => true, 'players' => $n, 'max' => MAX_PLAYERS, 'day' => $day, 'seed' => $seed, 'size' => CITY_SIZE]);
   }
+  if ($a === 'login') {
+    /* r18: passo 1 da tela ONLINE — cria a conta (nome novo) ou confere a senha; devolve o que está salvo (roupa, carro, dinheiro…) */
+    $b = body(); txBegin($db);
+    [$name, $lc, $acc, $isNew] = acctAuth($db, $b);
+    txCommit($db);
+    out(['ok' => true, 'name' => $name, 'acct' => json_decode((string)$acc['data'], true) ?: [], 'new' => $isNew]);
+  }
   if ($a === 'join') {
     $b = body();
-    $name = trim(preg_replace('/\s+/u', ' ', (string)($b['name'] ?? '')));
-    if (mb_strlen($name) < 3 || mb_strlen($name) > 16 || !preg_match('/^[\p{L}\p{N} _.\-]+$/u', $name)) fail('NOME INVÁLIDO · 3 A 16 LETRAS/NÚMEROS');
     $look = cleanJson($b['look'] ?? null, 4000); if ($look === null) fail('aparência inválida');
-    $pass = (string)($b['pass'] ?? ''); if (mb_strlen($pass) < PASS_MIN || mb_strlen($pass) > 64) fail('SENHA · MÍNIMO 6 CARACTERES');
-    $lc = mb_strtolower($name);
-    $db->beginTransaction();
+    txBegin($db);
     cleanup($db);
-    /* conta: existe → confere a senha; não existe → cria com o dinheiro inicial */
-    $q = $db->prepare('SELECT * FROM accounts WHERE name_lc = ?'); $q->execute([$lc]); $acc = $q->fetch();
-    if ($acc) { if (!password_verify($pass, (string)$acc['pass'])) { $db->rollBack(); fail('SENHA ERRADA · ESSE NOME JÁ TEM DONO', 403); } $isNew = false; }
-    else { $acc = ['data' => json_encode(['m' => START_MONEY])]; $db->prepare('INSERT INTO accounts(name_lc,name,pass,data,created,seen) VALUES(?,?,?,?,?,?)')->execute([$lc, $name, password_hash($pass, PASSWORD_DEFAULT), $acc['data'], now(), now()]); $isNew = true; }
-    $db->prepare('UPDATE accounts SET seen=?, name=? WHERE name_lc=?')->execute([now(), $name, $lc]);
+    [$name, $lc, $acc, $isNew] = acctAuth($db, $b);
+    /* a roupa/carro escolhidos na tela ficam salvos na conta (preset da próxima vez) */
+    if (isset($b['preset']) && is_array($b['preset'])) { $d = json_decode((string)$acc['data'], true) ?: []; foreach (['look', 'car'] as $k) if (isset($b['preset'][$k]) && is_array($b['preset'][$k])) $d[$k] = $b['preset'][$k];
+      $j = json_encode($d, JSON_UNESCAPED_UNICODE); if ($j !== false && strlen($j) <= 8000) { $acc['data'] = $j; $db->prepare('UPDATE accounts SET data=? WHERE name_lc=?')->execute([$j, $lc]); } }
     /* casa segura: a conta mantém a dela; sem casa → a primeira livre */
     $q = $db->prepare('SELECT house FROM accounts WHERE name_lc=?'); $q->execute([$lc]); $house = (int)($q->fetch()['house'] ?? -1);
     if ($house < 0) { $used = array_map('intval', array_column($db->query('SELECT house FROM accounts WHERE house>=0')->fetchAll(), 'house'));
@@ -152,20 +173,20 @@ try {
     $q = $db->prepare('SELECT id, name, state FROM players WHERE name_lc = ?'); $q->execute([$lc]);
     if ($old = $q->fetch()) { releaseCars($db, (int)$old['id'], $old['state']); $db->prepare('DELETE FROM players WHERE id=?')->execute([$old['id']]); addEv($db, 0, 0, 'sys', ['m' => $old['name'] . ' saiu', 'en' => $old['name'] . ' left', 'left' => (int)$old['id']]); }
     $n = (int)$db->query('SELECT COUNT(*) n FROM players')->fetch()['n'];
-    if ($n >= MAX_PLAYERS) { $db->rollBack(); fail('SERVIDOR CHEIO · ' . MAX_PLAYERS . ' JOGADORES', 503); }
+    if ($n >= MAX_PLAYERS) { txRollback($db); fail('SERVIDOR CHEIO · ' . MAX_PLAYERS . ' JOGADORES', 503); }
     $token = bin2hex(random_bytes(16)); $t = now();
     $db->prepare('INSERT INTO players(name,name_lc,token,look,lookv,state,seen,joined) VALUES(?,?,?,?,1,NULL,?,?)')->execute([$name, mb_strtolower($name), $token, $look, $t, $t]);
     $id = (int)$db->lastInsertId();
     $last = lastEv($db);
     addEv($db, 0, 0, 'sys', ['m' => $name . ' entrou', 'en' => $name . ' joined']);
-    $db->commit();
+    txCommit($db);
     [$day, $seed] = daySeed();
     out(['ok' => true, 'id' => $id, 'name' => $name, 'token' => $token, 'seed' => $seed, 'size' => CITY_SIZE, 'day' => $day, 'tod' => gameTod(), 'last' => $last, 'max' => MAX_PLAYERS, 'acct' => json_decode((string)$acc['data'], true) ?: [], 'new' => $isNew, 'house' => $house]);
   }
   if ($a === 'tick') {
     $b = body(); $p = me($db, $b['token'] ?? null); $id = (int)$p['id']; $t = now();
     $state = cleanJson($b['s'] ?? null, 2000);
-    $db->beginTransaction();
+    txBegin($db);
     if (array_key_exists('look', $b) && ($lk = cleanJson($b['look'], 4000)) !== null) {
       $db->prepare('UPDATE players SET look=?, lookv=lookv+1 WHERE id=?')->execute([$lk, $id]);
     }
@@ -226,8 +247,8 @@ try {
         $to = (int)($e['to'] ?? 0); if ($to > 0 && $to !== $id) addEv($db, $id, $to, $k, ['n' => $p['name']]);
       }
     }
-    $db->commit();
-    if (mt_rand(0, 19) === 0) { $db->beginTransaction(); cleanup($db); $db->commit(); }
+    txCommit($db);
+    if (mt_rand(0, 19) === 0) { txBegin($db); cleanup($db); txCommit($db); }
     /* jogadores: aparência só para quem ainda não tem a versão atual (kv = "id:versão,...") */
     $known = [];
     foreach (explode(',', (string)($b['kv'] ?? '')) as $pair) { $kv = explode(':', $pair); if (count($kv) === 2) $known[(int)$kv[0]] = (int)$kv[1]; }
@@ -260,7 +281,7 @@ try {
   }
   fail('ação desconhecida', 404);
 } catch (Throwable $e) {
-  if (isset($db) && $db->inTransaction()) $db->rollBack();
+  if (isset($db)) txRollback($db);
   error_log('[ccss online] ' . $e->getMessage());
   fail('erro no servidor', 500);
 }
