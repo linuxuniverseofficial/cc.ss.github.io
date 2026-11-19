@@ -36,7 +36,19 @@
 <ul>
     <li><strong>Parallel worlds</strong>: a synthwave dimension drenched in neon, a dark and silent <strong>Upside Down</strong>, and <strong>Point Haze</strong>, a foggy island of dead trees out at sea, reachable by boat or helicopter.</li>
     <li><strong>A secret military lab</strong> is buried under Point Haze. Two floors of sealed rooms, a cargo elevator, a containment tank with something floating in it, and Tesla coils you really shouldn't get close to. Break in and see what they're hiding.</li>
+    <li>In the Upside Down the doors still open: empty, dark buildings where nothing works, but nothing follows you in either.</li>
     <li>Some masks give more than a disguise. Ever tried running across the water?</li>
+</ul>
+<h2>Online with your friends</h2>
+<p>Pick <strong>ONLINE</strong> in the menu and share the city with up to 24 players, SA-MP style: an empty city, just you and your crew.</p>
+<ul>
+    <li><strong>Same city, same sky</strong>: a new map every day, the same hour and the same weather for everyone.</li>
+    <li><strong>Your look, your ride</strong>: choose Nathan or Claire, the clothes, the car and the plate before you join. Export your setup to a file and import it next time.</li>
+    <li><strong>Name and password</strong>: your money, weapons and personal car are waiting when you come back. New accounts start with $500.</li>
+    <li><strong>Chat with T</strong>, see everyone on the map in their shirt color, fight, steal cars from each other (<strong>F</strong>) or <strong>ride along with G</strong> so one drives and the other shoots. Driving a taxi? Your passengers pay the fare.</li>
+    <li><strong>Shared world</strong>: parked cars, weapons and health packs are the same for everyone. Whoever goes down drops their gun and some cash for the fastest hand.</li>
+    <li><strong>Your own safe house</strong>, only you get in. Car blew up? Call <strong>VEHICLE DELIVERY</strong> on the phone or pay at the police station to get it back right now.</li>
+    <li><strong>Local or remote</strong>: play on the site's own server, or type any server address (your PC on the local network, or a remote host). The server is a single PHP file with SQLite, easy to run at home or in Docker.</li>
 </ul>
 <h2>A place to come home to</h2>
 <p>Your safe house is where you rest, change clothes, save your progress and <strong>watch TV</strong>. The garage keeps your rides, plates and all, and if you go down out there, your cars and your skateboard are waiting back home when you wake up. The local channels follow what's really happening out there: police operations, storms, chases, departures from the airport, and the occasional strange report from the woods.</p>

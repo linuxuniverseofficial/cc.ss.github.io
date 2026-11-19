@@ -9,6 +9,7 @@
    r14: tick também leva ws (versão do mundo que o cliente já tem) e recebe w (carros do servidor, coletáveis pegos, drops).
    Eventos novos: car {id, drv|dead, t,col,pl,x,z,a}, pk {id}, drop {x,z,w,am,m}, loot {id} (o primeiro leva), jack {to}, ride {to}.
    r16: join leva pass (mín. 6) e devolve acct (dados salvos) + new; tick aceita save {..} (vai para a conta); evento pay {to,m}.
+   r17: join devolve house (0..23, -1 = sem casa).
    r15: wx {d} = estado do clima do jogador de menor id (os outros copiam).
    A cidade inteira sai da seed (igual para todos); o servidor só guarda jogadores e eventos (chat, dano, mortes). */
 declare(strict_types=1);
@@ -20,7 +21,8 @@ const DROP_TTL    = 180.0;   // s que o drop de quem morreu fica no chão
 const WORLD_GONE  = 900.0;
 const START_MONEY = 500;     // dinheiro de quem cria a conta
 const ACCOUNT_TTL = 30 * 86400.0; // conta sem entrar há 30 dias é apagada (o nome fica livre)
-const PASS_MIN    = 6;   // s que uma remoção fica guardada para quem está sincronizando
+const PASS_MIN    = 6;
+const HOUSES      = 24;      // casas seguras do online: uma por conta (a 25ª conta fica sem)   // s que uma remoção fica guardada para quem está sincronizando
 const EV_KEEP     = 90.0;    // s que um evento fica guardado
 const TZ          = 'America/Sao_Paulo';
 
@@ -52,6 +54,8 @@ function db(): PDO {
   $pdo->exec('CREATE TABLE IF NOT EXISTS meta(k TEXT PRIMARY KEY, v INTEGER)');
   /* r16: contas (nome + senha). data = o que o cliente salva (dinheiro, armas, carro pessoal...) */
   $pdo->exec('CREATE TABLE IF NOT EXISTS accounts(name_lc TEXT PRIMARY KEY, name TEXT, pass TEXT, data TEXT, created REAL, seen REAL)');
+  /* r17: casa segura de cada conta (índice 0..HOUSES-1, -1 = sem casa) */
+  $cols = array_column($pdo->query('PRAGMA table_info(accounts)')->fetchAll(), 'name'); if (!in_array('house', $cols, true)) $pdo->exec('ALTER TABLE accounts ADD COLUMN house INTEGER DEFAULT -1');
   return $pdo;
 }
 function nextV(PDO $db): int {
@@ -139,6 +143,11 @@ try {
     if ($acc) { if (!password_verify($pass, (string)$acc['pass'])) { $db->rollBack(); fail('SENHA ERRADA · ESSE NOME JÁ TEM DONO', 403); } $isNew = false; }
     else { $acc = ['data' => json_encode(['m' => START_MONEY])]; $db->prepare('INSERT INTO accounts(name_lc,name,pass,data,created,seen) VALUES(?,?,?,?,?,?)')->execute([$lc, $name, password_hash($pass, PASSWORD_DEFAULT), $acc['data'], now(), now()]); $isNew = true; }
     $db->prepare('UPDATE accounts SET seen=?, name=? WHERE name_lc=?')->execute([now(), $name, $lc]);
+    /* casa segura: a conta mantém a dela; sem casa → a primeira livre */
+    $q = $db->prepare('SELECT house FROM accounts WHERE name_lc=?'); $q->execute([$lc]); $house = (int)($q->fetch()['house'] ?? -1);
+    if ($house < 0) { $used = array_map('intval', array_column($db->query('SELECT house FROM accounts WHERE house>=0')->fetchAll(), 'house'));
+      for ($h = 0; $h < HOUSES; $h++) if (!in_array($h, $used, true)) { $house = $h; break; }
+      if ($house >= 0) $db->prepare('UPDATE accounts SET house=? WHERE name_lc=?')->execute([$house, $lc]); }
     /* senha certa e o nome ainda está "online" (sessão fantasma, outra aba): derruba a sessão velha */
     $q = $db->prepare('SELECT id, name, state FROM players WHERE name_lc = ?'); $q->execute([$lc]);
     if ($old = $q->fetch()) { releaseCars($db, (int)$old['id'], $old['state']); $db->prepare('DELETE FROM players WHERE id=?')->execute([$old['id']]); addEv($db, 0, 0, 'sys', ['m' => $old['name'] . ' saiu', 'en' => $old['name'] . ' left', 'left' => (int)$old['id']]); }
@@ -151,7 +160,7 @@ try {
     addEv($db, 0, 0, 'sys', ['m' => $name . ' entrou', 'en' => $name . ' joined']);
     $db->commit();
     [$day, $seed] = daySeed();
-    out(['ok' => true, 'id' => $id, 'name' => $name, 'token' => $token, 'seed' => $seed, 'size' => CITY_SIZE, 'day' => $day, 'tod' => gameTod(), 'last' => $last, 'max' => MAX_PLAYERS, 'acct' => json_decode((string)$acc['data'], true) ?: [], 'new' => $isNew]);
+    out(['ok' => true, 'id' => $id, 'name' => $name, 'token' => $token, 'seed' => $seed, 'size' => CITY_SIZE, 'day' => $day, 'tod' => gameTod(), 'last' => $last, 'max' => MAX_PLAYERS, 'acct' => json_decode((string)$acc['data'], true) ?: [], 'new' => $isNew, 'house' => $house]);
   }
   if ($a === 'tick') {
     $b = body(); $p = me($db, $b['token'] ?? null); $id = (int)$p['id']; $t = now();

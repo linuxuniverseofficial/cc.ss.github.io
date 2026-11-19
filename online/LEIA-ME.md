@@ -29,7 +29,8 @@ Teste: abrir `https://gta.linuxuniverse.com.br/online/api.php?a=info` deve respo
 - **Sincronizado:** posição, roupa, carro (tipo, cor e placa), chat (tecla **T**), tiro/soco/atropelamento/explosão entre jogadores e o kill feed. Jogadores aparecem no minimapa e no mapa grande com a cor da camisa.
 - **Mundo do servidor:** carros estacionados (os da seed + extras nos estacionamentos e no meio-fio) são os mesmos para todos: quem pega, os outros veem andando; onde larga, fica para todos; explodiu, some para todos. Carro da concessionária/garagem entra no servidor quando é dirigido. Armas, vida e colete da seed: quem pega, some para todos e volta em 5 min. Quem morre larga a arma da mão + 10% do dinheiro (no lugar da conta do hospital): o primeiro que encostar leva; some em 3 min.
 - **Hora e clima iguais para todos:** a hora vem do servidor; o clima (chuva, previsão, tempestade) é do jogador mais antigo na partida e os outros copiam.
-- **Carro pessoal:** o do começo fica salvo onde você largou; `/carro` no chat traz outro na rua mais perto (o antigo some).
+- **Casa segura:** uma por conta (até 24), espalhadas pela cidade; só o dono vê e entra.
+- **Carro pessoal:** o do começo fica salvo onde você largou e marcado no seu mapa. Explodiu/levaram: celular → ENTREGA DE VEÍCULO (ou `/carro`) chega em 1 h de jogo; na porta da delegacia, E paga 15% do dinheiro (mín. $100) e ele sai na hora.
 - **Táxi:** carona num carro tipo táxi custa $10 + $1 a cada 25 m para o passageiro; o motorista recebe.
 - **Carro de outro jogador:** **G** = carona (dá para atirar de dentro; **F** desce). **F** = roubar (o motorista é jogado para fora e você assume o carro).
 - **Desligado no online:** save, cheats e modo história. Para sair, recarregue a página.
