@@ -1,0 +1,5 @@
+# Coastal Chaos online: só o api.php responde; o banco fica em data/ (bloqueado)
+Options -Indexes
+<FilesMatch "\.(sqlite|sqlite-wal|sqlite-shm)$">
+  Require all denied
+</FilesMatch>

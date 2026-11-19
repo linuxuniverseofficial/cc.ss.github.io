@@ -1,0 +1,17 @@
+# Coastal Chaos — jogo + servidor ONLINE em container (Apache + PHP 8.3; a imagem oficial já traz pdo_sqlite e mbstring).
+# Rodar a partir desta pasta:  docker compose up -d   → http://IP-DO-HOST:8080/
+services:
+  coastal-chaos:
+    image: php:8.3-apache
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      CCSS_DATA: /data               # banco do online fora da pasta servida pelo Apache
+    volumes:
+      - ..:/var/www/html:ro         # a pasta do jogo inteira (v77/), só leitura
+      - ccss-online-data:/data
+    command: >
+      sh -c "chown -R www-data:www-data /data && apache2-foreground"
+volumes:
+  ccss-online-data:
