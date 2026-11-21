@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 <script>
 /* v78 · BUILD: número da entrega. Ao abrir, o jogo lê version.txt (poucos bytes, sem cache) e, se a build no servidor for outra
    (navegador/celular servindo cópia velha), recarrega uma vez. Saves e configurações (localStorage) NÃO são apagados. */
-var BUILD_TAG='r2';
+var BUILD_TAG='r3';
 (function(){try{if(!/^https?:$/.test(location.protocol))return;const k='ps_build_reload';
  fetch(new URL('version.txt?b='+Date.now(),location.href).href,{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=/^\s*((?:dev\s+)?r[\d.]+)\s*$/i.exec(t||'');if(!m||m[1].replace(/\s+/g,' ').toLowerCase()===BUILD_TAG.toLowerCase()){try{sessionStorage.removeItem(k)}catch(e){}return}
   let n=0;try{n=+sessionStorage.getItem(k)||0}catch(e){}if(n>=2)return;try{sessionStorage.setItem(k,String(n+1))}catch(e){}
@@ -11206,6 +11206,10 @@ const PED_ATLAS_N=25,PED_PALS=[];(()=>{const skins=['#f1c27d','#e0ac69','#c68642
  for(let i=0;i<PED_ATLAS_N;i++){const cap=Math.random()<.3;PED_PALS.push({skin:pick2(skins),hair:pick2(hairs),cap:cap?pick2(['#2a6ad6','#e0b23a','#2a2a2a','#3ab36a']):null,capDark:null,shirt:pick2(shirts),pants:pick2(pants),shoes:pick2(['#1b1b1b','#e8e8e8','#6a3a1e']),belt:'#2a1e14',stripe:Math.random()<.3?'#ffffff':null,long:!cap&&Math.random()<.4,glasses:Math.random()<.16?pick2(['#1a1a24','#3a6a8a','#5a3a20']):null,necklace:Math.random()<.12?pick2(['#e8c040','#d8d8e0']):null})}})();
 // Avoid a session with no glasses in the shared pedestrian palette pool.
 {const candidates=PED_PALS.filter(p=>!p.glasses);let n=PED_PALS.filter(p=>p.glasses).length;while(n<3&&candidates.length){const i=Math.floor(Math.random()*candidates.length),p=candidates.splice(i,1)[0];p.glasses=pick2(['#1a1a24','#3a6a8a','#5a3a20']);n++;}}
+/* v3r3: 40% (10 de 25) das roupas da rua sai com estampa de emoji colorido (art 'e:…', emojis diferentes entre si). Fica no próprio PED_PALS,
+   então entra no atlas 2D e no pré-carregamento 3D (pedAtlas3Build) como as outras roupas: nenhum boneco novo é montado na rua (sem stutter). */
+const PED_EMO=['😎','😂','😍','🤩','😜','🥳','🤠','👽','👾','🤖','💀','👻','🔥','⚡','🌈','⭐','💯','❤️','💚','💙','💜','🌴','🌵','🌻','🌸','🍕','🍔','🍩','🍉','🍒','🥑','🦈','🐙','🦄','🐸','🐱','🐶','🦊','🐼','🦖','🎸','🎮','🏀','⚽','🏄','🛹','🚀','🌊','☀️','🍀','💎','🎧','📼','🌮'];
+try{const pool=PED_EMO.filter(e=>emoOk(e)&&emoVisible(e)),cand=PED_PALS.filter(p=>p.shirt);const n=Math.min(pool.length,Math.round(PED_PALS.length*.4));for(let i=0;i<n&&cand.length;i++){const p=cand.splice(Math.floor(Math.random()*cand.length),1)[0],e=pool.splice(Math.floor(Math.random()*pool.length),1)[0];p.art='e:'+e}}catch(e){}
 // Banhistas: as mesmas pessoas da cidade, de sunga (cabelo comprido = biquíni), sem camisa e descalças.
 const BEACH_PALS=PED_PALS.map(p=>{const s=pick2(['#1e5ab0','#d62828','#1b1b1b','#2ac8c8','#f2c21a','#ff6fae','#3ab36a','#ff8a1a']);return{...p,cap:Math.random()<.2?'#f2f2ee':null,shirt:null,stripe:null,swim:s,bikini:p.long?s:null,shoes:null,glasses:Math.random()<.35?'#121218':null}});
 const atlasCache=new Map();
@@ -25526,9 +25530,9 @@ const TVCAT=[
  {k:'skate',ic:'🛹',c:'#ff4a4a',l:'2',n:['SKATE','SKATEBOARD'],
   g:['F sobe e desce da prancha, Espaço pula. Prancha nova na Skate Shop do shopping ($120), com estampa, texto ou emojis.','F hops on and off the board, Space jumps. New boards at the mall\'s Skate Shop ($120), with graphics, text or emojis.'],
   p:[tvcP('skate_pl',['NA RUA','ON THE STREET']),tvcP('scn_skate',['SKATISTAS DA ORLA','BOARDWALK SKATERS'])]},
- {k:'emoji',ic:'😀',c:'#ffd23a',l:'3',n:['EMOJIS NA CAMISETA E NO SKATE','EMOJIS ON SHIRTS AND SKATEBOARDS'],
-  g:['Teclado com todos os emojis, tom de pele e recentes. Emoji no peito na Moda Pixel ($25); até 3 no shape na Skate Shop.','Keyboard with every emoji, skin tones and recents. Emoji on the chest at Pixel Fashion ($25); up to 3 on the deck at the Skate Shop.'],
-  p:[tvcP('emo_kb',['TECLADO DE EMOJIS','EMOJI KEYBOARD']),tvcP('emo_shirt',['CAMISETA','T-SHIRT']),tvcP('emo_skate',['SHAPE DO SKATE','SKATEBOARD DECK'])]},
+ {k:'emoji',ic:'😀',c:'#ffd23a',l:'4',n:['EMOJIS NA CAMISETA E NO SKATE','EMOJIS ON SHIRTS AND SKATEBOARDS'],
+  g:['Teclado com todos os emojis, tom de pele e recentes. Emoji no peito na Moda Pixel ($25); até 3 no shape na Skate Shop. Pedestres também usam.','Keyboard with every emoji, skin tones and recents. Emoji on the chest at Pixel Fashion ($25); up to 3 on the deck at the Skate Shop. Pedestrians wear them too.'],
+  p:[tvcP('emo_kb',['TECLADO DE EMOJIS','EMOJI KEYBOARD']),tvcP('emo_shirt',['CAMISETA','T-SHIRT']),tvcP('emo_skate',['SHAPE DO SKATE','SKATEBOARD DECK']),tvcP('emo_peds',['NA RUA','ON THE STREET'])]},
  {k:'vehicles',ic:'🚁',c:'#ff7a1a',l:'3',n:['HELICÓPTERO, VORTEX E JET SKI','HELICOPTER, VORTEX AND JET SKI'],
   g:['Helicópteros nos helipontos, o hovercraft Vortex na areia ao lado do farol e jet skis na beira da praia e no píer.','Helicopters on the helipads, the Vortex hovercraft on the sand by the lighthouse and jet skis on the shore and at the pier.'],
   p:[tvcP('veh_heli',['HELIPONTO','HELIPAD']),tvcP('veh_vortex',['VORTEX','VORTEX']),tvcP('veh_jet',['JET SKI','JET SKI'])]},
