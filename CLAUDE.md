@@ -12,6 +12,9 @@ Jogo inteiro em `index.html` (three r128, scripts inline). `CONTEXT.md` = contex
 - Antes de recarregar a aba, lembrar que o usuário pode estar jogando nela; não mexer se ele pediu para parar.
 - Sem Node à mão: checar sintaxe recarregando a página e lendo o console (`city`/`PAD` indefinidos = script quebrou).
 
+## TV de recursos
+- **Toda mecânica adicionada ou ajustada precisa ter um canal na TV de recursos** (catálogo em canais). Plano, lista de canais e estado em `tvcat/PLANO.md`; quadros em `tvcat/*.jpg`, gerados por `tools/tvcat-capture.js`.
+
 ## Estilo dos textos de tela (pedido do usuário)
 - Avisos (toast/wxToast), objetivos e guias: CURTOS e não expositivos. Título direto; subtítulo só se for informação que o jogador não deduz sozinho (preço, tempo, tecla nova). Nada de narrar o que ele está vendo ou explicar o óbvio.
 - Todo texto novo em PT precisa de entrada em LANG_EN (frase inteira; chave terminada em espaço não funciona no regex do translatePlain).
