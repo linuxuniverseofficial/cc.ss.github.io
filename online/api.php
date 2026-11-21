@@ -9,11 +9,31 @@
    r14: tick também leva ws (versão do mundo que o cliente já tem) e recebe w (carros do servidor, coletáveis pegos, drops).
    Eventos novos: car {id, drv|dead, t,col,pl,x,z,a}, pk {id}, drop {x,z,w,am,m}, loot {id} (o primeiro leva), jack {to}, ride {to}.
    r16: join leva pass (mín. 6) e devolve acct (dados salvos) + new; tick aceita save {..} (vai para a conta); evento pay {to,m}.
+   r25: acct_delete {token} (apaga a própria conta); admin {token, cmd: list|del {name}|wipe}. Conta 'admin' com senha do servidor (CCSS_ADMIN_PASS ou data/admin-pass.txt).
+   r23: call/callok/callno {to} (agenda: pedido de encontro).
    r18: login {name,pass} → {acct,new} (passo 1 da tela); join aceita preset {look,car} e grava na conta.
    r17: join devolve house (0..23, -1 = sem casa).
    r15: wx {d} = estado do clima do jogador de menor id (os outros copiam).
    A cidade inteira sai da seed (igual para todos); o servidor só guarda jogadores e eventos (chat, dano, mortes). */
 declare(strict_types=1);
+/* r44: algumas imagens php:apache vêm SEM a extensão mbstring ("Call to undefined function mb_strlen" = "erro no servidor" no login).
+   Substitutos em UTF-8 puro (preg /u), usados só se a extensão faltar. */
+if (!function_exists('mb_strlen')) {
+  function mb_strlen(string $s, ?string $enc = null): int { $n = preg_match_all('/./us', $s); return $n === false ? strlen($s) : $n; }
+}
+if (!function_exists('mb_substr')) {
+  function mb_substr(string $s, int $start, ?int $len = null, ?string $enc = null): string {
+    $a = preg_split('//u', $s, -1, PREG_SPLIT_NO_EMPTY); if ($a === false) return substr($s, $start, $len ?? PHP_INT_MAX);
+    return implode('', array_slice($a, $start, $len));
+  }
+}
+if (!function_exists('mb_strtolower')) {
+  function mb_strtolower(string $s, ?string $enc = null): string {
+    static $map = null;
+    if ($map === null) { $up = 'ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ'; $lo = 'àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþ'; $map = array_combine(preg_split('//u', $up, -1, PREG_SPLIT_NO_EMPTY), preg_split('//u', $lo, -1, PREG_SPLIT_NO_EMPTY)); }
+    return strtr(strtolower($s), $map);
+  }
+}
 const MAX_PLAYERS = 24;      // jogadores por sessão
 const CITY_SIZE   = 14;      // 14×14 (o celular aguenta depois das otimizações da v2)
 const TIMEOUT     = 45.0;    // s sem tick = saiu (aba em 2º plano no celular segura o timer; o cliente reentra sozinho)
@@ -23,6 +43,7 @@ const WORLD_GONE  = 900.0;
 const START_MONEY = 500;     // dinheiro de quem cria a conta
 const ACCOUNT_TTL = 30 * 86400.0; // conta sem entrar há 30 dias é apagada (o nome fica livre)
 const PASS_MIN    = 6;
+const ADMIN_NAME  = 'admin';   // r25: conta de administração (nome reservado). Senha: variável CCSS_ADMIN_PASS ou o arquivo data/admin-pass.txt (criado sozinho na 1ª vez)
 const HOUSES      = 24;      // casas seguras do online: uma por conta (a 25ª conta fica sem)   // s que uma remoção fica guardada para quem está sincronizando
 const EV_KEEP     = 90.0;    // s que um evento fica guardado
 const TZ          = 'America/Sao_Paulo';
@@ -57,6 +78,8 @@ function db(): PDO {
   $pdo->exec('CREATE TABLE IF NOT EXISTS accounts(name_lc TEXT PRIMARY KEY, name TEXT, pass TEXT, data TEXT, created REAL, seen REAL)');
   /* r17: casa segura de cada conta (índice 0..HOUSES-1, -1 = sem casa) */
   $cols = array_column($pdo->query('PRAGMA table_info(accounts)')->fetchAll(), 'name'); if (!in_array('house', $cols, true)) $pdo->exec('ALTER TABLE accounts ADD COLUMN house INTEGER DEFAULT -1');
+  /* r25: kick = sessão removida pelo admin (o próximo tick recebe 410 e o jogo não reentra sozinho) */
+  $cols = array_column($pdo->query('PRAGMA table_info(players)')->fetchAll(), 'name'); if (!in_array('kick', $cols, true)) $pdo->exec('ALTER TABLE players ADD COLUMN kick INTEGER DEFAULT 0');
   return $pdo;
 }
 /* conta: nome + senha. Existe → confere; não existe → cria com o dinheiro inicial. Chamar dentro de transação. */
@@ -65,6 +88,9 @@ function acctAuth(PDO $db, array $b): array {
   if (mb_strlen($name) < 3 || mb_strlen($name) > 16 || !preg_match('/^[\p{L}\p{N} _.\-]+$/u', $name)) { txRollback($db); fail('NOME INVÁLIDO · 3 A 16 LETRAS/NÚMEROS'); }
   $pass = (string)($b['pass'] ?? ''); if (mb_strlen($pass) < PASS_MIN || mb_strlen($pass) > 64) { txRollback($db); fail('SENHA · MÍNIMO 6 CARACTERES'); }
   $lc = mb_strtolower($name);
+  if ($lc === ADMIN_NAME) { if (!hash_equals(adminPass(), $pass)) { txRollback($db); fail('SENHA ERRADA · ESSE NOME JÁ TEM DONO', 403); }
+    $q = $db->prepare('SELECT * FROM accounts WHERE name_lc = ?'); $q->execute([$lc]); $acc = $q->fetch();
+    if ($acc) $db->prepare('UPDATE accounts SET pass=? WHERE name_lc=?')->execute([password_hash($pass, PASSWORD_DEFAULT), $lc]); }
   $q = $db->prepare('SELECT * FROM accounts WHERE name_lc = ?'); $q->execute([$lc]); $acc = $q->fetch();
   if ($acc) { if (!password_verify($pass, (string)$acc['pass'])) { txRollback($db); fail('SENHA ERRADA · ESSE NOME JÁ TEM DONO', 403); } $isNew = false; $name = (string)$acc['name']; /* nome como foi criado (maiúsculas) */ }
   else { $acc = ['data' => json_encode(['m' => START_MONEY])]; $db->prepare('INSERT INTO accounts(name_lc,name,pass,data,created,seen,house) VALUES(?,?,?,?,?,?,-1)')->execute([$lc, $name, password_hash($pass, PASSWORD_DEFAULT), $acc['data'], now(), now()]); $isNew = true; }
@@ -95,6 +121,7 @@ function carData(array $e, ?array $old): array {
   $d = $old ?: [];
   if (isset($e['t'])) $d['t'] = mb_substr(preg_replace('/[^a-z0-9_]/', '', (string)$e['t']), 0, 16);
   if (isset($e['col'])) $d['col'] = preg_match('/^#[0-9a-fA-F]{6}$/', (string)$e['col']) ? (string)$e['col'] : null;
+  if (isset($e['ne'])) $d['ne'] = preg_match('/^#[0-9a-fA-F]{6}$/', (string)$e['ne']) ? (string)$e['ne'] : '';
   if (isset($e['pl'])) $d['pl'] = mb_substr(preg_replace('/[^A-Z0-9 \-]/', '', strtoupper((string)$e['pl'])), 0, 8);
   foreach (['x', 'z'] as $c) if (isset($e[$c])) $d[$c] = round(num($e[$c], -2000, 4000), 2);
   if (isset($e['a'])) $d['a'] = round(num($e['a'], -7, 7), 3);
@@ -135,7 +162,22 @@ function me(PDO $db, $token): array {
   if (!is_string($token) || !preg_match('/^[a-f0-9]{32}$/', $token)) fail('sessão inválida', 401);
   $q = $db->prepare('SELECT * FROM players WHERE token = ?'); $q->execute([$token]); $p = $q->fetch();
   if (!$p) fail('sessão expirada', 401);
+  if (!empty($p['kick'])) { $db->prepare('DELETE FROM players WHERE id=?')->execute([$p['id']]); fail((int)$p['kick'] === 2 ? 'CONTA APAGADA' : 'VOCÊ FOI REMOVIDO DO SERVIDOR', 410); }
   return $p;
+}
+/* r25: senha do admin — CCSS_ADMIN_PASS ou data/admin-pass.txt (gerada na 1ª vez, só o dono do servidor lê) */
+function adminPass(): string {
+  $e = getenv('CCSS_ADMIN_PASS'); if (is_string($e) && strlen($e) >= PASS_MIN) return $e;
+  $dir = getenv('CCSS_DATA') ?: (__DIR__ . '/data'); $f = $dir . '/admin-pass.txt';
+  if (is_file($f)) { $v = trim((string)@file_get_contents($f)); if (strlen($v) >= PASS_MIN) return $v; }
+  $v = substr(strtr(base64_encode(random_bytes(12)), '+/=', 'xyz'), 0, 12); @file_put_contents($f, $v . "\n"); @chmod($f, 0600); return $v;
+}
+function isAdmin(array $p): bool { return mb_strtolower((string)$p['name']) === ADMIN_NAME; }
+/* apaga a conta e tudo que é dela; a sessão (se houver) recebe kick */
+function acctWipe(PDO $db, string $lc, int $kick): void {
+  $db->prepare('DELETE FROM accounts WHERE name_lc=?')->execute([$lc]);
+  $q = $db->prepare('SELECT id, state FROM players WHERE name_lc=?'); $q->execute([$lc]);
+  foreach ($q->fetchAll() as $r) { releaseCars($db, (int)$r['id'], $r['state']); $db->prepare('UPDATE players SET kick=? WHERE id=?')->execute([$kick, $r['id']]); }
 }
 /* aparência e estado: só JSON pequeno e plano (nada de HTML); o cliente desenha com textContent */
 function cleanJson($v, int $max): ?string { if ($v === null) return null; $s = json_encode($v, JSON_UNESCAPED_UNICODE); return ($s !== false && strlen($s) <= $max) ? $s : null; }
@@ -143,6 +185,33 @@ function cleanJson($v, int $max): ?string { if ($v === null) return null; $s = j
 $a = $_GET['a'] ?? '';
 try {
   $db = db();
+  if ($a === 'acct_delete') {
+    /* r25: o próprio jogador apaga a conta (e sai do servidor) */
+    $b = body(); txBegin($db); $p = me($db, $b['token'] ?? null);
+    if (isAdmin($p)) { txRollback($db); fail('A CONTA ADMIN NÃO PODE SER APAGADA', 403); }
+    acctWipe($db, (string)$p['name_lc'], 2); $db->prepare('DELETE FROM players WHERE id=?')->execute([$p['id']]);
+    addEv($db, 0, 0, 'sys', ['m' => $p['name'] . ' saiu', 'en' => $p['name'] . ' left', 'left' => (int)$p['id']]);
+    txCommit($db); out(['ok' => true]);
+  }
+  if ($a === 'admin') {
+    /* r25: comandos do admin — list (contas), del {name} (apaga uma conta), wipe (apaga tudo menos o admin) */
+    $b = body(); txBegin($db); $p = me($db, $b['token'] ?? null);
+    if (!isAdmin($p)) { txRollback($db); fail('SÓ O ADMIN', 403); }
+    $cmd = (string)($b['cmd'] ?? '');
+    if ($cmd === 'list') { $r = []; foreach ($db->query('SELECT name, seen, data, house FROM accounts ORDER BY name_lc')->fetchAll() as $a2) { $d = json_decode((string)$a2['data'], true) ?: []; $r[] = ['n' => $a2['name'], 'seen' => (float)$a2['seen'], 'm' => (int)($d['m'] ?? 0), 'h' => (int)$a2['house']]; } txCommit($db); out(['ok' => true, 'accounts' => $r]); }
+    if ($cmd === 'del') { $lc = mb_strtolower(trim((string)($b['name'] ?? '')));
+      if ($lc === '' || $lc === ADMIN_NAME) { txRollback($db); fail('NOME INVÁLIDO'); }
+      $q = $db->prepare('SELECT 1 FROM accounts WHERE name_lc=?'); $q->execute([$lc]); $had = (bool)$q->fetch();
+      acctWipe($db, $lc, 1); txCommit($db); out(['ok' => true, 'deleted' => $had]); }
+    if ($cmd === 'wipe') {
+      $n = (int)$db->query("SELECT COUNT(*) n FROM accounts WHERE name_lc<>'" . ADMIN_NAME . "'")->fetch()['n'];
+      $db->prepare('UPDATE players SET kick=1 WHERE name_lc<>?')->execute([ADMIN_NAME]);
+      $db->prepare('DELETE FROM accounts WHERE name_lc<>?')->execute([ADMIN_NAME]);
+      $db->exec('DELETE FROM world'); $db->exec('DELETE FROM events');
+      addEv($db, 0, 0, 'sys', ['m' => 'O servidor foi zerado pelo admin', 'en' => 'The server was reset by the admin']);
+      txCommit($db); out(['ok' => true, 'accounts' => $n]); }
+    txRollback($db); fail('comando desconhecido');
+  }
   if ($a === 'info') {
     cleanup($db); [$day, $seed] = daySeed();
     $n = (int)$db->query('SELECT COUNT(*) n FROM players')->fetch()['n'];
@@ -153,7 +222,7 @@ try {
     $b = body(); txBegin($db);
     [$name, $lc, $acc, $isNew] = acctAuth($db, $b);
     txCommit($db);
-    out(['ok' => true, 'name' => $name, 'acct' => json_decode((string)$acc['data'], true) ?: [], 'new' => $isNew]);
+    out(['ok' => true, 'name' => $name, 'acct' => json_decode((string)$acc['data'], true) ?: [], 'new' => $isNew, 'admin' => $lc === ADMIN_NAME]);
   }
   if ($a === 'join') {
     $b = body();
@@ -181,7 +250,7 @@ try {
     addEv($db, 0, 0, 'sys', ['m' => $name . ' entrou', 'en' => $name . ' joined']);
     txCommit($db);
     [$day, $seed] = daySeed();
-    out(['ok' => true, 'id' => $id, 'name' => $name, 'token' => $token, 'seed' => $seed, 'size' => CITY_SIZE, 'day' => $day, 'tod' => gameTod(), 'last' => $last, 'max' => MAX_PLAYERS, 'acct' => json_decode((string)$acc['data'], true) ?: [], 'new' => $isNew, 'house' => $house]);
+    out(['ok' => true, 'id' => $id, 'name' => $name, 'token' => $token, 'seed' => $seed, 'size' => CITY_SIZE, 'day' => $day, 'tod' => gameTod(), 'last' => $last, 'max' => MAX_PLAYERS, 'acct' => json_decode((string)$acc['data'], true) ?: [], 'new' => $isNew, 'house' => $house, 'admin' => $lc === ADMIN_NAME]);
   }
   if ($a === 'tick') {
     $b = body(); $p = me($db, $b['token'] ?? null); $id = (int)$p['id']; $t = now();
@@ -243,7 +312,7 @@ try {
       } elseif ($k === 'pay') {
         /* carona de táxi: o passageiro desconta do próprio dinheiro e o motorista recebe */
         $to = (int)($e['to'] ?? 0); $m = (int)num($e['m'] ?? 0, 0, 2000); if ($to > 0 && $to !== $id && $m > 0) addEv($db, $id, $to, 'pay', ['n' => $p['name'], 'm' => $m]);
-      } elseif ($k === 'jack' || $k === 'ride') {
+      } elseif (in_array($k, ['jack', 'ride', 'unride', 'call', 'callok', 'callno'], true)) { /* r52: unride = carona substituída (quem estava sai do carro) */
         $to = (int)($e['to'] ?? 0); if ($to > 0 && $to !== $id) addEv($db, $id, $to, $k, ['n' => $p['name']]);
       }
     }

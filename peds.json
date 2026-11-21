@@ -1,0 +1,748 @@
+{
+ "_": "Perfis do app ctOS (r55). tipo: geek | divida | procurado | rico (loot = dinheiro extra ao derrubar) | pista (marca um vinil no mapa) | comum.",
+ "nomes": [
+  "Ana",
+  "Bruno",
+  "Carla",
+  "Diego",
+  "Eduarda",
+  "Felipe",
+  "Gabi",
+  "Heitor",
+  "Isabela",
+  "João",
+  "Karina",
+  "Lucas",
+  "Marina",
+  "Nícolas",
+  "Olívia",
+  "Pedro",
+  "Quésia",
+  "Rafael",
+  "Sabrina",
+  "Thiago",
+  "Úrsula",
+  "Vítor",
+  "Wesley",
+  "Yasmin",
+  "Zeca",
+  "Bianca",
+  "Caio",
+  "Dandara",
+  "Enzo",
+  "Fernanda",
+  "Gustavo",
+  "Helena",
+  "Igor",
+  "Júlia",
+  "Kauã",
+  "Larissa",
+  "Mateus",
+  "Natália",
+  "Otávio",
+  "Paula",
+  "Renan",
+  "Sofia",
+  "Tainá",
+  "Vinícius",
+  "Wanda",
+  "Alice",
+  "Breno",
+  "Cecília",
+  "Davi",
+  "Elisa",
+  "Fábio",
+  "Giovana",
+  "Hugo",
+  "Iara",
+  "Jonas",
+  "Kelly",
+  "Leo",
+  "Mirela",
+  "Nando",
+  "Priscila",
+  "Rodrigo",
+  "Samanta",
+  "Tiago",
+  "Valéria"
+ ],
+ "sobrenomes": [
+  "Silva",
+  "Souza",
+  "Oliveira",
+  "Pereira",
+  "Costa",
+  "Rodrigues",
+  "Almeida",
+  "Nascimento",
+  "Lima",
+  "Araújo",
+  "Fernandes",
+  "Carvalho",
+  "Gomes",
+  "Martins",
+  "Rocha",
+  "Ribeiro",
+  "Alves",
+  "Monteiro",
+  "Mendes",
+  "Barros",
+  "Freitas",
+  "Barbosa",
+  "Pinto",
+  "Moura",
+  "Cavalcanti",
+  "Dias",
+  "Castro",
+  "Campos",
+  "Cardoso",
+  "Teixeira",
+  "Vieira",
+  "Nunes",
+  "Ramos",
+  "Moreira",
+  "Duarte",
+  "Batista",
+  "Sampaio",
+  "Brandão",
+  "Kowalski",
+  "Tanaka",
+  "Nakamura",
+  "Müller",
+  "Rossi",
+  "Ferraz",
+  "Prado"
+ ],
+ "perfis": [
+  {
+   "tipo": "geek",
+   "pt": "participa de eventos furry",
+   "en": "goes to furry conventions"
+  },
+  {
+   "tipo": "geek",
+   "pt": "é brony há 13 anos",
+   "en": "has been a brony for 13 years"
+  },
+  {
+   "tipo": "geek",
+   "pt": "é therian e se identifica como lobo",
+   "en": "is a therian who identifies as a wolf"
+  },
+  {
+   "tipo": "geek",
+   "pt": "tem 400 horas em Skyrim e nunca terminou a história",
+   "en": "has 400 hours in Skyrim and never finished the main quest"
+  },
+  {
+   "tipo": "geek",
+   "pt": "mestre de RPG de mesa às sextas",
+   "en": "runs a tabletop RPG every Friday"
+  },
+  {
+   "tipo": "geek",
+   "pt": "coleciona Funko Pop até no banheiro",
+   "en": "has Funko Pops even in the bathroom"
+  },
+  {
+   "tipo": "geek",
+   "pt": "cosplay de Naruto no casamento da prima",
+   "en": "wore a Naruto cosplay to a cousin's wedding"
+  },
+  {
+   "tipo": "geek",
+   "pt": "speedrunner de Mario 64 (recorde pessoal: 17 min)",
+   "en": "Mario 64 speedrunner (PB: 17 min)"
+  },
+  {
+   "tipo": "geek",
+   "pt": "sabe todos os Pokémon de Kanto de cor",
+   "en": "knows every Kanto Pokémon by heart"
+  },
+  {
+   "tipo": "geek",
+   "pt": "escreve fanfic de Star Trek desde 2009",
+   "en": "has written Star Trek fanfic since 2009"
+  },
+  {
+   "tipo": "geek",
+   "pt": "tem um sabre de luz com som de verdade",
+   "en": "owns a lightsaber with real sound effects"
+  },
+  {
+   "tipo": "geek",
+   "pt": "fala élfico fluente (Sindarin)",
+   "en": "speaks fluent Elvish (Sindarin)"
+  },
+  {
+   "tipo": "geek",
+   "pt": "chora em todo final de anime",
+   "en": "cries at the end of every anime"
+  },
+  {
+   "tipo": "geek",
+   "pt": "monta Gundam de madrugada",
+   "en": "builds Gunpla at 3 a.m."
+  },
+  {
+   "tipo": "geek",
+   "pt": "main de Bowser no Smash, sem vergonha nenhuma",
+   "en": "Bowser main in Smash, zero shame"
+  },
+  {
+   "tipo": "geek",
+   "pt": "tem conta de furry no Twitter com 12 mil seguidores",
+   "en": "has a furry account with 12k followers"
+  },
+  {
+   "tipo": "geek",
+   "pt": "gastou o 13º em cartas de Magic",
+   "en": "spent the year-end bonus on Magic cards"
+  },
+  {
+   "tipo": "geek",
+   "pt": "acha que o Hollow Knight Silksong nunca vai sair",
+   "en": "swears Silksong will never come out"
+  },
+  {
+   "tipo": "geek",
+   "pt": "assistiu One Piece inteiro duas vezes",
+   "en": "has watched all of One Piece twice"
+  },
+  {
+   "tipo": "geek",
+   "pt": "joga LoL ranqueada desde 2011 e ainda é prata",
+   "en": "has played ranked LoL since 2011 and is still Silver"
+  },
+  {
+   "tipo": "geek",
+   "pt": "dá nome de Pokémon pras plantas",
+   "en": "names houseplants after Pokémon"
+  },
+  {
+   "tipo": "geek",
+   "pt": "vai às convenções vestido de Pikachu",
+   "en": "attends conventions dressed as Pikachu"
+  },
+  {
+   "tipo": "geek",
+   "pt": "tem uma tatuagem da Triforça no tornozelo",
+   "en": "has a Triforce tattoo on the ankle"
+  },
+  {
+   "tipo": "geek",
+   "pt": "cria mods de GTA San Andreas",
+   "en": "makes GTA San Andreas mods"
+  },
+  {
+   "tipo": "geek",
+   "pt": "faz ASMR de teclado mecânico",
+   "en": "records mechanical keyboard ASMR"
+  },
+  {
+   "tipo": "geek",
+   "pt": "tem 7 teclados mecânicos e quer o 8º",
+   "en": "owns 7 mechanical keyboards and wants an 8th"
+  },
+  {
+   "tipo": "geek",
+   "pt": "é VTuber nas horas vagas (avatar de raposa)",
+   "en": "is a VTuber on weekends (fox avatar)"
+  },
+  {
+   "tipo": "geek",
+   "pt": "defende que Han atirou primeiro",
+   "en": "insists Han shot first"
+  },
+  {
+   "tipo": "geek",
+   "pt": "tem fursuit de dragão guardada no armário",
+   "en": "keeps a dragon fursuit in the closet"
+  },
+  {
+   "tipo": "geek",
+   "pt": "coleciona cartuchos de Mega Drive",
+   "en": "collects Mega Drive cartridges"
+  },
+  {
+   "tipo": "geek",
+   "pt": "aprendeu japonês só pra ler mangá",
+   "en": "learned Japanese just to read manga"
+  },
+  {
+   "tipo": "geek",
+   "pt": "jogou Dark Souls sem tomar dano (diz ele)",
+   "en": "beat Dark Souls without getting hit (allegedly)"
+  },
+  {
+   "tipo": "geek",
+   "pt": "vê tutorial de origami de Gundam",
+   "en": "watches Gundam origami tutorials"
+  },
+  {
+   "tipo": "geek",
+   "pt": "chama o gato de Sr. Spock",
+   "en": "calls the cat Mr. Spock"
+  },
+  {
+   "tipo": "geek",
+   "pt": "tem fé que vai sair Half-Life 3",
+   "en": "still believes in Half-Life 3"
+  },
+  {
+   "tipo": "geek",
+   "pt": "tem uma fantasia de Sonic que não serve mais",
+   "en": "owns a Sonic costume that no longer fits"
+  },
+  {
+   "tipo": "geek",
+   "pt": "deu ponto de habilidade em carisma na vida real",
+   "en": "put skill points into charisma IRL"
+  },
+  {
+   "tipo": "geek",
+   "pt": "ouve só trilha sonora de Final Fantasy",
+   "en": "only listens to Final Fantasy soundtracks"
+  },
+  {
+   "tipo": "geek",
+   "pt": "pinta miniaturas de Warhammer, 300 até agora",
+   "en": "painted 300 Warhammer minis so far"
+  },
+  {
+   "tipo": "geek",
+   "pt": "diz que é o maior fã de My Little Pony da cidade",
+   "en": "claims to be the city's biggest My Little Pony fan"
+  },
+  {
+   "tipo": "geek",
+   "pt": "tem um altar pro Hatsune Miku",
+   "en": "has a Hatsune Miku shrine"
+  },
+  {
+   "tipo": "geek",
+   "pt": "joga Minecraft com a avó toda quarta",
+   "en": "plays Minecraft with grandma every Wednesday"
+  },
+  {
+   "tipo": "geek",
+   "pt": "perdeu a namorada por causa de Elden Ring",
+   "en": "lost a girlfriend over Elden Ring"
+  },
+  {
+   "tipo": "geek",
+   "pt": "assina 4 streamings de anime",
+   "en": "pays for 4 anime streaming services"
+  },
+  {
+   "tipo": "geek",
+   "pt": "já foi banido de servidor de Discord por spoiler",
+   "en": "got banned from a Discord server for spoilers"
+  },
+  {
+   "tipo": "geek",
+   "pt": "faz pão com formato de Totoro",
+   "en": "bakes Totoro-shaped bread"
+  },
+  {
+   "tipo": "geek",
+   "pt": "ainda tem o Tamagotchi vivo desde 1998",
+   "en": "has kept the same Tamagotchi alive since 1998"
+  },
+  {
+   "tipo": "geek",
+   "pt": "sabe a fala inteira do Rutger Hauer em Blade Runner",
+   "en": "can recite Roy Batty's whole monologue"
+  },
+  {
+   "tipo": "geek",
+   "pt": "tem fursuit de cervo e vai ao parque aos domingos",
+   "en": "wears a deer fursuit at the park on Sundays"
+  },
+  {
+   "tipo": "geek",
+   "pt": "é therian gato: mia quando está nervoso",
+   "en": "is a cat therian: meows when nervous"
+  },
+  {
+   "tipo": "geek",
+   "pt": "chamou o filho de Link",
+   "en": "named the kid Link"
+  },
+  {
+   "tipo": "geek",
+   "pt": "já fez maratona de 30 h de D&D",
+   "en": "once played a 30-hour D&D session"
+  },
+  {
+   "tipo": "geek",
+   "pt": "treina luta com espada de espuma no parque",
+   "en": "spars with foam swords in the park"
+  },
+  {
+   "tipo": "geek",
+   "pt": "tem uma Delorean de Lego de 2 mil peças",
+   "en": "owns a 2,000-piece Lego DeLorean"
+  },
+  {
+   "tipo": "geek",
+   "pt": "sabe programar em Brainfuck por diversão",
+   "en": "codes in Brainfuck for fun"
+  },
+  {
+   "tipo": "geek",
+   "pt": "faz cosplay de Sailor Moon nas quintas",
+   "en": "does Sailor Moon cosplay on Thursdays"
+  },
+  {
+   "tipo": "geek",
+   "pt": "chorou no fim de Toy Story 3 e no de 4",
+   "en": "cried at Toy Story 3 and again at 4"
+  },
+  {
+   "tipo": "geek",
+   "pt": "é brony e tem a Rainbow Dash tatuada",
+   "en": "is a brony with a Rainbow Dash tattoo"
+  },
+  {
+   "tipo": "geek",
+   "pt": "coleciona pelúcias de Pokémon em escala real",
+   "en": "collects life-size Pokémon plushies"
+  },
+  {
+   "tipo": "geek",
+   "pt": "passa o almoço jogando Tetris",
+   "en": "spends lunch break playing Tetris"
+  },
+  {
+   "tipo": "geek",
+   "pt": "já viu Matrix 47 vezes",
+   "en": "has seen The Matrix 47 times"
+  },
+  {
+   "tipo": "geek",
+   "pt": "acha que Shrek é cinema de arte",
+   "en": "considers Shrek an art film"
+  },
+  {
+   "tipo": "geek",
+   "pt": "tem um TCC sobre a física de Portal",
+   "en": "wrote a thesis on the physics of Portal"
+  },
+  {
+   "tipo": "geek",
+   "pt": "vai à Comic Con desde a primeira edição",
+   "en": "has been to every Comic Con since the first"
+  },
+  {
+   "tipo": "divida",
+   "pt": "deve $3.000 ao agiota",
+   "en": "owes $3,000 to a loan shark"
+  },
+  {
+   "tipo": "divida",
+   "pt": "deve 4 meses de aluguel",
+   "en": "is 4 months behind on rent"
+  },
+  {
+   "tipo": "divida",
+   "pt": "deve dinheiro pra meio bairro",
+   "en": "owes money to half the block"
+  },
+  {
+   "tipo": "divida",
+   "pt": "perdeu o carro no pôquer",
+   "en": "lost a car in a poker game"
+  },
+  {
+   "tipo": "divida",
+   "pt": "nome sujo desde 2019",
+   "en": "bad credit since 2019"
+  },
+  {
+   "tipo": "divida",
+   "pt": "deve uma pizza ao vizinho há 2 anos",
+   "en": "has owed the neighbor a pizza for 2 years"
+  },
+  {
+   "tipo": "divida",
+   "pt": "apostou tudo no cassino ontem",
+   "en": "bet everything at the casino last night"
+  },
+  {
+   "tipo": "divida",
+   "pt": "pagou uma moto que nunca chegou",
+   "en": "paid for a motorbike that never showed up"
+  },
+  {
+   "tipo": "procurado",
+   "pt": "procurado por furto",
+   "en": "wanted for theft"
+  },
+  {
+   "tipo": "procurado",
+   "pt": "procurado por estelionato",
+   "en": "wanted for fraud"
+  },
+  {
+   "tipo": "procurado",
+   "pt": "fugiu da cadeia em 2022",
+   "en": "escaped jail in 2022"
+  },
+  {
+   "tipo": "procurado",
+   "pt": "vende relógio falsificado na praia",
+   "en": "sells fake watches on the beach"
+  },
+  {
+   "tipo": "procurado",
+   "pt": "procurado por roubo de carga",
+   "en": "wanted for cargo theft"
+  },
+  {
+   "tipo": "procurado",
+   "pt": "rouba antena de TV",
+   "en": "steals TV antennas"
+  },
+  {
+   "tipo": "procurado",
+   "pt": "clona cartão no posto",
+   "en": "skims cards at the gas station"
+  },
+  {
+   "tipo": "procurado",
+   "pt": "aplicou golpe do falso sorteio",
+   "en": "ran a fake raffle scam"
+  },
+  {
+   "tipo": "procurado",
+   "pt": "procurado por pichar a delegacia",
+   "en": "wanted for tagging the police station"
+  },
+  {
+   "tipo": "procurado",
+   "pt": "dirige sem carteira há 10 anos",
+   "en": "has driven without a license for 10 years"
+  },
+  {
+   "tipo": "rico",
+   "pt": "carrega um Rolex na mochila",
+   "en": "carries a Rolex in the backpack",
+   "loot": 180
+  },
+  {
+   "tipo": "rico",
+   "pt": "saiu do banco agora com dinheiro vivo",
+   "en": "just left the bank with cash",
+   "loot": 240
+  },
+  {
+   "tipo": "rico",
+   "pt": "leva a féria da loja no bolso",
+   "en": "has the store's daily takings in the pocket",
+   "loot": 160
+  },
+  {
+   "tipo": "rico",
+   "pt": "ganhou na raspadinha hoje",
+   "en": "won a scratch card today",
+   "loot": 120
+  },
+  {
+   "tipo": "rico",
+   "pt": "tem um cordão de ouro escondido",
+   "en": "has a hidden gold chain",
+   "loot": 200
+  },
+  {
+   "tipo": "rico",
+   "pt": "voltou do cassino com a mão cheia",
+   "en": "came back from the casino with a fat wallet",
+   "loot": 260
+  },
+  {
+   "tipo": "rico",
+   "pt": "anda com envelope de propina",
+   "en": "carries an envelope of bribe money",
+   "loot": 300
+  },
+  {
+   "tipo": "rico",
+   "pt": "vendeu o carro hoje à vista",
+   "en": "sold a car for cash today",
+   "loot": 280
+  },
+  {
+   "tipo": "rico",
+   "pt": "leva cartas raras de Pokémon (valem uma fortuna)",
+   "en": "carries rare Pokémon cards (worth a fortune)",
+   "loot": 220
+  },
+  {
+   "tipo": "rico",
+   "pt": "carrega o pagamento do mês inteiro",
+   "en": "carries the whole month's pay",
+   "loot": 150
+  },
+  {
+   "tipo": "pista",
+   "pt": "sabe onde tem um vinil escondido",
+   "en": "knows where a hidden vinyl is"
+  },
+  {
+   "tipo": "pista",
+   "pt": "viu um disco raro num beco",
+   "en": "saw a rare record in an alley"
+  },
+  {
+   "tipo": "pista",
+   "pt": "o tio escondeu um LP pela cidade",
+   "en": "an uncle hid an LP somewhere in town"
+  },
+  {
+   "tipo": "pista",
+   "pt": "caça vinis raros pela cidade",
+   "en": "hunts rare vinyls around town"
+  },
+  {
+   "tipo": "pista",
+   "pt": "guardou um mapa de discos perdidos",
+   "en": "kept a map of lost records"
+  },
+  {
+   "tipo": "comum",
+   "pt": "tem medo de pombo",
+   "en": "is afraid of pigeons"
+  },
+  {
+   "tipo": "comum",
+   "pt": "já foi ao show do Fresno 38 vezes",
+   "en": "has been to 38 Fresno concerts"
+  },
+  {
+   "tipo": "comum",
+   "pt": "coach quântico",
+   "en": "quantum life coach"
+  },
+  {
+   "tipo": "comum",
+   "pt": "vende curso de day trade",
+   "en": "sells day-trading courses"
+  },
+  {
+   "tipo": "comum",
+   "pt": "terraplanista de fim de semana",
+   "en": "weekend flat-earther"
+  },
+  {
+   "tipo": "comum",
+   "pt": "acha que o Elvis mora em Sunset Shores",
+   "en": "thinks Elvis lives in Sunset Shores"
+  },
+  {
+   "tipo": "comum",
+   "pt": "tem 3 contas fake no Insta",
+   "en": "runs 3 fake Instagram accounts"
+  },
+  {
+   "tipo": "comum",
+   "pt": "usa a mesma senha: 123456",
+   "en": "uses the same password everywhere: 123456"
+  },
+  {
+   "tipo": "comum",
+   "pt": "fala com plantas e elas respondem (diz)",
+   "en": "talks to plants and they answer (supposedly)"
+  },
+  {
+   "tipo": "comum",
+   "pt": "já viu um OVNI na ilha",
+   "en": "once saw a UFO over the island"
+  },
+  {
+   "tipo": "comum",
+   "pt": "trabalha no banco e odeia o gerente",
+   "en": "works at the bank and hates the manager"
+  },
+  {
+   "tipo": "comum",
+   "pt": "faz live tomando banho de mar",
+   "en": "streams while swimming in the sea"
+  },
+  {
+   "tipo": "comum",
+   "pt": "está no 3º casamento",
+   "en": "is on marriage number three"
+  },
+  {
+   "tipo": "comum",
+   "pt": "trocou o carro por um patinete",
+   "en": "traded the car for a scooter"
+  },
+  {
+   "tipo": "comum",
+   "pt": "posta foto do almoço todo dia",
+   "en": "posts a photo of lunch every day"
+  },
+  {
+   "tipo": "comum",
+   "pt": "comprou NFT de macaco em 2021",
+   "en": "bought a monkey NFT in 2021"
+  },
+  {
+   "tipo": "comum",
+   "pt": "acha que a Claire é uma lenda urbana",
+   "en": "thinks Claire is an urban legend"
+  },
+  {
+   "tipo": "comum",
+   "pt": "jura que viu o DeLorean sumir no ar",
+   "en": "swears they saw the DeLorean vanish in midair"
+  },
+  {
+   "tipo": "comum",
+   "pt": "faz pilates e conta pra todo mundo",
+   "en": "does pilates and tells everyone"
+  },
+  {
+   "tipo": "comum",
+   "pt": "ouve rádio KRFM o dia inteiro",
+   "en": "listens to KRFM all day"
+  },
+  {
+   "tipo": "comum",
+   "pt": "tem 14 gatos",
+   "en": "has 14 cats"
+  },
+  {
+   "tipo": "comum",
+   "pt": "é ex-campeão de karaokê do bairro",
+   "en": "former neighborhood karaoke champion"
+  },
+  {
+   "tipo": "comum",
+   "pt": "dorme com o celular na mão",
+   "en": "sleeps with the phone in hand"
+  },
+  {
+   "tipo": "comum",
+   "pt": "faz cosplay do prefeito no Carnaval",
+   "en": "dresses as the mayor for Carnival"
+  },
+  {
+   "tipo": "comum",
+   "pt": "tem certeza que é vidente",
+   "en": "is sure they are psychic"
+  },
+  {
+   "tipo": "comum",
+   "pt": "vende brigadeiro na praia",
+   "en": "sells brigadeiros on the beach"
+  },
+  {
+   "tipo": "comum",
+   "pt": "tem uma Brasília amarela restaurada",
+   "en": "owns a restored yellow VW Brasília"
+  }
+ ]
+}

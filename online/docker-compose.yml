@@ -8,6 +8,7 @@ services:
       - "8080:80"
     environment:
       CCSS_DATA: /data               # banco do online fora da pasta servida pelo Apache
+      CCSS_ADMIN_PASS: ${CCSS_ADMIN_PASS:-}   # senha da conta "admin" (mín. 6). Ex.: CCSS_ADMIN_PASS=SuaSenha docker compose up -d. Vazia = senha gerada em /data/admin-pass.txt
     volumes:
       - ..:/var/www/html:ro         # a pasta do jogo inteira (v77/), só leitura
       - ccss-online-data:/data

@@ -32,6 +32,7 @@ Teste: abrir `https://gta.linuxuniverse.com.br/online/api.php?a=info` deve respo
 - **Casa segura:** uma por conta (até 24), espalhadas pela cidade; só o dono vê e entra.
 - **Carro pessoal:** o do começo fica salvo onde você largou e marcado no seu mapa. Explodiu/levaram: celular → ENTREGA DE VEÍCULO (ou `/carro`) chega em 1 h de jogo; na porta da delegacia, E paga 15% do dinheiro (mín. $100) e ele sai na hora.
 - **Táxi:** carona num carro tipo táxi custa $10 + $1 a cada 25 m para o passageiro; o motorista recebe.
+- **Agenda:** todo mundo da sala aparece no celular (P → AGENDA), em ordem alfabética. Ligar pede um encontro; se o outro atender (Y), você é levado até ele.
 - **Quem está online:** no mapa (M), botão JOGADORES acima da legenda; ou `/jogadores` no chat.
 - **Carro de outro jogador:** **G** = carona (dá para atirar de dentro; **F** desce). **F** = roubar (o motorista é jogado para fora e você assume o carro).
 - **Desligado no online:** save, cheats e modo história. Para sair, recarregue a página.
@@ -42,3 +43,8 @@ Teste: abrir `https://gta.linuxuniverse.com.br/online/api.php?a=info` deve respo
 ## Segurança
 - `online/data/` é bloqueada pelo `.htaccess` (o banco não pode ser baixado). Se o Apache tiver `AllowOverride None`, bloqueie a pasta na configuração do site.
 - O acerto de tiro é decidido por quem atira (modelo simples, bom para jogar entre amigos; dá para trapacear com o console do navegador).
+
+## Conta admin (r25)
+- Nome `admin`, senha definida pelo dono do servidor: variável de ambiente `CCSS_ADMIN_PASS` (mín. 6 caracteres). Docker: `CCSS_ADMIN_PASS=SuaSenha docker compose up -d` ou `sudo CCSS_ADMIN_PASS=SuaSenha sh servidor-docker.sh`. Sem a variável, o servidor gera uma senha em `data/admin-pass.txt` (no Docker: `/data/admin-pass.txt`, no host `/srv/coastal-chaos/data/`).
+- No jogo: CONFIGURAÇÕES → ONLINE → LIMPAR BANCO DE DADOS (apaga todas as contas menos o admin, carros/coletáveis do mundo e o chat; todos são desconectados). No chat: `/contas`, `/apagar Nome`, `/limparbanco confirmar`.
+- Todo jogador tem CONFIGURAÇÕES → ONLINE → APAGAR MINHA CONTA (apaga a conta e sai do servidor).

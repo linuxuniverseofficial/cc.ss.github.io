@@ -3,6 +3,7 @@
 # Uso:   sudo sh servidor-docker.sh                 → baixa a versão mais nova do GitHub
 #        sudo sh servidor-docker.sh jogo.zip        → usa um zip do jogo que você já tem
 #        PORTA=9000 sudo sh servidor-docker.sh      → outra porta (padrão 8080)
+#        sudo CCSS_ADMIN_PASS=SuaSenha sh servidor-docker.sh → senha da conta "admin" (mín. 6; sem ela o servidor gera uma em data/admin-pass.txt)
 # Rodar de novo = atualiza o jogo e recria o container (o banco do online é mantido).
 set -e
 PORTA="${PORTA:-8080}"
@@ -30,6 +31,7 @@ docker run -d --name "$NOME" --restart unless-stopped \
   -p "$PORTA":80 \
   -v "$BASE/www":/var/www/html:ro \
   -v "$BASE/data":/data -e CCSS_DATA=/data \
+  ${CCSS_ADMIN_PASS:+-e CCSS_ADMIN_PASS="$CCSS_ADMIN_PASS"} \
   -v /etc/localtime:/etc/localtime:ro \
   php:apache >/dev/null
 
@@ -38,6 +40,7 @@ IP=$(hostname -I 2>/dev/null | awk '{print $1}')
 if curl -fs "http://127.0.0.1:$PORTA/online/api.php?a=info" | grep -q '"ok":true'; then
   echo "Pronto! Jogo e online em http://${IP:-localhost}:$PORTA/"
   echo "No jogo: menu → ONLINE (ou, de outro site, campo SERVIDOR = ${IP:-IP}:$PORTA)"
+  if [ -n "$CCSS_ADMIN_PASS" ]; then echo "Conta admin: nome admin, senha = CCSS_ADMIN_PASS"; else echo "Conta admin: nome admin, senha no arquivo $BASE/data/admin-pass.txt (criado no 1º login do admin)"; fi
 else
   echo "O container subiu, mas o online não respondeu. Veja: docker logs $NOME"
 fi
