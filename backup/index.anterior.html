@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 <script>
 /* v78 · BUILD: número da entrega. Ao abrir, o jogo lê version.txt (poucos bytes, sem cache) e, se a build no servidor for outra
    (navegador/celular servindo cópia velha), recarrega uma vez. Saves e configurações (localStorage) NÃO são apagados. */
-var BUILD_TAG='r69';
+var BUILD_TAG='r1';
 (function(){try{if(!/^https?:$/.test(location.protocol))return;const k='ps_build_reload';
  fetch(new URL('version.txt?b='+Date.now(),location.href).href,{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=/^\s*((?:dev\s+)?r[\d.]+)\s*$/i.exec(t||'');if(!m||m[1].replace(/\s+/g,' ').toLowerCase()===BUILD_TAG.toLowerCase()){try{sessionStorage.removeItem(k)}catch(e){}return}
   let n=0;try{n=+sessionStorage.getItem(k)||0}catch(e){}if(n>=2)return;try{sessionStorage.setItem(k,String(n+1))}catch(e){}
@@ -1271,6 +1271,14 @@ body.cutscene-paused #menu.in-game #monBtn{grid-column:1/-1!important}
 #tvcat .fx-bolt{position:absolute;inset:0;z-index:3;background:#dfe8ff;opacity:0;animation:tvcBolt 5.5s infinite;mix-blend-mode:screen}
 @keyframes tvcBolt{0%,40%,46%,100%{opacity:0}41%{opacity:.7}43%{opacity:.1}44%{opacity:.5}}
 #tvcat .fx-corona{position:absolute;left:16%;top:12%;width:13%;aspect-ratio:1;border-radius:50%;z-index:3;background:radial-gradient(circle,#05060a 0 56%,#fff8e0 60%,#ffe9a8aa 64%,#ffd8701f 80%,#0000 100%);box-shadow:0 0 40px 10px #fff3c855;animation:tvcRing2 3.4s ease-in-out infinite}
+#tvcat .fx-tracer{position:absolute;inset:0;z-index:3;pointer-events:none}
+#tvcat .fx-tracer i{position:absolute;height:3px;width:34%;background:linear-gradient(90deg,#0000,#ffe28a,#fff);box-shadow:0 0 8px #ffd24a;opacity:0;transform-origin:0 50%;animation:tvcTracer 1.1s linear infinite}
+#tvcat .fx-tracer i:nth-child(1){left:18%;top:46%;transform:rotate(-8deg)}#tvcat .fx-tracer i:nth-child(2){left:42%;top:58%;transform:rotate(12deg);animation-delay:.37s}#tvcat .fx-tracer i:nth-child(3){left:30%;top:36%;transform:rotate(4deg);animation-delay:.74s}
+@keyframes tvcTracer{0%{opacity:0;clip-path:inset(0 100% 0 0)}10%{opacity:1}30%{opacity:1;clip-path:inset(0 0 0 0)}45%,100%{opacity:0}}
+#tvcat .bar u.drain{animation:tvcDrain 15s linear infinite;background:#ff3a3a}
+#tvcat .fx-pump{position:absolute;left:50%;top:28%;transform:translateX(-50%);z-index:3;display:grid;gap:4px;padding:8px 12px;background:#000d;border:2px solid #ff8a1a;font-weight:800;font-size:clamp(10px,1.3vw,15px);letter-spacing:.06em}
+#tvcat .fx-pump .t::before{content:"▸ " attr(data-t)}
+#tvcat .fx-alarm{position:absolute;left:50%;top:22%;transform:translateX(-50%);z-index:3;padding:6px 14px;border:3px solid #ff3a3a;background:#3a0608cc;color:#ff6a5a;font-weight:900;font-size:clamp(14px,2.4vw,28px);letter-spacing:.12em;animation:tvcStar .5s steps(1) infinite}
 #tvcat .fx-target{position:absolute;left:50%;top:62%;width:26%;aspect-ratio:1;transform:translate(-50%,-50%) scaleY(.45);z-index:3}
 #tvcat .fx-target i{position:absolute;inset:0;border-radius:50%;border:4px solid #ff3a3a}#tvcat .fx-target i:nth-child(2){inset:22%;border-color:#fff}#tvcat .fx-target i:nth-child(3){inset:42%;background:#ff3a3a;border:0}
 #tvcat .fx-card{position:absolute;inset:0;z-index:3;display:grid;align-content:center;justify-items:center;gap:clamp(4px,.9vw,10px);padding:8% 6%;text-align:center;font-weight:700;font-size:clamp(12px,1.6vw,19px);text-shadow:2px 2px 0 #000}
@@ -2015,6 +2023,47 @@ function invalidateStaticShadows(){SHADOW_CACHE.gen=(SHADOW_CACHE.gen+1)|0}
 })();
 
 /* sky dome */
+/* v2 r70: SOMBRA DAS NUVENS (CLDSH). Nuvens de bom tempo (camada `fair`) agora ficam presas no mundo (plano a CLDSH.H m) e andam com o vento.
+   A MESMA função de ruído (CS_GLSL, espelhada em csF) desenha a nuvem no céu e a sombra no chão: a luz direta (sol) de todo material
+   lambert/phong/standard é multiplicada por csShadeF() (ShaderChunk, uniforms csA/csB compartilhados por referência, objeto simples
+   para o UniformsUtils.clone não copiar). Sprites: csShadeAt() no actorLighting0. Disco do sol escurece quando a nuvem passa (csSun).
+   csA: x força (0 = desligado, early-out), y frequência (1/m), z limiar, w maciez. csB: xy deslocamento (vento + projeção do plano), zw inclinação do sol. */
+const CLDSH={H:260,f:1/110,A:{x:0,y:1/110,z:.7,w:.22},B:{x:0,y:0,z:0,w:0},wx:37,wz:11,lt:0,sun:0};
+const CS_GLSL=`float csH(vec2 p){vec3 p3=fract(vec3(p.xyx)*.1031);p3+=dot(p3,p3.yzx+33.33);return fract((p3.x+p3.y)*p3.z);}
+float csN(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);vec2 a=mod(i,256.),b=mod(i+1.,256.);return mix(mix(csH(a),csH(vec2(b.x,a.y)),f.x),mix(csH(vec2(a.x,b.y)),csH(b),f.x),f.y);}
+float csF(vec2 p){return csN(p)*.55+csN(p*2.+vec2(17.,9.))*.3+csN(p*4.+vec2(5.,31.))*.15;}
+`;
+(function csPatchShaders(){try{
+ const C=THREE.ShaderChunk,L=THREE.ShaderLib,G='#ifdef CS_LIT\n';
+ for(const n of ['lambert','phong','standard','physical']){const l=L[n];if(l){l.vertexShader='#define CS_LIT\n'+l.vertexShader;l.fragmentShader='#define CS_LIT\n'+l.fragmentShader}}
+ C.shadowmap_pars_vertex+='\n'+G+'varying vec2 vCsW;uniform vec4 csB;\n#endif\n';
+ C.worldpos_vertex+='\n'+G+'{vec4 csw=vec4(transformed,1.);\n#ifdef USE_INSTANCING\ncsw=instanceMatrix*csw;\n#endif\ncsw=modelMatrix*csw;vCsW=csw.xz-csw.y*csB.zw;}\n#endif\n';
+ C.shadowmap_pars_fragment+='\n'+G+'varying vec2 vCsW;uniform vec4 csA,csB;\n'+CS_GLSL+'float csShadeF(){if(csA.x<=0.)return 1.;return 1.-csA.x*smoothstep(csA.z,csA.z+csA.w,csF(vCsW*csA.y+csB.xy));}\n#endif\n';
+ const k='getDirectionalDirectLightIrradiance( directionalLight, geometry, directLight );';
+ if(C.lights_fragment_begin.includes(k))C.lights_fragment_begin=C.lights_fragment_begin.replace(k,k+'\n'+G+'directLight.color*=csShadeF();\n#endif\n');
+ const lk='* getShadowMask();';if(L.lambert.fragmentShader.includes(lk))L.lambert.fragmentShader=L.lambert.fragmentShader.replace(lk,'* getShadowMask() * csShadeF();');
+ for(const n of ['lambert','phong','standard','physical']){const u=L[n]&&L[n].uniforms;if(u){u.csA={value:CLDSH.A};u.csB={value:CLDSH.B}}}
+}catch(e){console.warn('csPatchShaders',e)}})();
+function csSS(a,b,x){const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t)}
+function csFr(x){return x-Math.floor(x)}
+function csHj(x,y){let a=csFr(x*.1031),b=csFr(y*.1031),c=a;const d=a*(b+33.33)+b*(c+33.33)+c*(a+33.33);a+=d;b+=d;c+=d;return csFr((a+b)*c)}
+function csNj(x,y){const ix=Math.floor(x),iy=Math.floor(y);let fx=x-ix,fy=y-iy;fx=fx*fx*(3-2*fx);fy=fy*fy*(3-2*fy);const ax=ix-256*Math.floor(ix/256),ay=iy-256*Math.floor(iy/256),bx=(ix+1)-256*Math.floor((ix+1)/256),by=(iy+1)-256*Math.floor((iy+1)/256);
+ const h00=csHj(ax,ay),h10=csHj(bx,ay),h01=csHj(ax,by),h11=csHj(bx,by);return(h00+(h10-h00)*fx)*(1-fy)+(h01+(h11-h01)*fx)*fy}
+function csFj(x,y){return csNj(x,y)*.55+csNj(x*2+17,y*2+9)*.3+csNj(x*4+5,y*4+31)*.15}
+function csCoverAt(x,y,z){const A=CLDSH.A,B=CLDSH.B,n=csFj((x-y*B.z)*A.y+B.x,(z-y*B.w)*A.y+B.y),t=clamp((n-A.z)/A.w,0,1);return t*t*(3-2*t)}
+function csShadeAt(x,y,z){return CLDSH.A.x>0?1-CLDSH.A.x*csCoverAt(x,y,z):1}
+function csTick(){
+ const U=skyMat.uniforms,s=_csV.copy(U.sunDir.value).normalize(),fair=U.fair.value||0,dt=clamp(simT-CLDSH.lt,0,.1);CLDSH.lt=simT;
+ const wl=Math.hypot(WX.wx||0,WX.wz||0),wx=wl>.01?WX.wx/wl:.93,wz=wl>.01?WX.wz/wl:.37,sp=6*(1+Math.min(2,wl*2));
+ CLDSH.wx=(CLDSH.wx+wx*sp*dt*CLDSH.f)%256;CLDSH.wz=(CLDSH.wz+wz*sp*dt*CLDSH.f)%256;
+ const sy=Math.max(.02,s.y),slx=s.x/(sy+.12),slz=s.z/(sy+.12);CLDSH.B.z=slx;CLDSH.B.w=slz;CLDSH.B.x=CLDSH.wx+CLDSH.H*slx*CLDSH.f;CLDSH.B.y=CLDSH.wz+CLDSH.H*slz*CLDSH.f;
+ const fc=.16+fair*.36;CLDSH.A.y=CLDSH.f;CLDSH.A.z=1-fc-.06;CLDSH.A.w=.22;
+ const world=S.style==='modern'&&!city.haze&&!ROOM_STAGE.mode&&!PL.inside&&!(typeof ITS!=='undefined'&&ITS.on);
+ const vis=world?csSS(.01,.08,fair)*csSS(.04,.2,s.y)*(1-csSS(.4,.75,U.cloud.value||0))*(1-(ECLIPSE.dark||0)):0;
+ CLDSH.A.x=S.shadows?.7*vis:0;
+ const cp=camera.position;CLDSH.sun=vis>0?vis*csCoverAt(cp.x,cp.y,cp.z):0;U.csSun.value=CLDSH.sun;
+}
+const _csV=new THREE.Vector3();
 const CELLS=[],CELLS_U=[];for(let i=0;i<6;i++)CELLS_U.push(new THREE.Vector4(0,0,1,0));
 function makeSkyNoiseTexture(){
  const N=512,d=new Uint8Array(N*N*4),fract=x=>x-Math.floor(x),wrap=(x,n)=>((x%n)+n)%n;
@@ -2032,10 +2081,10 @@ function meteorTick(dt,nf){const U=skyMat.uniforms;if(!METEOR.on){U.metK.value=0
  METEOR.t+=dt;const k=METEOR.t/METEOR.dur;if(k>=1){METEOR.on=false;U.metK.value=0;return}
  const hd=METEOR.len*k,tl=METEOR.len*Math.max(0,k-.38);U.metB.value.copy(METEOR.A).addScaledVector(METEOR.D,hd).normalize();U.metA.value.copy(METEOR.A).addScaledVector(METEOR.D,tl).normalize();U.metK.value=Math.min(1,k*6)*(1-Math.max(0,(k-.7)/.3))*1.4}
 const skyMat=new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,fog:false,
- uniforms:{metA:{value:new THREE.Vector3(0,1,0)},metB:{value:new THREE.Vector3(0,1,0)},metK:{value:0},eclipsePrep:{value:0},eclipse:{value:new THREE.Vector4(0,0,0,0)},noiseTex:{value:SKY_NOISE},sunDim:{value:1},top:{value:new THREE.Color()},hor:{value:new THREE.Color()},synth:{value:0},cloud:{value:0},fair:{value:0},time:{value:0},cloudCol:{value:new THREE.Color(1,1,1)},C:{value:CELLS_U},stormK:{value:new THREE.Vector4(1,0,2,0)},stormB:{value:new THREE.Vector4(2,0,0,0)},camP:{value:new THREE.Vector3()},sunDir:{value:new THREE.Vector3(-.4,.55,-.3)},night:{value:0},gC:{value:new THREE.Vector4(0,0,1,0)},moonD:{value:new THREE.Vector4(0,-1,0,1)}},
+ uniforms:{metA:{value:new THREE.Vector3(0,1,0)},metB:{value:new THREE.Vector3(0,1,0)},metK:{value:0},eclipsePrep:{value:0},eclipse:{value:new THREE.Vector4(0,0,0,0)},noiseTex:{value:SKY_NOISE},sunDim:{value:1},top:{value:new THREE.Color()},hor:{value:new THREE.Color()},synth:{value:0},cloud:{value:0},fair:{value:0},time:{value:0},cloudCol:{value:new THREE.Color(1,1,1)},C:{value:CELLS_U},stormK:{value:new THREE.Vector4(1,0,2,0)},stormB:{value:new THREE.Vector4(2,0,0,0)},camP:{value:new THREE.Vector3()},sunDir:{value:new THREE.Vector3(-.4,.55,-.3)},night:{value:0},gC:{value:new THREE.Vector4(0,0,1,0)},moonD:{value:new THREE.Vector4(0,-1,0,1)},csA:{value:CLDSH.A},csB:{value:CLDSH.B},csSun:{value:0}},
  vertexShader:`varying vec3 vPr;void main(){vPr=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
  fragmentShader:`uniform sampler2D noiseTex;uniform vec3 top,hor,sunDir,cloudCol,camP;uniform float synth,night,cloud,time,fair,sunDim;uniform float eclipsePrep;uniform vec3 metA,metB;uniform float metK;uniform vec4 moonD,eclipse;varying vec3 vPr;
- uniform vec4 C[6];uniform vec4 stormK,stormB;uniform vec4 gC;float rf(vec2 q){float r=0.;for(int i=0;i<6;i++){vec4 k=C[i];if(k.w<=0.||(i==0&&stormB.z>.5))continue;float d=length(q-k.xy)/k.z;r=max(r,k.w*smoothstep(.45,.7,k.w)*(1.-smoothstep(.55,1.,d)));}return r;}
+ uniform vec4 C[6];uniform vec4 stormK,stormB;uniform vec4 gC;uniform vec4 csA,csB;uniform float csSun;${CS_GLSL}float rf(vec2 q){float r=0.;for(int i=0;i<6;i++){vec4 k=C[i];if(k.w<=0.||(i==0&&stormB.z>.5))continue;float d=length(q-k.xy)/k.z;r=max(r,k.w*smoothstep(.45,.7,k.w)*(1.-smoothstep(.55,1.,d)));}return r;}
  float rfc(vec2 q){float r=0.;for(int i=0;i<6;i++){vec4 k=C[i];if(k.w<=0.||(i==0&&stormB.z>.5))continue;float d=length(q-k.xy)/(k.z*3.);r=max(r,k.w*(1.-smoothstep(.35,1.,d)));}return r;}
  float hh(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
  float nz(vec2 p){return texture2D(noiseTex,p/32.).g;}
@@ -2046,7 +2095,7 @@ const skyMat=new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,fog:
   vec3 sc=mix(vec3(1.,.74,.36),vec3(.92,.26,.58),clamp((sd.y+.25-vP.y)/.5,0.,1.))*.84;
   c=mix(c,sc,sun*.92*sunDim*(1.-eclipse.x*eclipse.w));c+=vec3(1.,.36,.62)*.18*exp(-d*5.5)*sunDim*(1.-eclipse.x*eclipse.w);
   float s=fract(sin(dot(floor(vP*380.),vec3(12.9898,78.233,37.719)))*43758.5453);c+=step(.9975,s)*smoothstep(.15,.45,h)*.9*night*step(.0312,length(vP-normalize(moonD.xyz)));
- }else{vec3 sd=normalize(sunDir);float up=smoothstep(-.1,.05,sd.y)*sunDim*(1.-eclipse.x*eclipse.w);float sdt=dot(vP,sd);float gold=smoothstep(.02,.4,sd.y);vec3 sdc=mix(vec3(1.,.62,.3),vec3(1.,.97,.88),gold),hl=mix(vec3(1.,.5,.2),vec3(1.,.95,.8),gold),hw=mix(vec3(1.,.45,.15),vec3(1.,.8,.6),gold);c+=sdc*smoothstep(.99995,.9999725,sdt)*1.4*up;c+=(hl*pow(max(sdt,0.),400.)*mix(.75,1.1,gold)+hw*pow(max(dot(vP,sd),0.),8.)*mix(.32,.2,gold))*up;
+ }else{vec3 sd=normalize(sunDir);float up=smoothstep(-.1,.05,sd.y)*sunDim*(1.-eclipse.x*eclipse.w)*(1.-.85*csSun);float sdt=dot(vP,sd);float gold=smoothstep(.02,.4,sd.y);vec3 sdc=mix(vec3(1.,.62,.3),vec3(1.,.97,.88),gold),hl=mix(vec3(1.,.5,.2),vec3(1.,.95,.8),gold),hw=mix(vec3(1.,.45,.15),vec3(1.,.8,.6),gold);c+=sdc*smoothstep(.99995,.9999725,sdt)*1.4*up;c+=(hl*pow(max(sdt,0.),400.)*mix(.75,1.1,gold)+hw*pow(max(dot(vP,sd),0.),8.)*mix(.32,.2,gold))*up;
   float s=fract(sin(dot(floor(vP*380.),vec3(12.9898,78.233,37.719)))*43758.5453);c+=step(.997,s)*smoothstep(.1,.4,h)*night*.8*step(.0312,length(vP-normalize(moonD.xyz))); /* v78: estrela não aparece por cima do disco da lua */
   vec3 md=normalize(moonD.xyz);float mup=smoothstep(-.04,.06,md.y)*(.3+.7*night);
   if(eclipse.x<.5&&mup>0.){vec3 mx=normalize(cross(md,vec3(0.,1.,0.)));vec3 my=cross(mx,md);float rad=.03;vec2 p=vec2(dot(vP,mx),dot(vP,my))/rad;float r2=dot(p,p);float dm=dot(vP,md);
@@ -2089,7 +2138,7 @@ const skyMat=new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,fog:
  if(h>.02){vec3 sdn=normalize(sunDir);float sg=(1.-synth)*sunDim*smoothstep(-.14,-.02,sdn.y)*(1.-smoothstep(.06,.34,sdn.y));vec2 hz=vP.xz;float dd=(length(hz)>1e-4&&length(sdn.xz)>1e-4)?dot(normalize(hz),normalize(sdn.xz)):0.;float tw=dd*.5+.5;tw*=tw;vec3 stc=mix(vec3(1.,.56,.5),vec3(1.,.64,.3),tw);float lum=clamp(dot(cloudCol,vec3(.3333))+.4,.7,1.1); /* v79r42: sol baixo pinta as nuvens — laranja do lado do sol, rosa do lado oposto */
  vec2 uv=vP.xz/(h+.15)*1.25+vec2(time*.012,time*.005);float n=fbm(uv);vec2 cq=camP.xz+vP.xz/max(h,.04)*210.;float cv=max(max(cloud,min(1.,rfc(cq)*1.5+rf(cq)*.6)),min(1.,msk*1.25));float gcl=gC.w*(1.-smoothstep(gC.z*.4,gC.z,length(cq-gC.xy)));cv=max(cv,min(1.,gcl*1.7));float cl=smoothstep(1.-cv,1.-cv+.32,n)*smoothstep(.02,.22,h);
   vec3 cc=mix(cloudCol,cloudCol*.5,smoothstep(.45,.95,n)*cv);cc*=mix(1.,.3,msk);cc*=mix(1.,.2,gcl);{float sk=sg*(.6+.4*tw)*(1.-.7*cloud)*(1.-msk)*(1.-gcl);float edge=1.-.3*smoothstep(.45,.95,n);cc=mix(cc,stc*(.85+.4*tw)*edge*lum,sk*.9);} /* v79r43: só céu fechado (cloud) e tempestade em cima (msk/gcl) tiram a cor; nuvens de chuva ao longe também pegam o laranja */c=mix(c,cc,cl*mix(.92,.99,msk));
-  if(fair>.01){vec2 fu=vP.xz/(h+.12)*3.4+vec2(time*.02,time*.008)+vec2(11.3,7.1);float fn=fbm(fu)*.75+nz(fu*3.1)*.25;float fc=.16+fair*.36;float fa=smoothstep(1.-fc-.06,1.-fc+.16,fn)*smoothstep(.03,.25,h)*(1.-cl)*.55;c=mix(c,mix(mix(cloudCol,vec3(1.),.35),stc*(.85+.45*tw)*lum,sg*(.6+.4*tw)*.9)*(1.-.12*smoothstep(.5,.9,fn)),fa);}}
+  if(fair>.01){vec2 fu=(camP.xz+vP.xz/(h+.12)*max(20.,260.-camP.y)-csB.zw*260.)*csA.y+csB.xy;float fn=csF(fu); /* v2r70: nuvem presa no mundo, mesmo ruído da sombra no chão (CS) */float fc=.16+fair*.36;float fa=smoothstep(1.-fc-.06,1.-fc+.16,fn)*smoothstep(.03,.25,h)*(1.-cl)*.68;c=mix(c,mix(mix(cloudCol,vec3(1.),.35),stc*(.85+.45*tw)*lum,sg*(.6+.4*tw)*.9)*(1.-.12*smoothstep(.5,.9,fn)),fa);}}
  gl_FragColor=vec4(c,1.);}`});
 const sky=new THREE.Mesh(new THREE.SphereGeometry(1500,32,16),skyMat); sky.renderOrder=10; sky.frustumCulled=false; sky.layers.set(1); scene.add(sky);
 
@@ -11330,7 +11379,7 @@ function actorLighting0(sp,local){
  }
  const dt=Math.max(0,Math.min(.1,simT-local.last));local.last=simT;
  if(!(local.shadeS>=0))local.shadeS=local.shade||0;local.shadeS+=((near?local.shade:0)-local.shadeS)*(1-Math.exp(-dt*9));
- const target=local.target;target.copy(hemi.color).multiplyScalar(hemi.intensity*.65).add(a.tmp.copy(sun.color).multiplyScalar(sun.intensity*(.65-.57*local.shadeS)));
+ const target=local.target;target.copy(hemi.color).multiplyScalar(hemi.intensity*.65).add(a.tmp.copy(sun.color).multiplyScalar(sun.intensity*(.65-.57*local.shadeS)*(CLDSH.A.x>0?csShadeAt(a.pos.x,a.pos.y,a.pos.z):1)));
  if(near){
  if(S.lampLighting!==false)for(const slot of nearLampLights){const l=slot.light;if(!l.visible||l.intensity<=0)continue;const d=Math.hypot(a.pos.x-l.position.x,a.pos.y+1-l.position.y,a.pos.z-l.position.z),r=l.distance||14;if(d<r){const f=(1-d/r)**2*l.intensity*1.4;target.add(a.tmp.copy(l.color).multiplyScalar(f))}}
  }
@@ -22469,7 +22518,7 @@ function glRescueResume(){let d=null;try{d=JSON.parse(sessionStorage.getItem('gl
 window.addEventListener('load',()=>setTimeout(glRescueResume,700));
 // Versão do jogo gravada no save. Suba este número a cada atualização: saves de outra versão são recusados.
 const DOOR_NOW=()=>performance.now()/1000;
-const GAME_VER=2; /* v2 r1: depois da v1 dev r2.4. Saves da v1 continuam aceitos (2 já está em saveVersionCompatible). */ /* numeração reorganizada: depois da v79 r49 vem v1 r1 (saves 1–79 continuam aceitos em saveVersionCompatible) */
+const GAME_VER=3; /* v3 r1 (21/11/2026, pedido do José): depois da v2 r70. 3 já está em saveVersionCompatible, então saves da v1 e v2 abrem. */ /* v2 r1: depois da v1 dev r2.4. Saves da v1 continuam aceitos (2 já está em saveVersionCompatible). */ /* numeração reorganizada: depois da v79 r49 vem v1 r1 (saves 1–79 continuam aceitos em saveVersionCompatible) */
 const SAVE_SERIES='pixelcity-restart-1';
 // v261 preserva saves v260 (AMOnições), v259 e v258. Nenhum dado de câmera é removido.
 function saveVersionCompatible(gv,series){return (gv===1||gv===2||gv===3||gv===4||gv===5||gv===6||gv===7||gv===8||gv===9||gv===10||gv===11||gv===12||gv===13||gv===14||gv===15||gv===16||gv===17||gv===18||gv===19||gv===20||gv===21||gv===22||gv===23||gv===24||gv===25||gv===26||gv===27||gv===28||gv===29||gv===30||gv===31||gv===32||gv===33||gv===34||gv===35||gv===36||gv===37||gv===38||gv===39||gv===40||gv===41||gv===42||gv===43||gv===44||gv===45||gv===46||gv===47||gv===48||gv===49||gv===50||gv===51||gv===52||gv===53||gv===54||gv===55||gv===56||gv===57||gv===58||gv===59||gv===60||gv===61||gv===62||gv===63||gv===64||gv===65||gv===66||gv===67||gv===68||gv===69||gv===70||gv===71||gv===72||gv===73||gv===74||gv===75||gv===76||gv===77||gv===78||gv===79)&&series===SAVE_SERIES}
@@ -24446,7 +24495,7 @@ function roomStageLocalTick(dt){
 }
 
 function update(dt){if(SKATE.ui)return;if(POOL.on){poolTick(dt);return}if(DICE.on){diceTick(dt);return}luciaIdleTick();if(roomStageKind()&&!BENCH.active){roomStageLocalTick(dt);return}crimeRoll();if(DLG.on){dlgTick(dt);return}paraTick(dt);try{dealTick(dt)}catch(e){console.error(e)}try{storyTick();duoTick(dt);questTick(dt);sideTick(dt);forestTick(dt);jetTick(dt);vortexTick();dbTick(dt);shipTick(dt);airTick2(dt);casinoTick(dt);motelTick(dt);labTick(dt);clubFxTick(dt);bankTick(dt);empTick(dt)}catch(e){console.error(e)}try{areaHudTick(dt)}catch(e){console.error(e)}cheatTick();maskTick(dt);jammerTick(dt);try{profTick(dt)}catch(e){console.error(e)}updateCloseCarDetails(dt);updateIndustrialGates(dt);
- simT+=dt;updateDayNight(dt);riverBoatsTick(dt);
+ simT+=dt;updateDayNight(dt);csTick();riverBoatsTick(dt);
  updatePlayer(dt);try{skTick(dt)}catch(e){console.error(e)}try{loanTick(dt)}catch(e){console.error(e)}jailTick(dt);updateSafe(dt);heistTick(dt);v67Tick(dt);try{aqTick(dt)}catch(e){console.error(e)}try{ghostTick(dt)}catch(e){console.error(e)}misUpdate(dt);updateTune();
  buildCarHash();buildLanes();
  const _profTraffic=MON.on?performance.now():0;
@@ -24561,7 +24610,7 @@ function updateHUD(dt){if(TBAR.own&&simT-TBAR.t>.4){$('#tbar').hidden=true;TBAR.
  v67Hud(dt);$('#jailBailTag').hidden=true;if(PL.inside==='jail'){$('#ctxp').hidden=true;$('#prompt').hidden=true;}if(toastT>0)toastT-=dt;tickNotes(dt);
  drawMinimap();
 }
-function render(){roomStageSync();actorSpriteRenderIntegrity();if(!ROOM_STAGE.mode){syncFogDrawDistance();syncCarWheelInstances()}else{CAR_WHEEL_IM.count=0;CAR_HUB_IM.count=0}isoFadeTick(menuOpen?0:Math.min(.05,ISOFADE.lastTime?Math.max(0,(performance.now()-ISOFADE.lastTime)/1000):1/60));ISOFADE.lastTime=performance.now();if(city.chunks&&!ROOM_STAGE.mode)cullChunks();syncPartInstances(camera);
+function render(){roomStageSync();if(ROOM_STAGE.mode){CLDSH.A.x=0;skyMat.uniforms.csSun.value=0}actorSpriteRenderIntegrity();if(!ROOM_STAGE.mode){syncFogDrawDistance();syncCarWheelInstances()}else{CAR_WHEEL_IM.count=0;CAR_HUB_IM.count=0}isoFadeTick(menuOpen?0:Math.min(.05,ISOFADE.lastTime?Math.max(0,(performance.now()-ISOFADE.lastTime)/1000):1/60));ISOFADE.lastTime=performance.now();if(city.chunks&&!ROOM_STAGE.mode)cullChunks();syncPartInstances(camera);
  if(ITS.on){itsSync();renderer.render(scene,camera);return} /* v79r12: IMPOSSIBLETOSEE — sem sombra, reflexo nem bloom */
  if(S.shadows&&!ROOM_STAGE.mode&&(simT-shadowRefreshAt>=1/30||simT<shadowRefreshAt)){renderer.shadowMap.needsUpdate=true;shadowRefreshAt=simT}
 if(!ROOM_STAGE.mode)try{renderReflection()}catch(e){console.error(e);S.refl=false}const st=STYLES[S.style];const nb=!st.night&&DN.nightF>.45;if(composer&&S.bloom&&(st.bloom||nb||PL.inside==='mall')){bloomPass.threshold=st.night?.62:.7;bloomPass.radius=.4;bloomPass.strength=st.night?(camMode==='top'?.5:.68)*(.3+.7*DN.nightF):.4*DN.nightF;if(PL.inside==='mall'){bloomPass.threshold=.74;bloomPass.radius=.38;bloomPass.strength=st.night?.62:.5}else if(PL.inside)bloomPass.strength*=.3;bloomResFit();composer.render()}else renderer.render(scene,camera)}
@@ -25174,6 +25223,9 @@ const TVCAT=[
  {k:'hosp',ic:'🚑',c:'#ff5a6a',l:'2',n:['HOSPITAL E PARAMÉDICO','HOSPITAL AND PARAMEDIC'],
   g:['Morreu, acorda no hospital pagando 10% do dinheiro. Ligue 192 e o paramédico enche sua vida; numa ambulância, T começa a missão de paramédico.','Die and you wake up at the hospital paying 10% of your cash. Dial 192 and the paramedic fills your health; in an ambulance, T starts the paramedic mission.'],
   p:[tvcP('poi_hosp',['HOSPITAL','HOSPITAL']),tvcP('amb',['AMBULÂNCIA','AMBULANCE'])]},
+ {k:'weapons',ic:'🔫',c:'#ff6a3a',l:'4',n:['ARMAS','WEAPONS'],
+  g:['Segure TAB (L1 no controle) e a roda de armas abre com o tempo lento. Pistola, Magnum, metralhadora, bazuca, granada e bomba programada: plante na parede e detone pelo celular (Agenda › Bomba Remota).','Hold TAB (L1 on a controller) and the weapon wheel opens in slow motion. Pistol, Magnum, SMG, bazooka, grenade and remote bomb: plant it on a wall and detonate it from the phone (Contacts › Remote Bomb).'],
+  p:[tvcP('weap_wheel',['RODA DE ARMAS','WEAPON WHEEL']),tvcP('gang_alley',['TIROTEIO','GUNFIGHT'],'tracer'),tvcP('weap_boom',['EXPLOSÃO','EXPLOSION']),tvcP(null,['BOMBA PROGRAMADA','REMOTE BOMB'],'bomb')]},
  {k:'gang',ic:'⬛',c:'#e8d23a',l:'2',n:['GANGUES','GANGS'],
   g:['A gangue amarela e a verde dominam um quarteirão cada. Os 6 do beco atiram em quem chega; derrube todos e ganhe $500. No dia seguinte elas voltam em outro lugar.','The yellow and green gangs each hold a block. The 6 in the alley shoot anyone who comes close; take them all down for $500. The next day they show up somewhere else.'],
   p:[tvcP('gang_alley',['BECO DA GANGUE','GANG ALLEY']),tvcP('map_gang',['QUARTEIRÃO NO MAPA','BLOCK ON THE MAP'],'gang',{zoom:1})]},
@@ -25195,9 +25247,18 @@ const TVCAT=[
  {k:'carrx',ic:'📸',c:'#ffd24a',l:'1',n:['PEDESTRES E SEU CARRO','PEDESTRIANS AND YOUR CAR'],
   g:['Pedestres elogiam carro de luxo, fotografam o DeLorean, xingam quem sobe na calçada e às vezes pedem carona ($20–60).','Pedestrians praise luxury cars, take photos of the DeLorean, curse whoever drives on the sidewalk and sometimes ask for a ride ($20–60).'],
   p:[tvcP('car_dmc',['FOTO DO DeLOREAN','DeLOREAN PHOTO'],'flash')]},
+ {k:'pedev',ic:'🚨',c:'#ff5a5a',l:'alt',n:['EVENTOS DE PEDESTRES','PEDESTRIAN EVENTS'],
+  g:['Pedestres trocam tiros, alguém arranca um motorista do carro e seu carro de luxo parado na rua pode ser roubado. Quando é você quem rouba, o dono pode fugir, correr atrás para pegar o carro de volta ou sacar uma arma.','Pedestrians trade shots, someone pulls a driver out of a car and your luxury car parked on the street can get stolen. When you are the thief, the owner may run, chase you to take the car back or pull a gun.'],
+  p:[tvcP('pedev',['ROUBO DE CARRO NA RUA','STREET CARJACKING']),tvcP('scn_chase',['TIROTEIO ENTRE PEDESTRES','PEDESTRIAN SHOOTOUT'],'tracer'),tvcP('car_dmc',['SEU CARRO DE LUXO NA MIRA','YOUR LUXURY CAR IS A TARGET'])]},
  {k:'dirt',ic:'🧽',c:'#c9a26a',l:'1',n:['CARRO SUJO · LAVA-JATO','DIRTY CAR · CAR WASH'],
   g:['Estrada de terra suja devagar, lama suja rápido e a chuva limpa um pouco. No posto, LAVAR CARRO custa $15.','Dirt roads soil the car slowly, mud quickly, and rain cleans it a little. At the gas station, CAR WASH costs $15.'],
   p:[tvcP('dirt_car',['NA ESTRADA DE TERRA','ON THE DIRT ROAD'])]},
+ {k:'cars',ic:'💥',c:'#ff8a3a',l:'2',n:['CARROS: DANO E DIREÇÃO','CARS: DAMAGE AND DRIVING'],
+  g:['Cada batida amassa a zona atingida e pode deixar o para-choque pendurado. W + S + direção faz zerinho, Espaço puxa o freio de mão, SHIFT é o nitro do superesportivo e cada motor tem o seu ronco e as suas marchas.','Every crash dents the area that was hit and can leave the bumper hanging. W + S + steering does donuts, Space pulls the handbrake, SHIFT is the supercar\'s nitro and every engine has its own roar and gears.'],
+  p:[tvcP('car_dmg',['AMASSADO POR ZONA','DENTS BY ZONE']),tvcP('car_spin',['ZERINHO','DONUTS'])]},
+ {k:'gas',ic:'⛽',c:'#ffb020',l:'2',n:['POSTO E CONVENIÊNCIA','GAS STATION AND STORE'],
+  g:['Na bomba: abasteça (o combustível acaba), conserte a lataria e lave o carro. Na conveniência, compre um lanche ou mire no caixa para assaltar antes que ele aperte o alarme.','At the pump: refuel (fuel runs out), repair the body and wash the car. In the store, buy a snack or aim at the cashier to rob it before they hit the alarm.'],
+  p:[tvcP('gas_pump',['NA BOMBA','AT THE PUMP'],'pump'),tvcP('gas_shop',['CONVENIÊNCIA','CONVENIENCE STORE'],'alarm')]},
  {k:'mask',ic:'🎭',c:'#7ad84a',l:'1',n:['A MASKARA','THE MASK'],
   g:['A Maskara do Nathan vem do laboratório de Point Haze: disfarce na hora, arsenal infinito e corrida sobre a água.','Nathan\'s Mask comes from the Point Haze lab: instant disguise, infinite arsenal and running on water.'],
   p:[tvcP('mask_on',['NATHAN COM A MASKARA','NATHAN WEARING THE MASK'])]},
@@ -25211,8 +25272,8 @@ const TVCAT=[
   g:['A 140 km/h o DeLorean viaja no tempo para o Synthwave: cidade neon de arranha-céus e palmeiras. Ele mora na garagem da micro-ilha.','At 140 km/h the DeLorean travels in time to Synthwave: a neon city of skyscrapers and palm trees. It lives in the micro-island garage.'],
   p:[tvcP('w_synth1',['O DeLOREAN','THE DeLOREAN']),tvcP('w_synth2',['A CIDADE NEON','THE NEON CITY'])]},
  {k:'weather',ic:'⛈',c:'#8fb4ff',l:'alt',n:['CLIMA','WEATHER'],
-  g:['Eclipses solares podem acontecer no jogo, assim como fortes tempestades que cobrem o céu de forma realista. Cada cidade tem o seu clima.','Solar eclipses can happen in the game, as well as strong storms that cover the sky realistically. Every city has its own weather.'],
-  p:[tvcP('storm2',['TEMPESTADE','STORM'],'rain'),tvcP('eclipse2',['ECLIPSE SOLAR','SOLAR ECLIPSE'],'corona')]},
+  g:['Eclipses solares podem acontecer no jogo, assim como fortes tempestades que cobrem o céu de forma realista. Nuvens que passam pelo sol fazem sombra no chão. Cada cidade tem o seu clima.','Solar eclipses can happen in the game, as well as strong storms that cover the sky realistically. Clouds passing over the sun cast shadows on the ground. Every city has its own weather.'],
+  p:[tvcP('storm2',['TEMPESTADE','STORM'],'rain'),tvcP('clouds',['SOMBRA DAS NUVENS','CLOUD SHADOWS']),tvcP('eclipse2',['ECLIPSE SOLAR','SOLAR ECLIPSE'],'corona')]},
  {k:'sea',ic:'🚢',c:'#4ab8e8',l:'alt',n:['RIOS E MAR','RIVERS AND SEA'],
   g:['Rios perto das indústrias ficam poluídos. No mar, dois navios cargueiros passam devagar: dá para subir de lancha ou pousar o helicóptero no convés.','Rivers near industry get polluted. At sea, two cargo ships sail slowly by: you can climb aboard from a boat or land the helicopter on deck.'],
   p:[tvcP('tv_pollution',['POLUIÇÃO','POLLUTION']),tvcP('ship2',['NAVIOS CARGUEIROS','CARGO SHIPS'])]},
@@ -25243,6 +25304,9 @@ const TVCAT=[
  {k:'vinyl',ic:'💿',c:'#ffd24a',l:'2',n:['DISCOS RAROS','RARE RECORDS'],
   g:['15 discos raros estão escondidos pela cidade. Eles só contam para a coleção depois de vendidos na casa de penhores ($150 cada).','15 rare records are hidden around the city. They only count toward the collection once sold at the pawn shop ($150 each).'],
   p:[tvcP(null,['COLEÇÃO','COLLECTION'],'vinyl'),tvcP('int_pawn2',['CASA DE PENHORES','PAWN SHOP'])]},
+ {k:'houses',ic:'📺',c:'#9a7aff',l:'2',n:['ASSALTO A RESIDÊNCIAS','HOME BURGLARY'],
+  g:['Das 22h às 8h aparecem setas em casas. Lá dentro você tem 15 s para pegar TV, micro-ondas, DVD e celular antes de um vizinho chamar a polícia. Tudo vira dinheiro na casa de penhores; cuidado com o cachorro no quintal.','From 10 PM to 8 AM arrows appear over houses. Inside you have 15 s to grab the TV, microwave, DVD player and phone before a neighbor calls the police. It all turns into cash at the pawn shop; watch out for the dog in the yard.'],
+  p:[tvcP('heist_out',['SETA NA CASA','ARROW ON THE HOUSE']),tvcP('heist_in',['15 s PARA SAIR','15 s TO GET OUT'],'timer')]},
  {k:'safe',ic:'🏠',c:'#ffd24a',l:'1',n:['CASA SEGURA','SAFEHOUSE'],
   g:['Salva o jogo, enche a vida e guarda 2 carros na garagem. O conversível da missão 1 mora na vaga 1.','Saves the game, refills health and keeps 2 cars in the garage. The convertible from mission 1 lives in spot 1.'],
   p:[tvcP('poi_safe',['CASA E GARAGEM','HOUSE AND GARAGE'])]},
@@ -25273,6 +25337,9 @@ const TVCAT=[
  {k:'vehicles',ic:'🚁',c:'#ff7a1a',l:'3',n:['HELICÓPTERO, VORTEX E JET SKI','HELICOPTER, VORTEX AND JET SKI'],
   g:['Helicópteros nos helipontos, o hovercraft Vortex na areia ao lado do farol e jet skis na beira da praia e no píer.','Helicopters on the helipads, the Vortex hovercraft on the sand by the lighthouse and jet skis on the shore and at the pier.'],
   p:[tvcP('veh_heli',['HELIPONTO','HELIPAD']),tvcP('veh_vortex',['VORTEX','VORTEX']),tvcP('veh_jet',['JET SKI','JET SKI'])]},
+ {k:'ramp',ic:'🛫',c:'#ff8a1a',l:'1',n:['RAMPAS E SALTOS','RAMPS AND STUNT JUMPS'],
+  g:['Rampas nos píeres e pela cidade lançam o carro longe. Nos saltos insanos a câmera muda de lugar e o tempo desacelera.','Ramps on the piers and around the city launch your car far. On insane jumps the camera moves and time slows down.'],
+  p:[tvcP('ramp',['NO AR','AIRBORNE'])]},
  {k:'taxi',ic:'🚕',c:'#ffd200',l:'1',n:['TÁXI E MISSÕES DE VEÍCULO','TAXI AND VEHICLE MISSIONS'],
   g:['G assobia para um táxi ou ligue 555. Dentro de táxi, viatura ou ambulância, T começa a missão: taxista, vigilante ou paramédico.','G whistles for a cab, or dial 555. In a taxi, patrol car or ambulance, T starts the mission: cab driver, vigilante or paramedic.'],
   p:[tvcP('taxi',['TÁXI','TAXI'])]},
@@ -25285,6 +25352,18 @@ const TVCAT=[
  {k:'online',ic:'🌐',c:'#3ae08a',l:'1',n:['ONLINE','ONLINE'],
   g:['Mundo, clima e trânsito compartilhados com outros jogadores. G pede carona no carro de alguém e a troca de mundo leva todos juntos.','World, weather and traffic shared with other players. G hitches a ride in someone\'s car and a world change takes everyone along.'],
   p:[tvcP(null,['CARONA','RIDE'],'online')]},
+ {k:'radio',ic:'📻',c:'#ff6ab0',l:'1',n:['RÁDIO E HEADPHONE','RADIO AND HEADPHONES'],
+  g:['Segure Q para a roda do rádio; vírgula e ponto trocam a música. A KRFM toca ao vivo, carros que passam tocam música e, com o headphone da loja de eletrônicos, as rádios tocam a pé.','Hold Q for the radio wheel; comma and period change the song. KRFM plays live, passing cars play music and, with headphones from the electronics store, the stations play on foot.'],
+  p:[tvcP('radio_wheel',['RODA DO RÁDIO','RADIO WHEEL'])]},
+ {k:'news',ic:'🗞',c:'#e8e0c8',l:'2',n:['NOTÍCIAS','NEWS'],
+  g:['Na banca, o jornal de $1 conta o que você aprontou: perseguições, prisões e explosões. Em casa, a TV mostra plantões ao vivo da cidade.','At the newsstand, the $1 paper reports what you got up to: chases, arrests and explosions. At home, the TV shows live city bulletins.'],
+  p:[tvcP('news',['BANCA DE JORNAL · $1','NEWSSTAND · $1'],null,{fit:1}),tvcP('tv_chase',['TV DA CASA','HOME TV'])]},
+ {k:'photo',ic:'📷',c:'#f0f0f0',l:'1',n:['MODO FOTO','PHOTO MODE'],
+  g:['No menu de pausa, 📷 congela o jogo: câmera livre, FOV, filtros e foto sem a interface.','In the pause menu, 📷 freezes the game: free camera, FOV, filters and a shot without the HUD.'],
+  p:[tvcP('photo',['CÂMERA LIVRE','FREE CAMERA'])]},
+ {k:'cheats',ic:'⌨',c:'#7ae07a',l:'2',n:['CHEATS','CHEATS'],
+  g:['Aperte ` (crase) e digite o código: HESOYAM, AEZAKMI, THEMASK, IMPOSSIBLETOSEE e outros. Atenção: qualquer cheat bloqueia o save até um jogo novo.','Press ` (backtick) and type a code: HESOYAM, AEZAKMI, THEMASK, IMPOSSIBLETOSEE and more. Warning: any cheat blocks saving until a new game.'],
+  p:[tvcP('cheat_box',['CAIXA DE CHEAT','CHEAT BOX']),tvcP('its',['IMPOSSIBLETOSEE','IMPOSSIBLETOSEE'])]},
  {k:'stats',ic:'📄',c:'#c9a26a',l:'1',n:['REGISTRO E ESTATÍSTICAS','RECORDS AND STATS'],
   g:['O Registro guarda os diálogos e mostra as estatísticas do save: carros destruídos, tempo procurado, dias, prisões, fugas e carros roubados.','The Records keep the dialogues and show the save stats: cars destroyed, time wanted, days, arrests, escapes and cars stolen.'],
   p:[tvcP(null,['ESTATÍSTICAS','STATS'],'stats')]}
@@ -25305,6 +25384,11 @@ function tvcFx(f){
  if(f==='scan')return '<div class="fx-scan"><i></i><i></i><i></i><i></i></div>';
  if(f==='flash')return '<div class="fx-flash"></div>';
  if(f==='rain')return '<div class="fx-bolt"></div>';
+ if(f==='tracer')return '<div class="fx-tracer"><i></i><i></i><i></i></div>';
+ if(f==='bomb')return '<div class="fx-card"><b class="big" data-t="💣"></b>'+tvcT(['plante na parede ou no chão','plant it on a wall or the floor'])+tvcT(['celular › Agenda › Bomba Remota','phone › Contacts › Remote Bomb'],'t warn')+'</div>';
+ if(f==='timer')return '<div class="fx-dig">'+tvcT(['TV · MICRO-ONDAS · DVD · CELULAR','TV · MICROWAVE · DVD · PHONE'])+'<i class="bar"><u class="drain"></u></i></div>';
+ if(f==='pump')return '<div class="fx-pump">'+tvcT(['ABASTECER','REFUEL'])+tvcT(['CONSERTAR','REPAIR'])+tvcT(['LAVAR CARRO · $15','CAR WASH · $15'])+'</div>';
+ if(f==='alarm')return '<div class="fx-alarm">'+tvcT(['ASSALTO!','ROBBERY!'])+'</div>';
  if(f==='corona')return '<div class="fx-corona"></div>';
  if(f==='deal')return '<div class="fx-card"><b class="big" data-t="$1.200 – $25.000"></b>'+tvcT(['da moto ao supercarro, na cor que você quiser','from motorbike to supercar, in any color'])+tvcT(['o carro novo vai direto para a garagem','the new car goes straight to the garage'])+'</div>';
  if(f==='target')return '<div class="fx-target"><i></i><i></i><i></i></div>';

@@ -21,6 +21,37 @@ const ONLY=process.argv[2]||'';const OUT=process.env.TVCAT_OUT||'/home/claude/ca
  else if(STYLE==='synth'){await ev(async()=>{S.style='synthwave';clearRiverBoats();await generateCity();initRiverBoats();applyShadows();await warmCityGPU();cheatWarp(city.startCar.x,city.startCar.z)});await sleep(4000);
    await poi('w_synth1',()=>{TOD(22*60);const c=makeVehicle('super',PL.x+3,PL.z,0,'#b8bcc4');c.special=true;campBoard(c);camMode='chase'},4000);await poi('w_synth2',()=>{TOD(21*60);AER(PL.x,PL.z,45,80,.6,0)},5000);}
 
+ else if(STYLE==='extra6'){
+ await poi('ramp',()=>{TOD(13*60);const q=city.ramps.find(r=>r.insane)||city.ramps[0];const a=Math.atan2(q.dz,q.dx);cheatWarp(q.x-q.dx*14+3,q.z-q.dz*14+3);const c=makeVehicle('sports',q.x-q.dx*7,q.z-q.dz*7,a,'#ff8a1a');STEP(6);const mx=q.x+q.dx*q.L*.5,mz=q.z+q.dz*q.L*.5;AER(mx-q.dx*3,mz-q.dz*3,5,13,a+2.0,.8)},3000);
+ await poi('pedev',()=>{TOD(12*60);cheatWarp(city.core.x,city.core.z);STEP(20);let r=null;for(let i=0;i<30&&!r;i++){pedevWitness();r=PEDEV.cur}for(let i=0;i<8;i++){try{pedevTick(.1)}catch(e){}updatePeds(.1)}const q=(r&&(r.p||r.c||r.car))||PL;AER(q.x,q.z,6,10,.9,1)},2500);
+ }
+ else if(STYLE==='extra5'){
+ await ev(()=>{S.lang='br';try{applyLanguage()}catch(e){}});
+ const hud=async(name,fn,wait=1500)=>{if(!run(name))return;try{await ev(fn);await sleep(wait);await p.screenshot({path:OUT+'/'+name+'.png'});console.log('shot',name)}catch(e){console.log('FAIL',name,e.message.slice(0,200))}};
+ await poi('car_dmg',()=>{TOD(14*60);cheatWarp(city.core.x+6,city.core.z+6);const c=makeVehicle('sports',PL.x+3,PL.z,0,'#2a6ad6');c.dmg={f:2,l:2,r:1,d:0};c.dmgDirty=true;STEP(10);try{carDmgApply(c)}catch(e){}STEP(3);AER(c.x,c.z,3.2,6.5,.7,.6)},3000);
+ await poi('car_spin',()=>{TOD(15*60);const c=makeVehicle('muscle'in VT?'muscle':'sports',PL.x+12,PL.z+4,0,'#d42a2a');campBoard(c);for(let i=0;i<50;i++){keys.KeyW=true;keys.KeyS=true;keys.KeyA=true;update(.05)}keys.KeyW=keys.KeyS=keys.KeyA=false;AER(c.x,c.z,4,9,1.2,.6)},2000);
+ await poi('weap_boom',()=>{try{enterExit()}catch(e){}TOD(16*60);const c=makeVehicle('sedan'in VT?'sedan':'sports',PL.x+14,PL.z+6,0,'#c8c8c8');STEP(2);explode(c,false);STEP(4);AER(c.x,c.z,6,16,1.1,1.5)},800);
+ await hud('weap_wheel',()=>{CAMOV=null;camMode='chase';for(const w of ['pistol','smg','rpg','magnum','grenade','remote'])try{gunGive(w,60)}catch(e){}gunSelect('rpg',true);STEP(5);wheelOpen('wpn','key')},1500);
+ await ev(()=>{try{wheelClose(false)}catch(e){}});
+ await poi('gas_pump',()=>{TOD(19*60);const st=[...GAS.list.values()].find(q=>q.pumps&&!q.burnt);const pp=st.pumps[0];cheatWarp(pp[0]+3,pp[1]+3);const c=makeVehicle('sports',pp[0]+1.6,pp[1],0,'#ffb020');STEP(10);AER(pp[0],pp[1],7,14,.8,1)},3000);
+ await poi('gas_shop',()=>{const st=[...GAS.list.values()].find(q=>q.pumps&&!q.burnt);enterShop(st);STEP(20);AER(PL.x,PL.z,3,5.5,(PL.yaw||0)+Math.PI,1.3)},3000);
+ await ev(()=>{try{exitShop()}catch(e){}});
+ await poi('heist_out',()=>{TOD(23*60);HEIST.night=-1;heistPick();const d=HEIST.list[0];cheatWarp(d.out.x+d.nrm[0]*6,d.out.z+d.nrm[1]*6);for(let i=0;i<10;i++)heistTick(.1);STEP(10);AER(d.x,d.z,7,13,Math.atan2(d.nrm[1],d.nrm[0]),1.2)},3500);
+ await poi('heist_in',()=>{const d=HEIST.list[0];heistEnter(d);STEP(20);AER(PL.x,PL.z,3.5,5,(PL.yaw||0)+Math.PI,1.2)},3500);
+ await ev(()=>{try{heistExit()}catch(e){}});
+ await poi('pedev',()=>{TOD(12*60);cheatWarp(city.core.x,city.core.z);STEP(20);let ok=false;for(let i=0;i<20&&!ok;i++)ok=!!pedevWitness();for(let i=0;i<12;i++){pedevTick(.1);updatePeds(.1);update(.05)}const q=(PEDEV.go&&PEDEV.go[0]&&PEDEV.go[0].p)||PL;AER(q.x,q.z,7,12,.9,1)},2500);
+ await poi('ramp',()=>{TOD(13*60);const q=city.ramps[0];const a=Math.atan2(q.dz,q.dx);cheatWarp(q.x-q.dx*40,q.z-q.dz*40);const c=makeVehicle('sports',q.x-q.dx*30,q.z-q.dz*30,a,'#ff8a1a');campBoard(c);c.fwd=32;for(let i=0;i<60&&!JUMP.active;i++){keys.KeyW=true;update(.05)}for(let i=0;i<6;i++)update(.05);keys.KeyW=false;AER(c.x,c.z,4,12,a+1.57,0)},1200);
+ await ev(()=>{try{if(PL.car)enterExit()}catch(e){}});
+ await poi('its',()=>{TOD(13*60);cheatWarp(city.core.x,city.core.z);cheatRun('IMPOSSIBLETOSEE');STEP(15);AER(PL.x,PL.z,14,24,.8,1)},3000);
+ await ev(()=>{try{cheatRun('IMPOSSIBLETOSEE')}catch(e){}});
+ await hud('cheat_box',()=>{CAMOV=null;camMode='chase';cheatConsole();const ci=$('#chin');ci.value='HESOYAM'},1200);
+ await ev(()=>{try{closeTextInput(false)}catch(e){}});
+ await hud('radio_wheel',()=>{const c=makeVehicle('conv'in VT?'conv':'sports',PL.x+3,PL.z,0,'#3ab8ff');campBoard(c);STEP(5);wheelOpen('radio','key')},1500);
+ await ev(()=>{try{wheelClose(false)}catch(e){}try{enterExit()}catch(e){}});
+ await hud('news',()=>{newsAdd('busted',{lv:2});try{newsAdd('maskboom',{veh:'SEDÃ'})}catch(e){}newsOpen()},1500);
+ await ev(()=>{try{newsClose()}catch(e){}});
+ await hud('photo',()=>{TOD(17.5*60);openMenu();photoEnter()},2500);
+ }
  else if(STYLE==='extra4'){
  await ev(()=>{S.lang='br';try{applyLanguage()}catch(e){}});
  await poi('mall_int',()=>{TOD(20*60);enterMall();STEP(30);AER(PL.x,PL.z,2.6,5,(PL.yaw||0)+Math.PI,1.4)},4000);

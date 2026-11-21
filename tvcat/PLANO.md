@@ -1,4 +1,4 @@
-# TV de recursos (catálogo em canais) — plano e estado (v2 r68)
+# TV de recursos (catálogo em canais) — plano e estado (v3 r1)
 
 Pedido do José (21/11/2026): um menu em forma de TV que mostra cada mecânica do jogo como um canal.
 ←/→ troca de canal (com chiado), cada canal tem nome, logo e LEGENDA curta explicando; tantos canais quantas
@@ -66,12 +66,29 @@ mecânicas houver (20, 30…). Coisas pequenas podem dividir canal (ex.: eclipse
 | 36 | FLORESTA E CEMITÉRIO | 2 | poi_forest · poi_cem |
 | 37 | MICRO-ILHA · PEDÁGIO | 1 | isle |
 | 38 | SKATE | 2 | skate_pl · scn_skate |
+| 38b | EMOJIS NA CAMISETA E NO SKATE (v3 r2) | 3 | emo_kb · emo_shirt · emo_skate (capturados com script avulso em 3D/PT; recorte 960×540) |
 | 39 | HELICÓPTERO, VORTEX E JET SKI | 3 | veh_heli · veh_vortex · veh_jet |
 | 40 | TÁXI E MISSÕES DE VEÍCULO | 1 | taxi |
 | 41 | SHOPPING | 1 | mall_int |
 | 42 | NATHAN E CLAIRE | 1 | cartão HTML (N/C, Alt e Caps Lock) |
 | 43 | ONLINE | 1 | cartão HTML (carona) |
 | 44 | REGISTRO E ESTATÍSTICAS | 1 | cartão HTML |
+
+**Novos na v3 r1** (ordem no `TVCAT`: armas depois do hospital, eventos de pedestres depois de "pedestres e seu carro", carros e posto depois do carro sujo, residências depois dos discos, rampas depois dos veículos especiais, e rádio/notícias/modo foto/cheats antes das estatísticas):
+| Canal | Layout | Quadros / HTML |
+|---|---|---|
+| ARMAS | 4 | weap_wheel · gang_alley+traçantes · weap_boom · cartão da bomba remota |
+| EVENTOS DE PEDESTRES | alt | pedev · scn_chase+traçantes · car_dmc |
+| CARROS: DANO E DIREÇÃO | 2 | car_dmg · car_spin |
+| POSTO E CONVENIÊNCIA | 2 | gas_pump+menu da bomba · gas_shop+"ASSALTO!" |
+| ASSALTO A RESIDÊNCIAS | 2 | heist_out · heist_in+barra de 15 s |
+| RAMPAS E SALTOS | 1 | ramp |
+| RÁDIO E HEADPHONE | 1 | radio_wheel |
+| NOTÍCIAS | 2 | news (jornal) · tv_chase |
+| MODO FOTO | 1 | photo |
+| CHEATS | 2 | cheat_box · its |
+
+Fora de propósito (pedido do José, para o jogador descobrir): modo história, detalhes da cidade (fantasma, pets, fogueiras, cardumes, aves, poças, outdoors), extras da Maskara.
 
 Ainda dá para melhorar com quadros reais: gatos/cachorro da casa, Fenda no beco (mundo normal), lab de Point Haze,
 mesas do cassino (sinuca, Liar's Dice), Skate Shop, online com 2 jogadores (precisa do servidor), roda de armas/rádio.
@@ -111,6 +128,7 @@ mesas do cassino (sinuca, Liar's Dice), Skate Shop, online com 2 jogadores (prec
 | FLORESTA / CEMITÉRIO | poi_forest, poi_cem |
 | NAVIOS | ship |
 | MICRO-ILHA (pedágio) | isle |
+| INTERFACE AUTOMÁTICA (minimapa recolhe, botões de toque somem) | hud_mini_on, hud_mini_off + fx touchfade |
 
 Faltam bons quadros de: interiores do banco e da casa de penhores (câmera bate em objeto), discos de vinil,
 skate do jogador, helicóptero, vortex/jet ski, gatos/pets, impérios, shopping, táxi/vigilante, online (carona).
