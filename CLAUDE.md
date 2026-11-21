@@ -14,6 +14,7 @@ Jogo inteiro em `index.html` (three r128, scripts inline). `CONTEXT.md` = contex
 
 ## TV de recursos
 - **Toda mecânica adicionada ou ajustada precisa ter um canal na TV de recursos** (catálogo em canais). Plano, lista de canais e estado em `tvcat/PLANO.md`; quadros em `tvcat/*.jpg`, gerados por `tools/tvcat-capture.js`.
+- Nome na tela (r69): **"Recursos do Jogo!"** (EN "Game Features!"); "TV de recursos" é só o nome interno.
 - Implementada na r68: botão 📺 no menu (`#tvCatBtn`) → `#tvcat`. Canais = array `TVCAT` (bloco "TV DE RECURSOS" no fim do script principal): `{k, ic, c, l:'1'|'2'|'3'|'4'|'alt', n:[pt,en], g:[legenda pt,en], p:[tvcP(img,[pt,en],fx?,{fit,dim,zoom,br})]}`. Texto PT/EN fica no próprio canal e vai para a tela por `data-t` + `::before` (fora do `LANG_RE`, então NÃO precisa de LANG_EN). Partes de HUD que não aparecem nos prints = `fx` em HTML (`tvcFx`). Quadro faltando mostra "SEM SINAL" (barras de cor) em vez de quebrar.
 - Quadro novo: `TVCAT_OUT=/tmp/cap node tools/tvcat-capture.js nome extra` (modos: vazio, `inv`, `haze`, `synth`, `extra`, `extra2`, `extra3`), depois converter para JPG 960×540 (q≈82). Outros mundos: só quadro guardado.
 
