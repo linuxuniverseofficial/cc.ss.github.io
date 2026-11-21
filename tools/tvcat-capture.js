@@ -1,6 +1,6 @@
 const {chromium}=require('playwright');const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-const ONLY=process.argv[2]||'';const STYLE=process.argv[3]||'';
-(async()=>{const b=await chromium.launch({executablePath:'/usr/bin/google-chrome',args:['--use-gl=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
+const ONLY=process.argv[2]||'';const OUT=process.env.TVCAT_OUT||'/home/claude/cap';require('fs').mkdirSync(OUT,{recursive:true});const STYLE=process.argv[3]||'';
+(async()=>{const b=await chromium.launch({...(process.env.CHROME?{executablePath:process.env.CHROME}:{}),args:['--use-gl=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
  const p=await b.newPage({viewport:{width:1280,height:720}});const errs=[];p.on('pageerror',e=>errs.push(e.message));const ev=(f,a)=>p.evaluate(f,a);
  await p.goto('http://127.0.0.1:8777/');await p.waitForFunction(()=>typeof generateCity==='function',null,{timeout:120000});await sleep(2500);
  await ev(()=>{$('#seed').value='716540';$('#seedPlay').click()});await sleep(2500);await ev(()=>$('#mpFree').click());
@@ -11,7 +11,7 @@ const ONLY=process.argv[2]||'';const STYLE=process.argv[3]||'';
   window.AER=(x,z,h,d,ang,ty)=>{window.CAMOV=[x+Math.cos(ang)*d,h,z+Math.sin(ang)*d,x,ty??1,z]};
   window.TOD=t=>{DN.tod=t;updateDayNight(0,true)};
   window.STEP=(n)=>{for(let i=0;i<n;i++)update(.05)}});
- const shot=async(name,clean=true,wait=2500,rect)=>{if(clean)await ev(()=>document.body.classList.add('capmode'));await sleep(wait);await p.screenshot({path:'/home/claude/cap/'+name+'.png',clip:rect});await ev(()=>document.body.classList.remove('capmode'));console.log('shot',name)};
+ const shot=async(name,clean=true,wait=2500,rect)=>{if(clean)await ev(()=>document.body.classList.add('capmode'));await sleep(wait);await p.screenshot({path:OUT+'/'+name+'.png',clip:rect});await ev(()=>document.body.classList.remove('capmode'));console.log('shot',name)};
  const run=(k)=>!ONLY||ONLY.split(',').includes(k);
  const poi=async(name,fn,wait=3500)=>{if(!run(name))return;try{await ev(fn);await shot(name,true,wait)}catch(e){console.log('FAIL',name,e.message.slice(0,200))}await ev(()=>{window.CAMOV=null})};
  if(STYLE==='inv'){await ev(()=>{void invertShiftWorld('inverted')});await p.waitForFunction(()=>S.style==='inverted'&&!INVERT.switching,null,{timeout:900000,polling:3000});await sleep(3000);
@@ -20,6 +20,57 @@ const ONLY=process.argv[2]||'';const STYLE=process.argv[3]||'';
    await poi('w_haze1',()=>{TOD(17*60);camMode='chase'},4000);await poi('w_haze2',()=>{TOD(17.5*60);AER(PL.x,PL.z,40,70,2.2,0)},5000);}
  else if(STYLE==='synth'){await ev(async()=>{S.style='synthwave';clearRiverBoats();await generateCity();initRiverBoats();applyShadows();await warmCityGPU();cheatWarp(city.startCar.x,city.startCar.z)});await sleep(4000);
    await poi('w_synth1',()=>{TOD(22*60);const c=makeVehicle('super',PL.x+3,PL.z,0,'#b8bcc4');c.special=true;campBoard(c);camMode='chase'},4000);await poi('w_synth2',()=>{TOD(21*60);AER(PL.x,PL.z,45,80,.6,0)},5000);}
+
+ else if(STYLE==='extra4'){
+ await ev(()=>{S.lang='br';try{applyLanguage()}catch(e){}});
+ await poi('mall_int',()=>{TOD(20*60);enterMall();STEP(30);AER(PL.x,PL.z,2.6,5,(PL.yaw||0)+Math.PI,1.4)},4000);
+ await ev(()=>{try{exitMall()}catch(e){}});
+ await poi('deal',()=>{TOD(13*60);const d=city.deal;cheatWarp(d.x,d.z);PL.hp=100;PL.dead=false;STEP(10);AER(d.x,d.z,10,18,.9,1.2)},3500);
+ await poi('skate_pl',()=>{TOD(16.5*60);const b=PARA.sites[0];cheatWarp(b.x,b.z);STEP(3);const it=skAdd(PL.x+1,PL.z,PL.a||0,skLookDefault(),true);skMount(it);for(let i=0;i<16;i++){keys.KeyW=true;update(.05)}keys.KeyW=false;AER(PL.x,PL.z,3.2,6,.9,.8)},2500);
+ await poi('eclipse2',()=>{try{skDismount()}catch(e){}cheatWarp(city.core.x,city.core.z);Object.assign(ECLIPSE,{on:true,stage:'total',t:0,sep:0,dark:1,fade:1,from:660,advance:0,day:DN.day||0,style:S.style,seed:S.seed});TOD(11*60);STEP(6);const s=sun.position.clone().sub(sun.target.position).normalize();CAMOV=[PL.x-s.x*40,30,PL.z-s.z*40,PL.x+s.x*400,30+Math.min(.5,s.y)*400,PL.z+s.z*400]},3500);
+ await poi('eclipse3',()=>{AER(PL.x,PL.z,60,100,.8,0)},3500);
+ }
+ else if(STYLE==='extra3'){
+ await ev(()=>{S.lang='br';try{applyLanguage()}catch(e){}});
+ await poi('skate_pl',()=>{TOD(10*60);cheatWarp(city.core.x+4,city.core.z+4);STEP(3);const it=skAdd(PL.x+1,PL.z,PL.a||0,skLookDefault(),true);skMount(it);for(let i=0;i<24;i++){keys.KeyW=true;update(.05)}keys.KeyW=false;const a=Math.atan2(PL.vz||0,PL.vx||1);AER(PL.x,PL.z,2.2,5.5,a+2.4,.9)},2500);
+ await poi('deal',()=>{try{skDismount()}catch(e){}TOD(13*60);const d=city.deal;cheatWarp(d.x+8,d.z+8);STEP(10);AER(d.x,d.z,12,22,.9,1.5)},3500);
+ await poi('mall_int',()=>{TOD(20*60);enterMall();CAMOV=null;camMode='chase';STEP(40)},4000);
+ await ev(()=>{try{exitMall()}catch(e){}});
+ for(const k of ['a','b','c']){await poi('storm_'+k,()=>{if(PL.car)enterExit();CAMOV=null;TOD(15*60);PL.inside=true;if(!TVM.on){tvOn();tvChannel('storm')}STEP(30)},2500+Math.random()*1500)}
+ await ev(()=>{try{tvOff()}catch(e){}PL.inside=false});
+ await poi('eclipse_a',()=>{TOD(12*60);cheatRun('ECLIPSE');for(let i=0;i<2400&&!(ECLIPSE.dark>.85);i++)update(.05);AER(PL.x,PL.z,70,110,.8,0)},3500);
+ await poi('eclipse_b',()=>{const sd=sun.position.clone().sub(sun.target.position).normalize();CAMOV=[PL.x-sd.x*60,25,PL.z-sd.z*60,PL.x+sd.x*300,25+sd.y*300,PL.z+sd.z*300]},3000);
+ }
+ else if(STYLE==='extra2'){
+ await ev(()=>{S.lang='br';try{applyLanguage()}catch(e){}});
+ await poi('storm2',()=>{TOD(15*60);cheatRun('AUIFRVQS');for(let i=0;i<1500&&!(WX.storm>.9);i++)update(.05);camMode='chase';STEP(20)},3500);
+ await poi('eclipse2',()=>{try{cheatRun('AUIFRVQS')}catch(e){}WX.storm=0;TOD(12*60);cheatRun('ECLIPSE');for(let i=0;i<2400&&!(ECLIPSE.dark>.85);i++)update(.05);const sd=sun.position.clone().sub(sun.target.position).normalize();CAMOV=[PL.x-sd.x*30,30,PL.z-sd.z*30,PL.x+sd.x*200,30+Math.max(.15,sd.y)*200,PL.z+sd.z*200]},3500);
+ await poi('deal',()=>{TOD(13*60);const d=city.deal;cheatWarp(d.x+8,d.z+8);PL.dead=false;STEP(10);AER(d.x,d.z,14,24,.9,1.5)},3500);
+ await poi('veh_jet',()=>{TOD(16*60);const b=PARA.sites[0];cheatWarp(b.x,b.z);jetTick(.1);let q=JET.spots[0],bd=1e9;for(const s of JET.spots){const d=Math.hypot(s.x-b.x,s.z-b.z);if(d<bd){bd=d;q=s}}cheatWarp(b.x,b.z);for(let i=0;i<5;i++)jetTick(.1);STEP(5);AER(q.x,q.z,6,12,(q.a||0)+2.2,.5)},3500);
+ await poi('skate_pl',()=>{TOD(10*60);if(PL.car)enterExit();cheatWarp(city.core.x+4,city.core.z+4);STEP(3);const it=skAdd(PL.x,PL.z,PL.a||0,skLookDefault(),true);skMount(it);camMode='chase';for(let i=0;i<30;i++){keys.KeyW=true;update(.05)}keys.KeyW=false},2500);
+ await poi('emp',()=>{try{skDismount()}catch(e){}TOD(17*60);empInit();const e=EMP.sites[0];cheatWarp(e.x+10,e.z+10);STEP(10);AER(e.x,e.z,30,44,2.4,6)},3500);
+ await poi('int_bank2',()=>{TOD(11*60);const d=city.bankDoor;cheatWarp(d.x,d.z);bankEnter();STEP(30);AER(PL.x,PL.z,5.5,7,(PL.yaw||0)+Math.PI,1.2)},4000);
+ await poi('int_pawn2',()=>{try{bankExit()}catch(e){}TOD(13*60);pawnEnter();STEP(30);AER(PL.x,PL.z,4.5,6,(PL.yaw||0)+Math.PI,1.2)},4000);
+ await poi('mall_int',()=>{try{heistExit()}catch(e){}TOD(20*60);enterMall();STEP(30);AER(PL.x,PL.z,6,10,(PL.yaw||0)+Math.PI,1.5)},4000);
+ }
+ else if(STYLE==='extra'){
+ await ev(()=>{S.lang='br';try{applyLanguage()}catch(e){}});
+ await poi('veh_heli',()=>{TOD(15*60);const h=HELI.list.find(q=>q.o&&q.state==='parked')||HELI.list[0];cheatWarp(h.x+8,h.z+8);STEP(5);AER(h.x,h.z,11,20,.9,1.5)},3500);
+ await poi('veh_vortex',()=>{TOD(17*60);const L=city.lh,p=wTU(L.s,L.t,SHORE-7);cheatWarp(p[0]+6,p[1]+6);vortexTick();STEP(5);const v=VORTEX.v||{x:p[0],z:p[1]};AER(v.x,v.z,7,14,.9,.8)},3500);
+ await poi('veh_jet',()=>{TOD(16*60);jetTick(.1);const q=JET.spots[0];cheatWarp(q.x,q.z);jetTick(.1);STEP(5);AER(q.x,q.z,6,12,(q.a||0)+2.2,.5)},3500);
+ await poi('taxi',()=>{TOD(12*60);if(PL.car)enterExit();cheatWarp(city.core.x,city.core.z);const c=makeVehicle('taxi',PL.x+3,PL.z,0);campBoard(c);camMode='chase';for(let i=0;i<40;i++){c.thr=1;update(.05)}},2500);
+ await poi('emp',()=>{if(PL.car)enterExit();TOD(18*60);empInit();const e=EMP.sites[0];cheatWarp(e.x+10,e.z+10);STEP(10);AER(e.x,e.z,18,32,.9,3)},3500);
+ await poi('deal',()=>{TOD(13*60);const d=city.deal;cheatWarp(d.x+8,d.z+8);STEP(10);AER(d.x,d.z,12,22,.9,1.5)},3500);
+ await poi('amb',()=>{TOD(11*60);const d=city.hosp;cheatWarp(d.x+6,d.z+6);STEP(20);const a=vehicles.find(c=>c.ambulance&&Math.hypot(c.x-d.x,c.z-d.z)<80)||d;AER(a.x,a.z,8,15,.9,1)},3500);
+ await poi('ship2',()=>{TOD(16*60);const s=SHIPS.list.find(q=>q.f)||SHIPS.list[0];const f=s.f||shipFrame(s);cheatWarp(PARA.sites[0].x,PARA.sites[0].z);STEP(5);AER(f.cx,f.cz,35,90,.6,0)},4000);
+ await poi('skate_pl',()=>{TOD(10*60);if(PL.car)enterExit();cheatWarp(city.core.x+4,city.core.z+4);const it=skAdd(PL.x,PL.z,0,{deck:'#d02a2a'},true);skMount(it);camMode='chase';for(let i=0;i<30;i++){keys.KeyW=true;update(.05)}keys.KeyW=false},2500);
+ await poi('storm2',()=>{try{skDismount()}catch(e){}TOD(15*60);cheatRun('AUIFRVQS');for(let i=0;i<1500&&!(WX.storm>.9);i++)update(.05);camMode='chase'},3500);
+ await poi('eclipse2',()=>{TOD(12*60);cheatRun('ECLIPSE');for(let i=0;i<2400&&!(ECLIPSE.dark>.85);i++)update(.05);const sd=sun.position.clone().sub(sun.target.position).normalize();CAMOV=[PL.x-sd.x*20,40,PL.z-sd.z*20,PL.x+sd.x*200,40+sd.y*200,PL.z+sd.z*200]},3500);
+ await poi('mall_int',()=>{TOD(20*60);enterMall();STEP(30)},4000);
+ await poi('int_bank2',()=>{try{exitMall&&exitMall()}catch(e){}TOD(11*60);const d=city.bankDoor;cheatWarp(d.x,d.z);bankEnter();STEP(30);VIEW.tp=true;camMode='top'},4000);
+ await poi('int_pawn2',()=>{TOD(13*60);pawnEnter();STEP(30);camMode='top'},4000);
+ for(const [n,f] of [['ph_home',()=>{phoneToggle();PHONE.zone='scr';PHONE.si=0;phoneDraw()}],['ph_apps',()=>{ctosInstall(true);PHONE.scr='apps';PHONE.si=0;phoneDraw()}],['ph_prof',()=>{const q=peds.find(carrxPedOK)||peds[0];profOf(q).bal=640;PROF.p=q;PHONE.scr='perfil';PHONE.si=0;phoneDraw()}],['ph_call',()=>{CALL.cur={...CALL_SCRIPTS[0],num:'(21) 98877-1020'};CALL.ring=99;PHONE.scr='incoming';PHONE.si=0;phoneDraw()}]]){if(!run(n))continue;try{await ev(f);await sleep(700);const r=await ev(()=>{const e=PHONE.el.getBoundingClientRect();return{x:e.left-20,y:Math.max(0,e.top-20),width:e.width+40,height:Math.min(720,e.height+40)}});await p.screenshot({path:OUT+'/'+n+'.png',clip:r});console.log('shot',n)}catch(e){console.log('FAIL',n,e.message.slice(0,200))}}
+ }
  else{
  await poi('poi_casino',()=>{TOD(21.5*60);const d=city.casino.door;cheatWarp(d.x+10,d.z+10);AER(d.x,d.z,22,40,.9,4)},4000);
  await poi('poi_club',()=>{TOD(23*60);const d=city.casino.clubDoor;cheatWarp(d.x+8,d.z+8);CLUBFX.cool=0;for(let i=0;i<5;i++)clubFxTick(.1);AER(d.x,d.z,9,20,.7,2)},4000);
@@ -60,11 +111,11 @@ const ONLY=process.argv[2]||'';const STYLE=process.argv[3]||'';
  await poi('int_bank',()=>{TOD(11*60);const d=city.bankDoor;cheatWarp(d.x,d.z);bankEnter();STEP(30)},4000);
  await poi('int_pawn',()=>{try{bankExit&&bankExit()}catch(e){}TOD(13*60);pawnEnter();STEP(30)},4000);
  await poi('int_jail',()=>{try{heistExit&&heistExit()}catch(e){}jailEnter(true);STEP(30)},4000);
- if(run('wanted')){await ev(()=>{if(PL.car)enterExit();TOD(16*60);cheatWarp(city.core.x,city.core.z);startWanted(true);wantedUp(3);STEP(40);openMap()});await sleep(2000);await p.screenshot({path:'/home/claude/cap/map_red.png'});
-   await ev(()=>{closeMap();endWanted(true);try{wzFadeAll()}catch(e){}STEP(10);openMap()});await sleep(2000);await p.screenshot({path:'/home/claude/cap/map_blue.png'});await ev(()=>closeMap());
-   await ev(()=>{GANG.day=-1;gangTick(.1);openMap()});await sleep(2000);await p.screenshot({path:'/home/claude/cap/map_gang.png'});await ev(()=>closeMap());}
+ if(run('wanted')){await ev(()=>{if(PL.car)enterExit();TOD(16*60);cheatWarp(city.core.x,city.core.z);startWanted(true);wantedUp(3);STEP(40);openMap()});await sleep(2000);await p.screenshot({path:OUT+'/map_red.png'});
+   await ev(()=>{closeMap();endWanted(true);try{wzFadeAll()}catch(e){}STEP(10);openMap()});await sleep(2000);await p.screenshot({path:OUT+'/map_blue.png'});await ev(()=>closeMap());
+   await ev(()=>{GANG.day=-1;gangTick(.1);openMap()});await sleep(2000);await p.screenshot({path:OUT+'/map_gang.png'});await ev(()=>closeMap());}
  if(run('police')){await ev(()=>{TOD(16*60);const c=makeVehicle('sports',PL.x+3,PL.z,0,'#d42a2a');campBoard(c);camMode='chase';startWanted(true);wantedUp(2);for(let i=0;i<60;i++){c.thr=1;update(.05)}});await shot('pol_chase',false,2500);await ev(()=>{enterExit();endWanted(true)})}
- if(run('phone')){for(const [n,f] of [['ph_home',()=>{phoneToggle();PHONE.zone='scr';PHONE.si=0;phoneDraw()}],['ph_apps',()=>{ctosInstall(true);PHONE.scr='apps';PHONE.si=0;phoneDraw()}],['ph_prof',()=>{const q=peds.find(carrxPedOK)||peds[0];profOf(q).bal=640;PROF.p=q;PHONE.scr='perfil';PHONE.si=0;phoneDraw()}],['ph_call',()=>{CALL.cur={...CALL_SCRIPTS[0],num:'(21) 98877-1020'};CALL.ring=99;PHONE.scr='incoming';PHONE.si=0;phoneDraw()}]]){await ev(f);await sleep(800);const r=await ev(()=>{const e=PHONE.el.getBoundingClientRect();return{x:e.left-20,y:Math.max(0,e.top-20),width:e.width+40,height:Math.min(720,e.height+40)}});await p.screenshot({path:'/home/claude/cap/'+n+'.png',clip:r});console.log('shot',n)}
-   await ev(()=>{phoneToggle();PROF.hack={p:PROF.p,t:3.5,dur:7,warn:0};PROF.p.x=PL.x-12;PROF.p.z=PL.z;profTick(.05)});await sleep(600);await p.screenshot({path:'/home/claude/cap/ph_pix.png',clip:{x:340,y:520,width:600,height:120}});await ev(()=>{PROF.hack=null;profTick(0)})}
+ if(run('phone')){for(const [n,f] of [['ph_home',()=>{phoneToggle();PHONE.zone='scr';PHONE.si=0;phoneDraw()}],['ph_apps',()=>{ctosInstall(true);PHONE.scr='apps';PHONE.si=0;phoneDraw()}],['ph_prof',()=>{const q=peds.find(carrxPedOK)||peds[0];profOf(q).bal=640;PROF.p=q;PHONE.scr='perfil';PHONE.si=0;phoneDraw()}],['ph_call',()=>{CALL.cur={...CALL_SCRIPTS[0],num:'(21) 98877-1020'};CALL.ring=99;PHONE.scr='incoming';PHONE.si=0;phoneDraw()}]]){await ev(f);await sleep(800);const r=await ev(()=>{const e=PHONE.el.getBoundingClientRect();return{x:e.left-20,y:Math.max(0,e.top-20),width:e.width+40,height:Math.min(720,e.height+40)}});await p.screenshot({path:OUT+'/'+n+'.png',clip:r});console.log('shot',n)}
+   await ev(()=>{phoneToggle();PROF.hack={p:PROF.p,t:3.5,dur:7,warn:0};PROF.p.x=PL.x-12;PROF.p.z=PL.z;profTick(.05)});await sleep(600);await p.screenshot({path:OUT+'/ph_pix.png',clip:{x:340,y:520,width:600,height:120}});await ev(()=>{PROF.hack=null;profTick(0)})}
  }
  console.log('ERRS',JSON.stringify(errs.slice(0,5)));await b.close()})();

@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 <script>
 /* v78 · BUILD: número da entrega. Ao abrir, o jogo lê version.txt (poucos bytes, sem cache) e, se a build no servidor for outra
    (navegador/celular servindo cópia velha), recarrega uma vez. Saves e configurações (localStorage) NÃO são apagados. */
-var BUILD_TAG='r67';
+var BUILD_TAG='r68';
 (function(){try{if(!/^https?:$/.test(location.protocol))return;const k='ps_build_reload';
  fetch(new URL('version.txt?b='+Date.now(),location.href).href,{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=/^\s*((?:dev\s+)?r[\d.]+)\s*$/i.exec(t||'');if(!m||m[1].replace(/\s+/g,' ').toLowerCase()===BUILD_TAG.toLowerCase()){try{sessionStorage.removeItem(k)}catch(e){}return}
   let n=0;try{n=+sessionStorage.getItem(k)||0}catch(e){}if(n>=2)return;try{sessionStorage.setItem(k,String(n+1))}catch(e){}
@@ -1181,6 +1181,119 @@ body.cutscene-paused #menu.in-game #monBtn{grid-column:1/-1!important}
 #menu:not(.in-game) .mfoot #fsBtn.half:not([hidden])~#installApp:not([hidden]){grid-column:auto!important}
 #menu:not(.in-game) .mfoot #installApp:not([hidden]){grid-column:1/-1!important;order:5;min-height:42px;margin:0!important;display:flex;align-items:center;justify-content:center}
 @media (max-height:520px){#menu:not(.in-game) .mfoot .mfoot-label{margin-bottom:1px}}
+/* ===== TV DE RECURSOS (#tvcat, v2 r68) ===== */
+#tvcat{position:fixed;inset:0;z-index:60;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 40%,#1b1712 0%,#07070a 75%);padding:max(10px,env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) max(10px,env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));font-family:'Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif;color:#fff;user-select:none;-webkit-user-select:none;touch-action:none}
+#tvcat[hidden]{display:none!important}
+#tvcat [data-t]::before{content:attr(data-t)}
+#tvcat .tvc-body{--w:min(calc(94vw - 44px),calc((100vh - 196px) * 16 / 9),1240px);width:calc(var(--w) + 44px);padding:22px 22px 12px;border-radius:26px;background:linear-gradient(180deg,#3a3129,#211b16 60%,#17130f);box-shadow:0 30px 80px #000c,inset 0 2px 0 #ffffff1f,inset 0 -3px 0 #0008;position:relative}
+#tvcat .tvc-body::after{content:"";position:absolute;left:50%;bottom:-16px;width:34%;height:16px;transform:translateX(-50%);background:linear-gradient(#151210,#0a0908);border-radius:0 0 12px 12px;box-shadow:0 10px 20px #0009}
+#tvcat .tvc-scr{position:relative;width:var(--w);aspect-ratio:16/9;border-radius:22px/18px;overflow:hidden;background:#050607;box-shadow:inset 0 0 0 3px #000,0 0 0 2px #0c0a08,inset 0 0 60px #000a;--cc:#fff;cursor:pointer;touch-action:pan-y}
+#tvcat .tvc-scr::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:8;background:repeating-linear-gradient(0deg,#0000 0 2px,#00000026 2px 3px),radial-gradient(ellipse at center,#0000 55%,#000a 100%);mix-blend-mode:multiply}
+#tvcat .tvc-scr::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:9;background:linear-gradient(160deg,#ffffff14 0%,#fff0 35%);border-radius:inherit}
+#tvcat .tvc-grid{position:absolute;inset:0;display:grid;gap:4px;background:#000}
+#tvcat .lay-1 .tvc-grid,#tvcat .lay-alt .tvc-grid{grid-template:1fr/1fr}
+#tvcat .lay-2 .tvc-grid{grid-template:1fr/1fr 1fr}
+#tvcat .lay-3 .tvc-grid{grid-template:1fr 1fr/1.75fr 1fr}#tvcat .lay-3 .p0{grid-row:1/3}
+#tvcat .lay-4 .tvc-grid{grid-template:1fr 1fr/1fr 1fr}
+#tvcat .lay-alt .tvc-pn{grid-area:1/1;opacity:0;transition:opacity .7s}#tvcat .lay-alt .tvc-pn.on{opacity:1}
+#tvcat .tvc-pn{position:relative;overflow:hidden;background:#0b0d10;min-width:0;min-height:0}
+#tvcat .tvc-pn.gfx{background:radial-gradient(ellipse at 50% 35%,color-mix(in srgb,var(--cc) 22%,#10131a),#07080b 75%)}
+#tvcat .tvc-pn img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(var(--br,1)) saturate(1.06);animation:tvcKen 14s ease-in-out infinite alternate;transform-origin:50% 50%}
+#tvcat .tvc-pn img.fit{object-fit:contain;animation:none;background:radial-gradient(ellipse at center,#1d2a24,#07090a)}
+#tvcat .tvc-pn img.dim{filter:brightness(calc(var(--br,1)*.45)) saturate(.7) blur(1px)}
+#tvcat .tvc-pn.zm img{animation:none;transform:scale(2.05);transform-origin:52% 42%}
+@keyframes tvcKen{from{transform:scale(1.02) translate(0,0)}to{transform:scale(1.11) translate(-1.5%,-1%)}}
+#tvcat .tvc-cap{position:absolute;left:10px;top:10px;z-index:5;max-width:calc(100% - 20px);padding:4px 9px 3px;background:#000b;border-left:4px solid var(--cc);font-weight:800;font-size:clamp(10px,1.25vw,15px);letter-spacing:.08em;text-shadow:1px 1px 0 #000}
+#tvcat .lay-1 .tvc-cap,#tvcat .lay-alt .tvc-cap{top:auto;bottom:12px;left:12px;font-size:clamp(11px,1.5vw,18px)}
+#tvcat .tvc-nosig{display:none;position:absolute;inset:0;place-items:center;font:900 clamp(14px,2.6vw,30px)/1 monospace;letter-spacing:.2em;color:#ddd;background:repeating-linear-gradient(90deg,#c0c0c0 0 12.5%,#c0c000 0 25%,#00c0c0 0 37.5%,#00c000 0 50%,#c000c0 0 62.5%,#c00000 0 75%,#0000c0 0 87.5%,#111 0 100%);text-shadow:2px 2px 0 #000}
+#tvcat .tvc-pn.nosig .tvc-nosig{display:grid}#tvcat .tvc-pn.nosig img{display:none}
+#tvcat .tvc-logo{position:absolute;right:14px;bottom:12px;z-index:6;display:flex;align-items:center;gap:8px;padding:5px 12px 5px 8px;border-radius:6px;background:#000c;border:2px solid var(--cc);font-weight:900;font-size:clamp(11px,1.45vw,18px);letter-spacing:.06em;box-shadow:0 0 14px color-mix(in srgb,var(--cc) 50%,transparent)}
+#tvcat .tvc-logo b{font-size:1.3em;line-height:1;color:var(--cc)}
+#tvcat .lay-1 .tvc-logo,#tvcat .lay-alt .tvc-logo{bottom:auto;top:12px}
+#tvcat .tvc-osd{position:absolute;right:16px;top:12px;z-index:7;font:900 clamp(16px,2.6vw,32px)/1 'Courier New',monospace;color:#3cff6a;text-shadow:0 0 6px #3cff6a,2px 2px 0 #000;animation:tvcOsd 3s forwards}
+#tvcat .lay-2 .tvc-osd,#tvcat .lay-3 .tvc-osd,#tvcat .lay-4 .tvc-osd{top:auto;bottom:12px;right:auto;left:14px}
+#tvcat .lay-1 .tvc-osd,#tvcat .lay-alt .tvc-osd{top:auto;bottom:14px}
+@keyframes tvcOsd{0%,70%{opacity:1}100%{opacity:0}}
+#tvcat .tvc-dots{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:6;display:flex;gap:6px}
+#tvcat .tvc-dots i{width:8px;height:8px;border-radius:50%;background:#fff5;box-shadow:0 0 0 1px #0008}#tvcat .tvc-dots i.on{background:var(--cc)}
+#tvcat .tvc-noise{position:absolute;inset:0;width:100%;height:100%;z-index:7;image-rendering:pixelated;opacity:0;pointer-events:none}#tvcat .tvc-noise.on{opacity:1}
+#tvcOsdIn{position:absolute;left:50%;top:34%;transform:translateX(-50%);z-index:12;font:900 clamp(30px,6vw,70px)/1 'Courier New',monospace;color:#3cff6a;text-shadow:0 0 10px #3cff6a,3px 3px 0 #000;pointer-events:none}
+#tvcOsdIn[hidden]{display:none}
+#tvcat .tvc-leg{min-height:3.1em;margin:10px 4px 0;padding:8px 14px;border-radius:8px;background:#0d0b09;box-shadow:inset 0 2px 6px #000;font-size:clamp(12px,1.45vw,17px);line-height:1.38;color:#f3eee4}
+#tvcat .tvc-bar{display:flex;align-items:center;gap:8px;margin-top:10px}
+#tvcat .tvc-bar button{appearance:none;border:0;border-radius:999px;min-width:44px;height:38px;padding:0 14px;background:linear-gradient(#4a4037,#2c251f);color:#f4ead8;font:800 14px/1 inherit;letter-spacing:.06em;box-shadow:inset 0 1px 0 #ffffff26,0 2px 4px #0008;cursor:pointer}
+#tvcat .tvc-bar button:hover,#tvcat .tvc-bar button:focus-visible{background:linear-gradient(#6a5a4c,#3c332a);outline:2px solid #ffd24a;outline-offset:1px}
+#tvcat .tvc-bar .sp{flex:1}
+#tvcNum{font:900 15px/1 'Courier New',monospace;color:#3cff6a;text-shadow:0 0 5px #3cff6a88;padding:0 6px}
+#tvcat .tvc-help{font-size:12px;color:#b3a894;letter-spacing:.04em}
+#tvcGuide{position:absolute;inset:22px 22px auto;aspect-ratio:16/9;width:var(--w);box-sizing:border-box;z-index:20;border-radius:22px/18px;background:#060a14f2;overflow:auto;padding:14px 16px}
+#tvcGuide[hidden]{display:none}
+#tvcat .tvc-ghead{font-weight:900;letter-spacing:.14em;color:#3cff6a;margin:0 0 10px;font-size:15px}
+#tvcat .tvc-glist{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px}
+#tvcat .tvc-gi{appearance:none;display:flex;align-items:center;gap:8px;text-align:left;border:0;border-left:4px solid var(--cc);border-radius:6px;padding:7px 9px;background:#ffffff0f;color:#fff;font:700 12.5px/1.2 inherit;cursor:pointer}
+#tvcat .tvc-gi b{font:900 13px/1 'Courier New',monospace;color:#3cff6a}#tvcat .tvc-gi i{font-style:normal;width:1.3em;text-align:center}
+#tvcat .tvc-gi.cur{background:#ffffff26}#tvcat .tvc-gi:focus-visible,#tvcat .tvc-gi:hover{outline:2px solid #ffd24a;background:#ffffff2a}
+/* --- sobreposições em HTML (partes do HUD que não saem nos prints) --- */
+#tvcat .fx-dis{position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);z-index:3;display:flex;gap:10px;align-items:center;font-weight:900;letter-spacing:.14em;font-size:clamp(11px,1.4vw,16px);text-shadow:2px 2px 0 #000}
+#tvcat .fx-dis .ic{width:clamp(34px,4.4vw,56px);aspect-ratio:1;display:grid;place-items:center;background:#000a;border:3px solid #ff3a3a;color:#ff3a3a;box-shadow:0 0 12px #ff3a3a88;animation:tvcBlink .85s steps(2,end) infinite}
+#tvcat .fx-dis .ic svg{width:62%;height:62%}#tvcat .fx-dis .ic+.ic{animation-delay:.42s}
+@keyframes tvcBlink{50%{background:#ff343499;box-shadow:0 0 16px #f33c;color:#fff}}
+#tvcat .fx-ring{position:absolute;left:50%;top:50%;width:46%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;z-index:3}
+#tvcat .fx-ring.r{background:rgba(255,40,40,.32);border:3px solid #ff3a3a;box-shadow:0 0 24px #ff2a2a99;animation:tvcRing 1.6s ease-in-out infinite}
+#tvcat .fx-ring.b{background:rgba(18,38,128,.55);border:3px solid #2a4ad8;animation:tvcFade 4.5s linear infinite}
+@keyframes tvcRing{50%{transform:translate(-50%,-50%) scale(1.06);background:rgba(255,40,40,.42)}}
+@keyframes tvcFade{0%{opacity:1}85%{opacity:.08}100%{opacity:1}}
+#tvcat .fx-gang{position:absolute;z-index:3;width:24%;aspect-ratio:1;border:3px solid;animation:tvcRing2 2s ease-in-out infinite}
+#tvcat .fx-gang.y{left:22%;top:26%;background:rgba(240,210,40,.38);border-color:#ffd23a}
+#tvcat .fx-gang.gr{left:56%;top:48%;background:rgba(60,210,80,.36);border-color:#3ad850;animation-delay:1s}
+@keyframes tvcRing2{50%{opacity:.55}}
+#tvcat .fx-lv{position:absolute;inset:16% 8% 10%;display:grid;align-content:center;gap:clamp(8px,1.6vw,18px);z-index:3}
+#tvcat .fx-lv div{display:flex;align-items:center;gap:14px;font-weight:800;font-size:clamp(11px,1.5vw,18px);text-shadow:2px 2px 0 #000}
+#tvcat .fx-lv b{min-width:3.3em;color:#ffd200;font-size:1.5em;letter-spacing:.08em;animation:tvcStar .6s steps(1) infinite}
+@keyframes tvcStar{50%{opacity:.25}}
+#tvcat .fx-x9,#tvcat .fx-pix,#tvcat .fx-dig{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);z-index:3;display:grid;justify-items:center;gap:8px;font-weight:800;font-size:clamp(11px,1.4vw,17px);text-shadow:2px 2px 0 #000;width:min(76%,460px);text-align:center}
+#tvcat .fx-x9 b{font-size:clamp(28px,5vw,60px);animation:tvcShake .25s steps(2) infinite}
+#tvcat .fx-x9 .n{font:900 clamp(20px,3.4vw,40px)/1 'Courier New',monospace;color:#ff4a4a;animation:tvcStar .6s steps(1) infinite}
+@keyframes tvcShake{50%{transform:rotate(-12deg)}}
+#tvcat .bar{display:block;width:100%;height:12px;border-radius:6px;background:#000a;border:2px solid #fff4;overflow:hidden}
+#tvcat .bar u{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffb020,#ff5a3a);animation:tvcFill 7s linear infinite}
+#tvcat .fx-x9 .bar u{background:#ff3a3a;animation:tvcDrain 10s linear infinite}
+#tvcat .fx-pix{top:76%;padding:8px 12px;background:#0d1a1fcc;border:2px solid #3ad8ff;border-radius:8px;color:#bff4ff}
+#tvcat .fx-pix .bar u{background:linear-gradient(90deg,#3ad8ff,#3ae08a)}
+#tvcat .fx-dig{top:80%}#tvcat .fx-dig .bar u{animation-duration:6s;background:#f07818}
+@keyframes tvcFill{from{width:0}to{width:100%}}@keyframes tvcDrain{from{width:100%}to{width:0}}
+#tvcat .fx-scan{position:absolute;left:50%;top:50%;width:30%;aspect-ratio:1;transform:translate(-50%,-50%);z-index:3;animation:tvcScan 2.2s ease-in-out infinite}
+#tvcat .fx-scan i{position:absolute;width:24%;height:24%;border:3px solid #3ad8ff;filter:drop-shadow(0 0 4px #3ad8ff)}
+#tvcat .fx-scan i:nth-child(1){left:0;top:0;border-right:0;border-bottom:0}#tvcat .fx-scan i:nth-child(2){right:0;top:0;border-left:0;border-bottom:0}#tvcat .fx-scan i:nth-child(3){left:0;bottom:0;border-right:0;border-top:0}#tvcat .fx-scan i:nth-child(4){right:0;bottom:0;border-left:0;border-top:0}
+@keyframes tvcScan{50%{transform:translate(-50%,-50%) scale(.82)}}
+#tvcat .fx-flash{position:absolute;inset:0;z-index:3;background:#fff;opacity:0;animation:tvcFlash 3.2s infinite}
+@keyframes tvcFlash{0%,62%,100%{opacity:0}64%{opacity:.85}}
+#tvcat .fx-bolt{position:absolute;inset:0;z-index:3;background:#dfe8ff;opacity:0;animation:tvcBolt 5.5s infinite;mix-blend-mode:screen}
+@keyframes tvcBolt{0%,40%,46%,100%{opacity:0}41%{opacity:.7}43%{opacity:.1}44%{opacity:.5}}
+#tvcat .fx-corona{position:absolute;left:16%;top:12%;width:13%;aspect-ratio:1;border-radius:50%;z-index:3;background:radial-gradient(circle,#05060a 0 56%,#fff8e0 60%,#ffe9a8aa 64%,#ffd8701f 80%,#0000 100%);box-shadow:0 0 40px 10px #fff3c855;animation:tvcRing2 3.4s ease-in-out infinite}
+#tvcat .fx-target{position:absolute;left:50%;top:62%;width:26%;aspect-ratio:1;transform:translate(-50%,-50%) scaleY(.45);z-index:3}
+#tvcat .fx-target i{position:absolute;inset:0;border-radius:50%;border:4px solid #ff3a3a}#tvcat .fx-target i:nth-child(2){inset:22%;border-color:#fff}#tvcat .fx-target i:nth-child(3){inset:42%;background:#ff3a3a;border:0}
+#tvcat .fx-card{position:absolute;inset:0;z-index:3;display:grid;align-content:center;justify-items:center;gap:clamp(4px,.9vw,10px);padding:8% 6%;text-align:center;font-weight:700;font-size:clamp(12px,1.6vw,19px);text-shadow:2px 2px 0 #000}
+#tvcat .fx-card .big{font-size:clamp(34px,6vw,76px);font-weight:900;color:var(--cc);line-height:1}
+#tvcat .fx-card .warn{color:#ff6a5a}
+#tvcat .fx-card .disc{width:clamp(60px,10vw,130px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,#ffd24a 0 14%,#111 15% 18%,#222 19% 100%),repeating-radial-gradient(circle,#0000 0 3px,#fff1 3px 4px);background-blend-mode:screen;box-shadow:0 0 0 2px #000,0 6px 18px #0009;animation:tvcSpin 2.4s linear infinite}
+@keyframes tvcSpin{to{transform:rotate(360deg)}}
+#tvcat .fx-card .pair{display:flex;gap:clamp(18px,4vw,60px)}
+#tvcat .fx-card .who{width:clamp(60px,10vw,128px);aspect-ratio:1;border-radius:50%;display:grid;place-items:center;font-size:clamp(30px,5vw,64px);font-weight:900;border:4px solid}
+#tvcat .fx-card .who.n{background:#4a0d10;border-color:#ff3a3a;color:#ff5a5a}#tvcat .fx-card .who.c{background:#4a0d34;border-color:#ff6ab0;color:#ff8ac8;animation:tvcSwap 2.4s infinite}
+#tvcat .fx-card .pair.lbl span{width:clamp(60px,10vw,128px);font-weight:900;letter-spacing:.1em}
+@keyframes tvcSwap{50%{transform:scale(1.08)}}
+#tvcat .fx-card .net{position:relative;width:clamp(120px,22vw,280px);aspect-ratio:2.2;margin-bottom:6px}
+#tvcat .fx-card .net i{position:absolute;width:18%;aspect-ratio:1;border-radius:50%;background:#3ae08a;box-shadow:0 0 12px #3ae08a;animation:tvcRing2 1.8s infinite}
+#tvcat .fx-card .net i:nth-child(1){left:0;top:30%}#tvcat .fx-card .net i:nth-child(2){left:28%;top:0;animation-delay:.4s;background:#3ad8ff}#tvcat .fx-card .net i:nth-child(3){left:56%;top:52%;animation-delay:.8s;background:#ffd24a}#tvcat .fx-card .net i:nth-child(4){left:82%;top:18%;animation-delay:1.2s;background:#ff6ab0}
+#tvcat .fx-card.stats{grid-template-columns:repeat(2,minmax(0,auto));justify-content:center;column-gap:24px;row-gap:10px;font-size:clamp(13px,1.9vw,22px)}
+#tvcat .fx-card.stats div{padding:4px 10px;border-left:3px solid var(--cc);background:#0007;text-align:left}
+@media (max-width:640px),(max-height:440px){#tvcat .tvc-body{--w:min(calc(96vw - 20px),calc((100vh - 132px) * 16 / 9));padding:10px 10px 8px;border-radius:16px}#tvcat .tvc-leg{margin-top:6px;padding:6px 10px;min-height:0}#tvcat .tvc-bar{margin-top:6px}#tvcat .tvc-bar button{height:32px;min-width:36px;padding:0 10px;font-size:12px}#tvcat .tvc-help{display:none}#tvcGuide{inset:10px 10px auto}}
+@media (prefers-reduced-motion:reduce){#tvcat .tvc-pn img{animation:none}}
+#menu.in-game .mfoot .pz-icons #tvCatBtn{padding:0 0 .1em!important}
+#menu:not(.in-game) #tvCatBtn{grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:40px;font-size:13px;letter-spacing:.08em;background:linear-gradient(180deg,#3a2f26,#211a14);border-color:#c9a26a;color:#f4ead8}
+#menu:not(.in-game) #tvCatBtn:hover,#menu:not(.in-game) #tvCatBtn:focus-visible{background:linear-gradient(180deg,#54443a,#2c231b)}
+#menu.in-game #tvCatBtn .tvc-blbl{display:none}
 </style>
 
 <canvas id="gl"></canvas>
@@ -1295,7 +1408,7 @@ body.cutscene-paused #menu.in-game #monBtn{grid-column:1/-1!important}
     <div id="mgLockNote" hidden></div>
     <div class="mfoot">
       <small id="menuBuildLine" aria-hidden="true"></small><div class="mfoot-label" aria-hidden="true">JOGAR</div><button class="btn" type="button" id="fsBtn" hidden>TELA CHEIA</button><button class="btn" type="button" id="installApp" hidden>INSTALAR COASTAL CHAOS</button>
-      <div class="row"><button class="btn" type="button" id="cfgBtnMenu">CONFIGURAÇÕES</button><button class="btn" type="button" id="monBtn" aria-pressed="false">MONITOR</button><span id="saveInfo" style="color:var(--mute);font-size:15px;margin-left:auto;text-align:right"></span><span class="pz-icons"><button class="btn" type="button" id="saveFile" hidden title="Salvar jogo" aria-label="Salvar jogo">💾</button><button class="btn" type="button" id="regBtnMenu" hidden title="Registros" aria-label="Registros">📄</button><button class="btn" type="button" id="mgBtn" title="Minigames" aria-label="Minigames"><svg class="pz-die" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="4.5" fill="#f4f2ea" stroke="#c9c1ad" stroke-width="1.2"/><circle cx="7.6" cy="7.6" r="1.9" fill="#1a1a20"/><circle cx="16.4" cy="7.6" r="1.9" fill="#1a1a20"/><circle cx="12" cy="12" r="1.9" fill="#c81e2a"/><circle cx="7.6" cy="16.4" r="1.9" fill="#1a1a20"/><circle cx="16.4" cy="16.4" r="1.9" fill="#1a1a20"/></svg></button><button class="btn" type="button" id="photoBtn" title="Modo foto" aria-label="Modo foto">📷</button></span></div>
+      <div class="row"><button class="btn" type="button" id="cfgBtnMenu">CONFIGURAÇÕES</button><button class="btn" type="button" id="monBtn" aria-pressed="false">MONITOR</button><span id="saveInfo" style="color:var(--mute);font-size:15px;margin-left:auto;text-align:right"></span><span class="pz-icons"><button class="btn" type="button" id="saveFile" hidden title="Salvar jogo" aria-label="Salvar jogo">💾</button><button class="btn" type="button" id="regBtnMenu" hidden title="Registros" aria-label="Registros">📄</button><button class="btn" type="button" id="mgBtn" title="Minigames" aria-label="Minigames"><svg class="pz-die" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="4.5" fill="#f4f2ea" stroke="#c9c1ad" stroke-width="1.2"/><circle cx="7.6" cy="7.6" r="1.9" fill="#1a1a20"/><circle cx="16.4" cy="7.6" r="1.9" fill="#1a1a20"/><circle cx="12" cy="12" r="1.9" fill="#c81e2a"/><circle cx="7.6" cy="16.4" r="1.9" fill="#1a1a20"/><circle cx="16.4" cy="16.4" r="1.9" fill="#1a1a20"/></svg></button><button class="btn" type="button" id="photoBtn" title="Modo foto" aria-label="Modo foto">📷</button><button class="btn" type="button" id="tvCatBtn" title="TV de recursos" aria-label="TV de recursos">📺<span class="tvc-blbl">TV DE RECURSOS</span></button></span></div>
       <div class="row" style="justify-content:flex-end">
         <button class="btn" type="button" id="menuFullscreen" hidden>DEIXAR EM TELA CHEIA</button>
         <button class="btn" type="button" id="loadSave" hidden>SAVE ANTIGO (NAVEGADOR)</button>
@@ -1395,6 +1508,7 @@ body.cutscene-paused #menu.in-game #monBtn{grid-column:1/-1!important}
     <div class="msec" data-cfg-panel="6" role="tabpanel" id="cfg-panel-6" aria-labelledby="cfg-tab-6" hidden="hidden"><h2>GERAL</h2><div class="cfg-general-actions"><button class="btn" type="button" id="cfgCmdBtn">COMANDOS</button><button class="btn" type="button" id="cfgReset">RESTAURAR PADRÕES</button></div><div id="cfgResetMsg" role="status" style="color:var(--mute);font-size:15px;margin-top:9px"></div>
   </div></div></div>
 </div>
+<div id="tvcat" hidden role="dialog" aria-modal="true" aria-label="TV de recursos"><div class="tvc-body"><div id="tvcScr" class="tvc-scr"></div><div id="tvcOsdIn" hidden></div><div id="tvcGuide" hidden></div><div class="tvc-leg" id="tvcLeg" aria-live="polite"></div><div class="tvc-bar"><button id="tvcPrev" type="button" aria-label="Canal anterior">◀</button><span id="tvcNum"></span><button id="tvcNext" type="button" aria-label="Próximo canal">▶</button><button id="tvcGuideBtn" type="button" aria-label="Guia de canais"><span id="tvcGuideLbl"></span></button><span class="sp"></span><span class="tvc-help" id="tvcHelp"></span><button id="tvcClose" type="button" aria-label="Fechar TV">✕</button></div></div></div>
 <div id="records" hidden role="dialog" aria-modal="true" aria-labelledby="recordsT">
   <div class="card px">
     <div class="row"><h2 id="recordsT" style="margin:0;color:var(--acc);font-size:21px">REGISTROS</h2><button id="recordsClose" type="button" class="btn" style="margin-left:auto">FECHAR [ESC]</button></div>
@@ -16020,6 +16134,7 @@ function padNavFocus(dlg,dir,vec){document.body.classList.add('padnav');const f=
  pick.focus();if(pick.scrollIntoView)pick.scrollIntoView({block:'nearest'})}
 function padPoll(dt){const g=PAD.on?padGet():null;if(!g){PAD.lx=PAD.ly=PAD.rx=PAD.ry=PAD.r2=PAD.l2=0;return}
  const B=g.buttons.map(b=>b.pressed),V=g.buttons.map(b=>b.value||0),P0=PAD.prev,pr=i=>B[i]&&!P0[i];PAD.prev=B;
+ if(TVC.open){tvcPad(B,pr,g,dt);return} /* r68: TV de recursos */
  if(typeof CAMP!=='undefined'&&CAMP.intro&&!menuOpen){if(CAMP.intro.t>.6&&(pr(0)||pr(1)))campIntroEnd();return}
  if((STORYEND.active||STORYINTRO.active)&&!menuOpen){
   if(pr(9)){if(played)openMenu();return}
@@ -23509,6 +23624,7 @@ LANG_EN["USB e Bluetooth compatíveis. No Linux, o acesso WebHID pode exigir reg
 /* v78: revisão do inglês — frases que caíam em mistura PT/EN */
 Object.assign(LANG_EN,{"vindo do norte": "coming from the north", "nuvens escuras já aparecem no horizonte, ao norte": "dark clouds are already forming on the horizon, to the north", "vindo do nordeste": "coming from the northeast", "nuvens escuras já aparecem no horizonte, ao nordeste": "dark clouds are already forming on the horizon, to the northeast", "vindo do leste": "coming from the east", "nuvens escuras já aparecem no horizonte, ao leste": "dark clouds are already forming on the horizon, to the east", "vindo do sudeste": "coming from the southeast", "nuvens escuras já aparecem no horizonte, ao sudeste": "dark clouds are already forming on the horizon, to the southeast", "vindo do sul": "coming from the south", "nuvens escuras já aparecem no horizonte, ao sul": "dark clouds are already forming on the horizon, to the south", "vindo do sudoeste": "coming from the southwest", "nuvens escuras já aparecem no horizonte, ao sudoeste": "dark clouds are already forming on the horizon, to the southwest", "vindo do oeste": "coming from the west", "nuvens escuras já aparecem no horizonte, ao oeste": "dark clouds are already forming on the horizon, to the west", "vindo do noroeste": "coming from the northwest", "nuvens escuras já aparecem no horizonte, ao noroeste": "dark clouds are already forming on the horizon, to the northwest","AO VIVO": "LIVE", "Transição gradual conforme a vida do personagem ativo. Procurado: alterna branco e vermelho. Feedback desligado: azul fixo.": "Gradual shift with the active character's health. Wanted: flashes white and red. Feedback off: solid blue.", "Copie o comando e cole no terminal. Digite sua senha de administrador quando solicitada.": "Copy the command and paste it in a terminal. Enter your admin password when asked.", "2. Desconecte e reconecte o controle (USB ou Bluetooth).": "2. Unplug and reconnect the controller (USB or Bluetooth).", "3. Feche todas as janelas do navegador e abra novamente. Volte aqui e autorize o DualSense e a saída de áudio.": "3. Close every browser window and reopen it. Come back here and authorize the DualSense and audio output.", "A regra libera o acesso aos gatilhos e à luz. Para o alto-falante, prefira USB e selecione a saída de áudio do controle acima.": "The rule unlocks the triggers and light bar. For the speaker, use USB and pick the controller's audio output above.", "Pronto para jogar": "Ready to play", "Scroll do mouse ou TAB selecionam armas; no controle, B/○ alterna. Q ou ← abre o rádio. Motorista usa pistola, Magnum ou metralhadora; Nathan de carona pode usar bazuca.": "Mouse wheel or TAB picks weapons; on a controller, B/○ cycles. Q or ← opens the radio. The driver can use pistol, Magnum or SMG; Nathan as passenger can use the bazooka.", "Escolha o alto-falante do controle conectado por USB. Sem controle, o bipe toca na saída normal. A autorização de áudio pode pedir acesso ao microfone para listar as saídas; a captura é encerrada imediatamente.": "Pick the speaker of a USB-connected controller. Without one, the beep plays on the normal output. Audio authorization may ask for microphone access to list outputs; capture stops immediately.", "COPIAR COMANDO": "COPY COMMAND"," da garagem ficou livre": " in the garage is now free", " da garagem": " in the garage", " m · precisa de ": " m · needs ", " para cavar": " to dig", " · compre na Malas & Mochilas Co. do shopping": " · buy one at Malas & Mochilas Co. in the mall", " · segure TAB: roda de armas": " · hold TAB: weapon wheel", "+25 DE ENERGIA": "+25 ENERGY", "A bola está girando…": "The ball is spinning…", "A poluição é um problema urbano nas grandes cidades · nesta região, não há mancha industrial visível": "Pollution is an urban problem in big cities · this area shows no visible industrial haze", "ABERTO ATÉ TARDE": "OPEN LATE", "ACOMPANHAMENTO AÉREO": "AERIAL COVERAGE", "AEROPORTO INTERNACIONAL DE SUNSET SHORES": "SUNSET SHORES INTERNATIONAL AIRPORT", "Aeroporto Internacional de Sunset Shores": "Sunset Shores International Airport", "ALERTA METEOROLÓGICO": "WEATHER ALERT", "ALÉM DO SINAL": "BEYOND THE SIGNAL", "AMOnições clerk": "AMOnições clerk", "AMOnições · ARMAS E UPGRADES": "AMOnições · WEAPONS & UPGRADES", "AMOnições · ARMAS": "AMOnições · WEAPONS", "AMOnições · VOLTE QUANDO NÃO ESTIVER PROCURADO": "AMOnições · COME BACK WHEN YOU'RE NOT WANTED", "ANEL DO MEIO": "MIDDLE RING", "ARMA INDISPONÍVEL NESTE ASSENTO": "WEAPON UNAVAILABLE IN THIS SEAT", "ARQUIVOS DA CIDADE": "CITY FILES", "ATÉ 50% OFF": "UP TO 50% OFF", "Arma especial sem melhorias permanentes.": "Special weapon: no damage/fire-rate/focus upgrades, to keep explosives and the jammer balanced.", "Armas dos becos: raras e sem respawn. Cada compra de arma existente repõe munição até o limite da mochila.": "Alley weapons: rare and never respawn. Buying a weapon you own refills ammo up to your backpack limit.", "Automáticas": "Automatic", "AÇAÍ TROPICAL": "TROPICAL AÇAÍ", "BORRACHARIA · AMOnições": "TIRE SHOP · AMOnições", "Blitz da polícia: fiscalização e operações preventivas para conter criminosos e aumentar a segurança nas ruas": "Police checkpoints: inspections and preventive operations to stop criminals and make the streets safer", "CADÊNCIA": "FIRE RATE", "CARDÁPIO": "MENU", "CAVE NO CANTO: SEGURE ": "DIG IN THE CORNER: HOLD ", "CENÁRIO SÓ EM SUNSET SHORES": "SCENE CONTROLS ONLY IN SUNSET SHORES", "CENÁRIO": "SCENE", "COFRE DE NOTAS": "CASH VAULT", "COLEÇÃO VERÃO 86": "SUMMER '86 COLLECTION", "CONEXÕES & DESTINOS": "CONNECTIONS & DESTINATIONS", "CONTA DO HOSPITAL · −$": "HOSPITAL BILL · −$", "COR DO NEON TROCADA": "NEON COLOR CHANGED", "CORRIDA CONCLUÍDA · SEM PAGAMENTO": "RIDE COMPLETE · NO PAYMENT", "Cheat usado nesta partida": "Cheat used in this game", "CORRIDA DE RUA": "STREET RACE", "CUIDADO & SAÚDE": "CARE & HEALTH", "Chegue a 21 sem ultrapassar. A banca para em 17.": "Get to 21 without going over. Dealer stands on 17.", "Chuva intensa, ventania e raios · motoristas enfrentam pista escorregadia · moradores correm para se abrigar": "Heavy rain, strong winds and lightning · drivers face slippery roads · residents rush for shelter", "Conectando pessoas, turismo e negócios · o Aeroporto Internacional de Sunset Shores impulsionou a economia e valorizou a cidade": "Connecting people, tourism and business · Sunset Shores International Airport boosted the economy and the city's value", "Cor, par/ímpar ou metade: paga 2× · número exato: paga 36× · no zero, só o número 0 ganha.": "Color, odd/even or half: pays 2× · exact number: pays 36× · on zero, only number 0 wins.", "CÉU AGORA": "SKY NOW", "DELEGACIA DE": "POLICE STATION OF", "DIVERSÃO GARANTIDA": "GUARANTEED FUN", "De volta a Sunset Shores. Nada de vida nova: é a mesma cidade, a mesma casa… só que vazia.": "Back in Sunset Shores. No new life: same city, same house… only empty.", "EM BREVE · SÓ NOS CINEMAS": "COMING SOON · ONLY IN THEATERS", "ESCAPANDO DA MORTE…": "CHEATING DEATH…", "ESSÊNCIA DE MIAMI": "ESSENCE OF MIAMI", "ESTE VEÍCULO NÃO TEM MISSÃO": "THIS VEHICLE HAS NO MISSION", "Eletrônicos": "Electronics", "Escolha as cartas para manter e troque as demais.": "Pick the cards to hold and swap the rest.", "Escolha onde apostar e gire. O zero é verde e só paga no número exato.": "Choose your bet and spin. Zero is green and only pays on the exact number.", "Experimente você também!": "Try it yourself!", "FARÓIS": "HEADLIGHTS", "FATIA DO DIA!": "SLICE OF THE DAY!", "FECHE O GUARDA-ROUPA PARA TROCAR DE PERSONAGEM": "CLOSE THE WARDROBE TO SWITCH CHARACTERS", "FIVELA DO CINTO": "BELT BUCKLE", "FREAR / RÉ": "BRAKE / REVERSE", "FREIO DE MÃO": "HANDBRAKE", "Fala aí.": "Talk to me.", "Fugitiva… não. Não pode ser.": "A fugitive… no. It can't be.", "HOSPITAL DE": "HOSPITAL OF", "Há rumores de que um demogorgon escapou para nosso mundo e se esconde aqui!": "Rumor has it a demogorgon escaped into our world and is hiding here!", "Ideia de Jerico": "Dumb idea", "JOIAS · COLEÇÃO": "JEWELRY · COLLECTION", "LANTERNA DO CELULAR DESLIGADA": "PHONE FLASHLIGHT OFF", "LANTERNA DO CELULAR LIGADA": "PHONE FLASHLIGHT ON", "LANÇAMENTOS": "NEW RELEASES", "LIMITE DE MUNIÇÃO ATINGIDO": "AMMO LIMIT REACHED", "Ligar não. Se ele ouvir minha voz, vem correndo e faz besteira. Uma mensagem basta.": "No calling. If he hears my voice he'll come running and do something stupid. A text will do.", "MARÉ ALTA": "HIGH TIDE", "MISTÉRIOS DE SUNSET SHORES": "MYSTERIES OF SUNSET SHORES", "MODA · COLEÇÃO": "FASHION · COLLECTION", "Munição": "Ammo", "NENHUM TÁXI POR PERTO": "NO TAXIS NEARBY", "NEOGÁS": "NEOGAS", "NINGUÉM ATENDEU": "NO ANSWER", "NOVA FRAGRÂNCIA": "NEW FRAGRANCE", "Nenhum diálogo da história registrado ainda.": "No story dialogue recorded yet.", "Nenhum diálogo registrado ainda.": "No dialogue recorded yet.", "NÃO FOI DESSA VEZ · ": "NOT THIS TIME · ", "NÃO FOI POSSÍVEL SALVAR A FOTO": "COULD NOT SAVE THE PHOTO", "O NOVO ÁLBUM · \"NOITES DE VERÃO\"": "THE NEW ALBUM · \"SUMMER NIGHTS\"", "OPERAÇÃO PREVENTIVA": "PREVENTIVE OPERATION", "PAR DE VALETE OU MAIOR": "JACKS OR BETTER", "PAR DE VALETE+": "JACKS OR BETTER", "PISE COM ESTILO": "STEP OUT IN STYLE", "PLANTÃO": "BREAKING NEWS", "POLUIÇÃO: UM DESAFIO URBANO": "POLLUTION: AN URBAN CHALLENGE", "PORTAL DO DELOREAN ABERTO": "DELOREAN PORTAL OPEN", "PREFEITURA DE": "CITY HALL OF", "Poderia ter sido tudo diferente… 10 anos presa não é brincadeira, e já faz pelo menos 3 anos que ela tá lá.": "It could've all been different… 10 years locked up is no joke, and she's been in there at least 3 years already.", "Pular trecho atual da abertura": "Skip this part of the intro", "RIOS DA CIDADE": "CITY RIVERS", "Rios perto de áreas industriais revelam os impactos da poluição nas grandes cidades · preservar a água é cuidar da cidade": "Rivers near industrial areas show the impact of pollution in big cities · protecting the water is protecting the city", "SAIA DO LOCAL PARA TROCAR DE PERSONAGEM": "LEAVE THIS PLACE TO SWITCH CHARACTERS", "SAIA DO SHOPPING PARA TROCAR DE PERSONAGEM": "LEAVE THE MALL TO SWITCH CHARACTERS", "SALTO DE PARAQUEDAS": "PARACHUTE JUMP", "SAÍDA": "EXIT", "SEGURANÇA EM PAUTA": "SAFETY IN FOCUS", "SEM COMBINAÇÃO": "NO WIN", "SEM DINHEIRO · FIM DA CORRIDA": "OUT OF MONEY · RIDE OVER", "SEM DINHEIRO": "NO MONEY", "SEM ESPAÇO PARA POUSAR AQUI": "NO ROOM TO LAND HERE", "SEM MOCHILA · MUNIÇÃO REDUZIDA": "NO BACKPACK · REDUCED AMMO", "SEM MUDANÇAS": "NO CHANGES", "SEM MÚSICA": "NO MUSIC", "SEQUÊNCIA": "STRAIGHT", "SERÁ QUE EXISTE ALGO DE MISTERIOSO NESSAS MATAS?": "IS THERE SOMETHING MYSTERIOUS IN THESE WOODS?", "SEU CONVERSÍVEL FOI DESTRUÍDO": "YOUR CONVERTIBLE WAS DESTROYED", "SUNSET ROYALE · VIDEOPÔQUER": "SUNSET ROYALE · VIDEO POKER", "SÉPIA": "SEPIA", "SÓ FUNCIONÁRIOS": "STAFF ONLY", "TOPO DO ARRANHA-CÉU · INTERAJA NA BORDA PARA SALTAR DE PARAQUEDAS": "SKYSCRAPER ROOF · USE THE EDGE TO PARACHUTE", "TOQUE DE NOVO PARA CONFIRMAR": "TAP AGAIN TO CONFIRM", "TUBARÕES": "SHARKS", "Tamanho da cidade": "City size", "Tenho um serviço pra você.": "I've got a job for you.", "Tony: tenho um serviço pra você no porto.": "Tony: I've got a job for you at the port.", "Tudo bem. Sem pressão, sem perguntas hoje.": "It's okay. No pressure, no questions today.", "UMA NOVA VISTA DE SUNSET SHORES": "A NEW VIEW OF SUNSET SHORES", "UNIVERSIDADE DE": "UNIVERSITY OF", "VEJA O VERÃO": "SEE THE SUMMER", "VENDEDOR DE CARROS": "CAR SALESMAN", "VIDEOPÔQUER · JACKS OR BETTER": "VIDEO POKER · JACKS OR BETTER", "VISTA DE CIMA": "VIEW FROM ABOVE", "VIVA LÁ FORA": "LIVE OUT THERE", "VOCÊ GANHOU · ": "YOU WON · ", "VOCÊ NÃO TEM ": "YOU DON'T HAVE ", "VOCÊ VENCEU": "YOU WIN", "VOCÊ": "YOU", "Vitória: 2× aposta · blackjack natural: 2,5× · empate: devolução.": "Win: 2× bet · natural blackjack: 2.5× · push: bet returned.", "Você tem carro? Preciso ir pro píer!": "Got a car? I need to get to the pier!", "agenda do celular": "phone contacts", "botões": "buttons", "demogorgon da floresta": "forest demogorgon", "fantasma do cemitério": "cemetery ghost", "o botão de ação": "the action button", "olhar para tras": "look back", "reta de ": "straight of ", "segure ": "hold ", "sem bônus": "no bonus", "vindo do ": "coming from the ", "ÍMPAR": "ODD", "ÚLTIMO VEÍCULO": "LAST VEHICLE", "● OBSERVATÓRIO": "● OBSERVATORY", "● OPERAÇÃO AO VIVO": "● LIVE OPERATION", "● SOBREVOO DA FLORESTA": "● FOREST FLYOVER", "● VOCÊ ESTÁ AQUI": "● YOU ARE HERE", "NÃO": "NO", "NÓS": "US", "MAIS": "MORE", "Sombras de Postes": "Pole Shadows", "RECURSOS DO CONTROLE": "CONTROLLER FEATURES", "CONEXÃO": "CONNECTION", "ÁUDIO DO CONTROLE": "CONTROLLER AUDIO", "VOLUME NO CONTROLE": "CONTROLLER VOLUME", "Bipe no alto-falante do controle": "Beep on controller speaker", "AUTORIZAR SAÍDAS DE ÁUDIO": "AUTHORIZE AUDIO OUTPUTS", "Saída normal": "Normal output", "Bipe na saída normal.": "Beep on normal output.", "Feedback de vida e perseguição": "Health and pursuit feedback", "Incline para virar. Aceleração e freio continuam nos gatilhos ou botões.": "Tilt to steer. Throttle and brake stay on the triggers or buttons.", "Escolha a aposta para jogar.": "Choose your bet to play.", "ESC / ○ volta ao menu": "ESC / ○ back to menu", "soco (ou": "punch (or", "sem arma)": "unarmed)", "arrastando, ou": "dragging, or", "especial do personagem": "character special", "ou": "or", "Armas no veículo": "Weapons in vehicles", "Erro no carregamento do arquivo:": "Error loading file:", "Subir/descer a câmera (R/V) · inativo nas câmeras de topo e isométrica": "Raise/lower camera (R/V) · disabled in top and isometric cameras", "Altura da câmera": "Camera height", "0% = céu do momento · 100% = tempestade formada sobre a cidade": "0% = current sky · 100% = full storm over the city", "0% = lua invisível ao lado do sol · 100% = eclipse total": "0% = invisible moon beside the sun · 100% = total eclipse", "Trocar personagem (segure Alt / ↓ no controle)": "Switch character (hold Alt / ↓ on controller)", "Carregando cenário": "Loading scene", "Fechar e voltar ao jogo (Esc)": "Close and return to game (Esc)", "Versão do jogo": "Game version", "Reiniciar e voltar ao menu inicial (progresso não salvo será perdido)": "Restart and return to main menu (unsaved progress will be lost)", "Categorias de configuração": "Settings categories", "Presets de qualidade gráfica": "Graphics quality presets", "Saída do bipe do celular": "Phone beep output", "Seções de registros": "Log sections", "Veículo anterior": "Previous vehicle", "Próximo veículo": "Next vehicle", "Copiar somente o número da seed atual": "Copy only the current seed number", "Copiar as coordenadas X, Y e Z, somente números": "Copy X, Y and Z coordinates, numbers only", "Lista dos símbolos do mapa": "Map symbol list", "Progresso do carregamento": "Loading progress", "HORA": "TIME", "Água caindo": "Falling rain", "SOCO": "PUNCH", "PUNHOS": "FISTS"});
 Object.assign(LANG_EN,{"G no carro de outro jogador: carona · F: roubar": "G at another player's car: ride along · F: steal it"});Object.assign(LANG_EN,{"online: carona no carro de outro jogador · F rouba · no controle: segure △ para carona": "online: ride along in another player's car · F steals it · on the gamepad: hold △ to ride", "G CARONA · F ROUBAR": "G RIDE · F STEAL"});Object.assign(LANG_EN,{"Carro sumiu: celular → ENTREGA DE VEÍCULO (1 h) ou delegacia (paga e sai na hora)": "Car gone: phone → VEHICLE DELIVERY (1 h) or the police station (pay and get it now)", "ENTREGA DE VEÍCULO": "VEHICLE DELIVERY"});Object.assign(LANG_EN,{"SENHA ERRADA · ESSE NOME JÁ TEM DONO": "WRONG PASSWORD · THIS NAME IS TAKEN", "NOME INVÁLIDO · 3 A 16 LETRAS/NÚMEROS": "INVALID NAME · 3 TO 16 LETTERS/NUMBERS"});Object.assign(LANG_EN,{"Quem está online: mapa (M) ou /jogadores no chat": "Who is online: map (M) or /players in chat"});Object.assign(LANG_EN,{"Ligue para outro jogador pela agenda do celular (P) para se encontrar": "Call another player from the phone contacts (P) to meet up"});Object.assign(LANG_EN,{"NADA FUNCIONA AQUI": "NOTHING WORKS HERE"});Object.assign(LANG_EN,{"/carro no chat: chama o seu carro": "/car in chat: calls your car", "SENHA · MÍNIMO 6 CARACTERES": "PASSWORD · AT LEAST 6 CHARACTERS", "SENHA ERRADA · ESSE NOME JÁ TEM DONO": "WRONG PASSWORD · THIS NAME IS TAKEN"});Object.assign(LANG_EN,{"SERVIDOR NÃO ENCONTRADO · CONFIRA O ENDEREÇO OU DIGITE OUTRO": "SERVER NOT FOUND · CHECK THE ADDRESS OR TYPE ANOTHER ONE", "SEM SERVIDOR NESTE SITE · DIGITE UM EM SERVIDOR": "NO SERVER ON THIS SITE · TYPE ONE IN SERVER", "ARQUIVO INVÁLIDO": "INVALID FILE", "RECONECTANDO…": "RECONNECTING…", "RECONECTADO": "RECONNECTED", "O DIA MUDOU NO SERVIDOR · SAIA E ENTRE DE NOVO": "THE SERVER DAY CHANGED · LEAVE AND JOIN AGAIN", "ROUBANDO O CARRO…": "STEALING THE CAR…"});Object.assign(LANG_EN,{"O NAVEGADOR BLOQUEOU A LEITURA": "THE BROWSER BLOCKED READING THE CLIPBOARD", "clique no campo e use Ctrl+V": "click the field and press Ctrl+V", "COLAR": "PASTE"});Object.assign(LANG_EN,{"colar X,Y,Z": "paste X,Y,Z", "TELEPORT · USE X,Y,Z OU X,Z": "TELEPORT · USE X,Y,Z OR X,Z", "cheat: save desativado": "cheat: saving disabled"});Object.assign(LANG_EN,{"carros atrás de você · junte $10.000 pra quitar": "cars after you · get $10,000 to pay it off","PEGAR EMPRÉSTIMO": "TAKE A LOAN", "prazo de 10 horas": "10-hour deadline", "PAGAR O AGIOTA": "PAY THE LOAN SHARK", "DÍVIDA COM O AGIOTA": "DEBT TO THE LOAN SHARK", "vence em": "due in", "VENCIDA · cobradores na rua": "OVERDUE · collectors on the street", "EMPRÉSTIMO · $10.000": "LOAN · $10,000", "Você tem 10 horas para pagar o que deve ao agiota, ou ele mandará seus associados lhe fazerem uma visita para cobrar a dívida de uma maneira.... dolorosa.": "You have 10 hours to pay back the loan shark, or he'll send his associates to pay you a visit and collect the debt in a rather... painful way.", "PAGAR O AGIOTA?": "PAY THE LOAN SHARK?", "Quitar agora os $10.000 da dívida.": "Pay off the $10,000 debt now.", "EMPRÉSTIMO PAGO": "LOAN PAID", "DÍVIDA QUITADA": "DEBT CLEARED", "O agiota recebeu os $10.000. Negócio fechado.": "The loan shark got his $10,000. Deal closed.", "O agiota recebeu os $10.000. Os associados dele foram embora.": "The loan shark got his $10,000. His associates are gone.", "O AGIOTA NÃO ESPEROU": "THE LOAN SHARK DIDN'T WAIT", "Você não tem os $10.000. Os associados dele estão chegando — e vão continuar vindo até a dívida ser paga.": "You don't have the $10,000. His associates are on their way, and they'll keep coming until the debt is paid.", "COBRADORES DO AGIOTA": "LOAN SHARK COLLECTORS", "AGIOTA · faltam 5 horas pra pagar": "LOAN SHARK · 5 hours left to pay", "AGIOTA · falta 1 hora pra pagar": "LOAN SHARK · 1 hour left to pay", "COBRADO PELO AGIOTA": "COLLECTED BY THE LOAN SHARK", "EMPRÉSTIMO · +$10.000": "LOAN · +$10,000", "AGIOTA · −$10.000": "LOAN SHARK · −$10,000"});Object.assign(LANG_EN,{"ROLETA": "ROULETTE","MINIGAMES BLOQUEADOS · ": "MINIGAMES LOCKED · ", "SAIA DO INTERIOR PRIMEIRO": "LEAVE THE BUILDING FIRST", "aposta mínima": "minimum bet", "Cassino Sunset Royale · joga com o dinheiro da conta e volta pra onde estava": "Sunset Royale Casino · play with your account money and come back where you were", "VÍDEO PÔQUER": "VIDEO POKER", "CAÇA-NÍQUEL": "SLOT MACHINE", "SINUCA (CASTIGADO)": "POOL (CASTIGADO)"});Object.assign(LANG_EN,{"SKATE · SHAPES · RODAS":"SKATE · DECKS · WHEELS","dar 1 skate da garagem na troca": "trade in 1 board from your garage", "SKATE TROCADO · −$": "BOARD TRADED IN · −$", "letras, números e símbolos · até 6": "letters, numbers and symbols · up to 6", "ATÉ 6": "UP TO 6"});Object.assign(LANG_EN,{"SUBIR NO SKATE": "HOP ON THE SKATEBOARD", "DESCER DO SKATE": "STEP OFF THE SKATEBOARD", "SKATE SHOP · SKATES $120": "SKATE SHOP · SKATEBOARDS $120", "W empurra · S freia · A/D curva · Espaço pula · F desce": "W pushes · S brakes · A/D turns · Space jumps · F steps off", "Analógico: frente empurra, trás freia, lados curvam · ↑ pula · SAIR desce": "Stick: forward pushes, back brakes, sides turn · ↑ jumps · EXIT steps off", "na velocidade máxima, SEGURE ↑ no pulo: kickflip (solte a tempo de alinhar antes do pouso)": "at top speed, HOLD ↑ while jumping: kickflip (let go in time to line up before landing)", "na velocidade máxima, SEGURE Espaço no pulo: kickflip (solte a tempo de alinhar antes do pouso)": "at top speed, HOLD Space while jumping: kickflip (let go in time to line up before landing)", "PRANCHA TORTA NO POUSO · CAIU": "BOARD NOT LINED UP ON LANDING · BAILED", "OFICINA · SKATE": "WORKSHOP · SKATEBOARD", "SEM MUDANÇAS": "NO CHANGES", "troque as cores e a estampa do seu skate": "change your board's colors and print", "o skate novo vai pra garagem da sua casa": "your new board goes to your home garage", "SKATE CUSTOMIZADO · −$": "BOARD CUSTOMIZED · −$", "SKATE COMPRADO · −$": "BOARD BOUGHT · −$", "está na garagem da sua casa": "it's in your home garage"});Object.assign(LANG_EN,{"VAI PAGAR POR ISSO!": "YOU'LL PAY FOR THAT!", "PARADO AÍ!": "FREEZE!", "PEGA ELE!": "GET HIM!", "FOGO! SAI DO CARRO!": "FIRE! GET OUT OF THE CAR!", "SAI, SAI!": "OUT, OUT!"});Object.assign(LANG_EN,{"CENTRALIZAR NA TELA": "CENTER ON SCREEN"});Object.assign(LANG_EN,{"RECARREGAR AGORA": "RELOAD NOW", "A placa de vídeo caiu várias vezes seguidas.": "The graphics card crashed several times in a row.", "Jogo salvo. Feche outras abas pesadas e recarregue; se continuar, reinicie o navegador.": "Game saved. Close other heavy tabs and reload; if it keeps happening, restart the browser.", "A placa de vídeo reiniciou.": "The graphics card restarted.", "Jogo salvo · recarregando em": "Game saved · reloading in", "Feche outras abas pesadas e recarregue; se continuar, reinicie o navegador.": "Close other heavy tabs and reload; if it keeps happening, restart the browser.", "Recarregando em": "Reloading in", "A placa de vídeo reiniciou · jogo retomado": "The graphics card restarted · game resumed"});Object.assign(LANG_EN,{"Que sono....": "So sleepy...."});Object.assign(LANG_EN,{"CONECTANDO…": "CONNECTING…","SESSÃO DE HOJE": "TODAY'S SESSION","SERVIDOR NÃO RESPONDE": "SERVER NOT RESPONDING","SEM SERVIDOR NESTE SITE · USE O CAMPO SERVIDOR": "NO SERVER ON THIS SITE · USE THE SERVER FIELD","NOME INVÁLIDO · 3 A 16 LETRAS/NÚMEROS": "INVALID NAME · 3 TO 16 LETTERS/DIGITS","NOME EM USO · ESCOLHA OUTRO": "NAME TAKEN · PICK ANOTHER","aperte T para conversar": "press T to chat","CONEXÃO INSTÁVEL…": "UNSTABLE CONNECTION…","VOCÊ FOI DESCONECTADO · RECARREGUE A PÁGINA": "YOU WERE DISCONNECTED · RELOAD THE PAGE","ABATIDO POR": "KILLED BY","ATROPELADO POR": "RUN OVER BY","SEM CHEATS NO ONLINE": "NO CHEATS ONLINE","ONLINE · SEM SAVE": "ONLINE · NO SAVING"});Object.assign(LANG_EN,{"PUXAR A ALAVANCA": "PULL THE LEVER","três iguais =": "three of a kind =","não foi dessa vez · saldo": "not this time · balance","DINHEIRO INSUFICIENTE": "NOT ENOUGH MONEY","Vencer paga 2× a aposta.": "A win pays 2× the bet.","Vencer paga 3× a aposta.": "A win pays 3× the bet.","SALDO NEGATIVO": "NEGATIVE BALANCE","Faltou dinheiro na aposta. Os associados do agiota vão atrás de você até você cobrir a diferença.": "You came up short on the bet. The loan shark's associates will hunt you until you cover the difference.","DÍVIDA DE APOSTA": "GAMBLING DEBT","Os associados do agiota foram embora.": "The loan shark's associates are gone."});Object.assign(LANG_EN,{"SALA DA FENDA": "RIFT ROOM","ACESSO NEGADO": "ACCESS DENIED","PRECISA DE CARTÃO": "KEYCARD REQUIRED","ACESSO LIBERADO": "ACCESS GRANTED","CARTÃO MAGNÉTICO": "KEYCARD","A FENDA NÃO DEIXA PASSAR": "THE RIFT WON'T LET YOU THROUGH"});Object.assign(LANG_EN,{"Pare de me perturbar.": "Stop bothering me."});Object.assign(LANG_EN,{"TEM UM X9 NA ÁREA!": "THERE'S A SNITCH AROUND!", "ele tá ligando pra polícia · 10 s pra calar ele": "he's calling the cops · 10 s to shut him up", "X9 SILENCIADO": "SNITCH SILENCED", "O X9 CHAMOU A POLÍCIA": "THE SNITCH CALLED THE COPS", "ALÔ, POLÍCIA? TEM UM MALUCO AQUI!": "HELLO, POLICE? THERE'S A MANIAC HERE!", "ALÔ? 190? CORRE PRA CÁ!": "HELLO? 911? GET OVER HERE!", "ELE TÁ MATANDO TODO MUNDO!": "HE'S KILLING EVERYBODY!", "TÔ VENDO ELE AGORA, MOÇO!": "I CAN SEE HIM RIGHT NOW, OFFICER!", "ANOTA A PLACA AÍ, SEU GUARDA!": "WRITE DOWN THE PLATE, OFFICER!"});
+Object.assign(LANG_EN,{"TV de recursos": "Feature TV", "Canal anterior": "Previous channel", "Próximo canal": "Next channel", "Guia de canais": "Channel guide", "Fechar TV": "Close TV", "TV DE RECURSOS": "FEATURE TV"});
 const LANG_EXACT=new Map(Object.entries(LANG_EN));
 // One-pass replacement prevents cascading translations and substitutions inside words.
 const LANG_KEYS=Object.keys(LANG_EN).filter(k=>k.trim().length>=2).sort((a,b)=>b.length-a.length);
@@ -23560,6 +23676,7 @@ function applyLanguage(){try{cheatListRender()}catch(e){}document.documentElemen
  }
  if(typeof recordsOpen!=='undefined'&&recordsOpen)recordsRefresh();
  if(typeof PHONE!=='undefined'&&PHONE.open&&PHONE.cv)phoneDraw();
+ if(typeof TVC!=='undefined'&&TVC.open)tvcRender();
  if(typeof NAV!=='undefined'&&NAV.open)try{drawBigmap()}catch(e){}
 }
 let LANG_OBS_LOCK=false;
@@ -25023,5 +25140,252 @@ requestAnimationFrame(loop);
 // A geracao, os chunks e o aquecimento da GPU so comecam em startGame(),
 // apos GERAR NOVA CIDADE ou CARREGAR SAVE.
 // Antes disso o canvas exibe apenas o fundo da cena, sem mundo procedural.
+
+/* ================= TV DE RECURSOS (TVCAT, v2 r68) =================
+   Catálogo do jogo em canais: botão 📺 no menu (#tvCatBtn) → #tvcat em tela cheia.
+   Cada canal = nome, ícone, legenda e uma montagem: l '1' (1 quadro), '2' (lado a lado), '3' (1 grande + 2),
+   '4' (quadrantes) ou 'alt' (quadros alternando a cada TVC_ALT_MS com a legenda fixa).
+   Quadros: tvcat/<i>.jpg (guardados; outros mundos NUNCA são carregados). Partes de HUD que não aparecem nos prints
+   (roupa/carro piscando, círculos no mapa, quadrado das gangues, barra do PIX…) são desenhadas em HTML (campo f).
+   Texto PT/EN fica aqui mesmo ([pt,en]) e vai para a tela por data-t + CSS ::before, fora do alcance do LANG_RE.
+   REGRA: toda mecânica adicionada ou ajustada ganha (ou atualiza) um canal nesta lista. Plano: tvcat/PLANO.md. */
+var TVC={open:false,i:0,altI:0,altT:0,guide:false,gi:0,num:'',numT:0,ret:null,noiseT:0,sw:null,navT:0};
+const TVC_ALT_MS=2800;
+const TVC_SHIRT='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 3l-6 4 3 4 2-1v11h10V10l2 1 3-4-6-4c-1 2-2 3-4 3S9 5 8 3z"/></svg>';
+const TVC_CAR='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 11l2-5h10l2 5h2v6h-2v2h-3v-2H8v2H5v-2H3v-6z M8 8l-1 3h10l-1-3z M6 13v2h3v-2z M15 13v2h3v-2z"/></svg>';
+/* p(img, [legenda do quadro pt,en], fx?, opções?) */
+function tvcP(i,t,f,o){return Object.assign({i,t,f},o||{})}
+const TVCAT=[
+ {k:'police',ic:'🚨',c:'#ff4a4a',l:'4',n:['POLÍCIA · PROCURADO','POLICE · WANTED'],
+  g:['A polícia só persegue o crime que ela vê. Troque de roupa e de carro para sumir: a área vermelha vira azul-marinho e esmaece, e um crime ali dentro devolve as estrelas.','Police only chase the crimes they see. Change outfit and car to vanish: the red area turns navy blue and fades, and a crime inside it brings the stars back.'],
+  p:[tvcP('pol_chase',['PERSEGUIÇÃO','CHASE']),tvcP('pol_chase',['ROUPA E CARRO RECONHECIDOS','OUTFIT AND CAR RECOGNIZED'],'disguise',{dim:1}),tvcP('map_red',['ÁREA DO CRIME','CRIME AREA'],'ringR',{zoom:1}),tvcP('map_blue',['BUSCA ENCERRANDO','SEARCH ENDING'],'ringB',{zoom:1})]},
+ {k:'levels',ic:'★',c:'#ffd200',l:'2',n:['NÍVEIS DE PROCURADO','WANTED LEVELS'],
+  g:['Explodir 3 coisas na fuga sobe um nível e roubar um helicóptero vai direto para ★★★. Na água vem a lancha da polícia; voar ou navegar até Point Haze despista tudo.','Blowing up 3 things during a chase adds a level and stealing a helicopter jumps straight to ★★★. On water the police boat comes; flying or sailing to Point Haze shakes everyone.'],
+  p:[tvcP('tv_chase',['AO VIVO NA TV','LIVE ON TV']),tvcP(null,['O QUE CADA NÍVEL CHAMA','WHAT EACH LEVEL CALLS'],'levels')]},
+ {k:'x9',ic:'📞',c:'#ff8a3a',l:'1',n:['TESTEMUNHA · X9','WITNESS · SNITCH'],
+  g:['Depois de 5 mortes a pé, o pedestre mais perto foge ligando para a polícia. Você tem 10 s para calar a testemunha. Só no modo livre.','After 5 kills on foot, the nearest pedestrian runs off calling the police. You have 10 s to silence the witness. Free mode only.'],
+  p:[tvcP('scn_crash',['LIGANDO PARA O 190','CALLING 911'],'x9',{dim:1})]},
+ {k:'blitz',ic:'🚧',c:'#ff9a2a',l:'1',n:['BLITZ','ROADBLOCK'],
+  g:['Cones e viaturas fecham a rua. Na blitz a polícia sempre descobre carro roubado: 50% de chance de prisão, 50% de ser liberado.','Cones and patrol cars close the street. At a roadblock the police always spot a stolen car: 50% chance of arrest, 50% of being let go.'],
+  p:[tvcP('tv_blitz',['OPERAÇÃO PREVENTIVA','PREVENTIVE OPERATION'])]},
+ {k:'jail',ic:'🥄',c:'#f07818',l:'2',n:['PRISÃO E FUGA','JAIL AND ESCAPE'],
+  g:['Pena de 5 minutos ou fiança na grade. Depois de 1 minuto o colega passa uma colher: cave 30 s no canto quando o guarda sumir e saia num beco perto da delegacia.','A 5-minute sentence or bail at the bars. After 1 minute your cellmate slips you a spoon: dig 30 s in the corner while the guard is away and come out in an alley near the station.'],
+  p:[tvcP('int_jail',['CELA 01','CELL 01'],'dig'),tvcP('poi_police',['DELEGACIA','POLICE STATION'])]},
+ {k:'hosp',ic:'🚑',c:'#ff5a6a',l:'2',n:['HOSPITAL E PARAMÉDICO','HOSPITAL AND PARAMEDIC'],
+  g:['Morreu, acorda no hospital pagando 10% do dinheiro. Ligue 192 e o paramédico enche sua vida; numa ambulância, T começa a missão de paramédico.','Die and you wake up at the hospital paying 10% of your cash. Dial 192 and the paramedic fills your health; in an ambulance, T starts the paramedic mission.'],
+  p:[tvcP('poi_hosp',['HOSPITAL','HOSPITAL']),tvcP('amb',['AMBULÂNCIA','AMBULANCE'])]},
+ {k:'gang',ic:'⬛',c:'#e8d23a',l:'2',n:['GANGUES','GANGS'],
+  g:['A gangue amarela e a verde dominam um quarteirão cada. Os 6 do beco atiram em quem chega; derrube todos e ganhe $500. No dia seguinte elas voltam em outro lugar.','The yellow and green gangs each hold a block. The 6 in the alley shoot anyone who comes close; take them all down for $500. The next day they show up somewhere else.'],
+  p:[tvcP('gang_alley',['BECO DA GANGUE','GANG ALLEY']),tvcP('map_gang',['QUARTEIRÃO NO MAPA','BLOCK ON THE MAP'],'gang',{zoom:1})]},
+ {k:'emp',ic:'🏢',c:'#ff8c1a',l:'1',n:['IMPÉRIOS','EMPIRES'],
+  g:['Prédios com ícone laranja são negócios de gangue. Limpe o interior, compre o prédio e escolha Drogas, Contrabando ou Roubo; o lucro sai todo dia na porta.','Buildings with an orange icon are gang businesses. Clear the inside, buy the building and pick Drugs, Smuggling or Robbery; profit is collected at the door every day.'],
+  p:[tvcP('emp',['NEGÓCIO DE GANGUE','GANG BUSINESS'])]},
+ {k:'jammer',ic:'◉',c:'#3ad8ff',l:'3',n:['ctOS · JAMMER','ctOS · JAMMER'],
+  g:['App ctOS ($3.800 na AMOnições). O JAMMER apaga 100 m à noite; de dia deixa todos os semáforos verdes e o trânsito bate; perto da ponte levadiça, ergue a ponte.','ctOS app ($3,800 at AMOnições). The JAMMER blacks out 100 m at night; by day it turns every light green and traffic crashes; near a drawbridge, it raises the bridge.'],
+  p:[tvcP('jam_night',['NOITE: APAGÃO','NIGHT: BLACKOUT'],'scan'),tvcP('jam_day',['DIA: SINAIS VERDES','DAY: GREEN LIGHTS']),tvcP('poi_bridge',['A PONTE SOBE','THE BRIDGE RISES'])]},
+ {k:'prof',ic:'👤',c:'#3ad8ff',l:'2',n:['ctOS · PERFIL E PIX','ctOS · PROFILE AND PIX'],
+  g:['Aponte o celular para alguém e veja nome, ficha e saldo. Para hackear o PIX fique entre 6 e 24 m: perto demais ele chama a polícia, longe demais o sinal cai.','Point the phone at someone to see name, record and balance. To hack their PIX stay between 6 and 24 m: too close and they call the police, too far and the signal drops.'],
+  p:[tvcP('ph_prof',['PERFIL','PROFILE'],null,{fit:1}),tvcP('car_dmc',['HACKEAR PIX','HACK PIX'],'pix',{dim:1})]},
+ {k:'phone',ic:'📱',c:'#3ae08a',l:'3',n:['CELULAR','PHONE'],
+  g:['Uma vez por dia o celular toca: pode ser propaganda ou golpe, e cair no golpe custa dinheiro. 190 polícia, 192 ambulância, 555 táxi.','Once a day the phone rings: it may be an ad or a scam, and falling for the scam costs money. 190 police, 192 ambulance, 555 taxi.'],
+  p:[tvcP('ph_call',['CHAMADA','INCOMING CALL'],null,{fit:1}),tvcP('ph_home',['INÍCIO','HOME'],null,{fit:1}),tvcP('ph_apps',['APPS','APPS'],null,{fit:1})]},
+ {k:'scenes',ic:'🎬',c:'#ffcc33',l:'alt',n:['CENAS DE RUA','STREET SCENES'],
+  g:['A cada poucos minutos algo acontece na rua. Derrube o ladrão de bolsa ($50) ou o bandido que o guarda persegue (+$10).','Every few minutes something happens on the street. Take down the purse snatcher ($50) or the thug the guard is chasing (+$10).'],
+  p:[tvcP('scn_purse',['LADRÃO DE BOLSA','PURSE SNATCHER']),tvcP('scn_chase',['GUARDA ATRÁS DO BANDIDO','GUARD CHASING A THUG']),tvcP('scn_crash',['BATIDA COM DISCUSSÃO','CRASH AND ARGUMENT']),tvcP('scn_stop',['ABORDAGEM POLICIAL','POLICE STOP']),tvcP('scn_dog',['CARINHO NO CACHORRO','PETTING A DOG']),tvcP('scn_skate',['MANOBRA DE SKATE','SKATE TRICK'])]},
+ {k:'carrx',ic:'📸',c:'#ffd24a',l:'1',n:['PEDESTRES E SEU CARRO','PEDESTRIANS AND YOUR CAR'],
+  g:['Pedestres elogiam carro de luxo, fotografam o DeLorean, xingam quem sobe na calçada e às vezes pedem carona ($20–60).','Pedestrians praise luxury cars, take photos of the DeLorean, curse whoever drives on the sidewalk and sometimes ask for a ride ($20–60).'],
+  p:[tvcP('car_dmc',['FOTO DO DeLOREAN','DeLOREAN PHOTO'],'flash')]},
+ {k:'dirt',ic:'🧽',c:'#c9a26a',l:'1',n:['CARRO SUJO · LAVA-JATO','DIRTY CAR · CAR WASH'],
+  g:['Estrada de terra suja devagar, lama suja rápido e a chuva limpa um pouco. No posto, LAVAR CARRO custa $15.','Dirt roads soil the car slowly, mud quickly, and rain cleans it a little. At the gas station, CAR WASH costs $15.'],
+  p:[tvcP('dirt_car',['NA ESTRADA DE TERRA','ON THE DIRT ROAD'])]},
+ {k:'mask',ic:'🎭',c:'#7ad84a',l:'1',n:['A MASKARA','THE MASK'],
+  g:['A Maskara do Nathan vem do laboratório de Point Haze: disfarce na hora, arsenal infinito e corrida sobre a água.','Nathan\'s Mask comes from the Point Haze lab: instant disguise, infinite arsenal and running on water.'],
+  p:[tvcP('mask_on',['NATHAN COM A MASKARA','NATHAN WEARING THE MASK'])]},
+ {k:'inv',ic:'🌑',c:'#b04aff',l:'2',n:['UPSIDE DOWN','UPSIDE DOWN'],
+  g:['A Fenda leva ao mundo invertido: a mesma cidade, apagada e podre, com fantasmas e Demogorgons. Só a lanterna do celular e os faróis iluminam.','The Rift leads to the inverted world: the same city, dark and rotten, with ghosts and Demogorgons. Only the phone flashlight and headlights shine.'],
+  p:[tvcP('w_inv1',['A FENDA','THE RIFT'],null,{br:2.1}),tvcP('w_inv2',['RUAS APAGADAS','DARK STREETS'],null,{br:2.6})]},
+ {k:'haze',ic:'🏝',c:'#d8b070',l:'2',n:['POINT HAZE','POINT HAZE'],
+  g:['Uma ilha do outro lado do mar, com o laboratório. Vá de hovercraft, lancha ou helicóptero; atravessar o mar despista a polícia.','An island across the sea, home of the lab. Go by hovercraft, boat or helicopter; crossing the sea shakes off the police.'],
+  p:[tvcP('w_haze1',['O PÍER','THE PIER']),tvcP('w_haze2',['A ILHA','THE ISLAND'])]},
+ {k:'synth',ic:'🌆',c:'#ff3aa8',l:'2',n:['SYNTHWAVE · DeLOREAN','SYNTHWAVE · DeLOREAN'],
+  g:['A 140 km/h o DeLorean viaja no tempo para o Synthwave: cidade neon de arranha-céus e palmeiras. Ele mora na garagem da micro-ilha.','At 140 km/h the DeLorean travels in time to Synthwave: a neon city of skyscrapers and palm trees. It lives in the micro-island garage.'],
+  p:[tvcP('w_synth1',['O DeLOREAN','THE DeLOREAN']),tvcP('w_synth2',['A CIDADE NEON','THE NEON CITY'])]},
+ {k:'weather',ic:'⛈',c:'#8fb4ff',l:'alt',n:['CLIMA','WEATHER'],
+  g:['Eclipses solares podem acontecer no jogo, assim como fortes tempestades que cobrem o céu de forma realista. Cada cidade tem o seu clima.','Solar eclipses can happen in the game, as well as strong storms that cover the sky realistically. Every city has its own weather.'],
+  p:[tvcP('storm2',['TEMPESTADE','STORM'],'rain'),tvcP('eclipse2',['ECLIPSE SOLAR','SOLAR ECLIPSE'],'corona')]},
+ {k:'sea',ic:'🚢',c:'#4ab8e8',l:'alt',n:['RIOS E MAR','RIVERS AND SEA'],
+  g:['Rios perto das indústrias ficam poluídos. No mar, dois navios cargueiros passam devagar: dá para subir de lancha ou pousar o helicóptero no convés.','Rivers near industry get polluted. At sea, two cargo ships sail slowly by: you can climb aboard from a boat or land the helicopter on deck.'],
+  p:[tvcP('tv_pollution',['POLUIÇÃO','POLLUTION']),tvcP('ship2',['NAVIOS CARGUEIROS','CARGO SHIPS'])]},
+ {k:'obra',ic:'🦺',c:'#ffb020',l:'1',n:['OBRAS NA RUA','ROADWORKS'],
+  g:['Todo dia, das 6h às 18h, uma rua fecha para obra. O GPS e o trânsito desviam, e no mapa ela aparece pontilhada de vermelho.','Every day, from 6 AM to 6 PM, one street closes for roadworks. GPS and traffic detour, and the map shows it dotted in red.'],
+  p:[tvcP('obra',['RUA FECHADA','STREET CLOSED'])]},
+ {k:'bridge',ic:'🌉',c:'#e0e0e0',l:'1',n:['PONTES LEVADIÇAS','DRAWBRIDGES'],
+  g:['Sobem em 5 s e ficam abertas 1 min. Com velocidade dá para saltar o vão. Procurado, elas sobem sozinhas; a guarita força a descida.','They rise in 5 s and stay open for 1 min. With enough speed you can jump the gap. When you are wanted they rise on their own; the booth forces them down.'],
+  p:[tvcP('poi_bridge',['A PONTE','THE BRIDGE'])]},
+ {k:'para',ic:'🪂',c:'#ff6ab0',l:'2',n:['PARAQUEDAS','PARACHUTE'],
+  g:['Salte de paraquedas e mire no alvo da praia: borda $60, anel do meio $150, na mosca $300.','Skydive and aim for the target on the beach: edge $60, middle ring $150, bullseye $300.'],
+  p:[tvcP('tv_parachute',['O SALTO','THE JUMP']),tvcP('beach2',['A PRAIA','THE BEACH'],'target')]},
+ {k:'air',ic:'✈',c:'#9ad0ff',l:'2',n:['AEROPORTO','AIRPORT'],
+  g:['Duas quadras cercadas, com cancela automática. Aviões decolam e pousam o tempo todo.','Two fenced blocks with an automatic gate. Planes take off and land all the time.'],
+  p:[tvcP('tv_airport',['DECOLAGEM','TAKEOFF']),tvcP('poi_air',['VISTA AÉREA','AERIAL VIEW'])]},
+ {k:'casino',ic:'🎰',c:'#ffcf3a',l:'2',n:['CASSINO','CASINO'],
+  g:['Caça-níqueis, blackjack, pôquer, roleta, sinuca e Liar\'s Dice. No menu de pausa, MINIGAMES leva direto às mesas.','Slots, blackjack, poker, roulette, pool and Liar\'s Dice. In the pause menu, MINIGAMES takes you straight to the tables.'],
+  p:[tvcP('poi_casino',['A FACHADA','THE FRONT']),tvcP('int_casino',['O SALÃO','THE FLOOR'])]},
+ {k:'loan',ic:'💸',c:'#7ae07a',l:'1',n:['AGIOTA','LOAN SHARK'],
+  g:['Em MINIGAMES, o agiota empresta $10.000 por 10 horas. Atrasou, chegam 3 carros de cobradores a cada 5 horas até você quitar.','In MINIGAMES, the loan shark lends $10,000 for 10 hours. Pay late and 3 cars of collectors show up every 5 hours until you pay.'],
+  p:[tvcP('int_casino',['$10.000 · 10 H','$10,000 · 10 H'],'loan',{dim:1})]},
+ {k:'club',ic:'🪩',c:'#c04aff',l:'2',n:['DANCETERIA','NIGHTCLUB'],
+  g:['Fila na porta e show no palco só depois das 22h. De dia a pista fica quase vazia.','A line at the door and a show on stage only after 10 PM. By day the dance floor is nearly empty.'],
+  p:[tvcP('poi_club',['A PORTA','THE DOOR']),tvcP('int_club',['A PISTA','THE DANCE FLOOR'])]},
+ {k:'bank',ic:'🏦',c:'#5ac0ff',l:'2',n:['ASSALTO AO BANCO','BANK HEIST'],
+  g:['No balcão, com uma arma, E anuncia o assalto: 3 estrelas na hora e 8 policiais. Derrube todos e o cofre abre (+$1.000).','At the counter, holding a gun, E announces the heist: 3 stars at once and 8 officers. Take them all down and the vault opens (+$1,000).'],
+  p:[tvcP('poi_bank',['SUNSET BANK','SUNSET BANK']),tvcP('int_bank2',['O SAGUÃO','THE LOBBY'])]},
+ {k:'vinyl',ic:'💿',c:'#ffd24a',l:'2',n:['DISCOS RAROS','RARE RECORDS'],
+  g:['15 discos raros estão escondidos pela cidade. Eles só contam para a coleção depois de vendidos na casa de penhores ($150 cada).','15 rare records are hidden around the city. They only count toward the collection once sold at the pawn shop ($150 each).'],
+  p:[tvcP(null,['COLEÇÃO','COLLECTION'],'vinyl'),tvcP('int_pawn2',['CASA DE PENHORES','PAWN SHOP'])]},
+ {k:'safe',ic:'🏠',c:'#ffd24a',l:'1',n:['CASA SEGURA','SAFEHOUSE'],
+  g:['Salva o jogo, enche a vida e guarda 2 carros na garagem. O conversível da missão 1 mora na vaga 1.','Saves the game, refills health and keeps 2 cars in the garage. The convertible from mission 1 lives in spot 1.'],
+  p:[tvcP('poi_safe',['CASA E GARAGEM','HOUSE AND GARAGE'])]},
+ {k:'motel',ic:'🛏',c:'#ff5aa8',l:'1',n:['MOTEL MIRAGEM','MIRAGE MOTEL'],
+  g:['O quarto 6 é o ponto de encontro da história. Cercas e muretas do motel dá para pular.','Room 6 is the story\'s meeting point. The motel fences and low walls can be jumped.'],
+  p:[tvcP('poi_motel',['AO ANOITECER','AT DUSK'])]},
+ {k:'tune',ic:'🔧',c:'#ff4ae0',l:'1',n:['OFICINA','GARAGE SHOP'],
+  g:['Turbo ($1.500) dobra a velocidade final e o neon embaixo do carro custa $300. Pintar o carro também despista a polícia.','Turbo ($1,500) doubles top speed and the underglow costs $300. A new paint job also shakes off the police.'],
+  p:[tvcP('poi_tune',['TURBO E NEON','TURBO AND NEON'])]},
+ {k:'deal',ic:'🚗',c:'#4a9aff',l:'1',n:['CONCESSIONÁRIA','CAR DEALER'],
+  g:['Coastal Car Shop: escolha veículo e cor na plataforma giratória. De $1.200 (moto) a $25.000 (supercarro), com documento no seu nome.','Coastal Car Shop: pick a vehicle and color on the turntable. From $1,200 (bike) to $25,000 (supercar), registered in your name.'],
+  p:[tvcP('car_dmc',['COASTAL CAR SHOP','COASTAL CAR SHOP'],'deal',{dim:1})]},
+ {k:'race',ic:'🏁',c:'#f0f0f0',l:'2',n:['CORRIDA E ARRANCADA','RACE AND DRAG'],
+  g:['Só à noite (22h às 8h). Corrida: 7 checkpoints contra 2 rivais. Arrancada: 300 m em reta com nitro.','Only at night (10 PM to 8 AM). Race: 7 checkpoints against 2 rivals. Drag: a 300 m straight with nitro.'],
+  p:[tvcP('side_race',['CORRIDA','RACE']),tvcP('side_drag',['ARRANCADA','DRAG'])]},
+ {k:'rampage',ic:'💀',c:'#ff4a4a',l:'1',n:['RAMPAGE','RAMPAGE'],
+  g:['Encoste a pé numa caveira: 90 s de Demogorgons sem fim. $10 por abate e $100 se sobreviver.','Touch a skull on foot: 90 s of endless Demogorgons. $10 per kill and $100 if you survive.'],
+  p:[tvcP('side_skull',['A CAVEIRA','THE SKULL'])]},
+ {k:'forest',ic:'🌲',c:'#5ad05a',l:'2',n:['FLORESTA E CEMITÉRIO','FOREST AND CEMETERY'],
+  g:['Há rumores de que um Demogorgon escapou e se esconde na mata. O cemitério do mausoléu fica sombrio à noite.','Rumor has it a Demogorgon escaped and hides in the woods. The mausoleum cemetery gets eerie at night.'],
+  p:[tvcP('poi_forest',['A MATA','THE WOODS']),tvcP('poi_cem',['O CEMITÉRIO','THE CEMETERY'])]},
+ {k:'isle',ic:'🛂',c:'#4ad0c0',l:'1',n:['MICRO-ILHA · PEDÁGIO','MICRO-ISLAND · TOLL'],
+  g:['Um quarteirão cercado de água, com uma única ponte e pedágio de $10. Furar a cancela chama a polícia; a garagem da ilha guarda o DeLorean.','A block surrounded by water, with a single bridge and a $10 toll. Crashing the gate calls the police; the island garage keeps the DeLorean.'],
+  p:[tvcP('isle',['A ILHA','THE ISLAND'])]},
+ {k:'skate',ic:'🛹',c:'#ff4a4a',l:'2',n:['SKATE','SKATEBOARD'],
+  g:['F sobe e desce da prancha, Espaço pula. Prancha nova na Skate Shop do shopping ($120), com estampa e texto.','F hops on and off the board, Space jumps. New boards at the mall\'s Skate Shop ($120), with graphics and text.'],
+  p:[tvcP('skate_pl',['NA RUA','ON THE STREET']),tvcP('scn_skate',['SKATISTAS DA ORLA','BOARDWALK SKATERS'])]},
+ {k:'vehicles',ic:'🚁',c:'#ff7a1a',l:'3',n:['HELICÓPTERO, VORTEX E JET SKI','HELICOPTER, VORTEX AND JET SKI'],
+  g:['Helicópteros nos helipontos, o hovercraft Vortex na areia ao lado do farol e jet skis na beira da praia e no píer.','Helicopters on the helipads, the Vortex hovercraft on the sand by the lighthouse and jet skis on the shore and at the pier.'],
+  p:[tvcP('veh_heli',['HELIPONTO','HELIPAD']),tvcP('veh_vortex',['VORTEX','VORTEX']),tvcP('veh_jet',['JET SKI','JET SKI'])]},
+ {k:'taxi',ic:'🚕',c:'#ffd200',l:'1',n:['TÁXI E MISSÕES DE VEÍCULO','TAXI AND VEHICLE MISSIONS'],
+  g:['G assobia para um táxi ou ligue 555. Dentro de táxi, viatura ou ambulância, T começa a missão: taxista, vigilante ou paramédico.','G whistles for a cab, or dial 555. In a taxi, patrol car or ambulance, T starts the mission: cab driver, vigilante or paramedic.'],
+  p:[tvcP('taxi',['TÁXI','TAXI'])]},
+ {k:'mall',ic:'🛍',c:'#ff8ad8',l:'1',n:['SHOPPING','MALL'],
+  g:['2 andares e 17 lojas: roupas, celulares, discos, farmácia, joias e skate. Vazio de dia, cheio à noite.','2 floors and 17 stores: clothes, phones, records, pharmacy, jewelry and skateboards. Empty by day, packed at night.'],
+  p:[tvcP('mall_int',['À NOITE','AT NIGHT'])]},
+ {k:'duo',ic:'👫',c:'#ff6ab0',l:'1',n:['NATHAN E CLAIRE','NATHAN AND CLAIRE'],
+  g:['Alt troca de personagem. Caps Lock é o especial: bullet time do Nathan a pé, câmera lenta da Claire ao volante. Juntos no carro, um dirige e o outro atira.','Alt switches character. Caps Lock is the special: Nathan\'s bullet time on foot, Claire\'s slow motion behind the wheel. Together in a car, one drives and the other shoots.'],
+  p:[tvcP(null,['DOIS PERSONAGENS','TWO CHARACTERS'],'duo')]},
+ {k:'online',ic:'🌐',c:'#3ae08a',l:'1',n:['ONLINE','ONLINE'],
+  g:['Mundo, clima e trânsito compartilhados com outros jogadores. G pede carona no carro de alguém e a troca de mundo leva todos juntos.','World, weather and traffic shared with other players. G hitches a ride in someone\'s car and a world change takes everyone along.'],
+  p:[tvcP(null,['CARONA','RIDE'],'online')]},
+ {k:'stats',ic:'📄',c:'#c9a26a',l:'1',n:['REGISTRO E ESTATÍSTICAS','RECORDS AND STATS'],
+  g:['O Registro guarda os diálogos e mostra as estatísticas do save: carros destruídos, tempo procurado, dias, prisões, fugas e carros roubados.','The Records keep the dialogues and show the save stats: cars destroyed, time wanted, days, arrests, escapes and cars stolen.'],
+  p:[tvcP(null,['ESTATÍSTICAS','STATS'],'stats')]}
+];
+function tvcL(a){return Array.isArray(a)?(S.lang==='en'?a[1]:a[0]):(a||'')}
+function tvcE(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}
+function tvcT(a,cls){return '<span class="'+(cls||'t')+'" data-t="'+tvcE(tvcL(a))+'"></span>'}
+function tvcSrc(i){return 'tvcat/'+i+'.jpg'}
+function tvcFx(f){
+ if(f==='disguise')return '<div class="fx-dis">'+tvcT(['ZONA','ZONE'],'fx-tag')+'<i class="ic">'+TVC_SHIRT+'</i><i class="ic">'+TVC_CAR+'</i></div>';
+ if(f==='ringR')return '<div class="fx-ring r"></div>';
+ if(f==='ringB')return '<div class="fx-ring b"></div>';
+ if(f==='gang')return '<div class="fx-gang y"></div><div class="fx-gang gr"></div>';
+ if(f==='levels'){const r=[['★','1 viatura','1 patrol car'],['★★','2 viaturas atirando','2 patrol cars shooting'],['★★★','helicóptero atirando do alto','helicopter shooting from above']];
+  return '<div class="fx-lv">'+r.map(q=>'<div><b data-t="'+q[0]+'"></b>'+tvcT([q[1],q[2]])+'</div>').join('')+'</div>'}
+ if(f==='x9')return '<div class="fx-x9"><b>📞</b><span class="n" data-t="190"></span><i class="bar"><u></u></i>'+tvcT(['10 s para calar a testemunha','10 s to silence the witness'])+'</div>';
+ if(f==='pix')return '<div class="fx-pix">'+tvcT(['PIX · 6–24 m','PIX · 6–24 m'])+'<i class="bar"><u></u></i></div>';
+ if(f==='scan')return '<div class="fx-scan"><i></i><i></i><i></i><i></i></div>';
+ if(f==='flash')return '<div class="fx-flash"></div>';
+ if(f==='rain')return '<div class="fx-bolt"></div>';
+ if(f==='corona')return '<div class="fx-corona"></div>';
+ if(f==='deal')return '<div class="fx-card"><b class="big" data-t="$1.200 – $25.000"></b>'+tvcT(['da moto ao supercarro, na cor que você quiser','from motorbike to supercar, in any color'])+tvcT(['o carro novo vai direto para a garagem','the new car goes straight to the garage'])+'</div>';
+ if(f==='target')return '<div class="fx-target"><i></i><i></i><i></i></div>';
+ if(f==='dig')return '<div class="fx-dig">'+tvcT(['COLHER · 30 s CAVANDO','SPOON · 30 s OF DIGGING'])+'<i class="bar"><u></u></i></div>';
+ if(f==='loan')return '<div class="fx-card"><b class="big" data-t="$10.000"></b>'+tvcT(['10 horas para pagar','10 hours to pay back'])+tvcT(['atrasou: 3 carros de cobradores','late: 3 cars of collectors'],'t warn')+'</div>';
+ if(f==='vinyl')return '<div class="fx-card"><div class="disc"></div><b class="big" data-t="15"></b>'+tvcT(['discos pela cidade','records around the city'])+tvcT(['venda: $150 cada','sell: $150 each'])+'</div>';
+ if(f==='duo')return '<div class="fx-card duo"><div class="pair"><span class="who n" data-t="N"></span><span class="who c" data-t="C"></span></div><div class="pair lbl"><span data-t="NATHAN"></span><span data-t="CLAIRE"></span></div>'+tvcT(['ALT troca · CAPS LOCK especial','ALT switch · CAPS LOCK special'])+'</div>';
+ if(f==='online')return '<div class="fx-card"><div class="net"><i></i><i></i><i></i><i></i></div>'+tvcT(['até 3 de carona num carro de 4 portas','up to 3 riders in a 4-door car'])+tvcT(['viagem no tempo leva os passageiros','time travel takes the passengers'])+'</div>';
+ if(f==='stats'){const r=[['carros destruídos','cars destroyed'],['tempo procurado','time wanted'],['tempo dirigindo','time driving'],['dias','days'],['vezes preso','arrests'],['fugas da prisão','jailbreaks'],['carros roubados','cars stolen']];
+  return '<div class="fx-card stats">'+r.map(q=>'<div>'+tvcT(q)+'</div>').join('')+'</div>'}
+ return '';
+}
+function tvcPanel(q,k){const st=[];if(q.br)st.push('--br:'+q.br);if(q.zoom)st.push('--zm:1');
+ const img=q.i?'<img alt="" decoding="async" src="'+tvcSrc(q.i)+'" class="'+(q.fit?'fit':'')+(q.dim?' dim':'')+'" onerror="this.closest(\'.tvc-pn\').classList.add(\'nosig\')">':'';
+ return '<div class="tvc-pn p'+k+(q.i?'':' gfx')+(q.zoom?' zm':'')+'" style="'+st.join(';')+'">'+img+(q.f?tvcFx(q.f):'')+'<div class="tvc-cap">'+tvcT(q.t)+'</div><div class="tvc-nosig" data-t="'+(S.lang==='en'?'NO SIGNAL':'SEM SINAL')+'"></div></div>'}
+function tvcRender(){const ch=TVCAT[TVC.i],el=$('#tvcScr');if(!ch||!el)return;
+ el.className='tvc-scr lay-'+ch.l;el.style.setProperty('--cc',ch.c);
+ el.innerHTML='<div class="tvc-grid">'+ch.p.map(tvcPanel).join('')+'</div>'+
+  '<div class="tvc-logo"><b>'+ch.ic+'</b>'+tvcT(ch.n,'t nm')+'</div><div class="tvc-osd" data-t="CH '+String(TVC.i+1).padStart(2,'0')+'"></div>'+
+  (ch.l==='alt'?'<div class="tvc-dots">'+ch.p.map((q,k)=>'<i class="'+(k?'':'on')+'"></i>').join('')+'</div>':'')+
+  '<canvas class="tvc-noise" width="160" height="90"></canvas>';
+ $('#tvcLeg').innerHTML=tvcT(ch.g,'t');
+ {const en=S.lang==='en';$('#tvcGuideLbl').setAttribute('data-t',en?'GUIDE':'GUIA');$('#tvcHelp').setAttribute('data-t',en?'←/→ channel · G guide · 0–9 number · Esc exit':'←/→ canal · G guia · 0–9 número · Esc sai')}
+ $('#tvcNum').setAttribute('data-t',String(TVC.i+1).padStart(2,'0')+' / '+TVCAT.length);
+ TVC.altI=0;TVC.altT=performance.now();if(ch.l==='alt')tvcAltShow(0);
+ for(const d of [1,-1]){const n=TVCAT[(TVC.i+d+TVCAT.length)%TVCAT.length];for(const q of n.p)if(q.i){const im=new Image();im.src=tvcSrc(q.i)}}
+ if(TVC.guide)tvcGuideRender();
+}
+function tvcAltShow(k){const ps=[...document.querySelectorAll('#tvcScr .tvc-pn')],ds=[...document.querySelectorAll('#tvcScr .tvc-dots i')];
+ ps.forEach((p,j)=>p.classList.toggle('on',j===k));ds.forEach((d,j)=>d.classList.toggle('on',j===k))}
+function tvcNoise(ms){const cv=document.querySelector('#tvcScr .tvc-noise');if(!cv)return;const g=cv.getContext('2d'),t0=performance.now();cv.classList.add('on');
+ const id=g.createImageData(160,90),d=id.data;
+ const step=()=>{if(!TVC.open||!cv.isConnected)return;for(let i=0;i<d.length;i+=4){const v=Math.random()*255|0;d[i]=d[i+1]=d[i+2]=v;d[i+3]=255}g.putImageData(id,0,0);
+  if(performance.now()-t0<ms)requestAnimationFrame(step);else cv.classList.remove('on')};step();
+ try{initAudio();if(!AC||!master)return;const t=AC.currentTime,len=Math.floor(AC.sampleRate*ms/1000),b=AC.createBuffer(1,len,AC.sampleRate),a=b.getChannelData(0);for(let i=0;i<len;i++)a[i]=Math.random()*2-1;
+  const s=AC.createBufferSource();s.buffer=b;const f=AC.createBiquadFilter();f.type='bandpass';f.frequency.value=2400;f.Q.value=.6;const gn=AC.createGain();gn.gain.setValueAtTime(.0001,t);gn.gain.linearRampToValueAtTime(.09,t+.02);gn.gain.setValueAtTime(.09,t+ms/1000-.06);gn.gain.linearRampToValueAtTime(.0001,t+ms/1000);
+  s.connect(f);f.connect(gn);gn.connect(master);s.start(t);s.stop(t+ms/1000+.02)}catch(e){}}
+function tvcGo(i,noise){TVC.i=(i+TVCAT.length)%TVCAT.length;tvcRender();if(noise!==false)tvcNoise(260)}
+function tvcStep(d){tvcGo(TVC.i+d)}
+function tvcGuideRender(){const g=$('#tvcGuide');g.innerHTML='<div class="tvc-ghead">'+tvcT(['GUIA DE CANAIS','CHANNEL GUIDE'])+'</div><div class="tvc-glist">'+TVCAT.map((c,k)=>'<button type="button" class="tvc-gi'+(k===TVC.i?' cur':'')+'" data-k="'+k+'" style="--cc:'+c.c+'"><b data-t="'+String(k+1).padStart(2,'0')+'"></b><i>'+c.ic+'</i>'+tvcT(c.n)+'</button>').join('')+'</div>';
+ const cur=g.querySelector('.tvc-gi.cur');if(cur){cur.focus({preventScroll:true});cur.scrollIntoView({block:'nearest'})}}
+function tvcGuide(on){TVC.guide=on===undefined?!TVC.guide:on;$('#tvcGuide').hidden=!TVC.guide;$('#tvcat').classList.toggle('guide',TVC.guide);if(TVC.guide)tvcGuideRender();else{const b=$('#tvcNext');if(b)b.focus({preventScroll:true})}}
+function tvcOpen(){if(TVC.open)return;TVC.open=true;TVC.ret=document.activeElement;for(const k in keys)keys[k]=false;try{GUN.firing=false}catch(e){}if(document.pointerLockElement)document.exitPointerLock();
+ $('#tvcat').hidden=false;document.body.classList.add('tvc-on');tvcGuide(false);tvcGo(TVC.i,true);$('#tvcNext').focus({preventScroll:true});TVC.raf=requestAnimationFrame(tvcLoop)}
+function tvcClose(){if(!TVC.open)return;TVC.open=false;TVC.guide=false;$('#tvcat').hidden=true;document.body.classList.remove('tvc-on');$('#tvcScr').innerHTML='';
+ const r=TVC.ret&&TVC.ret.isConnected?TVC.ret:$('#tvCatBtn');try{r&&r.focus()}catch(e){}}
+function tvcLoop(now){if(!TVC.open)return;const ch=TVCAT[TVC.i];
+ if(ch&&ch.l==='alt'&&!TVC.guide&&now-TVC.altT>TVC_ALT_MS){TVC.altT=now;TVC.altI=(TVC.altI+1)%ch.p.length;tvcAltShow(TVC.altI)}
+ if(TVC.num&&now-TVC.numT>1400){const n=parseInt(TVC.num,10);TVC.num='';$('#tvcOsdIn').hidden=true;if(n>=1&&n<=TVCAT.length&&n-1!==TVC.i)tvcGo(n-1)}
+ requestAnimationFrame(tvcLoop)}
+function tvcDigit(d){TVC.num=(TVC.num+d).slice(-2);TVC.numT=performance.now();const o=$('#tvcOsdIn');o.hidden=false;o.setAttribute('data-t',TVC.num.padStart(2,'-'));if(TVC.num.length>=2||parseInt(TVC.num+'0',10)>TVCAT.length)TVC.numT=-1e9}
+function tvcGuideMove(dx,dy){const L=[...document.querySelectorAll('#tvcGuide .tvc-gi')];if(!L.length)return;let i=L.indexOf(document.activeElement);if(i<0)i=TVC.i;
+ const cols=Math.max(1,Math.round($('#tvcGuide .tvc-glist').clientWidth/Math.max(1,L[0].offsetWidth)));i=clamp(i+dx+dy*cols,0,L.length-1);L[i].focus();L[i].scrollIntoView({block:'nearest'})}
+addEventListener('keydown',e=>{if(!TVC.open)return;const c=e.code;if(/^F(5|11|12)$/.test(c))return;e.stopImmediatePropagation();
+ if(c==='Escape'||c==='Backspace'){e.preventDefault();if(e.repeat)return;if(TVC.guide)tvcGuide(false);else tvcClose();return}
+ if(c==='Tab'){return}
+ if(TVC.guide){e.preventDefault();if(c==='ArrowLeft'||c==='KeyA')tvcGuideMove(-1,0);else if(c==='ArrowRight'||c==='KeyD')tvcGuideMove(1,0);else if(c==='ArrowUp'||c==='KeyW')tvcGuideMove(0,-1);else if(c==='ArrowDown'||c==='KeyS')tvcGuideMove(0,1);
+  else if((c==='Enter'||c==='Space'||c==='NumpadEnter')&&!e.repeat){const b=document.activeElement;if(b&&b.dataset&&b.dataset.k!=null){tvcGuide(false);tvcGo(+b.dataset.k)}}else if(c==='KeyG'&&!e.repeat)tvcGuide(false);return}
+ if(c==='ArrowLeft'||c==='KeyA'||c==='PageDown'||c==='Comma'){e.preventDefault();tvcStep(-1);return}
+ if(c==='ArrowRight'||c==='KeyD'||c==='PageUp'||c==='Period'){e.preventDefault();tvcStep(1);return}
+ if((c==='KeyG'||c==='ArrowUp'||c==='ArrowDown'||c==='KeyW'||c==='KeyS')&&!e.repeat){e.preventDefault();tvcGuide(true);return}
+ const m=/^(?:Digit|Numpad)(\d)$/.exec(c);if(m){e.preventDefault();tvcDigit(m[1]);return}
+ if(c==='Enter'||c==='Space'||c==='NumpadEnter'){const b=document.activeElement;if(b&&$('#tvcat').contains(b)&&b.tagName==='BUTTON')return;e.preventDefault();tvcStep(1);return}
+ e.preventDefault()},true);
+/* controle: ←/→ ou L1/R1 = canal, △ = guia, ○/OPTIONS = sair; no guia, direcional/analógico anda e ✕ escolhe */
+function tvcPad(B,pr,g,dt){const ax=g.axes||[],lx=padAxis(ax[0]||0),ly=padAxis(ax[1]||0);TVC.navT-=dt;let sx=0,sy=0;
+ if(TVC.navT<=0){if(lx>.6)sx=1;else if(lx<-.6)sx=-1;if(ly>.6)sy=1;else if(ly<-.6)sy=-1;if(sx||sy)TVC.navT=.22}else if(Math.abs(lx)<.3&&Math.abs(ly)<.3)TVC.navT=0;
+ if(pr(1)||pr(9)){if(TVC.guide)tvcGuide(false);else tvcClose();return}
+ if(TVC.guide){if(pr(14)||sx<0)tvcGuideMove(-1,0);else if(pr(15)||sx>0)tvcGuideMove(1,0);else if(pr(12)||sy<0)tvcGuideMove(0,-1);else if(pr(13)||sy>0)tvcGuideMove(0,1);
+  if(pr(0)){const b=document.activeElement;if(b&&b.dataset&&b.dataset.k!=null){tvcGuide(false);tvcGo(+b.dataset.k)}}if(pr(3))tvcGuide(false);return}
+ if(pr(14)||pr(4)||sx<0)tvcStep(-1);else if(pr(15)||pr(5)||pr(0)||sx>0)tvcStep(1);if(pr(3)||pr(12)||pr(13))tvcGuide(true)}
+(function tvcBind(){const r=$('#tvcat');if(!r)return;
+ $('#tvCatBtn').addEventListener('click',e=>{e.stopPropagation();tvcOpen()});
+ $('#tvcPrev').addEventListener('click',()=>tvcStep(-1));$('#tvcNext').addEventListener('click',()=>tvcStep(1));
+ $('#tvcClose').addEventListener('click',tvcClose);$('#tvcGuideBtn').addEventListener('click',()=>tvcGuide());
+ $('#tvcGuide').addEventListener('click',e=>{const b=e.target.closest('.tvc-gi');if(b){tvcGuide(false);tvcGo(+b.dataset.k)}});
+ const sc=$('#tvcScr');sc.addEventListener('pointerdown',e=>{TVC.sw={x:e.clientX,y:e.clientY,t:performance.now()}});
+ sc.addEventListener('pointerup',e=>{const s=TVC.sw;TVC.sw=null;if(!s)return;const dx=e.clientX-s.x,dy=e.clientY-s.y;if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)*1.3)tvcStep(dx<0?1:-1);else if(Math.abs(dx)<8&&Math.abs(dy)<8&&performance.now()-s.t<350)tvcStep(1)});
+ sc.addEventListener('pointercancel',()=>{TVC.sw=null});
+ r.addEventListener('wheel',e=>{if(TVC.guide)return;e.preventDefault();if(Math.abs(e.deltaY)<4)return;const n=performance.now();if(n-(TVC.wT||0)<220)return;TVC.wT=n;tvcStep(e.deltaY>0?1:-1)},{passive:false});
+})();
+
 
 </script>
