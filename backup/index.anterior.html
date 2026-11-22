@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 (function(){const h0=Math.hypot,sq=Math.sqrt,ab=Math.abs;Math.hypot=function hypot(a,b,c,d){if(d!==undefined)return h0(a,b,c,d);if(c!==undefined)return sq(a*a+b*b+c*c);if(b!==undefined)return sq(a*a+b*b);return a===undefined?0:ab(+a)}})();
 /* v78 · BUILD: número da entrega. Ao abrir, o jogo lê version.txt (poucos bytes, sem cache) e, se a build no servidor for outra
    (navegador/celular servindo cópia velha), recarrega uma vez. Saves e configurações (localStorage) NÃO são apagados. */
-var BUILD_TAG='r14';
+var BUILD_TAG='r15';
 (function(){try{if(!/^https?:$/.test(location.protocol))return;const k='ps_build_reload';
  fetch(new URL('version.txt?b='+Date.now(),location.href).href,{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=/^\s*((?:dev\s+)?r[\d.]+)\s*$/i.exec(t||'');if(!m||m[1].replace(/\s+/g,' ').toLowerCase()===BUILD_TAG.toLowerCase()){try{sessionStorage.removeItem(k)}catch(e){}return}
   let n=0;try{n=+sessionStorage.getItem(k)||0}catch(e){}if(n>=2)return;try{sessionStorage.setItem(k,String(n+1))}catch(e){}
@@ -24878,6 +24878,21 @@ function brSolidAt(x,z,pad){const C=BR.C,W=BR.W,H=BR.H,m=BR.m,lx=x-BR.ox,lz=z-BR
 /* câmera em 3ª pessoa: até onde dá para recuar a partir de (x,z) na direção (dx,dz) sem atravessar parede fina */
 function brCamDist(x,z,dx,dz,max){for(let s=.2;s<=max;s+=.2)if(brSolidAt(x+dx*s,z+dz*s,.22))return Math.max(.3,s-.3);return max}
 /* ---------- texturas (canvas) ---------- */
+/* v3 r15: penumbra "aconchegante" (mesma ideia do shopping: luz calculada por pixel). Poça de luz sob cada luminária
+   (2 por célula, em (.375,.375) e (.875,.875) da célula — onde o brCeilTex pinta os painéis), escurecendo entre elas e no pé
+   das paredes; média ~1 para não perder o claro. A força segue a cor de vértice (zonas com luz apagada continuam apagadas). */
+const BR_GLSL=`varying vec3 vBP;uniform float uBC;
+float brPool(vec2 p,float s){vec2 q=fract(p/uBC)*uBC,a=vec2(.375,.375)*uBC,b=vec2(.875,.875)*uBC;float k=1./(s*s),g=0.;
+ g+=exp(-dot(q-a,q-a)*k);g+=exp(-dot(q-b,q-b)*k);vec2 e=q-b+vec2(uBC,uBC);g+=exp(-dot(e,e)*k);e=q-b+vec2(uBC,0.);g+=exp(-dot(e,e)*k);e=q-b+vec2(0.,uBC);g+=exp(-dot(e,e)*k);
+ e=q-a-vec2(uBC,0.);g+=exp(-dot(e,e)*k);e=q-a-vec2(0.,uBC);g+=exp(-dot(e,e)*k);return g;}`;
+function brLitMat(map,kind){const m=new THREE.MeshBasicMaterial({map,vertexColors:true,fog:true});
+ m.onBeforeCompile=sh=>{sh.uniforms.uBC={value:BR.C};
+  sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vBP;').replace('#include <project_vertex>','#include <project_vertex>\nvBP=transformed;');
+  const f=kind===0?'float g=brPool(vBP.xz,1.55);float lv=clamp(vColor.r*1.15,0.,1.);diffuseColor.rgb*=mix(1.,.72+.36*min(g,1.),lv);'
+   :kind===1?'float g=brPool(vBP.xz,1.05);float lv=clamp(vColor.r*1.15,0.,1.);diffuseColor.rgb*=mix(1.,.8+.25*min(g,1.),lv);'
+   :'float g=brPool(vBP.xz,1.9);float lv=clamp(vColor.r*1.15,0.,1.);float h=clamp(vBP.y/3.2,0.,1.);diffuseColor.rgb*=mix(1.,(.7+.32*min(g,1.))*(.84+.16*smoothstep(0.,.75,h))*(1.-.08*smoothstep(.86,1.,h)),lv);';
+  sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\n'+BR_GLSL).replace('#include <color_fragment>','#include <color_fragment>\n'+f)};
+ m.customProgramCacheKey=()=>'brLit'+kind;return m}
 function brTexFin(c){const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=4;return t}
 function brWallTex(){const c=cv(256,256),g=c.getContext('2d');g.fillStyle='#d2c374';g.fillRect(0,0,256,256);
  for(let x=0;x<256;x+=32){g.fillStyle='rgba(150,128,48,.2)';g.fillRect(x,0,3,256);g.fillStyle='rgba(255,250,200,.13)';g.fillRect(x+16,0,2,256)}
@@ -24927,7 +24942,7 @@ function brBuild(){const key=S.seed+'|'+(city.N||7)+'|'+(city.worldNo||0);if(BR.
  for(let k=0;k<m.pil.length;k+=2){const x=m.pil[k]*C,z=m.pil[k+1]*C;boxes.push(x-.45,z-.45,x+.45,z+.45,2,1,1)}
  BR.boxes=boxes;
  const tw=brWallTex(),tf=brFloorTex(),tc=brCeilTex();BR.texs=[tw,tf,tc];
- BR.mats={w:new THREE.MeshBasicMaterial({map:tw,vertexColors:true,fog:true}),f:new THREE.MeshBasicMaterial({map:tf,vertexColors:true,fog:true}),c:new THREE.MeshBasicMaterial({map:tc,vertexColors:true,fog:true})};
+ BR.mats={w:brLitMat(tw,2),f:brLitMat(tf,0),c:brLitMat(tc,1)};
  BR.fog=new THREE.Fog(0x5c5330,7,52);BR.bg=new THREE.Color(0x2e2914);
  const grp=new THREE.Group();grp.position.set(BR.ox,0,BR.oz);grp.updateMatrix();grp.matrixAutoUpdate=false;grp.visible=false;scene.add(grp);BR.grp=grp;
  const GW=[],CH=[];for(let k=0;k<NC*NC;k++)GW.push(brGeo());

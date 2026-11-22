@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 (function(){const h0=Math.hypot,sq=Math.sqrt,ab=Math.abs;Math.hypot=function hypot(a,b,c,d){if(d!==undefined)return h0(a,b,c,d);if(c!==undefined)return sq(a*a+b*b+c*c);if(b!==undefined)return sq(a*a+b*b);return a===undefined?0:ab(+a)}})();
 /* v78 · BUILD: número da entrega. Ao abrir, o jogo lê version.txt (poucos bytes, sem cache) e, se a build no servidor for outra
    (navegador/celular servindo cópia velha), recarrega uma vez. Saves e configurações (localStorage) NÃO são apagados. */
-var BUILD_TAG='r15';
+var BUILD_TAG='r16';
 (function(){try{if(!/^https?:$/.test(location.protocol))return;const k='ps_build_reload';
  fetch(new URL('version.txt?b='+Date.now(),location.href).href,{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=/^\s*((?:dev\s+)?r[\d.]+)\s*$/i.exec(t||'');if(!m||m[1].replace(/\s+/g,' ').toLowerCase()===BUILD_TAG.toLowerCase()){try{sessionStorage.removeItem(k)}catch(e){}return}
   let n=0;try{n=+sessionStorage.getItem(k)||0}catch(e){}if(n>=2)return;try{sessionStorage.setItem(k,String(n+1))}catch(e){}
@@ -11005,7 +11005,7 @@ function mapLegendItems(){
   ['hosp','HOSPITAL',has('hosp')],['pol','DELEGACIA',has('pol')],['mall','SHOPPING',has('mall')],['bank','BANCO',has('bank')],['pawn','CASA DE PENHORES',has('pawn')],['motel','MOTEL',has('motel')],['ammo','MUNIÇÕES · ARMAS',has('ammo')],['mkt','SUPERMERCADO',has('mkt')],['gas','POSTO',(city.lms||[]).some(l=>l.name==='gas')],
   ['hall','PREFEITURA',has('hall')],['univ','UNIVERSIDADE',has('univ')],['stad','ESTÁDIO',has('stad')],['cem','CEMITÉRIO',has('cem')],['sky','ARRANHA-CÉU',has('sky')],['ind','INDÚSTRIA',has('ind')],['air','AEROPORTO',has('air')],
   ['beach','PRAIA',has('beach')],['parachute','SALTO DE PARAQUEDAS',has('parachute')],['rift','FENDA · UPSIDE DOWN',has('rift')],
-  ['wz','ÁREA DE BUSCA DA POLÍCIA',WZ.list.length>0],['wzOff','BUSCA ENCERRANDO · CRIME AQUI DEVOLVE AS ESTRELAS',WZ.fade.length>0],['obra','OBRA · RUA FECHADA (6H–18H)',!!(typeof OBRA!=='undefined'&&OBRA.seg&&OBRA.phase!=='off')],['gangY','GANGUE AMARELA',!!(typeof GANG!=='undefined'&&gangOK()&&GANG.T.some(t=>t.g===0&&!t.clear))],['gangG','GANGUE VERDE',!!(typeof GANG!=='undefined'&&gangOK()&&GANG.T.some(t=>t.g===1&&!t.clear))],['rain','CHUVA',CELLS.some(c=>c.s>=.05)],['unknown','ITEM OU VEÍCULO RARO (RADAR)',true],['chase','VIATURA TE SEGUINDO (RADAR)',true]];
+  ['wz','ÁREA DE BUSCA DA POLÍCIA',WZ.list.length>0],['wzOff','BUSCA ENCERRANDO · CRIME AQUI DEVOLVE AS ESTRELAS',WZ.fade.length>0],['obra','OBRA · RUA FECHADA',!!(typeof OBRA!=='undefined'&&OBRA.seg&&OBRA.phase!=='off')],['gangY','GANGUE AMARELA',!!(typeof GANG!=='undefined'&&gangOK()&&GANG.T.some(t=>t.g===0&&!t.clear))],['gangG','GANGUE VERDE',!!(typeof GANG!=='undefined'&&gangOK()&&GANG.T.some(t=>t.g===1&&!t.clear))],['rain','CHUVA',CELLS.some(c=>c.s>=.05)],['unknown','ITEM OU VEÍCULO RARO (RADAR)',true],['chase','VIATURA TE SEGUINDO (RADAR)',true]];
  return all.filter(q=>q[2]&&storyMap(q[0])&&(!city.haze||q[0]==='gps'||q[0]==='beach'||q[0]==='rain'));
  }
 function mapLegendRender(){
@@ -13631,11 +13631,15 @@ function pedevTick(dt){
   1. a via fecha para o trânsito (canDrive/bfsNext/populate ignoram o segmento) e o GPS desvia;
   2. quando ninguém mais está passando ali (ou depois de 45 s), aparecem com fade: 5 cones em cada ponta atravessando a via,
      buraco aberto no asfalto (borda de terra + monte de terra) e 2–3 operários de roupa fluorescente em volta;
-  3. às 18h tudo some com fade e o trânsito volta. Nunca à noite.
+  3. v3 r16: fica o dia inteiro; quando o dia muda (obraDay) some com fade e outro trecho é sorteado.
+ v3 r16: o miolo preto do buraco falha (BR_GLC) e é a entrada das Backrooms (brWorldTick → brFall); o beco com falha saiu.
  O trecho é sorteado pela seed + dia (igual para todos no online). Radar/mapa: faixa vermelha com pontilhado. Só no mundo moderno. */
 const OBRA={key:null,seg:null,phase:'off',day:-1,a:0,t:0,grp:null,mats:[],peds:[]};
 function obraClosed(kx,kz,d){return !!OBRA.key&&segKey(kx,kz,d)===OBRA.key}
-function obraActiveHour(){const h=(DN.tod||0)/60;return h>=6&&h<18}
+/* v3 r16: no online o DN.day de cada um conta desde que entrou (só a hora vem do servidor) → o dia da obra sai do relógio real
+   (1 dia de jogo = 1440 s, igual ao gameTod do api.php; vira à meia-noite do jogo, fora do horário da obra) */
+function obraDay(){return ONLINE.on?Math.floor(Date.now()/1440000):(DN.day||0)}
+function obraActiveHour(){return true} /* v3 r16: dia inteiro (antes 6h–18h) */
 function obraPick(day){const N=city.N,rnd=mulberry32(((S.seed>>>0)^Math.imul(day+1,0x2c1b3c6d)^0x0b7a)>>>0),c=[];
  for(let kx=0;kx<=N;kx++)for(let kz=0;kz<=N;kz++)for(const d of [0,1]){if(!segExists(kx,kz,d))continue;const bx=kx+D[d][0],bz=kz+D[d][1];if(bx<1||bz<1||bx>N-1||bz>N-1||kx<1||kz<1)continue;
   let ok=true;for(const t of [.2,.5,.8]){const x=kx*P+D[d][0]*P*t,z=kz*P+D[d][1]*P*t;if(inWater(x,z)||(typeof riverZone==='function'&&riverZone(x,z))||isRural(x-D[d][1]*(RW/2+3),z+D[d][0]*(RW/2+3))||isRural(x+D[d][1]*(RW/2+3),z-D[d][0]*(RW/2+3))){ok=false;break}} /* só rua de asfalto da cidade (nada de estrada de terra da roça) */
@@ -13645,6 +13649,60 @@ function obraPick(day){const N=city.N,rnd=mulberry32(((S.seed>>>0)^Math.imul(day
 function obraSegCars(){const g=OBRA.seg;if(!g)return 0;const [kx,kz,d]=g,ux=D[d][0],uz=D[d][1],x0=kx*P,z0=kz*P;let n=0;
  for(const c of vehicles){if(!c.alive||c===PL.car||c.net||(c.mode!=='rail'&&!c.ai))continue;const s=(c.x-x0)*ux+(c.z-z0)*uz,l=(c.x-x0)*-uz+(c.z-z0)*ux;if(s>RW/2-2&&s<P-RW/2+2&&Math.abs(l)<RW/2+1)n++}return n}
 function obraMat(col,hex){const m=new THREE.MeshLambertMaterial({color:hex!==undefined?hex:COL(col),transparent:true,opacity:0,depthWrite:true});OBRA.mats.push(m);return m}
+/* v3 r16: decalque do buraco. Canvas 512 px = OBRA_HOLE_M metros; +x do canvas = sentido da rua (lado do monte de terra). */
+const OBRA_HOLE_M=6.4;
+function obraJag(rnd,R,n,amp){const ph=[rnd()*6.283,rnd()*6.283,rnd()*6.283,rnd()*6.283],w=[.1+rnd()*.06,.06+rnd()*.05,.04+rnd()*.03,.025],pts=[];
+ for(let i=0;i<n;i++){const t=i/n*6.283+(rnd()-.5)*.08,r=R*(1+w[0]*Math.sin(2*t+ph[0])+w[1]*Math.sin(3*t+ph[1])+w[2]*Math.sin(5*t+ph[2])+w[3]*Math.sin(9*t+ph[3]))+(rnd()-.5)*amp;pts.push([Math.cos(t)*r,Math.sin(t)*r])}return pts}
+function obraPath(g,pts,cx,cy,k){g.beginPath();pts.forEach((q,i)=>{const x=cx+q[0]*(k||1),y=cy+q[1]*(k||1);i?g.lineTo(x,y):g.moveTo(x,y)});g.closePath()}
+function obraHoleMat(rnd){const N=512,c=cv(N,N),g=c.getContext('2d'),px=N/OBRA_HOLE_M,C=N/2,R=1.5*px;
+ const edge=obraJag(rnd,R,56,R*.07);
+ /* poeira de terra espalhada (mais para o lado do monte, +x) */
+ for(let i=0;i<900;i++){const a=rnd()*6.283,r=R*(1+Math.pow(rnd(),1.8)*1.05),x=C+Math.cos(a)*r+(rnd()<.55?rnd()*R*.6:0),y=C+Math.sin(a)*r*.9;
+  g.fillStyle='rgba('+(98+rnd()*30|0)+','+(70+rnd()*20|0)+','+(44+rnd()*14|0)+','+(.25+rnd()*.4).toFixed(2)+')';const s=1+rnd()*2.6;g.fillRect(x,y,s,s)}
+ {const gr=g.createRadialGradient(C+R*.5,C,R*.6,C+R*.5,C,R*1.9);gr.addColorStop(0,'rgba(110,80,50,.28)');gr.addColorStop(1,'rgba(110,80,50,0)');g.fillStyle=gr;g.fillRect(0,0,N,N)}
+ /* asfalto afundado/escuro logo em volta da borda */
+ g.save();g.filter='blur(5px)';obraPath(g,edge,C,C,1.16);g.fillStyle='rgba(0,0,0,.26)';g.fill();g.restore();
+ /* rachaduras saindo da borda para o asfalto, com galhos */
+ const crack=(x,y,a,len,w)=>{g.lineWidth=w;g.strokeStyle='rgba(14,14,16,.72)';g.beginPath();g.moveTo(x,y);let L=0;
+  while(L<len){const st=5+rnd()*9;a+=(rnd()-.5)*.9;x+=Math.cos(a)*st;y+=Math.sin(a)*st;L+=st;g.lineTo(x,y);if(rnd()<.12&&w>1)crack(x,y,a+(rnd()<.5?-1:1)*(.5+rnd()*.6),len*.4*rnd()+10,w*.6)}g.stroke()};
+ const nc=7+(rnd()*5|0);for(let i=0;i<nc;i++){const q=edge[(rnd()*edge.length)|0],a=Math.atan2(q[1],q[0])+(rnd()-.5)*.6;crack(C+q[0]*.98,C+q[1]*.98,a,R*(.35+rnd()*.75),1.4+rnd()*1.4)}
+ /* face cortada do asfalto (cinza claro, agregado exposto) */
+ obraPath(g,edge,C,C);g.fillStyle='#6d6c69';g.fill();
+ for(let i=0;i<260;i++){const q=edge[(rnd()*edge.length)|0],t=.9+rnd()*.1;g.fillStyle=rnd()<.55?'rgba(40,40,42,.6)':'rgba(170,166,158,.45)';g.fillRect(C+q[0]*t,C+q[1]*t,1+rnd()*2,1+rnd()*2)}
+ /* parede de terra descendo (gradiente) + fundo escuro fora do centro */
+ const wall=edge.map(q=>{const k=.955-rnd()*.04;return [q[0]*k,q[1]*k]}),ox=(rnd()-.5)*R*.18,oy=(rnd()-.5)*R*.18;
+ obraPath(g,wall,C,C);{const gr=g.createRadialGradient(C+ox,C+oy,R*.25,C,C,R*.95);gr.addColorStop(0,'#1a120a');gr.addColorStop(.55,'#3e2a18');gr.addColorStop(1,'#6f5034');g.fillStyle=gr;g.fill()}
+ g.save();obraPath(g,wall,C,C);g.clip();for(let i=0;i<700;i++){const a=rnd()*6.283,r=R*(.45+rnd()*.5),v=rnd();g.fillStyle=v<.5?'rgba(20,12,6,.45)':v<.8?'rgba(140,105,70,.4)':'rgba(150,150,146,.5)';const s=1+rnd()*3;g.fillRect(C+Math.cos(a)*r,C+Math.sin(a)*r,s,s)}
+ /* sombra da borda caindo para dentro (lado de cima do canvas) */
+ g.filter='blur(6px)';g.lineWidth=14;g.strokeStyle='rgba(0,0,0,.45)';obraPath(g,wall,C,C-5);g.stroke();g.restore();
+ const pit=obraJag(rnd,R*.5,30,R*.08);OBRA.pit={pts:pit.map(q=>[q[0]/px,q[1]/px]),ox:ox/px,oy:oy/px};g.save();g.filter='blur(3px)';obraPath(g,pit,C+ox,C+oy);{const gr=g.createRadialGradient(C+ox,C+oy,0,C+ox,C+oy,R*.55);gr.addColorStop(0,'#030202');gr.addColorStop(.7,'#0b0805');gr.addColorStop(1,'#1c130b');g.fillStyle=gr;g.fill()}g.restore();
+ /* lábio quebrado: contorno claro fino + dentes de asfalto entrando na terra */
+ g.lineWidth=1.5;g.strokeStyle='rgba(185,180,170,.4)';obraPath(g,edge,C,C,1.005);g.stroke();
+ const base=(STYLES[S.style]&&STYLES[S.style].asphalt)||'#46474b';
+ for(let i=0;i<16;i++){const q=edge[(rnd()*edge.length)|0],t=rnd()<.6?.86+rnd()*.12:1.05+rnd()*.3,cx=C+q[0]*t,cy=C+q[1]*t,sz=3+rnd()*8,n=5+(rnd()*3|0);g.beginPath();
+  for(let j=0;j<n;j++){const a=j/n*6.283,r=sz*(.6+rnd()*.5);j?g.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r):g.moveTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r)}g.closePath();g.fillStyle=base;g.fill();g.lineWidth=1;g.strokeStyle='rgba(170,166,158,.6)';g.stroke()}
+ const t=new THREE.CanvasTexture(c);t.anisotropy=4;
+ const m=new THREE.MeshStandardMaterial({map:t,roughness:.95,metalness:0,transparent:true,opacity:0,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-4});m.userData.obraDecal=true;OBRA.mats.push(m);return m}
+/* monte de terra: icosaedro amassado com ruído, achatado e com a base no chão; cor por vértice (mais escuro embaixo) */
+function obraPileGeo(rnd){const g=new THREE.IcosahedronGeometry(1,2),p=g.attributes.position,col=[],ph=[rnd()*9,rnd()*9,rnd()*9],v=new THREE.Vector3();
+ for(let i=0;i<p.count;i++){v.fromBufferAttribute(p,i);const n=1+.16*Math.sin(v.x*3.1+ph[0])*Math.cos(v.z*2.7+ph[1])+.1*Math.sin(v.y*4.3+v.x*2+ph[2])+(rnd()-.5)*.08;
+  v.multiplyScalar(n);v.x*=1.25;v.z*=1.0;v.y=Math.max(0,v.y*.62+.12);if(v.y<.02){v.x*=1.08;v.z*=1.08}p.setXYZ(i,v.x,v.y,v.z);
+  const k=.62+Math.min(.38,v.y*.55)+(rnd()-.5)*.08;col.push(.48*k,.35*k,.22*k)}
+ g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));g.computeVertexNormals();return g}
+/* v3 r16: falha no miolo preto do buraco (entrada das Backrooms). Canvas pequeno redesenhado ~9×/s só perto do jogador. */
+const OBRA_GL_M=2.1;
+function obraGlitchMesh(){const c=cv(96,96),t=new THREE.CanvasTexture(c);t.minFilter=t.magFilter=THREE.NearestFilter;t.generateMipmaps=false;
+ const m=new THREE.MeshBasicMaterial({map:t,transparent:true,opacity:0,depthWrite:false,toneMapped:false,fog:true,polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-6});m.userData.obraDecal=true;OBRA.mats.push(m);
+ const me=new THREE.Mesh(new THREE.PlaneGeometry(OBRA_GL_M,OBRA_GL_M),m);me.renderOrder=3;me.userData.obraDecal=true;OBRA.gl={cv:c,g:c.getContext('2d'),tex:t,t:0,on:-1};return me}
+function obraGlitchTick(dt){const G=OBRA.gl,h=OBRA.hole;if(!G||!h||!OBRA.pit)return;G.t-=dt;if(G.t>0)return;G.t=.11;
+ const near=!PL.inside&&Math.hypot(PL.x-h.x,PL.z-h.z)<90&&typeof brOK==='function'&&brOK(),g=G.g,N=96,k=N/OBRA_GL_M;
+ if(!near){if(G.on){g.clearRect(0,0,N,N);G.tex.needsUpdate=true;G.on=0}return}G.on=1;
+ g.clearRect(0,0,N,N);g.save();g.beginPath();OBRA.pit.pts.forEach((q,i)=>{const x=N/2+q[0]*k*.92,y=N/2+q[1]*k*.92;i?g.lineTo(x,y):g.moveTo(x,y)});g.closePath();g.clip();
+ if(Math.random()<.82){const nb=3+(Math.random()*6|0);for(let i=0;i<nb;i++){g.globalAlpha=.45+Math.random()*.55;g.fillStyle=BR_GLC[(Math.random()*BR_GLC.length)|0];
+   const y=Math.random()*N,hh=1+Math.random()*(Math.random()<.2?14:5),dx=(Math.random()-.5)*N*.5;g.fillRect(dx,y,N,hh)}
+  if(Math.random()<.35){g.globalAlpha=.85;g.fillStyle='#f2dc72';g.fillRect(Math.random()*N*.6,Math.random()*N*.7,6+Math.random()*24,4+Math.random()*10)}
+  for(let i=0;i<40;i++){g.globalAlpha=.7;g.fillStyle=BR_GLC[(Math.random()*BR_GLC.length)|0];g.fillRect(Math.random()*N,Math.random()*N,2,2)}}
+ g.restore();G.tex.needsUpdate=true}
 function obraBuild(){const [kx,kz,d]=OBRA.seg,ux=D[d][0],uz=D[d][1],nx=-uz,nz=ux,L=lineType(kx,kz,d),hw=L.t==='ave'?RW/2-.7:3.3,grp=new THREE.Group();
  const at=(s,l)=>[kx*P+ux*s+nx*l,kz*P+uz*s+nz*l],ang=Math.atan2(uz,ux),rnd=mulberry32(((S.seed>>>0)^(OBRA.day*7919)^0x51f)>>>0);
  const orange=obraMat(null,0xff6a10),white=obraMat(null,0xf4f4f0),black=obraMat(null,0x111114);
@@ -13653,32 +13711,37 @@ function obraBuild(){const [kx,kz,d]=OBRA.seg,ux=D[d][0],uz=D[d][1],nx=-uz,nz=ux
   const b=new THREE.Mesh(baseG,black);b.position.y=.03;c.add(b);const k=new THREE.Mesh(coneG,orange);k.position.y=.39;c.add(k);const w=new THREE.Mesh(bandG,white);w.position.y=.42;c.add(w);c.position.set(x,y,z);grp.add(c)}
  /* buraco no meio do trecho, numa das faixas */
  const hs=P/2+(rnd()-.5)*10,hl=(rnd()<.5?-1:1)*Math.min(hw*.45,2.2),[hx,hz]=at(hs,hl),hy=groundY(hx,hz);
- const cut=new THREE.Mesh(new THREE.CircleGeometry(2.35,6),obraMat(null,0x5c5c60));cut.rotation.x=-Math.PI/2;cut.rotation.z=.4;cut.position.set(hx,hy+.025,hz);grp.add(cut);
- const pit=new THREE.Mesh(new THREE.CircleGeometry(1.5,22),obraMat(null,0x3a2614));pit.rotation.x=-Math.PI/2;pit.position.set(hx,hy+.035,hz);grp.add(pit);
- const inner=new THREE.Mesh(new THREE.CircleGeometry(1.05,20),obraMat(null,0x050403));inner.rotation.x=-Math.PI/2;inner.position.set(hx,hy+.04,hz);grp.add(inner);
- const rim=new THREE.Mesh(new THREE.RingGeometry(1.5,2.05,22),obraMat(null,0x9a7650));rim.rotation.x=-Math.PI/2;rim.position.set(hx,hy+.03,hz);grp.add(rim);
- const [mx,mz]=at(hs+3.2,hl),pile=new THREE.Mesh(new THREE.ConeGeometry(1.1,.75,9),obraMat(null,0x7a5a3a));pile.position.set(mx,groundY(mx,mz)+.37,mz);pile.scale.set(1,1,.8);grp.add(pile);
+ /* v3 r16: buraco irregular pintado num decalque (canvas) por cima do asfalto: borda quebrada, terra, fundo escuro, rachaduras e cacos;
+    o resto do decalque é transparente, então o asfalto de verdade vai até a borda. Monte de terra amassado (não é mais um cone). */
+ const hr=mulberry32(((S.seed>>>0)^Math.imul(OBRA.day+3,0x6d2b79f5)^0x0b1e)>>>0),hm=obraHoleMat(hr),dec=new THREE.Mesh(new THREE.PlaneGeometry(OBRA_HOLE_M,OBRA_HOLE_M),hm);
+ dec.rotation.x=-Math.PI/2;dec.rotation.z=Math.atan2(-uz,ux);dec.position.set(hx,hy+.045,hz);dec.renderOrder=2;dec.userData.obraDecal=true;grp.add(dec);
+ {const gl=obraGlitchMesh();gl.position.set(OBRA.pit.ox,-OBRA.pit.oy,.004);dec.add(gl)}
+ const [mx,mz]=at(hs+3.2,hl),pile=new THREE.Mesh(obraPileGeo(hr),obraMat(null,0xffffff));pile.material.vertexColors=true;pile.position.set(mx,groundY(mx,mz),mz);pile.scale.setScalar(.8);pile.rotation.y=hr()*6.283;grp.add(pile);
+ /* cacos de asfalto e torrões soltos em volta (poucos, baixos) */
+ const chunkG=new THREE.DodecahedronGeometry(.16,0),clodG=new THREE.DodecahedronGeometry(.12,0),chunkM=obraMat(null,0x3c3d41),clodM=obraMat(null,0x6a4a2e);
+ for(let i=0;i<9;i++){const isC=i<5,a=hr()*6.283,r=isC?1.75+hr()*.7:0,[px,pz]=isC?[hx+Math.cos(a)*r,hz+Math.sin(a)*r]:at(hs+3.2+(hr()-.5)*2.6,hl+(hr()-.5)*2.2),m=new THREE.Mesh(isC?chunkG:clodG,isC?chunkM:clodM);
+  const k=.6+hr()*.9;m.scale.set(k*(1+hr()*.6),k*(isC?.35:.6),k);m.rotation.set(hr()*.4,hr()*6.283,hr()*.4);m.position.set(px,groundY(px,pz)+.03,pz);grp.add(m)}
  /* cavalete listrado ao lado do buraco */
  const [bx,bz]=at(hs-3,hl),bh=groundY(bx,bz),bar=new THREE.Group();for(const o of [-.9,.9]){const leg=new THREE.Mesh(new THREE.BoxGeometry(.08,.9,.08),white);leg.position.set(o,.45,0);bar.add(leg)}
  for(let i=0;i<4;i++){const p=new THREE.Mesh(new THREE.BoxGeometry(.45,.22,.06),i%2?white:orange);p.position.set(-.67+i*.45,.8,0);bar.add(p)}bar.position.set(bx,bh,bz);bar.rotation.y=-ang+Math.PI/2;grp.add(bar);
- grp.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;o.frustumCulled=true}});
+ grp.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=!!o.userData.obraDecal;o.frustumCulled=true}});
  (city.group||scene).add(grp);OBRA.grp=grp;OBRA.hole={x:hx,z:hz};
  /* operários: colete fluorescente e capacete */
  const n=2+(rnd()<.5?1:0),vests=['#d8ff2a','#ff7a1a','#c6f21a'];
- for(let i=0;i<n;i++){const a=i/n*6.283+rnd(),r=2.6+rnd()*.6,x=hx+Math.cos(a)*r,z=hz+Math.sin(a)*r;
+ for(let i=0;i<n;i++){let a=i/n*6.283+rnd();const r=2.6+rnd()*.6;for(let k=0;k<6&&Math.hypot(hx+Math.cos(a)*r-mx,hz+Math.sin(a)*r-mz)<1.7;k++)a+=.5; /* r16: fora do monte de terra */const x=hx+Math.cos(a)*r,z=hz+Math.sin(a)*r;
   const pal={...pick2(PED_PALS),shirt:vests[i%3],cap:'#ffd21a',capDark:'#c8a010',pants:'#2b3550'};const q=spawnPed(null,{x,z,vx:0,vz:0,pal});if(!q)continue;
   q.fixed=true;q.state='clerk';q.at={x,z};q.mx=hx-x;q.mz=hz-z;q.obra=true;q.fin=0;try{q.sp.material.opacity=0;q.sh.material.opacity=0}catch(e){}OBRA.peds.push(q)}}
-function obraClear(){if(OBRA.grp){OBRA.grp.parent&&OBRA.grp.parent.remove(OBRA.grp);OBRA.grp.traverse(o=>{if(o.isMesh)o.geometry.dispose()});OBRA.grp=null}for(const m of OBRA.mats)m.dispose();OBRA.mats=[];
- for(const q of OBRA.peds)if(peds.includes(q))removePed(q);OBRA.peds=[];OBRA.key=null;OBRA.seg=null;OBRA.hole=null;OBRA.phase='off'}
-function obraAlpha(a){OBRA.a=a;for(const m of OBRA.mats){m.opacity=a;m.depthWrite=a>.98}
+function obraClear(){if(OBRA.grp){OBRA.grp.parent&&OBRA.grp.parent.remove(OBRA.grp);OBRA.grp.traverse(o=>{if(o.isMesh)o.geometry.dispose()});OBRA.grp=null}for(const m of OBRA.mats){if(m.map)m.map.dispose();m.dispose()}OBRA.mats=[];
+ for(const q of OBRA.peds)if(peds.includes(q))removePed(q);OBRA.peds=[];OBRA.key=null;OBRA.seg=null;OBRA.hole=null;OBRA.pit=null;OBRA.gl=null;OBRA.phase='off'}
+function obraAlpha(a){OBRA.a=a;for(const m of OBRA.mats){m.opacity=a;m.depthWrite=a>.98&&!m.userData.obraDecal}
  if(OBRA.phase==='out')for(const q of OBRA.peds)if(peds.includes(q)&&q.state!=='dead'){try{q.sp.material.alphaTest=.02;q.sp.material.opacity=q.sh.material.opacity=a}catch(e){}}}
 function obraTick(dt){if(!played||!city||!city.N)return;
  if(S.style!=='modern'||city.haze){if(OBRA.phase!=='off')obraClear();return}
  const on=obraActiveHour();OBRA.t+=dt;
- if(OBRA.phase==='off'){if(on&&OBRA.day!==(DN.day||0)&&!missionMode()){const s=obraPick(DN.day||0);OBRA.day=DN.day||0;if(!s)return;OBRA.seg=s;OBRA.key=segKey(s[0],s[1],s[2]);OBRA.phase='closing';OBRA.t=0}return}
+ if(OBRA.phase==='off'){const dy=obraDay();if(on&&OBRA.day!==dy&&!missionMode()){const s=obraPick(dy);OBRA.day=dy;if(!s)return;OBRA.seg=s;OBRA.key=segKey(s[0],s[1],s[2]);OBRA.phase='closing';OBRA.t=0}return}
  if(OBRA.phase==='closing'){if(!on){obraClear();return}if(obraSegCars()===0||OBRA.t>45){obraBuild();OBRA.phase='in';OBRA.t=0;obraAlpha(0)}return}
- if(OBRA.phase==='in'){obraAlpha(Math.min(1,OBRA.t/3));if(OBRA.t>=3)OBRA.phase='on';return}
- if(OBRA.phase==='on'){if(!on){OBRA.phase='out';OBRA.t=0}return}
+ if(OBRA.phase==='in'){obraGlitchTick(dt);obraAlpha(Math.min(1,OBRA.t/3));if(OBRA.t>=3)OBRA.phase='on';return}
+ if(OBRA.phase==='on'){obraGlitchTick(dt);if(!on||obraDay()!==OBRA.day){OBRA.phase='out';OBRA.t=0}return}
  if(OBRA.phase==='out'){obraAlpha(Math.max(0,1-OBRA.t/3));if(OBRA.t>=3)obraClear()}}
 /* radar/mapa: faixa vermelha translúcida + pontilhado vermelho (unidades do mundo; sc = escala do mapa) */
 function obraMap(g,sc){if(!OBRA.seg||OBRA.phase==='off')return;const [kx,kz,d]=OBRA.seg,h=RW/2,ax=kx*P+MOFF,az=kz*P+MOFF;
@@ -23925,7 +23988,7 @@ Object.assign(LANG_EN,{"Nada chamativo. Ninguém lembra de um cara qualquer de b
 Object.assign(LANG_EN,{"Pronto. Se nem eu me reconheço no espelho, o guarda do banco também não vai.": "Done. If I can't even recognize myself in the mirror, the bank guard won't either."});
 /* fim r26 campanha EN */
 Object.assign(LANG_EN,{"BUSCA ENCERRANDO · CRIME AQUI DEVOLVE AS ESTRELAS": "SEARCH ENDING · A CRIME HERE BRINGS THE STARS BACK"});
-Object.assign(LANG_EN,{"OBRA · RUA FECHADA (6H–18H)": "ROADWORK · STREET CLOSED (6AM–6PM)"});
+Object.assign(LANG_EN,{"OBRA · RUA FECHADA": "ROADWORK · STREET CLOSED"});
 Object.assign(LANG_EN,{"VOCÊ FOI REMOVIDO DO SERVIDOR": "YOU WERE REMOVED FROM THE SERVER","CONTA APAGADA": "ACCOUNT DELETED","comando desconhecido": "unknown command","A CONTA ADMIN NÃO PODE SER APAGADA": "THE ADMIN ACCOUNT CAN’T BE DELETED","SÓ O ADMIN": "ADMIN ONLY","NOME INVÁLIDO": "INVALID NAME"});
 Object.assign(LANG_EN,{"bateu primeiro na bola do adversário": "hit an opponent’s ball first"});
 Object.assign(LANG_EN,{"Sunset Shores… cidade nova, vida nova. Pelo menos é o que eu repito pra mim mesmo.": "Sunset Shores… new city, new life. At least that's what I keep telling myself.", "Se eu não tivesse arrastado a Claire praquele serviço, ela não estaria atrás das grades.": "If I hadn't dragged Claire into that job, she wouldn't be behind bars.", "Não dá pra comprar o passado de volta… então vou comprar um conversível. Bens materiais não curam culpa, mas distraem.": "I can't buy the past back… so I'll buy a convertible. Things don't cure guilt, but they distract.", "Poderia ter sido tudo diferente… 10 anos presa não é brincadeira, e já faz pelo menos 3 anos que ela tá lá.": "It all could have been different… 10 years locked up is no joke, and she's been in there at least 3 years.", "PENITENCIÁRIA DE SUNSET SHORES · ANO 3 DE 10": "SUNSET SHORES PENITENTIARY · YEAR 3 OF 10", "Uma colher?! Você é um anjo.": "A spoon?! You're an angel.", "O guarda da noite cochila depois da ronda. Eu cavo no canto e ninguém percebe.": "The night guard dozes after his round. I dig in the corner and nobody notices.", "Três anos contando azulejo. Hoje eu saio daqui.": "Three years counting tiles. Today I'm getting out.", "Livre! Mas a pé eu não vou longe. Preciso de um carro… qualquer um.": "Free! But on foot I won't get far. I need a car… any car.", "Primeiro um celular. Depois… depois eu penso no resto.": "First a phone. Then… then I'll figure out the rest.", "Nathan é bom, mas aquilo quebrou minha confiança com ele….": "Nathan is good, but that broke my trust in him….", "Ligar não. Se ele ouvir minha voz, vem correndo e faz besteira. Uma mensagem basta.": "No call. If he hears my voice he'll come running and do something stupid. A text will do.", "“Me encontra no Motel Miragem, quarto 6. Vem sozinho.”": "“Meet me at the Miragem Motel, room 6. Come alone.”", "…Sem nome. Se ele ainda me conhece, vai entender.": "…No name. If he still knows me, he'll understand.", "NÚMERO DESCONHECIDO: Me encontra no Motel Miragem, quarto 6. Vem sozinho.": "UNKNOWN NUMBER: Meet me at the Miragem Motel, room 6. Come alone.", "ENQUANTO ISSO, NATHAN…": "MEANWHILE, NATHAN…", "Me encontra no Motel Miragem, quarto 6. Vem sozinho.": "Meet me at the Miragem Motel, room 6. Come alone.", "Número desconhecido… motel de beira de estrada… “vem sozinho”?": "Unknown number… a roadside motel… “come alone”?", "Isso tá com cara de armação. Algum inimigo antigo, um bandido querendo acerto de contas…": "This smells like a setup. Some old enemy, a thug looking to settle a score…", "Não vou de mãos vazias. Primeiro, a AMOnições.": "I'm not going empty-handed. Gun store first.", "Motel Miragem, quarto 6. Vamos ver quem tá brincando comigo.": "Miragem Motel, room 6. Let's see who's playing games with me.", "Boa tarde. Documentos do veículo, por favor.": "Good afternoon. Vehicle papers, please.", "Uma detenta fugiu hoje da penitenciária. Viu alguma moça sozinha por aí?": "An inmate escaped the penitentiary today. Seen a woman alone around here?", "Não vi ninguém, seu guarda.": "Haven't seen anyone, officer.", "Fugitiva… não. Não pode ser.": "A fugitive… no. It can't be.", "Quarto 6. Seja quem for, vai ter que se explicar.": "Room 6. Whoever it is, they'd better explain themselves.", "Parado aí! Mãos onde eu possa ver!": "Freeze! Hands where I can see them!", "Nate… sou eu.": "Nate… it's me.", "Claire?! Você… fugiu?": "Claire?! You… escaped?", "Eu achei que era uma armadilha. Quase entrei atirando.": "I thought it was a trap. I almost came in shooting.", "Desculpa… esse beijo foi o susto falando.": "Sorry… that kiss was the shock talking.", "Eu ainda não tô pronta pra conversar sobre aquilo, Nate. Nem pra confiar de novo.": "I'm not ready to talk about it yet, Nate. Or to trust again.", "Tudo bem. Sem pressão, sem perguntas hoje.": "That's okay. No pressure, no questions tonight.", "Que tal uma volta pela orla? Vento no rosto, o pôr do sol… depois a gente vai pra casa.": "How about a drive along the shore? Wind in your face, the sunset… then we go home.", "…Tá. Uma volta. Só isso, por enquanto.": "…Okay. A drive. Just that, for now.", "Obrigada pela volta, Nate. Ainda preciso de tempo… mas foi bom estar com você.": "Thanks for the drive, Nate. I still need time… but it was good to be with you.", "Livre, mas a pé e sem grana. Roube um carro!": "Free, but on foot and broke. Steal a car!", "Vá até o shopping e compre um celular.": "Go to the mall and buy a phone.", "Abra o celular e ligue para Nathan pela agenda.": "Open the phone and call Nathan from the contacts.", "Mensagem estranha… Passe na AMOnições e compre uma arma antes.": "Strange message… Stop by the gun store and buy a gun first.", "Vá ao Motel Miragem, quarto 6.": "Go to the Miragem Motel, room 6.", "Siga para o Motel Miragem, quarto 6.": "Head to the Miragem Motel, room 6.", "MOTEL MIRAGEM · SEM VAGAS": "MIRAGEM MOTEL · NO VACANCY", "VAGAS": "VACANCY", "RECEPÇÃO": "FRONT DESK"});Object.assign(LANG_EN,{"Tirar a máscara aqui? Eu afundo!": "Take the mask off here? I'd sink!", "Agora não!": "Not now!", "Tô defumado!": "I'm smoked!", "Esse churrasco é dos bons!": "Now that's a fine barbecue!", "Ao ponto, por favor!": "Medium rare, please!", "Alguém pediu bem passado?": "Did someone order well done?", "Essa vai deixar marca!": "That's gonna leave a mark!", "Essa doeu!": "That one hurt!", "Ai, minha coluna… brincadeira!": "Ow, my back… just kidding!", "Chão: 1. Eu: imortal.": "Ground: 1. Me: immortal.", "Fez cócegas!": "That tickles!", "Só isso?": "Is that all?", "Errou… quer dizer, acertou. Mas não doeu!": "Missed… I mean, hit. But it didn't hurt!", "Minha vez!": "My turn!", "MASKARA (ITEM + TRAJE · LIGA/DESLIGA · DESATIVA O SAVE)": "MASKARA (ITEM + OUTFIT · ON/OFF · DISABLES SAVING)", "OLHA MÃE, FUI ATROPELADO! HA HA!": "LOOK MA, I GOT RUN OVER! HA HA!", "Nem pensar. Essa coisa me dá medo.": "No way. That thing scares me.", "Tem uma máscara verde aí dentro… Nem encosto nisso. Me dá medo.": "There's a green mask in there… I'm not touching it. It scares me.", "MASKARA GUARDADA": "MASKARA PUT AWAY", "na roda de armas, fatia do JAMMER ›": "in the weapon wheel, JAMMER slot ›", "VESTIDA": "WORN", "GUARDADA": "STORED", "vestida · solte para guardar": "worn · release to take off", "guardada · solte para vestir": "stored · release to put on", "FUROU A BLITZ!": "RAN THE CHECKPOINT!", "MOCHILA NO BANCO DE TRÁS": "BACKPACK ON THE BACK SEAT", "Uma mochila cheia de grana no banco de trás?! Dá pra um chip e um celular novo.": "A backpack full of cash on the back seat?! That's a new SIM and a phone.", "Preciso falar com o Nathan.": "I need to talk to Nathan.", "OCUPADO": "BUSY", "Ocupado… depois eu tento de novo.": "Busy… I'll try again later.", "Preciso sair desse shopping. Tomara que o Nathan não tenha perdido meu número antigo.": "I need to get out of this mall. Hope Nathan didn't lose my old number.", "Enquanto isso…": "Meanwhile…", "SMS · NÚMERO DESCONHECIDO": "SMS · UNKNOWN NUMBER", "CLAIRE · SMS": "CLAIRE · TEXT", "ARMADO": "ARMED", "agora saia e vá ao Motel Miragem": "now leave and head to the Miragem Motel", "MOTEL MIRAGEM · QUARTO 6": "MIRAGEM MOTEL · ROOM 6", "ar-condicionado barulhento, colcha de 1987": "noisy A/C, a bedspread from 1987"});Object.assign(LANG_EN,{"Aeroporto Internacional de Sunset Shores · voo de Nassau, Bahamas · 7:00": "Sunset Shores International Airport · flight from Nassau, Bahamas · 7:00", "Bahamas… semanas de festa, praia e rum. E nem toda a farra do mundo tirou a Claire da minha cabeça.": "The Bahamas… weeks of parties, beach and rum. And all the partying in the world couldn't get Claire out of my head.", "Ela tá presa por minha culpa. Se eu não tivesse arrastado ela praquele serviço…": "She's locked up because of me. If I hadn't dragged her into that job…", "Sunset Shores, então. Cidade nova, vida nova… e um conversível. Bens materiais não curam culpa, mas distraem.": "Sunset Shores, then. New city, new life… and a convertible. Things don't cure guilt, but they distract.", "Bahamas… semanas de festa, praia e rum. Fugi o quanto deu, e nem assim tirei a Claire da cabeça.": "Bahamas… weeks of parties, beach and rum. I ran as far as I could, and still couldn't get Claire out of my head.", "De volta a Sunset Shores. Nada de vida nova: é a mesma cidade, a mesma casa… só que vazia.": "Back in Sunset Shores. No new life here: same city, same house… only empty.", "Ela tá presa por minha culpa. Fui eu que arrastei ela praquele serviço.": "She's locked up because of me. I'm the one who dragged her into that job.", "Vou passar na concessionária. Um conversível não enche o vazio, mas pelo menos me tira de casa.": "I'll stop by the dealership. A convertible won't fill the emptiness, but at least it gets me out of the house."});Object.assign(LANG_EN,{"ESPECIAL LIBERADO · aperte": "SPECIAL UNLOCKED · press", "ao volante: câmera lenta para costurar o trânsito.": "while driving: slow motion to weave through traffic.", "BULLET TIME LIBERADO": "BULLET TIME UNLOCKED", "a pé e de arma na mão, aperte": "on foot with a gun drawn, press", "BULLET TIME AINDA BLOQUEADO": "BULLET TIME STILL LOCKED", "CÂMERA LENTA AINDA BLOQUEADA": "SLOW MOTION STILL LOCKED", "o botão ESPECIAL": "the SPECIAL button"});Object.assign(LANG_EN,{"PENITENCIÁRIA DE SUNSET SHORES": "SUNSET SHORES PENITENTIARY", "Claire · ano 3 de 10": "Claire · year 3 of 10"});Object.assign(LANG_EN,{"ALTURA": "HEIGHT", "Arraste para girar · role ou pinça para aproximar · WASD/setas movem · R/V ou ALTURA sobem e descem · Esc volta": "Drag to rotate · scroll or pinch to zoom · WASD/arrows move · R/V or HEIGHT raise and lower · Esc back"});Object.assign(LANG_EN,{"15 SEGUNDOS": "15 SECONDS", "quarto, cozinha e banheiro têm coisas · pegue com E (→ no controle) e saia pela seta": "bedroom, kitchen and bathroom have stuff · grab with E (→ on controller) and exit via arrow", "JOIAS": "JEWELRY", "NOTEBOOK": "LAPTOP", "PERFUME": "PERFUME", "SECADOR": "HAIR DRYER", "LIQUIDIFICADOR": "BLENDER", "CAFETEIRA": "COFFEE MAKER", "VIDEOGAME": "GAME CONSOLE", "DINHEIRO": "CASH", "MICRO-ONDAS": "MICROWAVE", "CELULAR": "PHONE"});Object.assign(LANG_EN,{"Não vou de mãos vazias. Primeiro, a borracharia… aquela que vende mais do que pneu.": "I'm not going empty-handed. First, the tire shop… the one that sells more than tires.", "Passe no escritório da borracharia.": "Stop by the tire shop office.", "ESCRITÓRIO": "OFFICE", "Se quer uns pneus zerinhos, temos estoque… lá dentro.": "Looking for brand-new tires? We've got stock… inside.", "Calibragem? A gente calibra de tudo: 9 mm, .45, 12…": "Pressure check? We calibrate anything: 9 mm, .45, 12-gauge…", "Furou? Aqui a gente resolve furo de todo calibre.": "Got a hole? We handle holes of every caliber.", "Rodízio de pneus e de pentes. Fala com o chefe no escritório.": "Tire rotation, mag rotation. Talk to the boss in the office.", "Troca de óleo, troca de chumbo… entra aí, freguês.": "Oil change, lead change… come on in, pal.", "Balanceamento e munição. Mais a munição, na real.": "Wheel balancing and ammo. Mostly ammo, honestly.", "Pneu careca a gente não vende. Já cano curto…": "We don't sell bald tires. Short barrels, though…"}); // v77: missão 1 reescrita (motel)
@@ -24809,8 +24872,8 @@ function roomStageLocalTick(dt){
 }
 
 /* ================= BACKROOMS (v3 r10) =================
-   Sunset Shores (modo livre): UM trecho reto de beco (BR.seg, ≤12 m; r11) falha no mapa e no minimapa e troca a cada 3 h de jogo,
-   longe da Fenda/DeLorean/coletáveis/Timoty/gangues. Andando nele (a pé) o jogador atravessa o chão (BR.fall em worldPlGy, câmera
+   Sunset Shores: v3 r16 — a entrada é o buraco da obra do dia (OBRA.hole, brHole); o miolo preto falha (obraGlitchTick) e não há
+   mais falha no mapa nem beco (BR.seg/brPickSeg ficam sem uso). Pisando/pulando no miolo (a pé) o jogador atravessa o chão (BR.fall em worldPlGy, câmera
    brFallCam por baixo olhando a cidade lá em cima) e, ~1,5 s depois de começar a cair, entra o loading do Nível 0.
    Nível 0 = palco de interior (PL.inside='backrooms', roomStageLocalTick → brInsideTick): labirinto procedural com seed própria
    (6×6 células de 5 m por quadra: cidade 7×7 → 42×42 células; 14×14 → 84×84), carpete, papel de parede, teto com luminárias.
@@ -24823,7 +24886,9 @@ const BR={on:false,busy:false,fall:false,fv:0,fallT:0,fx:0,fz:0,seg:null,segK:-1
 const BR_GLC=['#ff2a8a','#2affea','#ffffff','#f2d21a','#000000','#7a2aff'];
 function brWait(ms){return new Promise(r=>setTimeout(r,ms))}
 function brOK(){try{return played&&S.style==='modern'&&!city.haze&&!profInMission()&&!PROLOGUE.cut&&!TIMEJUMP.busy&&!TIMEJUMP.loading&&!INVERT.switching&&!HAZE.switching&&!TVM.on&&!(typeof BENCH!=='undefined'&&BENCH.active)}catch(e){return false}}
-function brInBlock(x,z,m){const b=BR.seg;return !!b&&x>b.x0-m&&x<b.x1+m&&z>b.z0-m&&z<b.z1+m}
+/* v3 r16: a entrada é o buraco da obra (OBRA.hole); brInBlock mede distância até ele (Fenda, gangues, radar, ponto de volta) */
+function brHole(){return typeof OBRA!=='undefined'&&OBRA.hole&&(OBRA.phase==='on'||OBRA.phase==='in')?OBRA.hole:null}
+function brInBlock(x,z,m){const h=brHole();return !!h&&Math.hypot(x-h.x,z-h.z)<1.6+m}
 function brInitCity(){brReset();city.brBlock=null;BR.seg=null;BR.segK=-1}
 /* v3 r11: o que falha é UM trecho reto de beco entre prédios (≤12 m), sorteado pela seed + bloco de 3 h de jogo (DN.day/DN.tod),
    longe da Fenda, do DeLorean, de coletáveis (vinis/armas/colete), do Timoty e das gangues. Gerador próprio (não consome R). */
@@ -24983,7 +25048,7 @@ function brGlitchRect(g,x0,z0,w,h,u){const pd=4+6*u;x0-=pd;z0-=pd;w+=pd*2;h+=pd*
  g.save();for(let k=0;k<9;k++){s=(s*1664525+1013904223)>>>0;const y=z0+(s/4294967296)*h;s=(s*1664525+1013904223)>>>0;const hh=u*2+(s/4294967296)*h*.25;s=(s*1664525+1013904223)>>>0;const dx=((s/4294967296)-.5)*w*.35;s=(s*1664525+1013904223)>>>0;
   g.globalAlpha=.55+.45*(s/4294967296);g.fillStyle=BR_GLC[s%BR_GLC.length];g.fillRect(x0+dx,y,w,hh)}
  g.restore()}
-function brMapGlitch(g,sc){const b=BR.seg;if(!b||!brOK())return;brGlitchRect(g,b.x0+MOFF,b.z0+MOFF,b.x1-b.x0,b.z1-b.z0,1/(sc||1))}
+function brMapGlitch(g,sc){} /* v3 r16: sem falha no mapa (a entrada agora é o buraco da obra, que já aparece como obra) */
 /* ---------- efeito de tela e carregamento ---------- */
 function brCss(){if(document.getElementById('brCss'))return;const st=document.createElement('style');st.id='brCss';st.textContent=
  '#brFx{position:fixed;inset:0;pointer-events:none;z-index:6;opacity:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 2px,transparent 2px 4px)}'+
@@ -25005,10 +25070,10 @@ function brHum(on){if(!AC||!master)return;try{if(on&&!BR.hum){const o=AC.createO
 /* ---------- entrada pelo quarteirão ---------- */
 function brWorldTick(dt){if(BR.on&&PL.inside!=='backrooms'&&!BR.busy)brLeave(); /* morreu/saiu por outro caminho */
  if(BR.busy||BR.on||S.style!=='modern'||city.haze)return;
- {const k=brSegKey();if(k!==BR.segK){BR.segK=k;BR.seg=brPickSeg(k)}}
- if(!BR.seg||!brOK())return;
- const inS=!PL.car&&!PL.heli&&!PL.inside&&!(brNetOn()&&ONLINE.ride)&&!PL.dead&&!PL.taxi&&!SKATE.ride&&!PARA.active&&!(PL.down>0)&&!(LH.up||LH.fall)&&brInBlock(PL.x,PL.z,.4);
- if(inS&&Math.hypot(PL.vx,PL.vz)>1&&Math.random()<dt*.3)brFall()}
+ const H=brHole();if(!H||!brOK())return;
+ const inS=!PL.car&&!PL.heli&&!PL.inside&&!(brNetOn()&&ONLINE.ride)&&!PL.dead&&!PL.taxi&&!SKATE.ride&&!PARA.active&&!(PL.down>0)&&!(LH.up||LH.fall);
+ /* v3 r16: pisou (ou caiu do pulo) no miolo do buraco → atravessa o chão na hora */
+ if(inS&&!(PL.jy>.05)&&Math.hypot(PL.x-H.x,PL.z-H.z)<1.05){PL.x+=(H.x-PL.x)*.5;PL.z+=(H.z-PL.z)*.5;brFall()}}
 async function brFall(){if(BR.busy||PL.dead)return;BR.busy=true;BR.fall=true;BR.fv=0;BR.fallT=0;BR.fx=PL.x;BR.fz=PL.z;PL.vx=PL.vz=0;PL.jy=PL.jv=0;brFxSet(.45);try{ghostSnd(1.1)}catch(e){}rumble(.6,.6,500);
  await brWait(1500);brLoadShow(true,'BACKROOMS','NÍVEL 0');await brWait(80);brLoadBar(.15);
  try{brBuild()}catch(e){console.error('Backrooms:',e);BR.fall=false;PL.gy=groundY(PL.x,PL.z);brLoadShow(false);brFxSet(0);BR.busy=false;return}
@@ -25104,7 +25169,7 @@ function brEntTick(dt){if(BR.t>=600){BR.entT-=dt;if(BR.entT<=0){BR.entT=45;if(BR
   for(let k=0;k<2;k++){const s=e.gh[k],o=(k?-1:1)*(gl?.16+Math.random()*.2:.07);s.position.set(x+e0[0]*o,0,z+e0[2]*o);s.scale.copy(e.sp.scale);s.material.rotation=e.sp.material.rotation;s.material.opacity=gl?.55:.28}
   setFrame(e.tex,pickDir(e.fx,e.fz,e.x,e.z),Math.floor(e.ph*3)%3)}
  }
-window.brDebug={enter:()=>{const b=BR.seg;if(!b)return'sem beco';PL.x=(b.x0+b.x1)/2;PL.z=(b.z0+b.z1)/2;return brFall()},out:()=>brClipOut(),time:s=>{BR.t=s;BR.entT=0},seg:()=>BR.seg,state:()=>({on:BR.on,busy:BR.busy,t:BR.t,ents:BR.ents.length,exit:BR.exit,exitT:BR.exitT,seg:BR.seg&&{x0:BR.seg.x0,z0:BR.seg.z0,x1:BR.seg.x1,z1:BR.seg.z1},segK:BR.segK,W:BR.W,boxes:BR.boxes?BR.boxes.length/7:0})};
+window.brDebug={enter:()=>{const b=brHole();if(!b)return'sem obra';PL.x=b.x;PL.z=b.z;return brFall()},out:()=>brClipOut(),time:s=>{BR.t=s;BR.entT=0},seg:()=>brHole(),state:()=>({on:BR.on,busy:BR.busy,t:BR.t,ents:BR.ents.length,exit:BR.exit,exitT:BR.exitT,seg:BR.seg&&{x0:BR.seg.x0,z0:BR.seg.z0,x1:BR.seg.x1,z1:BR.seg.z1},segK:BR.segK,W:BR.W,boxes:BR.boxes?BR.boxes.length/7:0})};
 
 const UPD_ACT=[],UPD_SD=[-.42,.42],UPD_MOTO=[0,0];/* v3 r5: listas fixas do update (antes filter/literais por quadro) */
 function update(dt){if(SKATE.ui)return;if(POOL.on){poolTick(dt);return}if(DICE.on){diceTick(dt);return}luciaIdleTick();if(roomStageKind()&&!BENCH.active){roomStageLocalTick(dt);return}crimeRoll();if(DLG.on){dlgTick(dt);return}paraTick(dt);try{dealTick(dt)}catch(e){console.error(e)}try{storyTick();duoTick(dt);questTick(dt);sideTick(dt);forestTick(dt);jetTick(dt);vortexTick();dbTick(dt);shipTick(dt);airTick2(dt);casinoTick(dt);motelTick(dt);labTick(dt);clubFxTick(dt);bankTick(dt);empTick(dt);brWorldTick(dt)}catch(e){console.error(e)}try{areaHudTick(dt)}catch(e){console.error(e)}cheatTick();maskTick(dt);jammerTick(dt);try{profTick(dt)}catch(e){console.error(e)}updateCloseCarDetails(dt);updateIndustrialGates(dt);carGeoPrewarmTick(dt);
@@ -25891,7 +25956,7 @@ const TVCAT=[
   g:['A 140 km/h o DeLorean viaja no tempo para o Synthwave: cidade neon de arranha-céus e palmeiras. Ele mora na garagem da micro-ilha.','At 140 km/h the DeLorean travels in time to Synthwave: a neon city of skyscrapers and palm trees. It lives in the micro-island garage.'],
   p:[tvcP('w_synth1',['O DeLOREAN','THE DeLOREAN']),tvcP('w_synth2',['A CIDADE NEON','THE NEON CITY'])]},
  {k:'backrooms',ic:'🟨',c:'#f2dc72',l:'2',n:['BACKROOMS','BACKROOMS'],
-  g:['Um trecho de beco falha no mapa e muda de lugar a cada 3 horas. Ande nele e você atravessa o chão: labirinto amarelo, sem ninguém. Depois de 10 minutos, entidades lentas aparecem. A saída é o trecho com falha no minimapa, que também muda a cada 3 minutos. No online, todos caem no mesmo labirinto.','A stretch of alley glitches on the map and moves every 3 hours. Walk on it and you fall through the floor: a yellow maze, nobody else. After 10 minutes, slow entities show up. The exit is the glitched stretch on the minimap, which also moves every 3 minutes. Online, everyone falls into the same maze.'],
+  g:['O fundo do buraco da obra falha. Pule nele e você atravessa o chão: labirinto amarelo, sem ninguém. Depois de 10 minutos, entidades lentas aparecem. A saída é o trecho com falha no minimapa, que também muda a cada 3 minutos. No online, todos caem no mesmo labirinto.','The bottom of the roadwork hole glitches. Jump in and you fall through the floor: a yellow maze, nobody else. After 10 minutes, slow entities show up. The exit is the glitched stretch on the minimap, which also moves every 3 minutes. Online, everyone falls into the same maze.'],
   p:[tvcP('w_back1',['ATRAVESSANDO O CHÃO','FALLING THROUGH THE FLOOR']),tvcP('w_back2',['NÍVEL 0','LEVEL 0'])]},
  {k:'weather',ic:'⛈',c:'#8fb4ff',l:'alt',n:['CLIMA','WEATHER'],
   g:['Eclipses solares podem acontecer no jogo, assim como fortes tempestades que cobrem o céu de forma realista. Nuvens que passam pelo sol fazem sombra no chão. Cada cidade tem o seu clima.','Solar eclipses can happen in the game, as well as strong storms that cover the sky realistically. Clouds passing over the sun cast shadows on the ground. Every city has its own weather.'],
@@ -25900,7 +25965,7 @@ const TVCAT=[
   g:['Rios perto das indústrias ficam poluídos. No mar, dois navios cargueiros passam devagar: dá para subir de lancha ou pousar o helicóptero no convés.','Rivers near industry get polluted. At sea, two cargo ships sail slowly by: you can climb aboard from a boat or land the helicopter on deck.'],
   p:[tvcP('tv_pollution',['POLUIÇÃO','POLLUTION']),tvcP('ship2',['NAVIOS CARGUEIROS','CARGO SHIPS'])]},
  {k:'obra',ic:'🦺',c:'#ffb020',l:'1',n:['OBRAS NA RUA','ROADWORKS'],
-  g:['Todo dia, das 6h às 18h, uma rua fecha para obra. O GPS e o trânsito desviam, e no mapa ela aparece pontilhada de vermelho.','Every day, from 6 AM to 6 PM, one street closes for roadworks. GPS and traffic detour, and the map shows it dotted in red.'],
+  g:['Todo dia uma rua fecha para obra, o dia inteiro. O GPS e o trânsito desviam, e no mapa ela aparece pontilhada de vermelho. O fundo do buraco falha: é a entrada das Backrooms.','Every day one street closes for roadworks, all day long. GPS and traffic detour, and the map shows it dotted in red. The bottom of the hole glitches: it is the way into the Backrooms.'],
   p:[tvcP('obra',['RUA FECHADA','STREET CLOSED'])]},
  {k:'bridge',ic:'🌉',c:'#e0e0e0',l:'1',n:['PONTES LEVADIÇAS','DRAWBRIDGES'],
   g:['Sobem em 5 s e ficam abertas 1 min. Com velocidade dá para saltar o vão. Procurado, elas sobem sozinhas; a guarita força a descida.','They rise in 5 s and stay open for 1 min. With enough speed you can jump the gap. When you are wanted they rise on their own; the booth forces them down.'],
