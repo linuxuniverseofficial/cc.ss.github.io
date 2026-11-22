@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 (function(){const h0=Math.hypot,sq=Math.sqrt,ab=Math.abs;Math.hypot=function hypot(a,b,c,d){if(d!==undefined)return h0(a,b,c,d);if(c!==undefined)return sq(a*a+b*b+c*c);if(b!==undefined)return sq(a*a+b*b);return a===undefined?0:ab(+a)}})();
 /* v78 · BUILD: número da entrega. Ao abrir, o jogo lê version.txt (poucos bytes, sem cache) e, se a build no servidor for outra
    (navegador/celular servindo cópia velha), recarrega uma vez. Saves e configurações (localStorage) NÃO são apagados. */
-var BUILD_TAG='r5';
+var BUILD_TAG='r6';
 (function(){try{if(!/^https?:$/.test(location.protocol))return;const k='ps_build_reload';
  fetch(new URL('version.txt?b='+Date.now(),location.href).href,{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=/^\s*((?:dev\s+)?r[\d.]+)\s*$/i.exec(t||'');if(!m||m[1].replace(/\s+/g,' ').toLowerCase()===BUILD_TAG.toLowerCase()){try{sessionStorage.removeItem(k)}catch(e){}return}
   let n=0;try{n=+sessionStorage.getItem(k)||0}catch(e){}if(n>=2)return;try{sessionStorage.setItem(k,String(n+1))}catch(e){}
@@ -17358,7 +17358,7 @@ function applyShadowQuality(){const size=shadowMapPixels();if(sun.shadow.mapSize
  if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null}
  invalidateStaticShadows();renderer.shadowMap.needsUpdate=true;shadowRefreshAt=-1}syncShadowQualityUI()}
 function applyShadows(){applyShadowQuality();invalidateStaticShadows();sun.castShadow=S.shadows;renderer.shadowMap.enabled=S.shadows;renderer.shadowMap.needsUpdate=true;shadowRefreshAt=-1;scene.traverse(o=>{if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>m.needsUpdate=true)}})}
-if(MOB_LITE){
+if(IS_MOBILE){ /* v3 r6: era MOB_LITE (desligado desde a r35) e o aviso de girar nunca fechava */
  const portrait=matchMedia('(orientation: portrait)'),gate=$('#rotatePhone'),menuFull=$('#menuFullscreen');
  const syncOrientation=()=>{
   const vertical=portrait.matches;
