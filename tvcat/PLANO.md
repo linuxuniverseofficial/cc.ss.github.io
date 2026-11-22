@@ -132,6 +132,7 @@ mesas do cassino (sinuca, Liar's Dice), Skate Shop, online com 2 jogadores (prec
 | NAVIOS | ship |
 | MICRO-ILHA (pedágio) | isle |
 | INTERFACE AUTOMÁTICA (minimapa recolhe, botões de toque somem) | hud_mini_on, hud_mini_off + fx touchfade |
+| CONTROLES (△ de contexto, esquema Moderno, editor de botões de toque) | fx padmap + touch_edit |
 
 Faltam bons quadros de: interiores do banco e da casa de penhores (câmera bate em objeto), discos de vinil,
 skate do jogador, helicóptero, vortex/jet ski, gatos/pets, impérios, shopping, táxi/vigilante, online (carona).
