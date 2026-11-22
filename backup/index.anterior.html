@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 (function(){const h0=Math.hypot,sq=Math.sqrt,ab=Math.abs;Math.hypot=function hypot(a,b,c,d){if(d!==undefined)return h0(a,b,c,d);if(c!==undefined)return sq(a*a+b*b+c*c);if(b!==undefined)return sq(a*a+b*b);return a===undefined?0:ab(+a)}})();
 /* v78 · BUILD: número da entrega. Ao abrir, o jogo lê version.txt (poucos bytes, sem cache) e, se a build no servidor for outra
    (navegador/celular servindo cópia velha), recarrega uma vez. Saves e configurações (localStorage) NÃO são apagados. */
-var BUILD_TAG='r6';
+var BUILD_TAG='r7';
 (function(){try{if(!/^https?:$/.test(location.protocol))return;const k='ps_build_reload';
  fetch(new URL('version.txt?b='+Date.now(),location.href).href,{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=/^\s*((?:dev\s+)?r[\d.]+)\s*$/i.exec(t||'');if(!m||m[1].replace(/\s+/g,' ').toLowerCase()===BUILD_TAG.toLowerCase()){try{sessionStorage.removeItem(k)}catch(e){}return}
   let n=0;try{n=+sessionStorage.getItem(k)||0}catch(e){}if(n>=2)return;try{sessionStorage.setItem(k,String(n+1))}catch(e){}
@@ -17381,6 +17381,11 @@ if(IS_MOBILE){ /* v3 r6: era MOB_LITE (desligado desde a r35) e o aviso de girar
  menuFull.addEventListener('click',()=>requestLandscape(true));
  document.addEventListener('fullscreenchange',syncOrientation);
  for(const id of ['play','seedPlay','resume'])document.getElementById(id).addEventListener('click',()=>requestLandscape(true));
+ /* v3 r7: celular sempre tenta tela cheia em paisagem. O navegador só deixa pedir num toque, então qualquer toque pede de novo
+    (inclusive depois de sair pelo voltar do aparelho). Os botões continuam como reserva; iPhone (Safari) não tem tela cheia. */
+ let fsAutoT=0;const fsAuto=()=>{if(document.fullscreenElement||!document.documentElement.requestFullscreen)return;
+  if(matchMedia('(display-mode: fullscreen)').matches)return;const t=performance.now();if(t-fsAutoT<1200)return;fsAutoT=t;requestLandscape(true)};
+ for(const ev of ['pointerup','touchend','click'])document.addEventListener(ev,fsAuto,{capture:true,passive:true});
 }
 function mgModeSync(){const stOn=!!played&&storyOn(),wLock=!!played&&!stOn&&!!POL.wanted;document.body.classList.toggle('story-on',stOn);const mb=$('#mgBtn'),mn=$('#mgLockNote');if(mb){mb.classList.toggle('wanted-lock',wLock);mb.setAttribute('aria-disabled',wLock?'true':'false');const msg=wLock?(S.lang==='en'?'MINIGAMES LOCKED · POLICE PURSUIT ACTIVE':'MINIGAMES BLOQUEADOS · EM PERSEGUIÇÃO POLICIAL'):translatePlain('Minigames');mb.title=msg;mb.setAttribute('aria-label',msg)}if(mn){mn.hidden=!wLock;if(wLock)mn.textContent='🚨 '+(S.lang==='en'?'MINIGAMES LOCKED · POLICE PURSUIT ACTIVE':'MINIGAMES BLOQUEADOS · EM PERSEGUIÇÃO POLICIAL')}const mp=$('#mgPanel');if(wLock&&mp&&!mp.hidden)mgClosePanel()}
 function openMenu(){menuOpen=true;try{mgModeSync()}catch(e){}$('#menu').hidden=false;$('#resume').hidden=!played;$('#menuX').hidden=!played;modeSel=GAMEMODE;modePaint();syncSave();for(const k in keys)keys[k]=false;if(document.pointerLockElement)document.exitPointerLock();syncMenu();applyLanguage();storySkipSync();const menuFocus=(STORYINTRO.active||STORYEND.active)?$('#storySkip'):(played?$('#resume'):$('#play'));menuFocus.focus()}
