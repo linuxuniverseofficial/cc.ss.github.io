@@ -46,7 +46,7 @@ mecânicas houver (20, 30…). Coisas pequenas podem dividir canal (ex.: eclipse
 | 16 | UPSIDE DOWN | 2 | w_inv1, w_inv2 (clareados) |
 | 17 | POINT HAZE | 2 | w_haze1 · w_haze2 |
 | 18 | SYNTHWAVE · DeLOREAN | 2 | w_synth1 · w_synth2 |
-| 19 | CLIMA (tempestade + eclipse + sombra das nuvens) | alt | storm2 (+relâmpago) · clouds (r70) · eclipse2 (+disco do eclipse em HTML) |
+| 19 | CLIMA (tempestade + eclipse + sombra das nuvens) | alt | storm2 (+relâmpago) · clouds (r70) · clouds_ind (v3 r11) · eclipse2 (+disco do eclipse em HTML) |
 | 20 | RIOS E MAR (poluição + navios) | alt | tv_pollution · ship2 |
 | 21 | OBRAS NA RUA | 1 | obra |
 | 22 | PONTES LEVADIÇAS | 1 | poi_bridge |
