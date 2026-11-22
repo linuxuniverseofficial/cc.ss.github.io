@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 (function(){const h0=Math.hypot,sq=Math.sqrt,ab=Math.abs;Math.hypot=function hypot(a,b,c,d){if(d!==undefined)return h0(a,b,c,d);if(c!==undefined)return sq(a*a+b*b+c*c);if(b!==undefined)return sq(a*a+b*b);return a===undefined?0:ab(+a)}})();
 /* v78 · BUILD: número da entrega. Ao abrir, o jogo lê version.txt (poucos bytes, sem cache) e, se a build no servidor for outra
    (navegador/celular servindo cópia velha), recarrega uma vez. Saves e configurações (localStorage) NÃO são apagados. */
-var BUILD_TAG='r11';
+var BUILD_TAG='r12';
 (function(){try{if(!/^https?:$/.test(location.protocol))return;const k='ps_build_reload';
  fetch(new URL('version.txt?b='+Date.now(),location.href).href,{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=/^\s*((?:dev\s+)?r[\d.]+)\s*$/i.exec(t||'');if(!m||m[1].replace(/\s+/g,' ').toLowerCase()===BUILD_TAG.toLowerCase()){try{sessionStorage.removeItem(k)}catch(e){}return}
   let n=0;try{n=+sessionStorage.getItem(k)||0}catch(e){}if(n>=2)return;try{sessionStorage.setItem(k,String(n+1))}catch(e){}
@@ -2099,10 +2099,11 @@ function csTick(){
  const wl=Math.hypot(WX.wx||0,WX.wz||0),wx=wl>.01?WX.wx/wl:.93,wz=wl>.01?WX.wz/wl:.37,sp=6*(1+Math.min(2,wl*2));
  CLDSH.wx=(CLDSH.wx+wx*sp*dt*CLDSH.f)%256;CLDSH.wz=(CLDSH.wz+wz*sp*dt*CLDSH.f)%256;
  const sy=Math.max(.02,s.y),slx=s.x/(sy+.12),slz=s.z/(sy+.12);CLDSH.B.z=slx;CLDSH.B.w=slz;CLDSH.B.x=CLDSH.wx+CLDSH.H*slx*CLDSH.f;CLDSH.B.y=CLDSH.wz+CLDSH.H*slz*CLDSH.f;
- const fc=.16+fair*.36;CLDSH.A.y=CLDSH.f;CLDSH.A.z=1-fc-.06;CLDSH.A.w=.22;
+ /* v3 r12: zona industrial (WX.ind) sempre com nuvem baixa: mais cobertura e sombra mais forte; céu fechado de lá (U.cloud) não apaga mais a sombra. Tempestade (WX.f/gloom) apaga. */
+ const ind=clamp(WX.ind||0,0,1),fairE=Math.max(fair,.65*ind),fc=.16+fairE*.36+.1*ind;CLDSH.A.y=CLDSH.f;CLDSH.A.z=1-fc-.06;CLDSH.A.w=.22-.06*ind;
  const world=S.style==='modern'&&!city.haze&&!ROOM_STAGE.mode&&!PL.inside&&!(typeof ITS!=='undefined'&&ITS.on);
- const vis=world?csSS(.01,.08,fair)*csSS(.04,.2,s.y)*(1-csSS(.4,.75,U.cloud.value||0))*(1-(ECLIPSE.dark||0)):0;
- CLDSH.A.x=S.shadows?.7*vis:0;
+ const vis=world?csSS(.01,.08,fairE)*csSS(.04,.2,s.y)*(1-csSS(.25,.6,Math.max(WX.f||0,WX.gloom||0)))*(1-(ECLIPSE.dark||0)):0;
+ CLDSH.A.x=S.shadows?(.7+.15*ind)*vis:0;
  const cp=camera.position;CLDSH.sun=vis>0?vis*csCoverAt(cp.x,cp.y,cp.z):0;U.csSun.value=CLDSH.sun;
 }
 const _csV=new THREE.Vector3();
@@ -10566,8 +10567,8 @@ function updateDayNight(dt,force){dt=eclipseStep(dt);if(ECLIPSE.on)force=true;co
  }city.sunOff=[dir.x*150,dir.y*150,dir.z*150];skyMat.uniforms.sunDir.value.set(...sunRot(Math.cos(ph)*.85,elev,-.38));skyMat.uniforms.night.value=nf;meteorTick(dt,nf);
  if(st.night&&elev<.08)skyMat.uniforms.sunDir.value.lerp(_v4.set(-1,.11,0),clamp((.08-elev)/.25,0,1));
  const low=clamp(1-elev*2.2,0,1),SY=st.night;sun.color.set(SY?'#ffd9ec':'#fff0d8').lerp(_c1.set(SY?'#ff6aa0':'#ff8a3a'),low*dayF).lerp(_c2.set(SY?'#b09aff':'#8aa0ff'),nf);
- sun.intensity=(.98*clamp(elev*3.5,0,1)+.27*nf*(DN.moonL==null?1:DN.moonL))*(1-Math.max(.7*WX.f,.77*(WX.gloom||0)))*(1-.55*WLD.cem.f);
- hemi.intensity=(.2+.38*dayF+.21*nf*(DN.moonL==null?1:DN.moonL))*(1-Math.max(.22*WX.f,.26*(WX.gloom||0)))*(1-.3*WLD.cem.f);hemi.color.set(SY?'#c8b8ff':'#dde9ff').lerp(_c1.set(SY?'#5a3aa8':'#5266a0'),nf);ACTOR_LIGHT.value.copy(hemi.color).multiplyScalar(hemi.intensity*.9).add(_c1.copy(sun.color).multiplyScalar(sun.intensity*.65));ACTOR_LIGHT.value.r=clamp(ACTOR_LIGHT.value.r,.08,1);ACTOR_LIGHT.value.g=clamp(ACTOR_LIGHT.value.g,.08,1);ACTOR_LIGHT.value.b=clamp(ACTOR_LIGHT.value.b,.08,1);hemi.groundColor.set(SY?'#5a4a6a':'#5f564c').lerp(_c2.set(SY?'#1a0c28':'#232838'),nf);
+ sun.intensity=(.98*clamp(elev*3.5,0,1)+.27*nf*(DN.moonL==null?1:DN.moonL))*(1-Math.max(.7*WX.f,.77*(WX.gloom||0)))*(1-.55*WLD.cem.f)*(1-.22*clamp(WX.ind||0,0,1)); /* v3 r12: zona industrial sempre um pouco mais escura */
+ hemi.intensity=(.2+.38*dayF+.21*nf*(DN.moonL==null?1:DN.moonL))*(1-Math.max(.22*WX.f,.26*(WX.gloom||0)))*(1-.3*WLD.cem.f)*(1-.08*clamp(WX.ind||0,0,1));hemi.color.set(SY?'#c8b8ff':'#dde9ff').lerp(_c1.set(SY?'#5a3aa8':'#5266a0'),nf);ACTOR_LIGHT.value.copy(hemi.color).multiplyScalar(hemi.intensity*.9).add(_c1.copy(sun.color).multiplyScalar(sun.intensity*.65));ACTOR_LIGHT.value.r=clamp(ACTOR_LIGHT.value.r,.08,1);ACTOR_LIGHT.value.g=clamp(ACTOR_LIGHT.value.g,.08,1);ACTOR_LIGHT.value.b=clamp(ACTOR_LIGHT.value.b,.08,1);hemi.groundColor.set(SY?'#5a4a6a':'#5f564c').lerp(_c2.set(SY?'#1a0c28':'#232838'),nf);
  skyAt(h,skyMat.uniforms.top.value,skyMat.uniforms.hor.value);{const gf=Math.max(city.haze?.8:0,WX.f*(1-.7*(WX.stormAmt||0)));skyMat.uniforms.top.value.lerp(_c1.set(nf>.5?'#15171e':'#6a7078'),gf*.65);skyMat.uniforms.hor.value.lerp(_c2.set(nf>.5?'#24262e':'#9aa0a6'),gf*.6)}
  {const e=ECLIPSE,u=skyMat.uniforms;u.eclipse.value.set(e.on?1:0,e.sep,e.dark,e.fade);u.eclipsePrep.value=e.stage==='clock'?clamp(e.t/10,0,1):1;
   if(e.on){
@@ -25863,7 +25864,7 @@ const TVCAT=[
   p:[tvcP('w_back1',['ATRAVESSANDO O CHÃO','FALLING THROUGH THE FLOOR']),tvcP('w_back2',['NÍVEL 0','LEVEL 0'])]},
  {k:'weather',ic:'⛈',c:'#8fb4ff',l:'alt',n:['CLIMA','WEATHER'],
   g:['Eclipses solares podem acontecer no jogo, assim como fortes tempestades que cobrem o céu de forma realista. Nuvens que passam pelo sol fazem sombra no chão. Cada cidade tem o seu clima.','Solar eclipses can happen in the game, as well as strong storms that cover the sky realistically. Clouds passing over the sun cast shadows on the ground. Every city has its own weather.'],
-  p:[tvcP('storm2',['TEMPESTADE','STORM'],'rain'),tvcP('clouds',['SOMBRA DAS NUVENS','CLOUD SHADOWS']),tvcP('eclipse2',['ECLIPSE SOLAR','SOLAR ECLIPSE'],'corona')]},
+  p:[tvcP('storm2',['TEMPESTADE','STORM'],'rain'),tvcP('clouds',['SOMBRA DAS NUVENS','CLOUD SHADOWS']),tvcP('clouds_ind',['NUVENS DA ZONA INDUSTRIAL','INDUSTRIAL ZONE CLOUDS']),tvcP('eclipse2',['ECLIPSE SOLAR','SOLAR ECLIPSE'],'corona')]},
  {k:'sea',ic:'🚢',c:'#4ab8e8',l:'alt',n:['RIOS E MAR','RIVERS AND SEA'],
   g:['Rios perto das indústrias ficam poluídos. No mar, dois navios cargueiros passam devagar: dá para subir de lancha ou pousar o helicóptero no convés.','Rivers near industry get polluted. At sea, two cargo ships sail slowly by: you can climb aboard from a boat or land the helicopter on deck.'],
   p:[tvcP('tv_pollution',['POLUIÇÃO','POLLUTION']),tvcP('ship2',['NAVIOS CARGUEIROS','CARGO SHIPS'])]},

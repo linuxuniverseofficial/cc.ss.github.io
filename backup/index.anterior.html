@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 (function(){const h0=Math.hypot,sq=Math.sqrt,ab=Math.abs;Math.hypot=function hypot(a,b,c,d){if(d!==undefined)return h0(a,b,c,d);if(c!==undefined)return sq(a*a+b*b+c*c);if(b!==undefined)return sq(a*a+b*b);return a===undefined?0:ab(+a)}})();
 /* v78 · BUILD: número da entrega. Ao abrir, o jogo lê version.txt (poucos bytes, sem cache) e, se a build no servidor for outra
    (navegador/celular servindo cópia velha), recarrega uma vez. Saves e configurações (localStorage) NÃO são apagados. */
-var BUILD_TAG='r10';
+var BUILD_TAG='r11';
 (function(){try{if(!/^https?:$/.test(location.protocol))return;const k='ps_build_reload';
  fetch(new URL('version.txt?b='+Date.now(),location.href).href,{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=/^\s*((?:dev\s+)?r[\d.]+)\s*$/i.exec(t||'');if(!m||m[1].replace(/\s+/g,' ').toLowerCase()===BUILD_TAG.toLowerCase()){try{sessionStorage.removeItem(k)}catch(e){}return}
   let n=0;try{n=+sessionStorage.getItem(k)||0}catch(e){}if(n>=2)return;try{sessionStorage.setItem(k,String(n+1))}catch(e){}
@@ -4691,7 +4691,7 @@ function invertSetPortal(idx,side,quiet){
  const len=INVERT.cands.length,start=((idx%len)+len)%len;
  let found=null;
  for(let k=0;k<len&&!found;k++){
-  const j=(start+k)%len,r=INVERT.cands[j];const bb=city.brBlock;if(bb&&len>1&&r.x1>bb.x0&&r.x0<bb.x1&&r.z1>bb.z0&&r.z0<bb.z1)continue; /* v3 r10: a Fenda não abre no quarteirão das Backrooms */
+  const j=(start+k)%len,r=INVERT.cands[j];const bb=BR.seg;if(bb&&len>1&&r.x1>bb.x0-20&&r.x0<bb.x1+20&&r.z1>bb.z0-20&&r.z0<bb.z1+20)continue; /* v3 r11: a Fenda não abre no beco que falha (Backrooms) */
   for(const sd of [side||1,-(side||1)]){const pose=invertPose(r,sd);if(pose){found={idx:j,side:sd,pose,r};break}}
  }
  if(!found){INVERT.portal=null;if(INVERT.group)INVERT.group.visible=false;return}
@@ -4929,7 +4929,7 @@ function worldUpdate(dt){const M=city.M;if(!M)return;if(M.foam&&M.foam.map)M.foa
  }}
 }
 // no lugar da interpolação do PL.gy: sobre a sacada do farol / em queda
-function worldPlGy(dt){if(BR.fall){BR.fv+=13*dt;PL.gy-=BR.fv*dt;PL.x=BR.fx;PL.z=BR.fz;PL.vx=PL.vz=0;return true}if(PL.inside==='backrooms'){PL.gy=0;return true} /* v3 r10: Backrooms (queda pelo chão e piso do Nível 0) */
+function worldPlGy(dt){if(BR.fall){BR.fallT+=dt;BR.fv+=26*dt;PL.gy-=BR.fv*dt;PL.x=BR.fx;PL.z=BR.fz;PL.vx=PL.vz=0;return true}if(PL.inside==='backrooms'){PL.gy=0;return true} /* v3 r10: Backrooms (queda pelo chão e piso do Nível 0) */
  const L=city.lh;if(!L||(!LH.up&&!LH.fall))return false;
  if(LH.up){const dx=PL.x-L.cx,dz=PL.z-L.cz,d=Math.hypot(dx,dz);
   if(d>L.rail){if(PL.jy>.85){LH.up=false;LH.fall=true;LH.fv=0}else{PL.x=L.cx+dx/d*L.rail;PL.z=L.cz+dz/d*L.rail;PL.vx*=.3;PL.vz*=.3;PL.gy=L.H;return true}}
@@ -10697,7 +10697,7 @@ function drawMinimap0(){if(!mapCv)return;if((MINI_F=(MINI_F||0)+1)%60===1)miniRe
  {const tg=-Math.PI/2-ang;if(MINI.rot===undefined)MINI.rot=tg;let d=tg-MINI.rot;d=Math.atan2(Math.sin(d),Math.cos(d));MINI.rot+=d*.25}const rot=MINI.rot,cr=Math.cos(rot),sr=Math.sin(rot);
  // v77: dentro de interiores o radar mostra a planta do lugar (paredes/móveis pela colisão) em vez do cinza da cidade
  if(PL.inside&&!PL.car&&!HELI.cur){let ok=false;try{ok=interiorMiniMap(mctx,p,rot,w,h)}catch(e){console.error(e)}if(ok){drawNorth(mctx,w-19,21,14,rot);mctx.save();mctx.translate(w/2,h/2);mctx.rotate(ang+rot);mctx.fillStyle=plArrowCol();mctx.strokeStyle='#000';mctx.lineWidth=2;mctx.beginPath();mctx.moveTo(8,0);mctx.lineTo(-6,-6);mctx.lineTo(-3,0);mctx.lineTo(-6,6);mctx.closePath();mctx.fill();mctx.stroke();mctx.restore();return}}
- mctx.save();mctx.translate(w/2,h/2);mctx.rotate(rot);mctx.scale(sc,sc);mctx.translate(-(p.x+MOFF),-(p.z+MOFF));mctx.imageSmoothingEnabled=false;mapBack(mctx);{const cx=p.x+MOFF,cz=p.z+MOFF,mw=mapCv.width,mh=mapCv.height,sx=clamp(Math.floor(cx-178),0,mw),sy=clamp(Math.floor(cz-178),0,mh),sw=clamp(Math.ceil(cx+178),0,mw)-sx,sh=clamp(Math.ceil(cz+178),0,mh)-sy;if(sw>0&&sh>0)mctx.drawImage(mapCv,sx,sy,sw,sh,sx,sy,sw,sh)}brMapGlitch(mctx);
+ mctx.save();mctx.translate(w/2,h/2);mctx.rotate(rot);mctx.scale(sc,sc);mctx.translate(-(p.x+MOFF),-(p.z+MOFF));mctx.imageSmoothingEnabled=false;mapBack(mctx);{const cx=p.x+MOFF,cz=p.z+MOFF,mw=mapCv.width,mh=mapCv.height,sx=clamp(Math.floor(cx-178),0,mw),sy=clamp(Math.floor(cz-178),0,mh),sw=clamp(Math.ceil(cx+178),0,mw)-sx,sh=clamp(Math.ceil(cz+178),0,mh)-sy;if(sw>0&&sh>0)mctx.drawImage(mapCv,sx,sy,sw,sh,sx,sy,sw,sh)}brMapGlitch(mctx,sc);
  if(S.style==='inverted'){
   drawPOISet(mctx,sc,true,p,rot);if(storyMap('safe')&&!city.haze)safeIcon(mctx,17/sc,rot);if(storyMap('gas'))gasMapIcons(mctx,15.3/sc,rot);drawTommyRadar(mctx,sc,p);
   drawNav(mctx,sc,3,rot); // GPS amarelo também no minimapa invertido
@@ -11037,7 +11037,7 @@ $('#mapLegendClose').addEventListener('click',e=>{e.stopPropagation();mapLegendS
 
 function drawBigmap(){if(!NAV.open||!mapCv)return;try{drawBigmap0()}finally{if(PAD.on&&NAV.cur&&!NAV.inMode){const v=bigView(),x=v.ox+(NAV.cur.x+MOFF)*v.sc,y=v.oy+(NAV.cur.z+MOFF)*v.sc,g=bctx;g.save();g.strokeStyle='#000';g.lineWidth=5;g.beginPath();g.arc(x,y,11,0,7);g.moveTo(x-18,y);g.lineTo(x+18,y);g.moveTo(x,y-18);g.lineTo(x,y+18);g.stroke();g.strokeStyle='#ffd23a';g.lineWidth=2.5;g.stroke();g.restore();g.save();g.fillStyle='#fff';g.font='700 13px Segoe UI,Arial';g.textAlign='right';g.fillText('A/✕ MARCAR DESTINO · B/○ FECHAR',innerWidth-16,innerHeight-16);g.restore()}}}
 function drawBigmap0(){const W=innerWidth,H=innerHeight,BK=Math.min(2.5,window.devicePixelRatio||1);bigmap.width=Math.round(W*BK);bigmap.height=Math.round(H*BK);const g=bctx;g.setTransform(BK,0,0,BK,0,0);if(PL.inside==='backrooms'&&BR.mapCv){NAV.BK=BK;mapIconReset(g,[0,0]);brBigDraw(g,W,H);return}if(ONLINE.on)netPlayerPanel();if(NAV.inMode){NAV.BK=BK;mapIconReset(g,[0,0]);try{if(interiorBigDraw(g,W,H))return}catch(e){console.error(e)}NAV.inMode=false;mapIntSync()}const v=bigView();{const p=mapPlayerPos();mapIconReset(g,[(v.ox+(p.x+MOFF)*v.sc)*BK,(v.oy+(p.z+MOFF)*v.sc)*BK])}NAV.BK=BK;
- g.fillStyle='#05040a';g.fillRect(0,0,W,H);g.save();g.translate(v.ox,v.oy);g.scale(v.sc,v.sc);g.imageSmoothingEnabled=false;g.drawImage(mapCv,0,0);brMapGlitch(g);
+ g.fillStyle='#05040a';g.fillRect(0,0,W,H);g.save();g.translate(v.ox,v.oy);g.scale(v.sc,v.sc);g.imageSmoothingEnabled=false;g.drawImage(mapCv,0,0);brMapGlitch(g,v.sc);
  if(S.style==='inverted'){
   pylonMap(g,v.sc);drawPOISet(g,v.sc,false,null);if(storyMap('safe')&&!city.haze)safeIcon(g,23.8/v.sc);if(storyMap('gas'))gasMapIcons(g,22.1/v.sc);
   drawNav(g,v.sc,4);drawMissionIcons(g,v.sc,false,null); // Mesmo traçado GPS no mapa completo invertido
@@ -15990,7 +15990,7 @@ function updateCamera(dt,snapCamera=false){
 // Shared bank-style vertical limit for all indoor third-person cameras.
 function interiorCameraHeight(p,aiming){if(PL.inside)p.y=Math.min(p.y,aiming?2.7:2.75);if(PL.inside==='motel'&&MOTEL.rooms)houseCamClamp(p);return p}
 function gameplayCamera(dt,snapCamera=false){const cameraStep=snapCamera?1e6:dt;LOOK.yaw=cameraAngle(LOOK.yaw);
-if(DEAL.open&&city.deal){dealCam(dt);return}if(TVM.on){tvCam(dt);return}switchCapSync();if(SWITCH.on){switchCam(dt);return}if(CAMHOP.on){camHopTick(dt);return}
+if(DEAL.open&&city.deal){dealCam(dt);return}if(TVM.on){tvCam(dt);return}switchCapSync();if(SWITCH.on){switchCam(dt);return}if(CAMHOP.on){camHopTick(dt);return}if(BR.fall){brFallCam(dt);return}
  let fx,fz;
  if(camMode==='top'){const roofHeight=PARA.active||PL.heli?PL.gy:0;let tx,tz,spd=0;if(PL.car){const c=PL.car;tx=c.x+c.vx*.45;tz=c.z+c.vz*.45;spd=Math.hypot(c.vx,c.vz)}else{tx=PL.x;tz=PL.z}
   const k=1-Math.exp(-cameraStep*5);camT.x+=(tx-camT.x)*k;camT.z+=(tz-camT.z)*k;const hT=46+Math.min(spd,45)*1.1;camH+=(hT-camH)*(1-Math.exp(-cameraStep*1.4));
@@ -18665,7 +18665,7 @@ function touchSetup(){TOUCH.on=true;document.body.classList.add('touch');
    mensagem não lida (envelope no radar) ou táxi/serviço do celular vindo; fica aberto 4 s depois e espia 3 s ao entrar/sair de veículo.
    Toque: qualquer toque acorda os botões; 3 s sem dedo na tela (analógico, pedais, câmera) → touch-idle. Opções: S.miniAuto, S.touchHide. */
 const HUDA={miniT:0,ck:0,lastTouch:0,car:null};
-function miniInUse(){if(NAV.marker||POL.wanted||X9.p)return true;if(PL.inside==='backrooms'||!PL.inside&&brInBlock(PL.x,PL.z,110)&&brOK())return true; /* v3 r10: radar abre perto do quarteirão com falha e nas Backrooms */
+function miniInUse(){if(NAV.marker||POL.wanted||X9.p)return true;if(PL.inside==='backrooms'||!PL.inside&&brInBlock(PL.x,PL.z,70)&&brOK())return true; /* v3 r10: radar abre perto do quarteirão com falha e nas Backrooms */
  if(typeof RACE!=='undefined'&&RACE.on)return true;
  try{if(phoneUnread())return true}catch(e){}
  try{if(missionTargets().some(t=>t.active))return true}catch(e){}
@@ -24808,36 +24808,39 @@ function roomStageLocalTick(dt){
 }
 
 /* ================= BACKROOMS (v3 r10) =================
-   Sunset Shores (modo livre): um quarteirão (city.brBlock, sorteio pela seed, longe de gangue/Fenda/Timoty/marcos) falha no mapa
-   e no minimapa. Andando nele (a pé) o jogador atravessa o chão (BR.fall em worldPlGy) e cai no Nível 0.
+   Sunset Shores (modo livre): UM trecho reto de beco (BR.seg, ≤12 m; r11) falha no mapa e no minimapa e troca a cada 3 h de jogo,
+   longe da Fenda/DeLorean/coletáveis/Timoty/gangues. Andando nele (a pé) o jogador atravessa o chão (BR.fall em worldPlGy, câmera
+   brFallCam por baixo olhando a cidade lá em cima) e, ~1,5 s depois de começar a cair, entra o loading do Nível 0.
    Nível 0 = palco de interior (PL.inside='backrooms', roomStageLocalTick → brInsideTick): labirinto procedural com seed própria
    (6×6 células de 5 m por quadra: cidade 7×7 → 42×42 células; 14×14 → 84×84), carpete, papel de parede, teto com luminárias.
    Malha por pedaço de 6×6 células (3 materiais básicos, sem luz real; vertex color = luz/zonas escuras), colisores em addCol
    (ficam até a próxima geração da cidade, que zera a grade). Depois de 10 min surgem entidades lentas (demogorgon com falhas);
    um trecho de corredor (amarelo mais forte no mapa) devolve o jogador à cidade num ponto aleatório (chance por segundo andando nele). */
-const BR={on:false,busy:false,fall:false,fv:0,fx:0,fz:0,walk:0,need:30,t:0,built:'',grp:null,chunks:[],mats:null,texs:null,fog:null,bg:null,
+const BR={on:false,busy:false,fall:false,fv:0,fallT:0,fx:0,fz:0,seg:null,segK:-1,exitT:180,t:0,built:'',grp:null,chunks:[],mats:null,texs:null,fog:null,bg:null,
  m:null,W:0,H:0,C:5,HC:3.2,T:.3,ox:-6000,oz:-6000,LV:null,boxes:null,mapCv:null,exit:null,ents:[],entT:0,dist:null,bq:null,distT:0,distC:-1,
  fxEl:null,fxV:-1,glT:0,hum:null,ldEl:null,flick:1,flT:0,ckey:-1,entCv:null,lastCell:-1};
 const BR_GLC=['#ff2a8a','#2affea','#ffffff','#f2d21a','#000000','#7a2aff'];
 function brWait(ms){return new Promise(r=>setTimeout(r,ms))}
 function brOK(){try{return played&&S.style==='modern'&&!city.haze&&!ONLINE.on&&!profInMission()&&!PROLOGUE.cut&&!TIMEJUMP.busy&&!TIMEJUMP.loading&&!INVERT.switching&&!HAZE.switching&&!TVM.on&&!(typeof BENCH!=='undefined'&&BENCH.active)}catch(e){return false}}
-function brInBlock(x,z,m){const b=city.brBlock;return !!b&&x>b.x0-m&&x<b.x1+m&&z>b.z0-m&&z<b.z1+m}
-/* sorteio do quarteirão: quarteirão comum (prédios de preferência; casas/terreno/indústria/praça no 7×7, onde quase todo quarteirão de prédio tem Timoty), sem ponto do Timoty, sem casa/hospital/delegacia/boate/banco/motel/oficina;
-   prefere quarteirão sem beco (a Fenda só abre em beco). Gerador próprio (não consome R). */
-function brInitCity(){brReset();city.brBlock=null;if(S.style!=='modern'||city.haze||!city.rects)return;
- const rnd=mulberry32((S.seed^0x3b7c0de5)>>>0),cand=[],avoid=[city.safe,city.hosp,city.polDoor,city.casino&&city.casino.clubDoor,city.bank,city.motel,city.tuneSpot].filter(o=>o&&Number.isFinite(o.x)&&Number.isFinite(o.z));
- for(let ri=0;ri<city.rects.length;ri++){const inf=city.info[ri];if(!inf||!['bld','houses','lot','industrial','park'].includes(inf.kind))continue;const r=city.rects[ri],cx=(r[0]+r[2])/2,cz=(r[1]+r[3])/2;
-  if(r[2]-r[0]<30||r[3]-r[1]<30||isRural(cx,cz)||inWater(cx,cz))continue;
-  if((TOMMY.sites||[]).some(t=>t.ri===ri||t.x>r[0]-6&&t.x<r[2]+6&&t.z>r[1]-6&&t.z<r[3]+6))continue;
-  if(avoid.some(o=>o.x>r[0]-14&&o.x<r[2]+14&&o.z>r[1]-14&&o.z<r[3]+14))continue;
-  const alley=(city.alleySites||[]).some(a=>a.x1>r[0]&&a.x0<r[2]&&a.z1>r[1]&&a.z0<r[3]);
-  cand.push({ri,rank:(alley?1:0)+(inf.kind==='bld'?0:.5)+rnd()})}
- if(!cand.length)return;cand.sort((a,b)=>a.rank-b.rank);const ri=cand[0].ri,r=city.rects[ri];
- city.brBlock={ri,x0:r[0],z0:r[1],x1:r[2],z1:r[3]};BR.need=22+rnd()*18}
+function brInBlock(x,z,m){const b=BR.seg;return !!b&&x>b.x0-m&&x<b.x1+m&&z>b.z0-m&&z<b.z1+m}
+function brInitCity(){brReset();city.brBlock=null;BR.seg=null;BR.segK=-1}
+/* v3 r11: o que falha é UM trecho reto de beco entre prédios (≤12 m), sorteado pela seed + bloco de 3 h de jogo (DN.day/DN.tod),
+   longe da Fenda, do DeLorean, de coletáveis (vinis/armas/colete), do Timoty e das gangues. Gerador próprio (não consome R). */
+function brSegKey(){return (DN.day||0)*8+Math.floor((DN.tod||0)/180)}
+function brPickSeg(key){const L=(city.alleySites||[]).filter(a=>a&&!a.ramp&&!a.weapon&&Number.isFinite(a.x0));if(!L.length)return null;
+ const rnd=mulberry32(((S.seed^0x3b7c0de5)+Math.imul(key+1,2654435761))>>>0),far=[];const add=(x,z,r)=>{if(Number.isFinite(x)&&Number.isFinite(z))far.push(x,z,r)};
+ if(INVERT.portal)add(INVERT.portal.x,INVERT.portal.z,40);for(const t of TOMMY.sites||[])add(t.x,t.z,35);for(const t of GANG.T||[])add(t.x,t.z,70);
+ for(const q of pickups)add(q.x,q.z,14);for(const q of VINYL.spots||[])add(q.x,q.z,22);for(const c of vehicles)if(c.special)add(c.x,c.z,40);if(ISLE.car)add(ISLE.car.x,ISLE.car.z,40);
+ /* cidade pequena tem poucos becos: se quase nada passa, afrouxa as distâncias (nunca em cima de nada) */
+ let ok=[];for(const sc of [1,.6,.35]){ok=L.filter(a=>{const cx=(a.x0+a.x1)/2,cz=(a.z0+a.z1)/2;if(inWater(cx,cz)||isRural(cx,cz))return false;
+  for(let f=0;f<far.length;f+=3){const dx=clamp(far[f],a.x0,a.x1)-far[f],dz=clamp(far[f+1],a.z0,a.z1)-far[f+1],r=Math.max(8,far[f+2]*sc);if(dx*dx+dz*dz<r*r)return false}return true});if(ok.length>=4)break}
+ if(ok.length){const a=ok[(rnd()*ok.length)|0];
+  const ax=a.x1-a.x0>=a.z1-a.z0,len=ax?a.x1-a.x0:a.z1-a.z0,n=Math.min(12,len),o=rnd()*(len-n);
+  return ax?{x0:a.x0+o,x1:a.x0+o+n,z0:a.z0,z1:a.z1,ref:a}:{x0:a.x0,x1:a.x1,z0:a.z0+o,z1:a.z0+o+n,ref:a}}return null}
 function brReset(){brEntClear();brHum(false);brFxSet(0);if(BR.ldEl)BR.ldEl.hidden=true;
  if(BR.grp){if(BR.grp.parent)BR.grp.parent.remove(BR.grp);BR.grp.traverse(o=>{if(o.geometry)o.geometry.dispose()})}
  if(BR.mats)for(const k in BR.mats)BR.mats[k].dispose();if(BR.texs)for(const t of BR.texs)t.dispose();
- BR.grp=null;BR.mats=null;BR.texs=null;BR.chunks=[];BR.built='';BR.m=null;BR.LV=null;BR.boxes=null;BR.exit=null;BR.on=false;BR.busy=false;BR.fall=false;BR.walk=0;BR.ckey=-1;
+ BR.grp=null;BR.mats=null;BR.texs=null;BR.chunks=[];BR.built='';BR.m=null;BR.LV=null;BR.boxes=null;BR.exit=null;BR.on=false;BR.busy=false;BR.fall=false;BR.ckey=-1;
  if(PL.inside==='backrooms')PL.inside=false}
 /* ---------- labirinto ---------- */
 function brGen(){const N=clamp(city.N||7,4,16),W=N*6,H=N*6,rnd=mulberry32((S.seed^0x51a7e0b1)>>>0);
@@ -24943,23 +24946,24 @@ function brChunkCull(){if(!BR.chunks.length)return;const top=camMode==='top',cx=
 /* ---------- mapa ---------- */
 function brCellOf(x,z){const i=Math.floor((x-BR.ox)/BR.C),j=Math.floor((z-BR.oz)/BR.C);return i<0||j<0||i>=BR.W||j>=BR.H?-1:j*BR.W+i}
 function brIsExit(c){const e=BR.exit;if(!e||c<0)return false;const i=c%BR.W,j=(c/BR.W)|0;return e.ax===0?j===e.j&&i>=e.i&&i<e.i+e.n:i===e.i&&j>=e.j&&j<e.j+e.n}
+function brExitRect(){const e=BR.exit,C=BR.C;if(!e)return null;return e.ax===0?[e.i*C,e.j*C,e.n*C,C]:[e.i*C,e.j*C,C,e.n*C]}
 function brMapPaint(){const m=BR.m;if(!m)return;const K=2,C=BR.C,W=m.W,H=m.H,c=BR.mapCv||(BR.mapCv=document.createElement('canvas'));c.width=W*C*K;c.height=H*C*K;const g=c.getContext('2d');
- for(let j=0;j<H;j++)for(let i=0;i<W;i++){const k=.42+.58*m.L[j*W+i],ex=brIsExit(j*W+i);g.fillStyle='rgb('+Math.round((ex?236:196)*k)+','+Math.round((ex?204:178)*k)+','+Math.round((ex?58:96)*k)+')';g.fillRect(i*C*K,j*C*K,C*K,C*K)}
+ g.fillStyle='#c4b260';g.fillRect(0,0,W*C*K,H*C*K);
  g.fillStyle='#3a2f10';const b=BR.boxes;for(let q=0;q<b.length;q+=7)g.fillRect(b[q]*K,b[q+1]*K,Math.max(1.4,(b[q+2]-b[q])*K),Math.max(1.4,(b[q+3]-b[q+1])*K))}
 function brMiniMap(g,p,rot,w,h){if(!BR.mapCv)return false;const k=2.6,Sz=BR.W*BR.C;g.fillStyle='#14110a';g.fillRect(0,0,w,h);g.save();g.translate(w/2,h/2);g.rotate(rot);g.scale(k,k);g.translate(-p.x,-p.z);g.imageSmoothingEnabled=false;
- g.drawImage(BR.mapCv,BR.ox,BR.oz,Sz,BR.H*BR.C);
+ g.drawImage(BR.mapCv,BR.ox,BR.oz,Sz,BR.H*BR.C);{const r=brExitRect();if(r)brGlitchRect(g,BR.ox+r[0],BR.oz+r[1],r[2],r[3],.4)}
  for(const e of BR.ents){if(Math.abs(e.x-p.x)>34||Math.abs(e.z-p.z)>34)continue;g.fillStyle=(simT*6|0)%2?'#ff2a2a':'#a01010';g.beginPath();g.arc(e.x,e.z,1.3,0,7);g.fill()}
  g.restore();return true}
 function brBigDraw(g,W,H){const Sz=BR.W*BR.C,Hz=BR.H*BR.C,sc=Math.min(W*.92/Sz,H*.8/Hz),ox=(W-Sz*sc)/2,oy=(H-Hz*sc)/2+H*.04;g.fillStyle='#0b0906';g.fillRect(0,0,W,H);g.imageSmoothingEnabled=false;
- if(BR.mapCv)g.drawImage(BR.mapCv,ox,oy,Sz*sc,Hz*sc);playerArrow(g,ox+(PL.x-BR.ox)*sc,oy+(PL.z-BR.oz)*sc,1.6);
+ if(BR.mapCv)g.drawImage(BR.mapCv,ox,oy,Sz*sc,Hz*sc);{const r=brExitRect();if(r)brGlitchRect(g,ox+r[0]*sc,oy+r[1]*sc,r[2]*sc,r[3]*sc,1)}playerArrow(g,ox+(PL.x-BR.ox)*sc,oy+(PL.z-BR.oz)*sc,1.6);
  const fs=H<500?22:30;g.save();g.font='800 '+fs+'px Fredoka, Arial Black, sans-serif';g.textBaseline='top';g.lineWidth=5;g.strokeStyle='#000';g.fillStyle='#f2dc72';g.strokeText('BACKROOMS',14,12);g.fillText('BACKROOMS',14,12);
  const sub=translatePlain('NÍVEL 0');g.font='700 '+Math.round(fs*.5)+'px Segoe UI, Arial, sans-serif';g.lineWidth=3;g.strokeText(sub,15,16+fs);g.fillStyle='#fff';g.fillText(sub,15,16+fs);g.restore();NAV.icons=[]}
-/* falha no mapa da cidade (minimapa e mapa grande, coordenadas do mapCv) */
-function brMapGlitch(g){const b=city.brBlock;if(!b||!brOK())return;const x0=b.x0+MOFF,z0=b.z0+MOFF,w=b.x1-b.x0,h=b.z1-b.z0;let s=((Math.floor(performance.now()/110)+7)*2654435761)>>>0;
- g.save();for(let k=0;k<11;k++){s=(s*1664525+1013904223)>>>0;const y=z0+(s/4294967296)*h;s=(s*1664525+1013904223)>>>0;const hh=1+(s/4294967296)*h*.16;s=(s*1664525+1013904223)>>>0;const dx=((s/4294967296)-.5)*w*.3;s=(s*1664525+1013904223)>>>0;
-  g.globalAlpha=.45+.5*(s/4294967296);g.fillStyle=BR_GLC[s%BR_GLC.length];g.fillRect(x0+dx,y,w,hh)}
- g.globalAlpha=.6;g.fillStyle='#000';for(let k=0;k<6;k++){s=(s*1664525+1013904223)>>>0;const x=x0+(s/4294967296)*w;s=(s*1664525+1013904223)>>>0;g.fillRect(x,z0+(s/4294967296)*h,2+w*.18*((s>>>8)/16777216),1+3*((s&255)/255))}
+/* falha no mapa: faixas coloridas/pretas sorteadas a cada 110 ms sobre um retângulo (sem lixo por quadro); u = 1 m na escala atual */
+function brGlitchRect(g,x0,z0,w,h,u){const pd=4+6*u;x0-=pd;z0-=pd;w+=pd*2;h+=pd*2;let s=((Math.floor(performance.now()/110)+7)*2654435761)>>>0;
+ g.save();for(let k=0;k<9;k++){s=(s*1664525+1013904223)>>>0;const y=z0+(s/4294967296)*h;s=(s*1664525+1013904223)>>>0;const hh=u*2+(s/4294967296)*h*.25;s=(s*1664525+1013904223)>>>0;const dx=((s/4294967296)-.5)*w*.35;s=(s*1664525+1013904223)>>>0;
+  g.globalAlpha=.55+.45*(s/4294967296);g.fillStyle=BR_GLC[s%BR_GLC.length];g.fillRect(x0+dx,y,w,hh)}
  g.restore()}
+function brMapGlitch(g,sc){const b=BR.seg;if(!b||!brOK())return;brGlitchRect(g,b.x0+MOFF,b.z0+MOFF,b.x1-b.x0,b.z1-b.z0,1/(sc||1))}
 /* ---------- efeito de tela e carregamento ---------- */
 function brCss(){if(document.getElementById('brCss'))return;const st=document.createElement('style');st.id='brCss';st.textContent=
  '#brFx{position:fixed;inset:0;pointer-events:none;z-index:6;opacity:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 2px,transparent 2px 4px)}'+
@@ -24980,45 +24984,49 @@ function brHum(on){if(!AC||!master)return;try{if(on&&!BR.hum){const o=AC.createO
  else if(!on&&BR.hum){const h=BR.hum,t=AC.currentTime;BR.hum=null;h.g.gain.setTargetAtTime(0,t,.08);h.o.stop(t+.5);h.o2.stop(t+.5)}}catch(e){BR.hum=null}}
 /* ---------- entrada pelo quarteirão ---------- */
 function brWorldTick(dt){if(BR.on&&PL.inside!=='backrooms'&&!BR.busy)brLeave(); /* morreu/saiu por outro caminho */
- const b=city.brBlock;if(!b||BR.busy||BR.on)return;
- if(!brOK()){BR.walk=Math.max(0,BR.walk-dt);brFxSet(0);return}
- const inB=!PL.car&&!PL.heli&&!PL.inside&&!PL.dead&&!PL.taxi&&!SKATE.ride&&!PARA.active&&!(PL.down>0)&&!(LH.up||LH.fall)&&brInBlock(PL.x,PL.z,1);
- if(!inB){BR.walk=Math.max(0,BR.walk-dt*.5);brFxSet(0);return}
- if(Math.hypot(PL.vx,PL.vz)>1)BR.walk+=dt;const f=BR.walk/BR.need;
- BR.glT-=dt;if(BR.glT<=0&&Math.random()<dt*(.4+f*2))BR.glT=.08+Math.random()*.16;
- brFxSet((f>.35?f*f*.35:0)+(BR.glT>0?.25+f*.4:0));
- if(BR.walk>=BR.need)brFall()}
-async function brFall(){if(BR.busy||PL.dead)return;BR.busy=true;BR.fall=true;BR.fv=0;BR.fx=PL.x;BR.fz=PL.z;PL.vx=PL.vz=0;brFxSet(1);try{ghostSnd(1.1)}catch(e){}rumble(.6,.6,500);
- await brWait(1150);brLoadShow(true,'BACKROOMS','NÍVEL 0');await brWait(80);brLoadBar(.15);
- try{brBuild()}catch(e){console.error('Backrooms:',e);BR.fall=false;PL.gy=groundY(PL.x,PL.z);brLoadShow(false);brFxSet(0);BR.busy=false;BR.walk=0;return}
- brLoadBar(.65);await brWait(200);
+ if(BR.busy||BR.on||S.style!=='modern'||city.haze)return;
+ {const k=brSegKey();if(k!==BR.segK){BR.segK=k;BR.seg=brPickSeg(k)}}
+ if(!BR.seg||!brOK())return;
+ const inS=!PL.car&&!PL.heli&&!PL.inside&&!PL.dead&&!PL.taxi&&!SKATE.ride&&!PARA.active&&!(PL.down>0)&&!(LH.up||LH.fall)&&brInBlock(PL.x,PL.z,.4);
+ if(inS&&Math.hypot(PL.vx,PL.vz)>1&&Math.random()<dt*.3)brFall()}
+async function brFall(){if(BR.busy||PL.dead)return;BR.busy=true;BR.fall=true;BR.fv=0;BR.fallT=0;BR.fx=PL.x;BR.fz=PL.z;PL.vx=PL.vz=0;PL.jy=PL.jv=0;brFxSet(.45);try{ghostSnd(1.1)}catch(e){}rumble(.6,.6,500);
+ await brWait(1500);brLoadShow(true,'BACKROOMS','NÍVEL 0');await brWait(80);brLoadBar(.15);
+ try{brBuild()}catch(e){console.error('Backrooms:',e);BR.fall=false;PL.gy=groundY(PL.x,PL.z);brLoadShow(false);brFxSet(0);BR.busy=false;return}
+ brLoadBar(.65);await brWait(200);BR.exitT=180;
  if(POL.wanted)try{endWanted(true,true)}catch(e){}
- BR.on=true;BR.t=0;BR.entT=0;BR.walk=0;BR.lastCell=-1;BR.fall=false;BR.grp.visible=true;
+ BR.on=true;BR.t=0;BR.entT=0;BR.lastCell=-1;BR.fall=false;BR.grp.visible=true;
  const c=brSpawnCell();PL.x=BR.ox+(c%BR.W+.5)*BR.C;PL.z=BR.oz+(((c/BR.W)|0)+.5)*BR.C;PL.gy=0;PL.jy=PL.jv=0;PL.vx=PL.vz=0;PL.inside='backrooms';AREAHUD.zoneT=0;AREAHUD.vehT=0;try{areaHudTick(0)}catch(e){}
  brPickExit(c);brMapPaint();camT.x=PL.x;camT.z=PL.z;BR.ckey=-1;brChunkCull();try{updateCamera(0,true)}catch(e){}
  brLoadBar(1);await brWait(450);brFxSet(0);brHum(true);brLoadShow(false);BR.busy=false;
  toast('<span style="color:#f2dc72">BACKROOMS</span>')}
 function brSpawnCell(){const W=BR.W,H=BR.H,m=BR.m;for(let k=0;k<200;k++){const c=(Math.random()*W*H)|0;if(m.L[c]>.85)return c}return((H/2)|0)*W+((W/2)|0)}
 /* corredor de saída: trecho reto (paredes dos dois lados) de 3–5 células, longe de onde o jogador caiu */
-function brPickExit(pc){const m=BR.m,W=m.W,H=m.H,hw=m.hw,vw=m.vw,runs=[];
- for(let j=1;j<H-1;j++){let s=-1;for(let i=0;i<W;i++){const cor=hw[j*W+i]&&hw[(j+1)*W+i],cont=s>=0&&!vw[j*(W+1)+i];if(cor&&(s<0||cont)){if(s<0)s=i}else{if(s>=0&&i-s>=3)runs.push(0,s,j,i-s);s=cor?i:-1}}if(s>=0&&W-s>=3)runs.push(0,s,j,W-s)}
- for(let i=1;i<W-1;i++){let s=-1;for(let j=0;j<H;j++){const cor=vw[j*(W+1)+i]&&vw[j*(W+1)+i+1],cont=s>=0&&!hw[j*W+i];if(cor&&(s<0||cont)){if(s<0)s=j}else{if(s>=0&&j-s>=3)runs.push(1,i,s,j-s);s=cor?j:-1}}if(s>=0&&H-s>=3)runs.push(1,i,s,H-s)}
- const pi=pc%W,pj=(pc/W)|0,far=Math.max(8,(W*.35)|0);let pick=-1;
- for(let k=0;k<80&&runs.length;k++){const r=((Math.random()*runs.length/4)|0)*4,ci=runs[r+1]+(runs[r]===0?runs[r+3]/2:0),cj=runs[r+2]+(runs[r]===1?runs[r+3]/2:0);if(Math.abs(ci-pi)+Math.abs(cj-pj)>=far){pick=r;break}if(pick<0)pick=r}
- if(pick<0){BR.exit={ax:0,i:Math.max(0,pi-1),j:pj,n:3};return}
- const n=Math.min(5,runs[pick+3]),off=(Math.random()*(runs[pick+3]-n+1))|0;BR.exit={ax:runs[pick],i:runs[pick+1]+(runs[pick]===0?off:0),j:runs[pick+2]+(runs[pick]===1?off:0),n}}
+/* v3 r11: saída = trecho reto de 3 células andáveis (sem parede no meio), sorteado longe do jogador (afrouxa se não achar), nunca o mesmo de antes */
+function brPickExit(pc){const m=BR.m,W=m.W,H=m.H,hw=m.hw,vw=m.vw,pi=pc%W,pj=(pc/W)|0,far=Math.max(8,(W*.35)|0),e0=BR.exit;let fb=null;
+ for(let k=0;k<400;k++){const ax=Math.random()<.5?0:1,i=1+((Math.random()*(W-(ax===0?4:2)))|0),j=1+((Math.random()*(H-(ax===1?4:2)))|0);
+  let ok=true;for(let q=0;q<2&&ok;q++)ok=ax===0?!vw[j*(W+1)+i+q+1]:!hw[(j+q+1)*W+i];if(!ok)continue;
+  if(e0&&e0.ax===ax&&Math.abs(e0.i-i)<3&&Math.abs(e0.j-j)<3)continue;const dd=Math.abs(i+(ax===0?1:0)-pi)+Math.abs(j+(ax===1?1:0)-pj);
+  if(dd>=(k<300?far:5)){BR.exit={ax,i,j,n:3};return}if(!fb&&dd>=3)fb={ax,i,j,n:3}}
+ BR.exit=fb||{ax:0,i:Math.max(1,Math.min(W-4,pi-1)),j:pj,n:3}}
+/* queda (entrada e saída): câmera abaixo e atrás do jogador olhando para cima — o chão some (só tem face de cima) e o mundo fica
+   pendurado lá em cima, tremendo; gravidade igual à queda do farol (26 m/s²) em worldPlGy */
+function brFallCam(dt){const f=PL.face||[0,1],t=BR.fallT||0,back=3.6+t*1.6;setLens(80,.1);camera.up.set(0,1,0);
+ camera.position.set(PL.x-f[0]*back,PL.gy-1.4-t*1.5,PL.z-f[1]*back);camera.lookAt(PL.x+f[0]*1.2,PL.gy+5+t*6,PL.z+f[1]*1.2);
+ if(Math.random()<.35)camera.rotateZ((Math.random()-.5)*.09);PL.sp.visible=true;sky.position.copy(camera.position);
+ brFxSet(Math.random()<.3?.75:.35)}
 /* ---------- dentro (roomStageLocalTick) ---------- */
 function brInsideTick(dt){if(!BR.on||!BR.m)return;BR.t+=dt;
  const top=camMode==='top';if(BR.fog){BR.fog.near=top?70:7;BR.fog.far=top?170:52}
  brChunkCull();
  BR.flT-=dt;if(BR.flT<=0){BR.flT=.05+Math.random()*(Math.random()<.12?.15:2.5);BR.flick=Math.random()<.16?.8+Math.random()*.12:1;if(BR.mats){BR.mats.c.color.setScalar(BR.flick);BR.mats.w.color.setScalar(.96+.04*BR.flick);BR.mats.f.color.setScalar(.96+.04*BR.flick)}}
  brEntTick(dt);
- if(!BR.busy&&!PL.dead){const c=brCellOf(PL.x,PL.z);if(brIsExit(c)&&Math.hypot(PL.vx,PL.vz)>1&&Math.random()<dt*.22)brClipOut()}}
-async function brClipOut(){if(BR.busy)return;BR.busy=true;BR.fall=true;BR.fv=0;BR.fx=PL.x;BR.fz=PL.z;PL.vx=PL.vz=0;brFxSet(1);try{ghostSnd(.9)}catch(e){}rumble(.5,.5,400);
- await brWait(1000);brLoadShow(true,'SUNSET SHORES','DE VOLTA À REALIDADE');await brWait(120);brLoadBar(.4);
+ BR.exitT-=dt;if(BR.exitT<=0){BR.exitT=180;brPickExit(brCellOf(PL.x,PL.z))} /* v3 r11: troca a cada 3 min (3 h) */
+ if(!BR.busy&&!PL.dead){const c=brCellOf(PL.x,PL.z);if(brIsExit(c)&&Math.hypot(PL.vx,PL.vz)>1&&Math.random()<dt*.3)brClipOut()}}
+async function brClipOut(){if(BR.busy)return;BR.busy=true;BR.fall=true;BR.fv=0;BR.fallT=0;BR.fx=PL.x;BR.fz=PL.z;PL.vx=PL.vz=0;PL.jy=PL.jv=0;brFxSet(.45);try{ghostSnd(.9)}catch(e){}rumble(.5,.5,400);
+ await brWait(1500);brLoadShow(true,'SUNSET SHORES','DE VOLTA À REALIDADE');await brWait(120);brLoadBar(.4);
  brLeave();const pt=brCityPoint();BR.fall=false;
  if(pt){PL.x=pt.x;PL.z=pt.z}else{const s=city.safe||{x:city.ext/2,z:city.ext/2};PL.x=s.x;PL.z=s.z}
- PL.gy=groundY(PL.x,PL.z);PL.jy=PL.jv=0;PL.vx=PL.vz=0;camT.x=PL.x;camT.z=PL.z;BR.walk=0;
+ PL.gy=groundY(PL.x,PL.z);PL.jy=PL.jv=0;PL.vx=PL.vz=0;camT.x=PL.x;camT.z=PL.z;BR.segK=-1;
  await brWait(300);brLoadBar(1);try{updateCamera(0,true)}catch(e){}await brWait(250);brFxSet(0);brLoadShow(false);BR.busy=false}
 function brLeave(){brEntClear();brHum(false);brFxSet(0);BR.on=false;BR.exit=null;if(BR.grp)BR.grp.visible=false;if(PL.inside==='backrooms')PL.inside=false}
 function brCityPoint(){const n=city.rects.length;for(let k=0;k<80;k++){const ri=(Math.random()*n)|0,r=city.rects[ri];if(!r)continue;const pt=perimPoint(perim(ri),Math.random()*400),x=pt[0],z=pt[1];
@@ -25046,7 +25054,7 @@ function brDistField(){const W=BR.W,H=BR.H,D=BR.dist,Q=BR.bq,m=BR.m,hw=m.hw,vw=m
   if(i>0&&!vw[j*(W+1)+i]&&D[c-1]<0){D[c-1]=d;Q[t++]=c-1}if(i<W-1&&!vw[j*(W+1)+i+1]&&D[c+1]<0){D[c+1]=d;Q[t++]=c+1}}
  BR.distC=pc}
 function brEntTick(dt){if(BR.t>=600){BR.entT-=dt;if(BR.entT<=0){BR.entT=45;if(BR.ents.length<5)brEntSpawn()}}
- if(!BR.ents.length){if(BR.fxV>0&&!BR.busy)brFxSet(0);return}
+ if(!BR.ents.length)return;
  BR.distT-=dt;if(BR.distT<=0||brCellOf(PL.x,PL.z)!==BR.distC){BR.distT=.5;brDistField()}
  const W=BR.W,m=BR.m,hw=m.hw,vw=m.vw,D=BR.dist,C=BR.C,e0=camera.matrixWorld.elements,pc=BR.distC;let near=99;
  for(const e of BR.ents){e.ph+=dt;e.hit=Math.max(0,e.hit-dt);const c=brCellOf(e.x,e.z);let tx=PL.x,tz=PL.z;
@@ -25063,8 +25071,8 @@ function brEntTick(dt){if(BR.t>=600){BR.entT-=dt;if(BR.entT<=0){BR.entT=45;if(BR
   const x=e.x+e0[0]*jx,z=e.z+e0[2]*jx;e.sp.position.set(x,0,z);e.sp.scale.set(sx,Math.min(3.05,sy),1);e.sp.material.rotation=gl?(Math.random()-.5)*.35:Math.sin(e.ph*1.7)*.05;
   for(let k=0;k<2;k++){const s=e.gh[k],o=(k?-1:1)*(gl?.16+Math.random()*.2:.07);s.position.set(x+e0[0]*o,0,z+e0[2]*o);s.scale.copy(e.sp.scale);s.material.rotation=e.sp.material.rotation;s.material.opacity=gl?.55:.28}
   setFrame(e.tex,pickDir(e.fx,e.fz,e.x,e.z),Math.floor(e.ph*3)%3)}
- if(!BR.busy)brFxSet(near<9?(.3-near*.03)*(Math.random()<.5?1:.4):0)}
-window.brDebug={enter:()=>{if(!city.brBlock)return'sem quarteirão';PL.x=(city.brBlock.x0+city.brBlock.x1)/2;PL.z=city.brBlock.z0+2;BR.walk=BR.need;return brFall()},out:()=>brClipOut(),time:s=>{BR.t=s;BR.entT=0},state:()=>({on:BR.on,busy:BR.busy,t:BR.t,ents:BR.ents.length,exit:BR.exit,block:city.brBlock,W:BR.W,boxes:BR.boxes?BR.boxes.length/7:0})};
+ }
+window.brDebug={enter:()=>{const b=BR.seg;if(!b)return'sem beco';PL.x=(b.x0+b.x1)/2;PL.z=(b.z0+b.z1)/2;return brFall()},out:()=>brClipOut(),time:s=>{BR.t=s;BR.entT=0},seg:()=>BR.seg,state:()=>({on:BR.on,busy:BR.busy,t:BR.t,ents:BR.ents.length,exit:BR.exit,exitT:BR.exitT,seg:BR.seg&&{x0:BR.seg.x0,z0:BR.seg.z0,x1:BR.seg.x1,z1:BR.seg.z1},segK:BR.segK,W:BR.W,boxes:BR.boxes?BR.boxes.length/7:0})};
 
 const UPD_ACT=[],UPD_SD=[-.42,.42],UPD_MOTO=[0,0];/* v3 r5: listas fixas do update (antes filter/literais por quadro) */
 function update(dt){if(SKATE.ui)return;if(POOL.on){poolTick(dt);return}if(DICE.on){diceTick(dt);return}luciaIdleTick();if(roomStageKind()&&!BENCH.active){roomStageLocalTick(dt);return}crimeRoll();if(DLG.on){dlgTick(dt);return}paraTick(dt);try{dealTick(dt)}catch(e){console.error(e)}try{storyTick();duoTick(dt);questTick(dt);sideTick(dt);forestTick(dt);jetTick(dt);vortexTick();dbTick(dt);shipTick(dt);airTick2(dt);casinoTick(dt);motelTick(dt);labTick(dt);clubFxTick(dt);bankTick(dt);empTick(dt);brWorldTick(dt)}catch(e){console.error(e)}try{areaHudTick(dt)}catch(e){console.error(e)}cheatTick();maskTick(dt);jammerTick(dt);try{profTick(dt)}catch(e){console.error(e)}updateCloseCarDetails(dt);updateIndustrialGates(dt);carGeoPrewarmTick(dt);
@@ -25851,8 +25859,8 @@ const TVCAT=[
   g:['A 140 km/h o DeLorean viaja no tempo para o Synthwave: cidade neon de arranha-céus e palmeiras. Ele mora na garagem da micro-ilha.','At 140 km/h the DeLorean travels in time to Synthwave: a neon city of skyscrapers and palm trees. It lives in the micro-island garage.'],
   p:[tvcP('w_synth1',['O DeLOREAN','THE DeLOREAN']),tvcP('w_synth2',['A CIDADE NEON','THE NEON CITY'])]},
  {k:'backrooms',ic:'🟨',c:'#f2dc72',l:'2',n:['BACKROOMS','BACKROOMS'],
-  g:['Um quarteirão falha no mapa. Ande por ele até atravessar o chão: labirinto amarelo, sem ninguém. Depois de 10 minutos, entidades lentas aparecem. A saída é o corredor mais amarelo do mapa; ande nele até voltar.','One block glitches on the map. Walk around it until you fall through the floor: a yellow maze, nobody else. After 10 minutes, slow entities show up. The exit is the yellower corridor on the map; walk it until you get back.'],
-  p:[tvcP('w_back1',['O QUARTEIRÃO COM FALHA','THE GLITCHED BLOCK']),tvcP('w_back2',['NÍVEL 0','LEVEL 0'])]},
+  g:['Um trecho de beco falha no mapa e muda de lugar a cada 3 horas. Ande nele e você atravessa o chão: labirinto amarelo, sem ninguém. Depois de 10 minutos, entidades lentas aparecem. A saída é o trecho com falha no mapa, que também muda a cada 3 minutos.','A stretch of alley glitches on the map and moves every 3 hours. Walk on it and you fall through the floor: a yellow maze, nobody else. After 10 minutes, slow entities show up. The exit is the glitched stretch on the map, which also moves every 3 minutes.'],
+  p:[tvcP('w_back1',['ATRAVESSANDO O CHÃO','FALLING THROUGH THE FLOOR']),tvcP('w_back2',['NÍVEL 0','LEVEL 0'])]},
  {k:'weather',ic:'⛈',c:'#8fb4ff',l:'alt',n:['CLIMA','WEATHER'],
   g:['Eclipses solares podem acontecer no jogo, assim como fortes tempestades que cobrem o céu de forma realista. Nuvens que passam pelo sol fazem sombra no chão. Cada cidade tem o seu clima.','Solar eclipses can happen in the game, as well as strong storms that cover the sky realistically. Clouds passing over the sun cast shadows on the ground. Every city has its own weather.'],
   p:[tvcP('storm2',['TEMPESTADE','STORM'],'rain'),tvcP('clouds',['SOMBRA DAS NUVENS','CLOUD SHADOWS']),tvcP('eclipse2',['ECLIPSE SOLAR','SOLAR ECLIPSE'],'corona')]},
