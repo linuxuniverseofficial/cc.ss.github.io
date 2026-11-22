@@ -46,6 +46,7 @@ mecânicas houver (20, 30…). Coisas pequenas podem dividir canal (ex.: eclipse
 | 16 | UPSIDE DOWN | 2 | w_inv1, w_inv2 (clareados) |
 | 17 | POINT HAZE | 2 | w_haze1 · w_haze2 |
 | 18 | SYNTHWAVE · DeLOREAN | 2 | w_synth1 · w_synth2 |
+| 18b | BACKROOMS (v3 r10, r11) | 2 | w_back1 (queda: cidade vista por baixo, r11) · w_back2 (Nível 0) |
 | 19 | CLIMA (tempestade + eclipse + sombra das nuvens) | alt | storm2 (+relâmpago) · clouds (r70) · eclipse2 (+disco do eclipse em HTML) |
 | 20 | RIOS E MAR (poluição + navios) | alt | tv_pollution · ship2 |
 | 21 | OBRAS NA RUA | 1 | obra |
@@ -72,6 +73,7 @@ mecânicas houver (20, 30…). Coisas pequenas podem dividir canal (ex.: eclipse
 | 41 | SHOPPING | 1 | mall_int |
 | 42 | NATHAN E CLAIRE | 1 | cartão HTML (N/C, Alt e Caps Lock) |
 | 43 | ONLINE | 1 | cartão HTML (carona) |
+| 43b | ONLINE · HACK DE PIX (v3 r9) | 1 | ph_prof + cartão HTML (Bloqueador de Sinal) |
 | 44 | REGISTRO E ESTATÍSTICAS | 1 | cartão HTML |
 
 **Novos na v3 r1** (ordem no `TVCAT`: armas depois do hospital, eventos de pedestres depois de "pedestres e seu carro", carros e posto depois do carro sujo, residências depois dos discos, rampas depois dos veículos especiais, e rádio/notícias/modo foto/cheats antes das estatísticas):
@@ -110,6 +112,7 @@ mesas do cassino (sinuca, Liar's Dice), Skate Shop, online com 2 jogadores (prec
 | UPSIDE DOWN | w_inv1, w_inv2 |
 | POINT HAZE | w_haze1, w_haze2 |
 | SYNTHWAVE / DeLOREAN | w_synth1, w_synth2 |
+| BACKROOMS | w_back1, w_back2 (capturados à mão: tools/tvcat-capture.js não tem modo para isso) |
 | CLIMA (tempestade + eclipse) | tv_storm, eclipse |
 | POLUIÇÃO | tv_pollution |
 | PARAQUEDAS / PRAIA | tv_parachute, poi_beach, beach2 |

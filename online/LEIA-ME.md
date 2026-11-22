@@ -35,6 +35,7 @@ Teste: abrir `https://gta.linuxuniverse.com.br/online/api.php?a=info` deve respo
 - **Agenda:** todo mundo da sala aparece no celular (P → AGENDA), em ordem alfabética. Ligar pede um encontro; se o outro atender (Y), você é levado até ele.
 - **Quem está online:** no mapa (M), botão JOGADORES acima da legenda; ou `/jogadores` no chat.
 - **Carro de outro jogador:** **G** = carona (dá para atirar de dentro; **F** desce). **F** = roubar (o motorista é jogado para fora e você assume o carro).
+- **Hack de PIX (v3 r9):** com o app ctOS, celular › ctOS › PERFIL apontado para outro jogador → HACKEAR PIX (fique entre 6 e 24 m por 7 s). Leva 20% do saldo dele (máx. $5.000); recarga de 90 s; quem foi hackeado fica 5 min protegido. O servidor confere tudo. **Bloqueador de Sinal:** AMOnições › APP ctOS, $5.000, fica na conta e ninguém hackeia mais o seu PIX. Ajustes no topo do `api.php` (`SIG_PRICE`, `HACK_*`).
 - **Desligado no online:** save, cheats e modo história. Para sair, recarregue a página.
 
 ## Ajustes (topo do `api.php`)

@@ -45,7 +45,18 @@ const ACCOUNT_TTL = 30 * 86400.0; // conta sem entrar há 30 dias é apagada (o 
 const PASS_MIN    = 6;
 const ADMIN_NAME  = 'admin';   // r25: conta de administração (nome reservado). Senha: variável CCSS_ADMIN_PASS ou o arquivo data/admin-pass.txt (criado sozinho na 1ª vez)
 const HOUSES      = 24;      // casas seguras do online: uma por conta (a 25ª conta fica sem)   // s que uma remoção fica guardada para quem está sincronizando
-const EV_KEEP     = 90.0;    // s que um evento fica guardado
+const EV_KEEP     = 90.0;
+/* v3 r9: HACK DE PIX entre jogadores (ctOS › PERFIL apontado para outro jogador). O servidor decide tudo: alvo, distância,
+   tempo mínimo da transferência, valor (do saldo salvo da vítima), recargas e o BLOQUEADOR DE SINAL (comprado na AMOnições). */
+const SIG_PRICE   = 5000;    // Bloqueador de Sinal: protege o PIX de hackers para sempre (fica na conta)
+const HACK_MIN_T  = 6.0;     // s mínimos entre começar e terminar (o cliente usa 7 s)
+const HACK_MAX_T  = 40.0;    // s máximos (depois disso a transferência expira)
+const HACK_RANGE  = 34.0;    // m entre os dois (o cliente corta em 24 m; folga para o atraso do estado)
+const HACK_PCT    = 0.20;    // parte do saldo da vítima
+const HACK_CAP    = 5000;    // máximo por hack
+const HACK_MIN_BAL= 100;     // vítima com menos que isso não vale a pena
+const HACK_CD     = 90.0;    // s de recarga de quem hackeia
+const HACK_SHIELD = 300.0;   // s em que a vítima não pode ser hackeada de novo    // s que um evento fica guardado
 const TZ          = 'America/Sao_Paulo';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -80,6 +91,9 @@ function db(): PDO {
   $cols = array_column($pdo->query('PRAGMA table_info(accounts)')->fetchAll(), 'name'); if (!in_array('house', $cols, true)) $pdo->exec('ALTER TABLE accounts ADD COLUMN house INTEGER DEFAULT -1');
   /* r25: kick = sessão removida pelo admin (o próximo tick recebe 410 e o jogo não reentra sozinho) */
   $cols = array_column($pdo->query('PRAGMA table_info(players)')->fetchAll(), 'name'); if (!in_array('kick', $cols, true)) $pdo->exec('ALTER TABLE players ADD COLUMN kick INTEGER DEFAULT 0');
+  /* v3 r9: hack de PIX (alvo e início da transferência em andamento, recarga de quem hackeia, proteção de quem foi hackeado) */
+  foreach (['hack_to INTEGER DEFAULT 0', 'hack_t REAL DEFAULT 0', 'hack_cd REAL DEFAULT 0', 'hacked_t REAL DEFAULT 0'] as $c) { $n = strtok($c, ' '); if (!in_array($n, $cols, true)) $pdo->exec('ALTER TABLE players ADD COLUMN ' . $c); }
+  $cols = array_column($pdo->query('PRAGMA table_info(accounts)')->fetchAll(), 'name'); if (!in_array('sigblock', $cols, true)) $pdo->exec('ALTER TABLE accounts ADD COLUMN sigblock INTEGER DEFAULT 0');
   return $pdo;
 }
 /* conta: nome + senha. Existe → confere; não existe → cria com o dinheiro inicial. Chamar dentro de transação. */
@@ -180,6 +194,15 @@ function acctWipe(PDO $db, string $lc, int $kick): void {
   foreach ($q->fetchAll() as $r) { releaseCars($db, (int)$r['id'], $r['state']); $db->prepare('UPDATE players SET kick=? WHERE id=?')->execute([$kick, $r['id']]); }
 }
 /* aparência e estado: só JSON pequeno e plano (nada de HTML); o cliente desenha com textContent */
+/* v3 r9: dinheiro salvo na conta (o cliente manda o saldo a cada 10 s; o hack e o bloqueador mexem aqui também) */
+function acctMoney(PDO $db, string $lc): int { $q = $db->prepare('SELECT data FROM accounts WHERE name_lc=?'); $q->execute([$lc]); $r = $q->fetch(); $d = $r ? (json_decode((string)$r['data'], true) ?: []) : []; return (int)($d['m'] ?? 0); }
+function acctMoneyAdd(PDO $db, string $lc, int $delta): void { $q = $db->prepare('SELECT data FROM accounts WHERE name_lc=?'); $q->execute([$lc]); $r = $q->fetch(); if (!$r) return;
+  $d = json_decode((string)$r['data'], true) ?: []; $d['m'] = (int)($d['m'] ?? 0) + $delta; $db->prepare('UPDATE accounts SET data=? WHERE name_lc=?')->execute([json_encode($d, JSON_UNESCAPED_UNICODE), $lc]); }
+function acctSig(PDO $db, string $lc): bool { $q = $db->prepare('SELECT sigblock FROM accounts WHERE name_lc=?'); $q->execute([$lc]); return (int)($q->fetch()['sigblock'] ?? 0) === 1; }
+/* os dois na mesma cidade, vivos, fora de interior e perto (posição do último estado de cada um) */
+function hackNear(?string $sa, ?string $sb): bool { $a = $sa ? json_decode($sa, true) : null; $b = $sb ? json_decode($sb, true) : null; if (!is_array($a) || !is_array($b)) return false;
+  foreach ([$a, $b] as $s) if (($s['st'] ?? '') === 'dead' || !empty($s['w']) || !empty($s['tj']) || !is_numeric($s['x'] ?? null) || !is_numeric($s['z'] ?? null)) return false;
+  if (($a['wk'] ?? '') !== ($b['wk'] ?? '')) return false; return hypot((float)$a['x'] - (float)$b['x'], (float)$a['z'] - (float)$b['z']) <= HACK_RANGE; }
 function cleanJson($v, int $max): ?string { if ($v === null) return null; $s = json_encode($v, JSON_UNESCAPED_UNICODE); return ($s !== false && strlen($s) <= $max) ? $s : null; }
 
 $a = $_GET['a'] ?? '';
@@ -222,7 +245,7 @@ try {
     $b = body(); txBegin($db);
     [$name, $lc, $acc, $isNew] = acctAuth($db, $b);
     txCommit($db);
-    out(['ok' => true, 'name' => $name, 'acct' => json_decode((string)$acc['data'], true) ?: [], 'new' => $isNew, 'admin' => $lc === ADMIN_NAME]);
+    out(['ok' => true, 'name' => $name, 'acct' => json_decode((string)$acc['data'], true) ?: [], 'new' => $isNew, 'admin' => $lc === ADMIN_NAME, 'bl' => acctSig($db, $lc) ? 1 : 0]);
   }
   if ($a === 'join') {
     $b = body();
@@ -250,7 +273,7 @@ try {
     addEv($db, 0, 0, 'sys', ['m' => $name . ' entrou', 'en' => $name . ' joined']);
     txCommit($db);
     [$day, $seed] = daySeed();
-    out(['ok' => true, 'id' => $id, 'name' => $name, 'token' => $token, 'seed' => $seed, 'size' => CITY_SIZE, 'day' => $day, 'tod' => gameTod(), 'last' => $last, 'max' => MAX_PLAYERS, 'acct' => json_decode((string)$acc['data'], true) ?: [], 'new' => $isNew, 'house' => $house, 'admin' => $lc === ADMIN_NAME]);
+    out(['ok' => true, 'id' => $id, 'name' => $name, 'token' => $token, 'seed' => $seed, 'size' => CITY_SIZE, 'day' => $day, 'tod' => gameTod(), 'last' => $last, 'max' => MAX_PLAYERS, 'acct' => json_decode((string)$acc['data'], true) ?: [], 'new' => $isNew, 'house' => $house, 'admin' => $lc === ADMIN_NAME, 'bl' => acctSig($db, $lc) ? 1 : 0]);
   }
   if ($a === 'tick') {
     $b = body(); $p = me($db, $b['token'] ?? null); $id = (int)$p['id']; $t = now();
@@ -312,6 +335,39 @@ try {
       } elseif ($k === 'pay') {
         /* carona de táxi: o passageiro desconta do próprio dinheiro e o motorista recebe */
         $to = (int)($e['to'] ?? 0); $m = (int)num($e['m'] ?? 0, 0, 2000); if ($to > 0 && $to !== $id && $m > 0) addEv($db, $id, $to, 'pay', ['n' => $p['name'], 'm' => $m]);
+      } elseif ($k === 'sigbuy') {
+        /* v3 r9: Bloqueador de Sinal. Cobra do saldo salvo (o cliente manda o save junto, então está em dia) */
+        $mlc = (string)$p['name_lc'];
+        if (acctSig($db, $mlc)) { addEv($db, 0, $id, 'sig', ['ok' => 1, 'paid' => 0]); continue; }
+        if (acctMoney($db, $mlc) < SIG_PRICE) { addEv($db, 0, $id, 'sig', ['ok' => 0, 'r' => 'money']); continue; }
+        acctMoneyAdd($db, $mlc, -SIG_PRICE); $db->prepare('UPDATE accounts SET sigblock=1 WHERE name_lc=?')->execute([$mlc]);
+        addEv($db, 0, $id, 'sig', ['ok' => 1, 'paid' => SIG_PRICE]);
+      } elseif ($k === 'hk0' || $k === 'hk1' || $k === 'hkx') {
+        /* v3 r9: hack de PIX. hk0 = começou (avisa a vítima), hk1 = barra cheia (o servidor confere e transfere), hkx = desistiu/sinal caiu */
+        $to = (int)($e['to'] ?? 0);
+        $q = $db->prepare('SELECT id,name,name_lc,state,seen,hacked_t FROM players WHERE id=?'); $q->execute([$to]); $v = ($to > 0 && $to !== $id) ? $q->fetch() : null;
+        if ($k === 'hkx') { if ((int)$p['hack_to'] === $to) { $db->prepare('UPDATE players SET hack_to=0, hack_t=0 WHERE id=?')->execute([$id]); $p['hack_to'] = 0; if ($v) addEv($db, $id, $to, 'hkx', ['n' => $p['name']]); } continue; }
+        $no = function (string $r) use ($db, $id, $to, &$p) { $db->prepare('UPDATE players SET hack_to=0, hack_t=0 WHERE id=?')->execute([$id]); $p['hack_to'] = 0; addEv($db, 0, $id, 'hk', ['st' => 'no', 'r' => $r, 'to' => $to]); };
+        if (!$v || $t - (float)$v['seen'] > TIMEOUT) { $no('gone'); continue; }
+        if (acctSig($db, (string)$v['name_lc'])) { $no('blk'); continue; }
+        if (!hackNear($state, $v['state'])) { $no('far'); continue; }
+        if ($k === 'hk0') {
+          if ((float)$p['hack_cd'] > $t) { addEv($db, 0, $id, 'hk', ['st' => 'no', 'r' => 'cd', 's' => (int)ceil((float)$p['hack_cd'] - $t), 'to' => $to]); continue; }
+          if ((float)$v['hacked_t'] + HACK_SHIELD > $t) { $no('shield'); continue; }
+          $db->prepare('UPDATE players SET hack_to=?, hack_t=? WHERE id=?')->execute([$to, $t, $id]); $p['hack_to'] = $to; $p['hack_t'] = $t;
+          addEv($db, $id, $to, 'hkw', ['n' => $p['name']]); addEv($db, 0, $id, 'hk', ['st' => 'go', 'to' => $to]); continue;
+        }
+        /* hk1: precisa ter começado com esse alvo há pelo menos HACK_MIN_T */
+        $dt = $t - (float)$p['hack_t'];
+        if ((int)$p['hack_to'] !== $to || $dt < HACK_MIN_T || $dt > HACK_MAX_T) { $no('time'); continue; }
+        if ((float)$v['hacked_t'] + HACK_SHIELD > $t) { $no('shield'); continue; }
+        $bal = acctMoney($db, (string)$v['name_lc']); $m = (int)min(HACK_CAP, floor(max(0, $bal) * HACK_PCT));
+        if ($bal < HACK_MIN_BAL || $m <= 0) { $no('poor'); continue; }
+        acctMoneyAdd($db, (string)$v['name_lc'], -$m); acctMoneyAdd($db, (string)$p['name_lc'], $m);
+        $db->prepare('UPDATE players SET hack_to=0, hack_t=0, hack_cd=? WHERE id=?')->execute([$t + HACK_CD, $id]); $p['hack_to'] = 0; $p['hack_cd'] = $t + HACK_CD;
+        $db->prepare('UPDATE players SET hacked_t=? WHERE id=?')->execute([$t, $to]);
+        addEv($db, $id, $to, 'pixed', ['n' => $p['name'], 'm' => $m]); addEv($db, 0, $id, 'hk', ['st' => 'ok', 'm' => $m, 'n' => $v['name'], 'to' => $to]);
+        addEv($db, 0, 0, 'sys', ['m' => $p['name'] . ' hackeou o PIX de ' . $v['name'], 'en' => $p['name'] . ' hacked ' . $v['name'] . "'s PIX"]);
       } elseif (in_array($k, ['jack', 'ride', 'unride', 'call', 'callok', 'callno'], true)) { /* r52: unride = carona substituída (quem estava sai do carro) */
         $to = (int)($e['to'] ?? 0); if ($to > 0 && $to !== $id) addEv($db, $id, $to, $k, ['n' => $p['name']]);
       }
@@ -321,10 +377,10 @@ try {
     /* jogadores: aparência só para quem ainda não tem a versão atual (kv = "id:versão,...") */
     $known = [];
     foreach (explode(',', (string)($b['kv'] ?? '')) as $pair) { $kv = explode(':', $pair); if (count($kv) === 2) $known[(int)$kv[0]] = (int)$kv[1]; }
-    $rows = $db->prepare('SELECT id,name,look,lookv,state,seen,kills,deaths FROM players WHERE id<>? AND seen>=?'); $rows->execute([$id, $t - TIMEOUT]);
+    $rows = $db->prepare('SELECT p.id,p.name,p.look,p.lookv,p.state,p.seen,p.kills,p.deaths,IFNULL(a.sigblock,0) bl FROM players p LEFT JOIN accounts a ON a.name_lc=p.name_lc WHERE p.id<>? AND p.seen>=?'); $rows->execute([$id, $t - TIMEOUT]);
     $players = [];
     foreach ($rows->fetchAll() as $r) {
-      $o = ['id' => (int)$r['id'], 'n' => $r['name'], 'lv' => (int)$r['lookv'], 's' => $r['state'] ? json_decode($r['state'], true) : null, 'age' => round($t - (float)$r['seen'], 3), 'k' => (int)$r['kills'], 'd' => (int)$r['deaths']];
+      $o = ['id' => (int)$r['id'], 'n' => $r['name'], 'lv' => (int)$r['lookv'], 's' => $r['state'] ? json_decode($r['state'], true) : null, 'age' => round($t - (float)$r['seen'], 3), 'k' => (int)$r['kills'], 'd' => (int)$r['deaths'], 'bl' => (int)$r['bl']];
       if (($known[(int)$r['id']] ?? -1) !== (int)$r['lookv']) $o['look'] = json_decode((string)$r['look'], true);
       $players[] = $o;
     }
@@ -338,7 +394,7 @@ try {
     if ($ws === 0) { $wv = (int)($db->query("SELECT IFNULL(v,0) v FROM meta WHERE k='wv'")->fetch()['v'] ?? 0); $q = $db->query('SELECT k,kind,data,owner,gone FROM world WHERE gone=0'); }
     else { $q = $db->prepare('SELECT k,kind,data,owner,gone,v FROM world WHERE v>? ORDER BY v LIMIT 300'); $q->execute([$ws]); }
     foreach ($q->fetchAll() as $r) { if ($ws) $wv = max($wv, (int)$r['v']); $w[] = ['k' => $r['k'], 'o' => (int)$r['owner'], 'g' => (int)$r['gone'], 'd' => $r['data'] ? json_decode((string)$r['data'], true) : null]; }
-    out(['ok' => true, 'now' => $t, 'tod' => gameTod(), 'players' => $players, 'ev' => $ev, 'last' => $last, 'w' => $w, 'wv' => $wv, 'me' => ['k' => (int)$p['kills'], 'd' => (int)$p['deaths']]]);
+    out(['ok' => true, 'now' => $t, 'tod' => gameTod(), 'players' => $players, 'ev' => $ev, 'last' => $last, 'w' => $w, 'wv' => $wv, 'me' => ['k' => (int)$p['kills'], 'd' => (int)$p['deaths'], 'bl' => acctSig($db, (string)$p['name_lc']) ? 1 : 0]]);
   }
   if ($a === 'leave') {
     $b = body(); $token = $b['token'] ?? ($_GET['token'] ?? null);
