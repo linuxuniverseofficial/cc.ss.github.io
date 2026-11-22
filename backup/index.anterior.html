@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 <script>
 /* v78 · BUILD: número da entrega. Ao abrir, o jogo lê version.txt (poucos bytes, sem cache) e, se a build no servidor for outra
    (navegador/celular servindo cópia velha), recarrega uma vez. Saves e configurações (localStorage) NÃO são apagados. */
-var BUILD_TAG='r3';
+var BUILD_TAG='r4';
 (function(){try{if(!/^https?:$/.test(location.protocol))return;const k='ps_build_reload';
  fetch(new URL('version.txt?b='+Date.now(),location.href).href,{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=/^\s*((?:dev\s+)?r[\d.]+)\s*$/i.exec(t||'');if(!m||m[1].replace(/\s+/g,' ').toLowerCase()===BUILD_TAG.toLowerCase()){try{sessionStorage.removeItem(k)}catch(e){}return}
   let n=0;try{n=+sessionStorage.getItem(k)||0}catch(e){}if(n>=2)return;try{sessionStorage.setItem(k,String(n+1))}catch(e){}
@@ -799,6 +799,12 @@ body.hide-gamehud #gun,body.hide-gamehud #wanted,body.hide-gamehud #wzone{displa
 @keyframes wzonePulse{50%{background:#ff343499;box-shadow:0 0 11px #f33c;color:#fff}}
 /* v130: procurado junto ao canto superior direito, abaixo do indicador de busca regional. */
 #wanted{top:calc(49px + env(safe-area-inset-top,0px));right:calc(10px + env(safe-area-inset-right,0px));text-align:right;max-width:min(350px,55vw)}
+/* v3 r4 (PC): o kit (arma, vida, colete, câmera lenta, veículo) sai de cima do minimapa e vai para o canto superior direito
+   (o radar recolhe sozinho e o kit ficava descendo junto); zona de busca e procurado descem para baixo dele. Toque não muda. */
+body:not(.touch) #hpwrap{left:auto;right:calc(16px + env(safe-area-inset-right,0px));bottom:auto;top:calc(16px + env(safe-area-inset-top,0px));justify-items:end}
+body:not(.touch).mini-rest #hpwrap{transform:none}
+body:not(.touch) #wzone{top:calc(104px + env(safe-area-inset-top,0px))}
+body:not(.touch) #wanted{top:calc(139px + env(safe-area-inset-top,0px))}
 /* velocímetro à direita do minimapa, alinhado pela base. */
 #speed{left:calc(16px + 180px + 22px + env(safe-area-inset-left,0px));right:auto;bottom:calc(18px + env(safe-area-inset-bottom,0px));text-align:left}
 body.touch #speed{left:calc(16px + 118px + 16px + env(safe-area-inset-left,0px));right:auto;top:calc(80px + 118px - 48px + env(safe-area-inset-top,0px));bottom:auto;text-align:left;font-size:27px}
