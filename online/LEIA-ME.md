@@ -36,6 +36,7 @@ Teste: abrir `https://gta.linuxuniverse.com.br/online/api.php?a=info` deve respo
 - **Quem está online:** no mapa (M), botão JOGADORES acima da legenda; ou `/jogadores` no chat.
 - **Carro de outro jogador:** **G** = carona (dá para atirar de dentro; **F** desce). **F** = roubar (o motorista é jogado para fora e você assume o carro).
 - **Hack de PIX (v3 r9):** com o app ctOS, celular › ctOS › PERFIL apontado para outro jogador → HACKEAR PIX (fique entre 6 e 24 m por 7 s). Leva 20% do saldo dele (máx. $5.000); recarga de 90 s; quem foi hackeado fica 5 min protegido. O servidor confere tudo. **Bloqueador de Sinal:** AMOnições › APP ctOS, $5.000, fica na conta e ninguém hackeia mais o seu PIX. Ajustes no topo do `api.php` (`SIG_PRICE`, `HACK_*`).
+- **Backrooms (v3 r14):** o trecho de beco com falha é o mesmo para todos (troca a cada 3 h de jogo). Quem cai vai para o mesmo labirinto e vê os outros que estão lá; a saída (só no minimapa) é a mesma para todos e troca a cada 3 min. As entidades são de cada jogador.
 - **Desligado no online:** save, cheats e modo história. Para sair, recarregue a página.
 
 ## Ajustes (topo do `api.php`)
