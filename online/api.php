@@ -151,6 +151,8 @@ function carData(array $e, ?array $old): array {
   if (isset($e['pl'])) $d['pl'] = mb_substr(preg_replace('/[^A-Z0-9 \-]/', '', strtoupper((string)$e['pl'])), 0, 8);
   foreach (['x', 'z'] as $c) if (isset($e[$c])) $d[$c] = round(num($e[$c], -2000, 4000), 2);
   if (isset($e['a'])) $d['a'] = round(num($e['a'], -7, 7), 3);
+  /* v3 r30: dano do carro (vida 0..100 e amassados "frld" 0..2) fica guardado para todos; carro consertado manda sem os campos */
+  if (isset($e['x'])) { unset($d['hp'], $d['dm']); if (isset($e['hp'])) $d['hp'] = (int)num($e['hp'], 0, 100); if (isset($e['dm']) && preg_match('/^[0-2]{4}$/', (string)$e['dm'])) $d['dm'] = (string)$e['dm']; }
   return $d;
 }
 /* seed do dia: igual para todo mundo, muda à meia-noite (horário de Brasília) */
