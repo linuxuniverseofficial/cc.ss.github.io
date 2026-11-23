@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 (function(){const h0=Math.hypot,sq=Math.sqrt,ab=Math.abs;Math.hypot=function hypot(a,b,c,d){if(d!==undefined)return h0(a,b,c,d);if(c!==undefined)return sq(a*a+b*b+c*c);if(b!==undefined)return sq(a*a+b*b);return a===undefined?0:ab(+a)}})();
 /* v78 · BUILD: número da entrega. Ao abrir, o jogo lê version.txt (poucos bytes, sem cache) e, se a build no servidor for outra
    (navegador/celular servindo cópia velha), recarrega uma vez. Saves e configurações (localStorage) NÃO são apagados. */
-var BUILD_TAG='r29';
+var BUILD_TAG='r30';
 (function(){try{if(!/^https?:$/.test(location.protocol))return;const k='ps_build_reload';
  fetch(new URL('version.txt?b='+Date.now(),location.href).href,{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=/^\s*((?:dev\s+)?r[\d.]+)\s*$/i.exec(t||'');if(!m||m[1].replace(/\s+/g,' ').toLowerCase()===BUILD_TAG.toLowerCase()){try{sessionStorage.removeItem(k)}catch(e){}return}
   let n=0;try{n=+sessionStorage.getItem(k)||0}catch(e){}if(n>=2)return;try{sessionStorage.setItem(k,String(n+1))}catch(e){}
@@ -4519,8 +4519,8 @@ function emoVisible(e){emoBase();const v=EMOKB.ver.get(e);if(v&&!emoDraws(EMO_RE
 function emoRecent(){try{const a=JSON.parse(localStorage.getItem('ccss_emo_recent')||'[]');return Array.isArray(a)?a.filter(emoOk).slice(0,40):[]}catch(e){return[]}}
 function emoRecentAdd(e){try{const a=[e,...emoRecent().filter(x=>x!==e)].slice(0,40);localStorage.setItem('ccss_emo_recent',JSON.stringify(a))}catch(err){}}
 function emoKbBuild(){if(EMOKB.el)return EMOKB.el;const st=document.createElement('style');st.textContent=
- '#emoKb{position:fixed;inset:0;z-index:70;display:flex;align-items:flex-end;justify-content:center;background:rgba(6,4,14,.55);font-family:"Segoe UI",Arial,sans-serif;color:#fff;padding:0 env(safe-area-inset-right,0) env(safe-area-inset-bottom,0) env(safe-area-inset-left,0)}#emoKb[hidden]{display:none}'+
- '#emoKb .ek-box{width:min(560px,100vw);height:min(440px,82vh);display:flex;flex-direction:column;background:#15121e;border:2px solid #ffd23a;border-bottom:0;border-radius:14px 14px 0 0;box-shadow:0 -10px 40px rgba(0,0,0,.6)}'+
+ '#emoKb{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;background:rgba(6,4,14,.55);font-family:"Segoe UI",Arial,sans-serif;color:#fff;padding:0 env(safe-area-inset-right,0) env(safe-area-inset-bottom,0) env(safe-area-inset-left,0)}#emoKb[hidden]{display:none}'+
+ '#emoKb .ek-box{width:min(560px,calc(100vw - 16px));height:min(440px,calc(100vh - 16px));height:min(440px,calc(100dvh - 16px));display:flex;flex-direction:column;background:#15121e;border:2px solid #ffd23a;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.6)} /* v3 r30: centralizado na tela (era preso embaixo como teclado de celular e ficava cortado/por cima do botão) */'+
  '#emoKb .ek-hd{display:flex;align-items:center;gap:8px;padding:8px 12px 4px;font:700 15px Silkscreen,monospace;color:#ffd23a}#emoKb .ek-hd b{flex:1}#emoKb .ek-x{background:none;border:0;color:#fff;font-size:20px;cursor:pointer;padding:2px 6px}'+
  '#emoKb .ek-tone{display:flex;gap:5px}#emoKb .ek-tone button{width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,.3);padding:0;cursor:pointer}#emoKb .ek-tone button.on{border-color:#fff;box-shadow:0 0 0 2px #ffd23a}'+
  '#emoKb .ek-tabs{display:flex;gap:2px;padding:0 8px;border-bottom:1px solid #2c2840;overflow-x:auto;scrollbar-width:none}#emoKb .ek-tabs button{flex:1 0 auto;min-width:40px;height:38px;font-size:21px;background:none;border:0;border-bottom:3px solid transparent;cursor:pointer;opacity:.55;font-family:'+EMO_FONT.replace(/"/g,"'")+'}#emoKb .ek-tabs button.on{opacity:1;border-bottom-color:#ffd23a}'+
@@ -21614,6 +21614,12 @@ function dbBoothAct(d){clang(.25);
  }else{dbBeginWarning(d);toast('CANCELAS FECHANDO')}
 }
 const DB={key:'',cT:0,groups:[]};
+/* v3 r30: ponte levadiça no online = fase do relógio do servidor (netNow) + defasagem fixa por ponte. Mesma sequência do modo solo:
+   fechada 60 s → aviso 5 → subindo 5 → aberta 60 → descendo 5. Não espera o tabuleiro esvaziar (senão cada jogo atrasaria diferente). */
+function dbNetSync(d){if(!ONLINE.on||S.style!=='modern'||city.haze)return false;const T=DB_T,L=T.closed+T.warning+T.rising+T.open+T.lowering,i=Math.max(0,city.dbs.indexOf(d));
+ let ph=((netNow()+i*47)%L+L)%L;if(ph<T.closed){d.state='closed';d.t=T.closed-ph;return true}ph-=T.closed;
+ if(ph<T.warning){d.state='warning';d.t=T.warning-ph;return true}ph-=T.warning;if(ph<T.rising){d.state='rising';d.t=T.rising-ph;return true}ph-=T.rising;
+ if(ph<T.open){d.state='open';d.t=T.open-ph;return true}ph-=T.open;d.state='lowering';d.t=T.lowering-ph;return true}
 function dbTick(dt){if(!played||!city.dbs)return;const k=S.seed+':'+S.style;if(DB.key!==k||DB.ref!==city.dbs){DB.key=k;DB.ref=city.dbs;
   // v78: troca de mundo (Synth ↔ Point Haze…): as pontes ficavam na cena (boiando no mar da ilha) e, na volta,
   // eram construídas de novo por cima das antigas (duplicadas e congeladas). Agora só ficam as do mundo atual;
@@ -21630,6 +21636,7 @@ function dbTick(dt){if(!played||!city.dbs)return;const k=S.seed+':'+S.style;if(D
   }
   if(!want&&d.forced){d.forced=false;if(d.state==='open')d.t=Math.min(d.t,8);
    if(d.state==='warning'){d.state='closed';d.t=DB_T.closed}}
+  if(dbNetSync(d)){}else{ /* v3 r30: no online o ciclo sai do relógio do servidor (todos veem a mesma ponte subindo) */
   d.t-=dt;
   if(d.t<=0){
    if(d.state==='warning'){
@@ -21641,7 +21648,7 @@ function dbTick(dt){if(!played||!city.dbs)return;const k=S.seed+':'+S.style;if(D
    else if(d.state==='lowering'){d.state='closed';d.t=DB_T.closed;
     if(d.reopen||d.forced)dbBeginWarning(d)}
    else{dbBeginWarning(d)}
-  }
+  }}
   d.prevAng=d.ang;
   d.ang=d.state==='rising'?DB_ANG*(1-Math.max(0,d.t)/DB_T.rising):
    d.state==='open'?DB_ANG:d.state==='lowering'?DB_ANG*Math.max(0,d.t)/DB_T.lowering:0;
@@ -23497,7 +23504,7 @@ function netPeerShown(s){return !!s&&!s.w&&(s.wk||'modern')===netWorldKey()}
 function netWorldOk(){return S.style==='modern'&&!city.haze&&!HAZE.switching&&!INVERT.switching&&!TIMEJUMP.busy}
 function netState(){const c=PL.car,s={x:+PL.x.toFixed(2),z:+PL.z.toFixed(2),f:+Math.atan2(PL.face[1],PL.face[0]).toFixed(3),m:Math.hypot(PL.vx||0,PL.vz||0)>.4?1:0,st:PL.dead?'dead':ONLINE.ride?'ride':c?'car':'foot',w:netHidden()&&!(PL.inside==='backrooms'&&!BR.busy)?1:0,wk:PL.inside==='backrooms'?'backrooms':netWorldKey()};if(netTransit())s.tj=1; /* r14: nas Backrooms aparece para quem também está lá */
  if(ONLINE.ride){s.r=ONLINE.ride;s.rt=ONLINE.rideT||0}if(PL.inside&&PL.inside!=='backrooms')s.in=1;
- if(c&&!c.t.boat){s.c={t:c.type,col:c.color,pl:c.plate||'',x:+c.x.toFixed(2),z:+c.z.toFixed(2),a:+c.a.toFixed(3),v:+(c.fwd||0).toFixed(2),f:c.onFire||!c.alive?1:0};if(c.neon&&c.neonCol)s.c.ne=c.neonCol;if(c.spotId)s.c.sid=c.spotId}return s}
+ if(c&&!c.t.boat){s.c={t:c.type,col:c.color,pl:c.plate||'',x:+c.x.toFixed(2),z:+c.z.toFixed(2),a:+c.a.toFixed(3),v:+(c.fwd||0).toFixed(2),f:c.onFire||!c.alive?1:0};if(c.neon&&c.neonCol)s.c.ne=c.neonCol;if(c.spotId)s.c.sid=c.spotId;netCarDmgOut(c,s.c)}return s}
 function netPost(a,body){return fetch(ONLINE.url+'?a='+a,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(body),cache:'no-store'}) /* text/plain = pedido "simples": servidor em outro endereço não precisa de preflight CORS */.then(r=>r.json().catch(()=>({ok:false,http:r.status,err:netSrvErr(r.status)})))}
 /* ---------- tela de entrada: personagem (Nathan ou Claire) + roupas, exportar/importar ---------- */
 const NET_BASE0={art:null,cap:'#d62828',capDark:null,skin:'#f1c27d',hair:'#4a2a12',shirt:'#2f6fd6',pants:'#2b3550',swim:null,headphone:null,bag:null,pack:false,shoes:'#1b1b1b',belt:'#3a2a1a',stripe:null,glasses:null,necklace:null};
@@ -23614,13 +23621,14 @@ async function netTick(){if(!played){return}
  netNpcOut(body);
  const ls=JSON.stringify(netLook());if(ls!==ONLINE.lookStr){body.look=JSON.parse(ls);ONLINE.lookStr=ls}
  if(ONLINE.acctDone&&performance.now()>(ONLINE.saveT||0)){ONLINE.saveT=performance.now()+10000;body.save=netSaveData()}
- const r=await netPost('tick',body);
+ const tq0=Date.now()/1000,r=await netPost('tick',body),tq1=Date.now()/1000;
  if(!r.ok){ONLINE.fail++;if(/REMOVIDO|CONTA APAGADA/.test(r.err||'')){netKicked(r.err);return}if(/sessão/.test(r.err||'')){ONLINE.out.unshift(...body.ev.filter(e=>e.k!=='hit'));await netRejoin()}return}
- ONLINE.fail=0;ONLINE.lastOk=performance.now();ONLINE.since=r.last;ONLINE.tod=r.tod;ONLINE.count=r.players.length+1;ONLINE.meKD=r.me||null;if(r.me&&'bl' in r.me)ONLINE.sig=!!r.me.bl;
+ ONLINE.fail=0;ONLINE.lastOk=performance.now();if(Number.isFinite(r.now)){const o=r.now-(tq0+tq1)/2; /* meio da ida e volta */ONLINE.srvOff=ONLINE.srvOff==null?o:ONLINE.srvOff+(o-ONLINE.srvOff)*.2}ONLINE.since=r.last;ONLINE.tod=r.tod;ONLINE.count=r.players.length+1;ONLINE.meKD=r.me||null;if(r.me&&'bl' in r.me)ONLINE.sig=!!r.me.bl;
  const seen=new Set();for(const q of r.players){seen.add(q.id);let p=ONLINE.peers.get(q.id);if(!p){p={id:q.id,name:q.n,lv:0,look:null,s:null,rx:null,rz:null,ra:0,ped:null,car:null,carT:0,tag:null};ONLINE.peers.set(q.id,p)}
   if(q.look){p.look=q.look;p.lv=q.lv;if(p.ped){removePed(p.ped);p.ped=null}}p.s=q.s;p.k=q.k;p.d=q.d;p.bl=!!q.bl;p.age=q.age;p.recv=performance.now()}
  for(const [id,p] of ONLINE.peers)if(!seen.has(id))netDropPeer(p);
- if(Array.isArray(r.w)){ONLINE.ws=r.wv||ONLINE.ws;netWorld(r.w)}
+ if(Array.isArray(r.w)){ONLINE.ws=r.wv||ONLINE.ws;netWorld(r.w);ONLINE.wGot=true}
+ netPvAnnounce();
  netNpcApply(r.npc);
  for(const e of r.ev)netEvent(e);
  /* roubo de carro: o motorista saiu → entra no carro que ficou parado */
@@ -23676,6 +23684,8 @@ function netNewsStory(n){const T=newsTL,bairro=n.d||T('a cidade','town'),em=T('e
  const k=/EXPLOD/.test(c)?0:/ATROPELADO/.test(c)?1:/AFOGADO/.test(c)?2:/QUEDA/.test(c)?3:-1;
  const H=[[T('EXPLOSÃO NO ','BLAST IN '),T('Um carro explodiu '+em+' com '+B+' ao volante.','A car blew up '+em+' with '+B+' at the wheel.')],[T('ATROPELAMENTO NO ','HIT-AND-RUN IN '),T(B+' foi atingido por um carro '+em+'. O motorista fugiu.',B+' was hit by a car '+em+'. The driver fled.')],[T('AFOGAMENTO NO ','DROWNING IN '),T(B+' se afogou '+em+'. Salva-vidas pedem cuidado.',B+' drowned '+em+'. Lifeguards urge caution.')],[T('QUEDA NO ','FATAL FALL IN '),T(B+' despencou de grande altura '+em+'.',B+' fell from a great height '+em+'.')]][k];
  return H?[H[0]+UB,H[1]]:[T('MORTE NO ','DEATH IN ')+UB,T(B+' foi encontrado desacordado '+em+'. A polícia investiga.',B+' was found unconscious '+em+'. Police are investigating.')]}
+/* v3 r30: relógio do servidor em segundos (ponte levadiça, nuvens) */
+function netNow(){return Date.now()/1000+(ONLINE.srvOff||0)}
 function netHit(id,dmg,car,w){if(!ONLINE.on||!id||!(dmg>0))return;if(typeof id==='string'){if(id[0]==='n')netNpcDmg(+id.slice(1),dmg);return} /* v3 r27: carro do servidor de outro host */const v=ONLINE.dmg.get(id)||{d:0,car:!!car,w:w||''};v.d=Math.min(250,v.d+dmg);v.car=!!car;ONLINE.dmg.set(id,v)}
 function netHitPed(p,dmg,w){if(p&&p.net){netHit(p.net,dmg,false,w);p.hp=3;try{ouch(p.x,p.z,p.pitch)}catch(_){}}}
 /* ================= r15 · CLIMA COMPARTILHADO =================
@@ -23691,14 +23701,14 @@ function netRnd(v){return typeof v==='number'?Math.round(v*1000)/1000:v}
 function netWxTick(){const lead=netWxLead();ONLINE.wxFollow=!lead&&!netHidden();
  if(!lead||S.style!=='modern'||city.haze)return;if(simT<(ONLINE.wxT||0)&&ONLINE.wxT-simT<10)return;ONLINE.wxT=simT+3;
  const d={};for(const k of NET_WXK)if(WX[k]!==undefined&&WX[k]!==null)d[k]=netRnd(WX[k]);
- d.cells=CELLS.slice(0,6).map(c=>{const o={};for(const k of NET_WXC)if(c[k]!==undefined)o[k]=netRnd(c[k]);return o});d.si=CELLS.indexOf(WX.stormCell);
+ d.cells=CELLS.slice(0,6).map(c=>{const o={};for(const k of NET_WXC)if(c[k]!==undefined)o[k]=netRnd(c[k]);return o});d.si=CELLS.indexOf(WX.stormCell);d.cw=[netRnd(CLDSH.wx),netRnd(CLDSH.wz)]; /* v3 r30: posição da camada de nuvens */
  ONLINE.out.push({k:'wx',d})}
 function netWxApply(d){if(!d||!ONLINE.wxFollow||S.style!=='modern'||city.haze||!Array.isArray(d.cells))return;
  const had=WX.stormEta!=null;
  for(const k of NET_WXK)WX[k]=k in d?d[k]:(['stormEta','stormNext','calm','postClear','stormDir'].includes(k)?null:WX[k]);
  /* células: reaproveita os objetos (mesmo índice) para não piscar a chuva; a intensidade local WX.f continua suave */
  const n=Math.min(6,d.cells.length);for(let i=0;i<n;i++){const c=CELLS[i]||{};for(const k of NET_WXC)if(k in d.cells[i])c[k]=d.cells[i][k];else if(k!=='x'&&k!=='z'&&k!=='r'&&k!=='s')delete c[k];CELLS[i]=c}
- CELLS.length=n;WX.stormCell=d.si>=0?CELLS[d.si]||null:null;WX.stormReq=false;WX.lastOpt=S.rain;WX.fairT=simT+30;
+ CELLS.length=n;WX.stormCell=d.si>=0?CELLS[d.si]||null:null;if(Array.isArray(d.cw)&&Number.isFinite(d.cw[0])&&Number.isFinite(d.cw[1])){CLDSH.wx=d.cw[0];CLDSH.wz=d.cw[1]}WX.stormReq=false;WX.lastOpt=S.rain;WX.fairT=simT+30;
  /* previsão: quem copia também vê o aviso de 1h (o de 30/10 min sai sozinho da contagem) */
  if(!had&&WX.stormEta!=null&&WX.stormEta>30*GMIN&&played)wxToast('PREVISÃO DO TEMPO: TEMPESTADE EM 1H','vindo do '+dirName(Math.cos(WX.stormDir||0),Math.sin(WX.stormDir||0)).toLowerCase()+'')}
 /* ================= r14 · MUNDO COMPARTILHADO =================
@@ -23706,6 +23716,13 @@ function netWxApply(d){if(!d||!ONLINE.wxFollow||S.style!=='modern'||city.haze||!
    escondem a cópia parada (veem o carro andando pelo estado do jogador); ao sair, a posição nova vale para todos; explodiu = some para todos.
    Carro sem spotId (o do começo, concessionária, garagem) ganha um id ao ser dirigido e passa a existir no servidor.
    Coletáveis: pegou = some para todos e volta depois de 5 min (servidor). Drop: quem morre larga a arma da mão + 10% do dinheiro. */
+/* v3 r30: dano dos carros dos jogadores para todos — hp (vida/motor: fumaça < 35, fogo em 0) e dm = nível dos amassados por zona
+   "frld" (frente, trás, esquerda, direita; 0..2). Vai no estado do jogador (s.c) e no registro do carro estacionado (servidor guarda). */
+function netCarDmgOut(c,o){const h=Math.round(clamp(c.hp,0,100));if(h<100)o.hp=h;const d=c.dmg;if(d&&(d.f|d.r|d.l|d.d))o.dm=''+(d.f|0)+(d.r|0)+(d.l|0)+(d.d|0);return o}
+function netCarDmgIn(c,o,copy){const dm=/^[0-2]{4}$/.test(o.dm||'')?o.dm:'';if((c.netDm||'')!==dm||(!dm&&c.dmg)){c.netDm=dm;c.dmg=dm?{f:+dm[0],r:+dm[1],l:+dm[2],d:+dm[3]}:null;c.dmgDirty=true;if(c.g&&c.dentParts&&c.ch)try{carDmgApply(c)}catch(_){}else if(!dm&&c.g)try{dropCarMesh(c);buildCarMesh(c)}catch(_){}}
+ const h=Number.isFinite(o.hp)?clamp(o.hp,0,100):100;if(copy)c.netHp=h;else if(c.alive&&!c.onFire)c.hp=Math.max(1,h)}
+/* fumaça do motor na cópia (a cópia dorme, então o laço de carros não solta a fumaça dela) */
+function netCarSmoke(c,dt){const h=c.netHp??100;if(!c.alive||h>=35||!c.g||R2()>=dt*(h<18?12:5))return;const ca=Math.cos(c.a),sa=Math.sin(c.a);emit(c.x+ca*c.t.L*.35,c.gy+1.2,c.z+sa*c.t.L*.35,(R2()-.5)*.6,1.5+R2(),(R2()-.5)*.6,1.8,1,4,0x8a8a8a,false,.55)}
 function netCarFind(sid){for(const c of vehicles)if(c.spotId===sid&&!c.net)return c;return null}
 function netCarApply(sid){if(!netWorldOk())return;const r=ONLINE.cars.get(sid);if(!r)return;const c=netCarFind(sid),d=r.d||{};
  if(d.dead){if(c&&c!==PL.car&&c.alive)removeVehicle(c);city.taken.add(sid);return}
@@ -23714,9 +23731,10 @@ function netCarApply(sid){if(!netWorldOk())return;const r=ONLINE.cars.get(sid);i
  if(c){if(c===PL.car||!c.alive)return;
   /* tunado por outro jogador: cor, neon e placa iguais para todos */
   const nc=/^#[0-9a-f]{6}$/i.test(d.col||'')?d.col:null,nn=d.ne||'';if((nc&&c.color!==nc)||(c.neon?c.neonCol:'')!==nn){if(nc){c.color=nc;c.icol=COL(nc)}c.neon=!!nn;c.neonCol=nn||c.neonCol;if(c.g){try{dropCarMesh(c);buildCarMesh(c)}catch(e){}}}if(d.pl&&c.plate!==d.pl)try{setCarPlate(c,d.pl)}catch(e){}
-  if(Math.hypot(c.x-d.x,c.z-d.z)>1.2){c.x=d.x;c.z=d.z;c.a=d.a||0;c.vx=c.vz=c.fwd=c.w=0;c.sleep=true;c.hand=true;c.gy=groundY(c.x,c.z);try{syncCar(c,0)}catch(e){}}return}
- const t=VT[d.t]&&!VT[d.t].boat?d.t:'sedan',n=makeVehicle(t,d.x,d.z,d.a||0,d.col||parkedCityColor(t,sid));if(d.pl)try{setCarPlate(n,d.pl)}catch(e){}if(d.ne){n.neon=true;n.neonCol=d.ne}n.spotId=sid;n.hand=true;n.sleep=true}
-function netCarRec(c,o){return{k:'car',id:c.spotId,t:c.type,col:/^#[0-9a-f]{6}$/i.test(c.color||'')?c.color:null,ne:c.neon&&/^#[0-9a-f]{6}$/i.test(c.neonCol||'')?c.neonCol:'',pl:c.plate||'',x:+c.x.toFixed(2),z:+c.z.toFixed(2),a:+c.a.toFixed(3),...o}}
+  netCarDmgIn(c,d,false);if(Math.hypot(c.x-d.x,c.z-d.z)>1.2){c.x=d.x;c.z=d.z;c.a=d.a||0;c.vx=c.vz=c.fwd=c.w=0;c.sleep=true;c.hand=true;c.gy=groundY(c.x,c.z);try{syncCar(c,0)}catch(e){}}return}
+ const t=VT[d.t]&&!VT[d.t].boat?d.t:'sedan',n=makeVehicle(t,d.x,d.z,d.a||0,d.col||parkedCityColor(t,sid));if(d.pl)try{setCarPlate(n,d.pl)}catch(e){}if(d.ne){n.neon=true;n.neonCol=d.ne}n.spotId=sid;n.hand=true;n.sleep=true;netCarDmgIn(n,d,false);
+ const pv=ONLINE.pv;if(pv&&pv!==n&&pv!==PL.car&&vehicles.includes(pv)&&pv.alive&&Math.hypot(pv.x-n.x,pv.z-n.z)<5.6&&netPvFree(pv))ONLINE.out.push(netCarRec(pv,{drv:0})) /* v3 r30: carro de outro jogador chegou em cima do meu: o meu vai para a vaga livre */}
+function netCarRec(c,o){return{k:'car',id:c.spotId,t:c.type,col:/^#[0-9a-f]{6}$/i.test(c.color||'')?c.color:null,ne:c.neon&&/^#[0-9a-f]{6}$/i.test(c.neonCol||'')?c.neonCol:'',pl:c.plate||'',x:+c.x.toFixed(2),z:+c.z.toFixed(2),a:+c.a.toFixed(3),...netCarDmgOut(c,{}),...o}}
 function netCarTick(){const c=PL.car&&!PL.car.net&&PL.car.alive&&!PL.car.t.boat&&VT[PL.car.type]?PL.car:null;
  if(c&&!c.spotId)c.spotId='u'+ONLINE.id+'-'+(++ONLINE.carN)+'-'+(Date.now()%1e6);
  const sid=c?c.spotId:null;
@@ -23756,7 +23774,14 @@ function netAcctApply(a,isNew){a=a||{};PL.money=Number.isFinite(a.m)?a.m:500;if(
 addEventListener('pagehide',()=>{if(!ONLINE.on||!ONLINE.token||!ONLINE.acctDone)return;try{navigator.sendBeacon(ONLINE.url+'?a=leave',JSON.stringify({token:ONLINE.token,save:netSaveData()}))}catch(e){}});
 function netPvId(){return 'pv'+String(ONLINE.name||'x').toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g,'').slice(0,16)+'-'+Date.now().toString(36)}
 /* carro pessoal: o do começo. Fica no servidor com o id da conta → na volta ele está onde você largou (se não explodiu nem foi levado) */
-function netPvAdopt(){const c=city.startCar;if(!c||!vehicles.includes(c)||c.spotId)return;if(!ONLINE.pvSid)ONLINE.pvSid=netPvId();c.spotId=ONLINE.pvSid;ONLINE.pv=c}
+function netPvAdopt(){const c=city.startCar;if(!c||!vehicles.includes(c)||c.spotId)return;if(!ONLINE.pvSid)ONLINE.pvSid=netPvId();c.spotId=ONLINE.pvSid;ONLINE.pv=c;ONLINE.pvAnn=true}
+/* v3 r30: o carro pessoal aparece para todos já ao entrar (antes só depois da 1ª vez que o dono dirigia). Espera o mundo do servidor
+   chegar: se o servidor já tem esse carro (sessão anterior), vale a posição de lá; se não tem, anuncia onde ele nasceu. */
+function netPvAnnounce(){if(!ONLINE.pvAnn||!ONLINE.wGot)return;ONLINE.pvAnn=false;const c=ONLINE.pv,sid=ONLINE.pvSid;if(!c||!sid||c.spotId!==sid||!vehicles.includes(c)||!c.alive||c===PL.car||ONLINE.cars.has(sid))return;netPvFree(c);ONLINE.out.push(netCarRec(c,{drv:0}))}
+/* todo mundo entra no mesmo ponto da cidade: o carro pessoal anda pelo meio-fio até uma vaga sem outro carro (senão os carros nasciam um dentro do outro) */
+function netPvClear(c,x,z){if(!Number.isFinite(x)||!Number.isFinite(z)||inWater(x,z))return false;for(const o of vehicles)if(o!==c&&Math.abs(o.x-x)<5.6&&Math.abs(o.z-z)<5.6&&Math.hypot(o.x-x,o.z-z)<5.6)return false; /* lista inteira: carro recém-criado ainda não está na grade do carsNear */return !query(x,z,3).some(o=>!o.dead&&x+1.6>o.x0&&x-1.6<o.x1&&z+1.6>o.z0&&z-1.6<o.z1)}
+function netPvFree(c){if(netPvClear(c,c.x,c.z))return false;const ca=Math.cos(c.a),sa=Math.sin(c.a);
+ for(let k=1;k<=12;k++)for(const sg of [1,-1]){const x=c.x+ca*k*6.5*sg,z=c.z+sa*k*6.5*sg;if(netPvClear(c,x,z)){c.x=x;c.z=z;c.vx=c.vz=c.fwd=c.w=0;c.sleep=true;c.gy=groundY(x,z);try{syncCar(c,0)}catch(e){}return true}}return false}
 /* carro pessoal sumido = explodiu, foi levado por outro jogador ou não existe mais aqui */
 function netPvState(){const c=ONLINE.pv,row=ONLINE.pvSid&&ONLINE.cars.get(ONLINE.pvSid);if(row&&row.o&&row.o!==ONLINE.id)return 'stolen';if(row&&row.d&&row.d.dead)return 'dead';if(c&&vehicles.includes(c)&&c.alive)return 'ok';return 'gone'}
 /* celular → ENTREGA DE VEÍCULO (ou /carro): o carro chega depois de 60 s reais (20 min de jogo desde a v3 r23) na rua mais perto */
@@ -23883,6 +23908,10 @@ function netEnterHook(){if(ONLINE.ride){netRideExit();return true}if(PL.car||PL.
  const q=netPeerCarNear(4.5);if(!q||netLocalCarNear(q.d)<q.d)return false;const sid=q.p.s.c&&q.p.s.c.sid;if(!sid)return false;
  ONLINE.out.push({k:'jack',to:q.p.id});ONLINE.jack={sid,t:simT};toast(translatePlain('ROUBANDO O CARRO…'));return true}
 /* ---------- quadro: posiciona os outros jogadores ---------- */
+/* v3 r30: barra de vida do carro embaixo do nome (redesenha só quando muda de faixa de 5%) */
+function netTagCar(p,c){const tag=p.tag;if(!tag)return;const h=c&&c.alive?Math.round((c.netHp??100)/5)*5:-1;if(tag.hpShown===h)return;tag.hpShown=h;const cvs=tag.material.map.image,g=cvs.getContext('2d');
+ g.clearRect(0,0,cvs.width,cvs.height);g.font='800 26px Segoe UI,Arial';g.textAlign='center';g.textBaseline='middle';g.lineWidth=6;g.strokeStyle='rgba(0,0,0,.85)';g.strokeText(p.name,128,24);g.fillStyle='#ffffff';g.fillText(p.name,128,24);
+ if(h>=0&&h<100){g.fillStyle='rgba(0,0,0,.8)';g.fillRect(70,39,116,8);g.fillStyle=h<35?'#ff4a3a':h<65?'#ffc53a':'#4ade6a';g.fillRect(72,41,112*h/100,4)}tag.material.map.needsUpdate=true}
 function netTag(p){if(p.tag)return p.tag;const c=cv(256,48),g=c.getContext('2d');g.font='800 26px Segoe UI,Arial';g.textAlign='center';g.textBaseline='middle';g.lineWidth=6;g.strokeStyle='rgba(0,0,0,.85)';g.strokeText(p.name,128,24);g.fillStyle='#ffffff';g.fillText(p.name,128,24);
  const t=new THREE.CanvasTexture(c),sp=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthWrite:false,sizeAttenuation:false,fog:false,toneMapped:false}));sp.scale.set(.26,.049,1);sp.renderOrder=6;sp.position.set(0,-9999,0);scene.add(sp);p.tag=sp;return sp}
 function netAngLerp(a,b,k){let d=b-a;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;return a+d*k}
@@ -23899,11 +23928,11 @@ function netFrame(dt){if(!ONLINE.on)return;const hideAll=netHidden(),k=1-Math.ex
     const t=VT[C.t]&&!VT[C.t].boat?C.t:'sedan',c=makeVehicle(t,C.x,C.z,C.a,C.col);c.net=p.id;c.mode='net';c.rail=null;c.ai=null;c.keep=true;c.hand=true;c.sleep=true;c.hp=1e6;c.legal=true;if(C.ne){c.neon=true;c.neonCol=C.ne}if(C.pl)setCarPlate(c,C.pl);p.car=c;p.rx=C.x;p.rz=C.z;p.ra=C.a}
    if(C.pl&&p.car.plate!==C.pl)try{setCarPlate(p.car,C.pl)}catch(e){}
    const c=p.car,tx=C.x+Math.cos(C.a)*C.v*lag,tz=C.z+Math.sin(C.a)*C.v*lag;if(Math.hypot(tx-c.x,tz-c.z)>25){c.x=tx;c.z=tz}else{c.x+=(tx-c.x)*k;c.z+=(tz-c.z)*k}c.a=netAngLerp(c.a,C.a,k);c.fwd=C.v;c.vx=Math.cos(c.a)*C.v;c.vz=Math.sin(c.a)*C.v;c.gy=groundY(c.x,c.z);
-   if(c.alive)c.hp=1e6;if(c.g&&c.sleep)try{syncCar(c,dt)}catch(e){} /* r16: carro parado (sleep) não passa pelo syncCar do laço: a malha ficava onde nasceu */if(C.f&&c.alive&&!c.onFire){c.netFire=true;setOnFire(c)}p.carT=C.sid?0:8;ax=c.x;az=c.z;ay=(c.gy||0)+c.t.H+.9;
+   if(c.alive)c.hp=1e6;netCarDmgIn(c,C,true);netCarSmoke(c,dt);netTagCar(p,c);if(c.g&&c.sleep)try{syncCar(c,dt)}catch(e){} /* r16: carro parado (sleep) não passa pelo syncCar do laço: a malha ficava onde nasceu */if(C.f&&c.alive&&!c.onFire){c.netFire=true;setOnFire(c)}p.carT=C.sid?0:8;ax=c.x;az=c.z;ay=(c.gy||0)+c.t.H+.9;
    /* atropelado pelo carro de outro jogador: a vítima (eu) aplica o dano */
    if(!PL.car&&!PL.dead&&ONLINE.ride!==p.id&&Math.abs(C.v)>5&&Math.hypot(PL.x-c.x,PL.z-c.z)<c.t.L*.45&&simT>(ONLINE.runT||0)){ONLINE.runT=simT+1;ONLINE.lastHitBy=p.id;ONLINE.lastHitT=simT;PL.hp-=armorHit(Math.abs(C.v)*3);try{knockPlayer&&knockPlayer(c.vx,c.vz)}catch(_){}if(PL.hp<=0)killPlayer(translatePlain('ATROPELADO POR')+' '+p.name)}}
   else{/* a pé (ou morto): ped com a roupa do jogador; carro do servidor que ele largou some já (o mundo põe a cópia parada); outro fica 8 s parado e some */
-   p.sid=null;if(p.car){p.carT-=dt;if(p.carT<=0||!vehicles.includes(p.car)){if(vehicles.includes(p.car))removeVehicle(p.car);p.car=null}else{p.car.fwd=p.car.vx=p.car.vz=0}}
+   p.sid=null;netTagCar(p,null);if(p.car){p.carT-=dt;if(p.carT<=0||!vehicles.includes(p.car)){if(vehicles.includes(p.car))removeVehicle(p.car);p.car=null}else{p.car.fwd=p.car.vx=p.car.vz=0}}
    if(s.st==='dead'||s.st==='ride'){if(p.ped&&peds.includes(p.ped))removePed(p.ped);p.ped=null;tag.visible=false;continue}
    if(!p.ped||!peds.includes(p.ped)){const q=spawnPed(null,{x:s.x,z:s.z,vx:0,vz:0,main:true,pal:{...(p.look||PLAYER_PAL),pack:false}});if(!q){tag.visible=false;continue}q.state='duoFollow';q.fixed=true;q.at={x:s.x,z:s.z};q.mx=Math.cos(s.f);q.mz=Math.sin(s.f);q.net=p.id;q.hp=3;q.duoMoving=false;p.ped=q;p.mk=(p.mk||0)+1}
    const q=p.ped,tx=s.x,tz=s.z;if(Math.hypot(tx-q.at.x,tz-q.at.z)>12){q.at.x=tx;q.at.z=tz}else{q.at.x+=(tx-q.at.x)*k;q.at.z+=(tz-q.at.z)*k}q.mx=Math.cos(s.f);q.mz=Math.sin(s.f);q.duoMoving=!!s.m;q.hp=3;if(q.state!=='duoFollow'){q.state='duoFollow';q.fixed=true}
@@ -26502,7 +26531,7 @@ const TVCAT=[
   g:['Alt troca de personagem. Caps Lock é o especial: bullet time do Nathan a pé, câmera lenta da Claire ao volante. Juntos no carro, um dirige e o outro atira.','Alt switches character. Caps Lock is the special: Nathan\'s bullet time on foot, Claire\'s slow motion behind the wheel. Together in a car, one drives and the other shoots.'],
   p:[tvcP(null,['DOIS PERSONAGENS','TWO CHARACTERS'],'duo')]},
  {k:'online',ic:'🌐',c:'#3ae08a',l:'1',n:['ONLINE','ONLINE'],
-  g:['Mundo, clima, trânsito e viaturas do servidor iguais para todos, e os carros dos jogadores batem entre si. O ESC não pausa. G pede carona no carro de alguém e a troca de mundo leva todos juntos.','World, weather, traffic and police cars come from the server and are the same for everyone, and players\' cars crash into each other. ESC does not pause. G hitches a ride in someone\'s car and a world change takes everyone along.'],
+  g:['Mundo, clima, nuvens, pontes levadiças, trânsito e viaturas do servidor iguais para todos; os carros dos jogadores batem entre si e todos veem a vida e os amassados de cada um. O ESC não pausa. G pede carona no carro de alguém e a troca de mundo leva todos juntos.','World, weather, clouds, drawbridges, traffic and police cars come from the server and are the same for everyone; players\' cars crash into each other and everyone sees each car\'s health and dents. ESC does not pause. G hitches a ride in someone\'s car and a world change takes everyone along.'],
   p:[tvcP(null,['CARONA','RIDE'],'online')]},
  {k:'pixnet',ic:'📡',c:'#3ad8ff',l:'1',n:['ONLINE · HACK DE PIX','ONLINE · PIX HACK'],
   g:['No online, o ctOS hackeia outros jogadores: aponte o PERFIL, fique entre 6 e 24 m e leve 20% do saldo (até $5.000). O Bloqueador de Sinal ($5.000 na AMOnições) protege o seu.','Online, ctOS hacks other players: aim PROFILE, stay 6 to 24 m away and take 20% of their balance (up to $5,000). The Signal Jammer ($5,000 at AMOnições) protects yours.'],
