@@ -81,11 +81,11 @@ $('#optPoleShadows').addEventListener('change',e=>{S.poleShadows=e.target.checke
 const IS_MOBILE=pixelIsMobile();
 const GRAPHICS_PRESETS={
  LOW:{traffic:25,peds:25,drawDistance:0,objectDistance:0,shadowDistance:0,renderScale:40,
-      shadows:false,shadowQuality:1,detailedShadows:false,poleShadows:false,bloom:false,refl:false,lampLighting:false,lampCount:1,sprite8:false,cloudQ:1,waterQ:0,fxWet:false,fxGlow:true,fxPaint:false,fxSurf:false},
+      shadows:false,shadowQuality:1,detailedShadows:false,poleShadows:false,bloom:false,refl:false,lampLighting:false,lampCount:1,sprite8:false,char3d:false,cloudQ:1,waterQ:0,fxWet:false,fxGlow:true,fxPaint:false,fxSurf:false},
  MEDIUM:{traffic:50,peds:50,drawDistance:150,objectDistance:25,shadowDistance:0,renderScale:90,
-       shadows:true,shadowQuality:1,detailedShadows:true,poleShadows:false,bloom:true,refl:true,lampLighting:!MOB_LITE,lampCount:4,sprite8:false,cloudQ:1,waterQ:1,fxWet:true,fxGlow:true,fxPaint:true,fxSurf:true},
+       shadows:true,shadowQuality:1,detailedShadows:true,poleShadows:false,bloom:true,refl:true,lampLighting:!MOB_LITE,lampCount:4,sprite8:true,char3d:false,cloudQ:1,waterQ:1,fxWet:true,fxGlow:true,fxPaint:true,fxSurf:true},
  HIGH:{traffic:50,peds:50,drawDistance:200,objectDistance:100,shadowDistance:100,renderScale:100,
-      shadows:true,shadowQuality:4,detailedShadows:true,poleShadows:true,bloom:true,refl:true,lampLighting:true,lampCount:4,sprite8:true,cloudQ:2,waterQ:2,fxWet:true,fxGlow:true,fxPaint:true,fxSurf:true}
+      shadows:true,shadowQuality:4,detailedShadows:true,poleShadows:true,bloom:true,refl:true,lampLighting:true,lampCount:4,sprite8:false,char3d:true,cloudQ:2,waterQ:2,fxWet:true,fxGlow:true,fxPaint:true,fxSurf:true}
 };
 function graphicsPresetSelected(){
  for(const [name,values] of Object.entries(GRAPHICS_PRESETS))
@@ -101,9 +101,9 @@ function graphicsPresetUI(){
 function graphicsPresetApply(name){
  const values=GRAPHICS_PRESETS[name];if(!values||BENCH.active)return;
  const oldShadows=S.shadows,oldQuality=S.shadowQuality,oldLamp=S.lampLighting,oldLampCount=S.lampCount;
- const oldScale=S.renderScale,oldDraw=S.drawDistance,oldDetail=S.detailedShadows,oldPole=S.poleShadows,oldShadowDistance=S.shadowDistance,oldSprite=S.sprite8===true;
+ const oldScale=S.renderScale,oldDraw=S.drawDistance,oldDetail=S.detailedShadows,oldPole=S.poleShadows,oldShadowDistance=S.shadowDistance,oldSprite=charModeOf(); /* v3 r41: ALTO = 3D, MÉDIO = 2.5D, BAIXO = 2D */
  Object.assign(S,values);try{waterQApply()}catch(err){}try{shfxApply();fxUI()}catch(err){}
- if(oldSprite!==(S.sprite8===true)){if(S.sprite8===true&&S.char3d===true){S.char3d=false;try{c3ApplyMode()}catch(err){}}const e=$('#optCharMode');if(e)e.value=charModeOf();atlasCache.clear();try{applyPlayerLook()}catch(err){console.error(err)}try{charPreload3D()}catch(err){console.error(err)}try{spritesRefreshPeds()}catch(err){console.error(err)}try{charFaces()}catch(err){}}
+ if(oldSprite!==charModeOf()){try{c3ApplyMode()}catch(err){console.error(err)}const e=$('#optCharMode');if(e)e.value=charModeOf();atlasCache.clear();try{applyPlayerLook()}catch(err){console.error(err)}try{charPreload3D()}catch(err){console.error(err)}try{spritesRefreshPeds()}catch(err){console.error(err)}try{charFaces()}catch(err){}}
  // Atualiza SOMENTE os mecanismos normais dos controles da aba Gráficos.
  if(oldShadows!==S.shadows)applyShadows();
  else if(oldQuality!==S.shadowQuality)applyShadowQuality();

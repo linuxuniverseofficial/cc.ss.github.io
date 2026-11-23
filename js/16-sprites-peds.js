@@ -244,7 +244,7 @@ function atlas8Build(p0,N=8,RES0=2,side=0){const A=ATLAS8,RES=RES0,CW=32*RES,CH=
 /* v78i · RETRATO plano (foto de frente, cabeça e ombros, 192×192) para os cards de modo e a caixa de diálogo.
    Independe de 2D/3D. 4 variações (olhos abertos/fechados × boca fechada/aberta) geradas uma vez por paleta. */
 const PORTRAIT={cache:new Map(),cam:null};
-function charPortrait(pal){const k=JSON.stringify(pal);let P=PORTRAIT.cache.get(k);if(P)return P;
+function charPortrait(pal){if(S.char3d===true&&typeof c3Portrait==='function')return c3Portrait(pal);/* r42: no modo 3D a foto é do boneco PS1 */const k=JSON.stringify(pal);let P=PORTRAIT.cache.get(k);if(P)return P;
  const S0=192,rt=char3DStage(S0,S0);if(!PORTRAIT.cam){PORTRAIT.cam=new THREE.OrthographicCamera(-12.5,12.5,12.5,-12.5,-80,80);PORTRAIT.cam.position.set(0,33.5+40*Math.sin(.06),40*Math.cos(.06));PORTRAIT.cam.lookAt(0,33.5,0)}
  const M=charModel3D({...pal,pack:false});M.g.rotation.y=0;M.pose(0);ATLAS8.scene.add(M.g);P={};
  try{char3DWith(()=>{for(const eyes of['open','closed'])for(const mouth of['closed','open']){M.setFace({eyes,mouth});P[eyes+'_'+mouth]=char3DShoot(PORTRAIT.cam,rt,S0,S0,3,false)}})}

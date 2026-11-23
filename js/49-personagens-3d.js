@@ -221,4 +221,22 @@ spawnPed=(f=>function(){const q=f.apply(this,arguments);if(q&&q.sp&&C3_ON()){try
 spawnLying=(f=>function(){const q=f.apply(this,arguments);if(q&&q.sp&&C3_ON()){try{c3Place(q)}catch(e){}}return q})(spawnLying);
 /* r41: ped removido solta o boneco na hora (antes o sprite fora da cena segurava a malha e a lista crescia a cada troca de cidade) */
 removePed=(f=>function(p){try{if(p&&p.sp)c3Drop(p.sp)}catch(e){}return f.apply(this,arguments)})(removePed);
+/* r42 · RETRATO 3D ("foto" do boneco PS1) para seleção de modo, diálogo e HUD. Mesmo formato do charPortrait do 2.5D:
+   {open_closed, open_open, closed_closed, closed_open} 192×192, uma vez por roupa (cache), fora do quadro do jogo.
+   Atlas próprio (PT.cv, 4 tiles: piscada × boca) para não mexer nos slots dos bonecos da rua. */
+const C3PT={cache:new Map(),cv:null,g:null,tex:null,mesh:null,cam:null};
+function c3Portrait(pal){const k=c3Key(pal);let P=C3PT.cache.get(k);if(P)return P;
+ const T=C3.T,n=C3.AW/T;if(!C3PT.cv){C3PT.cv=cv(C3.AW,C3.AH);C3PT.g=C3PT.cv.getContext('2d');C3PT.g.imageSmoothingEnabled=false;const t=new THREE.CanvasTexture(C3PT.cv);t.magFilter=t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;C3PT.tex=t}
+ const g=C3PT.g,hD=c3Shade(pal.hair||'#2a1a12',.75),ex=C3RG.head[0]+20,hy=C3RG.head[1],noEye=!!(pal.glasses||pal.demo);
+ for(let i=0;i<4;i++){const ox=i*T;c3Paint(g,ox,0,pal);const R=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(ox+x,y,w,h)};
+  if(i&1&&!noEye){R(ex-5,hy+10,3,2,pal.skin);R(ex+2,hy+10,3,2,pal.skin);R(ex-5,hy+11,3,1,hD);R(ex+2,hy+11,3,1,hD)}
+  if(i&2&&!pal.demo){R(ex-2,hy+15,4,1,'#6a2228');R(ex-2,hy+16,4,1,'#2a0a0e')}}
+ C3PT.tex.needsUpdate=true;
+ if(!C3PT.mesh){const m=c3Material();m.uniforms.map.value=C3PT.tex;m.uniforms.uSunDir.value=new THREE.Vector3(-.45,.55,.9).normalize();m.uniforms.uLight.value.setRGB(1.04,1,.97);
+  C3PT.mesh=new THREE.Mesh(c3Geo(),m);C3PT.mesh.frustumCulled=false;
+  C3PT.cam=new THREE.OrthographicCamera(-.4,.4,.4,-.4,-5,5);C3PT.cam.position.set(0,1.42+2*Math.sin(.06),2*Math.cos(.06));C3PT.cam.lookAt(0,1.42,0)}
+ const S0=192,rt=char3DStage(S0,S0),M=C3PT.mesh,U=M.material.uniforms;ATLAS8.scene.add(M);P={};
+ try{char3DWith(()=>{for(let i=0;i<4;i++){U.uTile.value.set((i%n)*T/C3.AW,0);P[(i&1?'closed':'open')+'_'+(i&2?'open':'closed')]=char3DShoot(C3PT.cam,rt,S0,S0,3,false)}})}
+ finally{ATLAS8.scene.remove(M)}
+ if(C3PT.cache.size>40)C3PT.cache.delete(C3PT.cache.keys().next().value);C3PT.cache.set(k,P);return P}
 window.c3Debug=()=>({on:C3_ON(),chars:C3.list.size,slots:C3.slots.size,free:C3.free.length,tris:C3.geo?C3.geo.index.count/3:0});
