@@ -70,7 +70,7 @@ Pedido do José (r25): todo efeito de shader novo entra nesta tabela, com onde m
 | Reflexo do céu na lataria | v3 r25 | `CAR_SKY_GLSL`, `carLampInject` (`cBurnt` no `carHoleMat`) | **Gráficos › Reflexo do céu na lataria** (`S.fxPaint`) | tirar o `.replace('#include <tonemapping_fragment>',CAR_SKY_GLSL...)` do `carLampInject` |
 
 - As 4 chaves da r25 só mudam o uniform `SHFX.U.fxK` (`shfxApply`), sem recompilar shader. Presets: BAIXO = só brilho pintado; MÉDIO/ALTO = tudo ligado. (`fxK.z` ficou livre desde a r26.) Cfg antigo sem as chaves: tudo ligado, menos asfalto/lataria quando sombras e bloom estavam desligados.
-- Custo: nenhum draw call, textura ou render target novo. Por pixel: janelas +2 leituras de textura (só onde é parede de prédio), lataria ~20 operações (só pixels de carro), asfalto molhado só quando o WET está visível (chuva/depois da chuva). Vegetação é no vértice.
+- Custo: nenhum draw call, textura ou render target novo. Por pixel: janelas +2 leituras de textura (só onde é parede de prédio), lataria ~20 operações (só pixels de carro), asfalto molhado só quando o WET está visível (chuva/depois da chuva).
 - Regra: efeito de shader novo entra nesta tabela e, de preferência, ganha chave em Gráficos via uniform (sem recompilar).
 
 ---
