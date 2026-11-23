@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 (function(){const h0=Math.hypot,sq=Math.sqrt,ab=Math.abs;Math.hypot=function hypot(a,b,c,d){if(d!==undefined)return h0(a,b,c,d);if(c!==undefined)return sq(a*a+b*b+c*c);if(b!==undefined)return sq(a*a+b*b);return a===undefined?0:ab(+a)}})();
 /* v78 · BUILD: número da entrega. Ao abrir, o jogo lê version.txt (poucos bytes, sem cache) e, se a build no servidor for outra
    (navegador/celular servindo cópia velha), recarrega uma vez. Saves e configurações (localStorage) NÃO são apagados. */
-var BUILD_TAG='r32';
+var BUILD_TAG='r33';
 (function(){try{if(!/^https?:$/.test(location.protocol))return;const k='ps_build_reload';
  fetch(new URL('version.txt?b='+Date.now(),location.href).href,{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=/^\s*((?:dev\s+)?r[\d.]+)\s*$/i.exec(t||'');if(!m||m[1].replace(/\s+/g,' ').toLowerCase()===BUILD_TAG.toLowerCase()){try{sessionStorage.removeItem(k)}catch(e){}return}
   let n=0;try{n=+sessionStorage.getItem(k)||0}catch(e){}if(n>=2)return;try{sessionStorage.setItem(k,String(n+1))}catch(e){}
@@ -1529,6 +1529,7 @@ body.cutscene-paused #menu.in-game #monBtn{grid-column:1/-1!important}
       <label><input type="checkbox" id="fxWet" checked>Brilho do sol e da lua no asfalto molhado</label>
       <label><input type="checkbox" id="fxGlow" checked>Brilho de janelas e neons à noite</label>
       <label><input type="checkbox" id="fxPaint" checked>Reflexo do céu na lataria</label>
+      <label><input type="checkbox" id="fxSurf" checked>Texturas de areia, asfalto e prédios</label>
       <label><input type="checkbox" id="optLampLighting">Iluminação dos postes</label>
       <label><input type="checkbox" id="optSprite8">Pedestres em 3D (Experimental)</label>
     </div><p style="margin:10px 0 0;color:var(--mute);font-size:18px">Desligar sombras e bloom deixa o jogo bem mais leve em computadores fracos e celulares.</p><div class="checks" style="margin-top:14px"><label><input type="checkbox" id="optMobLite">Modo Mobile</label></div><p style="margin:6px 0 0;color:var(--mute);font-size:15px">Cortes de desempenho para celular e PC fraco: sombra menor, objetos simplificam mais perto, menos efeitos e menos gente em volta. Desliga sombra, reflexo e luz dos postes. Alguns itens só valem depois de recarregar.</p></div>
@@ -1918,14 +1919,14 @@ function applyVolumes(){
   if(RADIO.el&&!RADIO.routed)RADIO.el.volume=S.sound?.75*musVol()*musicTravelFactor():0;
  }
 }
-function cfgObj(){return{motion:{dirVersion:2,mode:MOTION.mode,sens:MOTION.sens,dz:MOTION.dz,invert:MOTION.invert},mv2:1,iv2:1,vol:{...VOL},shadows:S.shadows,shadowQuality:S.shadowQuality,cloudQ:S.cloudQ,waterQ:S.waterQ,fxWet:S.fxWet!==false,fxGlow:S.fxGlow!==false,fxPaint:S.fxPaint!==false,bloom:S.bloom,refl:S.refl!==false,mobLite:!!MOB_LITE,sound:S.sound,traffic:S.traffic,peds:S.peds,showMinimap:S.showMinimap!==false,miniAuto:S.miniAuto!==false,touchHide:['auto','fade','off'].includes(S.touchHide)?S.touchHide:'auto',showHud:S.showHud!==false,fpsLimit:S.fpsLimit,renderScale:S.renderScale,drawDistance:S.drawDistance,objectDistance:S.objectDistance,shadowDistance:S.shadowDistance,detailedShadows:S.detailedShadows,poleShadows:S.poleShadows!==false,sprite8:S.sprite8===true,lang:S.lang,lampLighting:S.lampLighting!==false,lampCount:Math.min(NEAR_LAMP_COUNT,S.lampCount),touchSteer:S.touchSteer==='stick'?'stick':'arrows',touchLayout:S.touchLayout||null,mode:S.mode,pad:{vib:PAD.vib,sens:PAD.sens,dz:PAD.dz,inv:PAD.inv,adaptive:PAD.adaptive,triggerForce:PAD.triggerForce,speakerVolume:PAD.speakerVolume??1,speakerEnabled:PAD.speakerEnabled!==false,lightbar:PAD.lightbar!==false,scheme:PAD.scheme==='modern'?'modern':'classic'}}}
+function cfgObj(){return{motion:{dirVersion:2,mode:MOTION.mode,sens:MOTION.sens,dz:MOTION.dz,invert:MOTION.invert},mv2:1,iv2:1,vol:{...VOL},shadows:S.shadows,shadowQuality:S.shadowQuality,cloudQ:S.cloudQ,waterQ:S.waterQ,fxWet:S.fxWet!==false,fxGlow:S.fxGlow!==false,fxPaint:S.fxPaint!==false,fxSurf:S.fxSurf!==false,bloom:S.bloom,refl:S.refl!==false,mobLite:!!MOB_LITE,sound:S.sound,traffic:S.traffic,peds:S.peds,showMinimap:S.showMinimap!==false,miniAuto:S.miniAuto!==false,touchHide:['auto','fade','off'].includes(S.touchHide)?S.touchHide:'auto',showHud:S.showHud!==false,fpsLimit:S.fpsLimit,renderScale:S.renderScale,drawDistance:S.drawDistance,objectDistance:S.objectDistance,shadowDistance:S.shadowDistance,detailedShadows:S.detailedShadows,poleShadows:S.poleShadows!==false,sprite8:S.sprite8===true,lang:S.lang,lampLighting:S.lampLighting!==false,lampCount:Math.min(NEAR_LAMP_COUNT,S.lampCount),touchSteer:S.touchSteer==='stick'?'stick':'arrows',touchLayout:S.touchLayout||null,mode:S.mode,pad:{vib:PAD.vib,sens:PAD.sens,dz:PAD.dz,inv:PAD.inv,adaptive:PAD.adaptive,triggerForce:PAD.triggerForce,speakerVolume:PAD.speakerVolume??1,speakerEnabled:PAD.speakerEnabled!==false,lightbar:PAD.lightbar!==false,scheme:PAD.scheme==='modern'?'modern':'classic'}}}
 // O benchmark usa perfis temporários. Nunca gravá-los como preferências do jogador.
 let BENCH_CFG_LOCK=false;
 function saveCfg(){if(BENCH_CFG_LOCK||(typeof ONLINE!=='undefined'&&ONLINE.on))return;try{localStorage.setItem('ps_cfg',JSON.stringify(cfgObj()))}catch(e){}}
 function supportedCitySize(n){return Number(n)===7||Number(n)===14}
 function normalizeCitySize(n){return Number(n)===7?7:14}
 const CITY_CACHE={ready:false,building:false};
-const S={cloudQ:1,waterQ:1,fxWet:true,fxGlow:true,fxPaint:true,mode:'campaign',hour:8,view:'fps',style:'modern',seed:(Math.random()*1e6)|0,size:14,rain:true,storm:true,traffic:50,peds:50,shadows:true,poleShadows:false,shadowQuality:1,bloom:true,refl:true,sprite8:false,sound:true,showMinimap:true,miniAuto:true,touchHide:'auto',showHud:true,fpsLimit:0,renderScale:90,drawDistance:150,objectDistance:25,shadowDistance:0,detailedShadows:true,/* v78: padrão = preset MÉDIO (peds 2D; 3D só no ALTO) */lang:((navigator.language||'pt-BR').toLowerCase().startsWith('pt')?'br':'en'),lampLighting:!pixelIsMobile(),lampCount:4,touchSteer:'arrows'};
+const S={cloudQ:1,waterQ:1,fxWet:true,fxGlow:true,fxPaint:true,fxSurf:true,mode:'campaign',hour:8,view:'fps',style:'modern',seed:(Math.random()*1e6)|0,size:14,rain:true,storm:true,traffic:50,peds:50,shadows:true,poleShadows:false,shadowQuality:1,bloom:true,refl:true,sprite8:false,sound:true,showMinimap:true,miniAuto:true,touchHide:'auto',showHud:true,fpsLimit:0,renderScale:90,drawDistance:150,objectDistance:25,shadowDistance:0,detailedShadows:true,/* v78: padrão = preset MÉDIO (peds 2D; 3D só no ALTO) */lang:((navigator.language||'pt-BR').toLowerCase().startsWith('pt')?'br':'en'),lampLighting:!pixelIsMobile(),lampCount:4,touchSteer:'arrows'};
 
 const STYLES={
  modern:{label:'MODERN',sky:[0x6fa6de,0xd4e4ef],fog:0xc9d4dc,fogNear:160,fogFar:600,bg:0x55585c,
@@ -2570,7 +2571,7 @@ function hazeTerrain(){const E=city.ext,o=RW/2,stp=2,n=Math.ceil((E+2*o)/stp),x0
   const ed=clamp((hazeU(x,z)+12)/12,0,1);c.lerp(hazeBaseCol(),ed); /* borda = mesma cor da faixa de terra do hazeShore (v79r2: tom do miolo da ilha) */c.lerp(rock,Math.max(clamp((sl-.35)*2,0,1),hazeCliff(x,z)*.3));col[k]=c.r;col[k+1]=c.g;col[k+2]=c.b}
  for(let j=0;j<n;j++)for(let i=0;i<n;i++){const a=j*N1+i,b=a+1,d=a+N1,e=d+1;idx.push(a,d,b,b,d,e)}
  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(pos,3));geo.setAttribute('color',new THREE.BufferAttribute(col,3));geo.setAttribute('uv',new THREE.BufferAttribute(uvs,2));geo.setIndex(idx);geo.computeVertexNormals();
- const mat=new THREE.MeshStandardMaterial({map:worldSandTex(),vertexColors:true,roughness:1,metalness:0}); /* v79r2: mesma textura/rugosidade da faixa do hazeShore — antes o miolo liso e a borda texturizada davam 2 tons com quina reta */city.mats.push(mat);const m=new THREE.Mesh(geo,mat);m.receiveShadow=true;m.name='hazeTerrain';city.group.add(m);city.hazeTerrainMesh=m;return m}
+ const mat=surfPatch(new THREE.MeshStandardMaterial({map:worldSandTex(),vertexColors:true,roughness:1,metalness:0}),'sand'); /* v3 r33 SURF · v79r2: mesma textura/rugosidade da faixa do hazeShore — antes o miolo liso e a borda texturizada davam 2 tons com quina reta */city.mats.push(mat);const m=new THREE.Mesh(geo,mat);m.receiveShadow=true;m.name='hazeTerrain';city.group.add(m);city.hazeTerrainMesh=m;return m}
 
 // Altura da superfície da areia. Plana na faixa das barracas, curva suave no começo da descida e
 // rampa constante (~9°) até a água; além de SHORE segue submersa com a mesma inclinação.
@@ -3469,7 +3470,7 @@ function causticPatch(mat,yTop){const old=mat.onBeforeCompile,key=(mat.customPro
    fxK.w = reflexo do céu na lataria (Fresnel com as cores do skyMat + linha do horizonte + brilho do sol; carLampInject)
    Para remover um efeito de vez: ver o registro de shaders em CONTEXT.md §2b. */
 const SHFX={U:{fxK:{value:new THREE.Vector4(1,1,1,1)},fxT:{value:0},fxN:{value:0}}};
-function shfxApply(){SHFX.U.fxK.value.set(S.fxWet!==false?1:0,S.fxGlow!==false?1:0,0,S.fxPaint!==false?1:0)}
+function shfxApply(){SHFX.U.fxK.value.set(S.fxWet!==false?1:0,S.fxGlow!==false?1:0,0,S.fxPaint!==false?1:0);if(typeof SURF!=='undefined')surfApply()}
 function shfxTick(dt){const U=SHFX.U;U.fxT.value=simT;
  const n=city&&city.st&&city.st.night?1:(typeof DN!=='undefined'?DN.nightF||0:0);if(Math.abs(n-U.fxN.value)>.004)U.fxN.value=n}
 // janelas e placas: halo "pintado" = o próprio emissiveMap lido em mipmaps borrados (2 leituras), somado à emissão.
@@ -3490,6 +3491,76 @@ function fxNeonPatch(mat){if(!mat||mat.userData.fxNeon||!mat.isMeshBasicMaterial
     float hum=.95+.05*sin(fxT*(23.+hs*17.)+hs*40.);float fl=1.-.55*step(.93,hs)*step(.82,fract(sin(floor(fxT*9.+hs*50.)*1.7)*913.3));
     diffuseColor.rgb=mix(nc,vec3(nl),.22*nl)*(1.+.35*fxNk*nl)*hum*fl;}`)};
  mat.customProgramCacheKey=()=>key+'|fxNeon';mat.needsUpdate=true;return mat}
+/* v3 r33: TEXTURAS DE SUPERFÍCIE (SURF). Mesma técnica da água/nuvens: tudo no shader dos materiais que já existem
+   (onBeforeCompile), ruído pela posição do mundo (nada se repete, nenhuma textura/geometria/draw call novo, então
+   não existe camada nova que possa dar z-fight). Cada superfície ganha camadas de ruído sobrepostas DENTRO do shader:
+   areia  = manchas largas + marcas de vento (relevo pela normal) + poros escuros com borda clara + grãos e conchinhas;
+   asfalto = manchas largas + remendos + trincas finas + granulado (pedrinhas claras/escuras) + grão miúdo;
+   prédios = pelo tom da parede: tijolo (paredes avermelhadas), reboco (bege) ou concreto (cinza: juntas de fôrma e furos).
+   Só na parede lisa (a moldura e o vidro das janelas ficam como estavam). Detalhe fino some sozinho com a distância
+   (pegada do pixel por fwidth = sem chiado/moiré) e tudo corta a 170 m. Chave: Gráficos › Texturas de areia, asfalto e
+   prédios (S.fxSurf → uniform sfOn, sem recompilar). Remover de vez: tirar as chamadas surfPatch(...) (ver CONTEXT §2b). */
+const SURF={U:{sfOn:{value:1}}};
+const SURF_GLSL=`uniform float sfOn;varying vec3 sfW;varying vec3 sfN;
+float sfH(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}
+float sfV(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(sfH(i),sfH(i+vec2(1.,0.)),f.x),mix(sfH(i+vec2(0.,1.)),sfH(i+vec2(1.,1.)),f.x),f.y);}
+float sfAA(float px,float fq){return 1.-smoothstep(.3,.9,px*fq);}
+float sfDot(vec2 p,float fq,float th,float r){vec2 c=floor(p*fq),f=fract(p*fq)-.5;float h=sfH(c+11.3);if(h<th)return 0.;vec2 o=(vec2(sfH(c+3.7),sfH(c+8.1))-.5)*.5;return 1.-smoothstep(r*.55,r,length(f-o));}
+vec3 sfAsph(vec2 p,float px){float big=sfV(p*.045)*.6+sfV(p*.13+3.1)*.4;float t=mix(.9,1.07,big);
+ vec2 c=floor(p/6.5),f=fract(p/6.5);if(sfH(c+17.)>.84){vec2 lo=vec2(sfH(c+3.),sfH(c+5.))*.4,hi=lo+.3+vec2(sfH(c+7.),sfH(c+9.))*.28;
+  float e=.02*(sfV(p*2.3)-.5);float inR=step(lo.x+e,f.x)*step(f.x,hi.x-e)*step(lo.y-e,f.y)*step(f.y,hi.y+e);t*=mix(1.,.8+.06*sfV(p*.7),inR);}
+ float cz=smoothstep(.55,.75,sfV(p*.07+9.));if(cz>0.){float n=sfV(p*.42)*.7+sfV(p*1.3)*.3;float w=.012+px*.6;t*=1.-cz*.32*(1.-smoothstep(0.,w,abs(n-.5)))*sfAA(px,.8);}
+ float a1=sfAA(px,9.),a2=sfAA(px,3.),a3=sfAA(px,26.);
+ if(a1>0.){float lt=sfDot(p,9.,.55,.32),dk=sfDot(p+.37,11.,.6,.3);t*=1.+a1*(lt*.15-dk*.13);}
+ t*=1.+a2*(sfV(p*3.)-.5)*.1;if(a3>0.)t*=1.+a3*(sfH(floor(p*26.))-.5)*.09;
+ return vec3(t);}
+vec3 sfSand(vec2 p,float px){float t=mix(.9,1.07,sfV(p*.06)*.6+sfV(p*.19+5.)*.4);
+ float a1=sfAA(px,7.),a4=sfAA(px,16.),a2=sfAA(px,30.),a3=sfAA(px,2.5);float dens=smoothstep(.25,.8,sfV(p*.45+8.));
+ if(a1>0.){float pit=sfDot(p,7.,.55,.2)*dens;float rim=max(sfDot(p+vec2(.01,.014),7.,.55,.25)*dens-pit,0.);t*=1.-a1*(pit*.18-rim*.07);
+  t=mix(t,1.16,a3*sfDot(p,1.6,.93,.14)*.6);}
+ if(a4>0.)t*=1.-a4*sfDot(p+.21,16.,.6,.28)*(1.-dens*.5)*.1;
+ if(a2>0.)t*=1.+a2*(sfH(floor(p*30.))-.5)*.14;
+ t*=1.+a3*(sfV(p*2.5+1.7)-.5)*.08;
+ return vec3(t,t,t*mix(1.,.97,step(1.,t)));}
+vec2 sfRip(vec2 p,float px){float a=sfAA(px,2.2)*smoothstep(.25,.6,sfV(p*.11+2.));if(a<.01)return vec2(0.);vec2 d=normalize(vec2(.8,.6));float w=sfV(p*.35)*5.;float ph=dot(p,d)*5.2+w;float s=cos(ph)+.35*cos(ph*2.+1.);return d*s*a*.2;}
+vec3 sfWall(vec3 w,vec3 n,vec3 bc,float px){vec2 tg=normalize(vec2(-n.z,n.x));float s=dot(w.xz,tg),y=w.y;vec2 q=vec2(s,y);
+ float mx=max(bc.r,max(bc.g,bc.b)),warm=(bc.r-bc.b)/max(mx,.001);float kb=smoothstep(.22,.27,warm),kp=smoothstep(.1,.13,warm)*(1.-kb);
+ float t=1.+(sfV(q*vec2(.35,.5)+4.)-.5)*.1;vec3 col=vec3(t);
+ if(kb>0.){float bw=.5,bh=.17,row=floor(y/bh);float u=s/bw+.5*mod(row,2.);float fu=fract(u),fv=fract(y/bh);
+  float a=sfAA(px,1./bh);float mwu=max(.05,px/bw*.8),mwv=max(.12,px/bh*.8);float mort=1.-smoothstep(0.,mwu,min(fu,1.-fu))*smoothstep(0.,mwv,min(fv,1.-fv));
+  float h=sfH(vec2(floor(u),row)+.3);float bt=.86+h*.2-step(.9,h)*.12;bt*=1.+(sfH(floor(q*28.))-.5)*.08*sfAA(px,28.);
+  vec3 bcol=vec3(bt*1.02,bt,bt*.97);vec3 mcol=vec3(1.2,1.2,1.17);col=mix(col,mix(col,mix(bcol,mcol,mort),a),kb);}
+ if(kp>0.){float a=sfAA(px,24.);float g=(sfH(floor(q*24.))-.5)*.1*a+(sfV(q*3.)-.5)*.06*sfAA(px,3.);col*=1.+g*kp;}
+ float kc=1.-kb-kp;if(kc>0.){float a=sfAA(px,2.);vec2 pn=vec2(s/2.4,y/1.2);vec2 fp=fract(pn);float mw=max(.008,px/1.2*.8);
+  float jt=1.-smoothstep(0.,mw*1.6,min(min(fp.x,1.-fp.x)*2.,min(fp.y,1.-fp.y)));
+  vec2 th=fract(vec2(s/.6,y/.6)+.5)-.5;float hole=(1.-smoothstep(.04,.07,length(th)))*sfAA(px,6.)*step(.5,sfH(floor(pn)+2.));
+  float pore=sfAA(px,30.)*(sfH(floor(q*30.))-.5)*.1;float pan=(sfH(floor(pn))-.5)*.08;
+  col*=1.+kc*(pan+pore-jt*.18*a-hole*.25);}
+ return col;}`;
+function surfVert(sh){sh.vertexShader='varying vec3 sfW;varying vec3 sfN;\n'+sh.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\n sfW=(modelMatrix*vec4(transformed,1.)).xyz;sfN=normalize(mat3(modelMatrix)*objectNormal);')}
+// kind: 'asph' (chão de asfalto), 'sand' (areia da praia), 'wall' (paredes de prédios/casas, com janelas no map)
+function surfPatch(mat,kind){if(!mat||mat.userData.surf)return mat;mat.userData.surf=kind;const old=mat.onBeforeCompile,key=(mat.customProgramCacheKey&&mat.customProgramCacheKey())||'';
+ mat.onBeforeCompile=(sh,r)=>{if(old)old.call(mat,sh,r);sh.uniforms.sfOn=SURF.U.sfOn;surfVert(sh);
+  const head=`float sfD=distance(sfW,cameraPosition);float sfF=sfOn*(1.-smoothstep(120.,170.,sfD));float sfPx=length(fwidth(sfW));`;
+  let fs=SURF_GLSL+'\n'+sh.fragmentShader;
+  if(kind==='sand')fs=fs.replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
+   {${head}if(sfF>.01&&sfN.y>.6){vec2 g=sfRip(sfW.xz,sfPx)*sfF;normal=normalize(normal+(viewMatrix*vec4(-g.x,0.,-g.y,0.)).xyz);}}`);
+  const body=kind==='asph'?`if(sfN.y>.6)diffuseColor.rgb*=mix(vec3(1.),sfAsph(sfW.xz,sfPx),sfF);`
+   :kind==='sand'?`if(sfN.y>-.2)diffuseColor.rgb*=mix(vec3(1.),sfSand(sfW.xz,sfPx),sfF);`
+   :`if(abs(sfN.y)<.5){vec3 bc=vec3(.6);
+     #ifdef USE_COLOR
+     bc=vColor;
+     #endif
+     float wm=1.;
+     #ifdef USE_MAP
+     vec3 sfT=texture2D(map,vUv).rgb;wm=smoothstep(.88,.97,min(sfT.r,min(sfT.g,sfT.b)));
+     #endif
+     if(wm>.01)diffuseColor.rgb*=mix(vec3(1.),sfWall(sfW,normalize(sfN),bc,sfPx),sfF*wm);}`;
+  fs=fs.replace('#include <color_fragment>',`#include <color_fragment>
+   {${head}if(sfF>.01){${body}}}`);
+  sh.fragmentShader=fs};
+ mat.customProgramCacheKey=()=>key+'|surf-'+kind;mat.needsUpdate=true;return mat}
+function surfApply(){SURF.U.sfOn.value=S.fxSurf!==false?1:0}
 // Superfície do mar em coordenadas de mundo: o mar aberto a partir de SHORE e o canal da foz até a
 // ponte da avenida (mesmo material e mesmo nível do rio, então a água do rio entra no mar sem degrau).
 // UV = mundo/22, para o mesmo padrão de ondas cobrir mar e canal sem emenda.
@@ -5075,7 +5146,7 @@ function lhLand(x,z){const L=city.lh;if(!L)return false;const u=outDist(x,z);if(
 function worldGen2(grp,st){const E=city.ext,night=!!st.synth,M=city.M,o=RW/2;
  WLD.pools.clear();WLD.grills.clear();LH.up=false;LH.fall=false;LH.fv=0;LH.cool=0;WLD.cem.f=0;WLD.cem.msg=false;
  city.mausoleum=null;city.polDoor=null;city.cem=null;city.lh=null;
- M.sand=new THREE.MeshStandardMaterial({map:worldSandTex(),vertexColors:true,roughness:1,metalness:0,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});
+ M.sand=surfPatch(new THREE.MeshStandardMaterial({map:worldSandTex(),vertexColors:true,roughness:1,metalness:0,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}),'sand'); /* v3 r33: areia porosa (SURF) */
  M.foam=S.style==='inverted'?new THREE.MeshBasicMaterial({map:worldFoamTex(),vertexColors:true,color:0x6a6e78,transparent:true,depthWrite:false,side:THREE.DoubleSide,opacity:.28,polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3}):new THREE.MeshBasicMaterial({map:worldFoamTex(),vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,opacity:night?.5:.7,polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3});
  M.sign=st.noWindows?new THREE.MeshLambertMaterial({map:worldSignAtlas(),color:0xb8bcc2,transparent:true,alphaTest:.04,side:THREE.DoubleSide,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-6,polygonOffsetUnits:-6}):new THREE.MeshBasicMaterial({map:worldSignAtlas(),transparent:true,alphaTest:.04,side:THREE.DoubleSide,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-6,polygonOffsetUnits:-6});
  // cemitério
@@ -5900,7 +5971,7 @@ async function generateCity(){
  M.surface=new THREE.MeshStandardMaterial({map:surfaceTex,vertexColors:true,roughness:.94,metalness:0});M.surface.onBeforeCompile=surfaceAtlasShader;M.surface.userData.surfaceAtlas=true;
  M.surface2=M.surface.clone();M.surface2.side=THREE.DoubleSide;M.surface2.onBeforeCompile=surfaceAtlasShader;M.surface2.userData.surfaceAtlas=true;
  if(S.style==='inverted')for(const m of [M.wall,M.abWall,M.solid,M.solid2,M.surface,M.surface2])rotMat(m); /* dev r2.4: podridão do Upside Down (ROT_GLSL) */ /* dev r2.4: podridão do Upside Down (ROT_GLSL) */
- fxGlowPatch(M.wall,.75); /* v3 r25: brilho pintado das janelas (SHFX) */
+ fxGlowPatch(M.wall,.75); /* v3 r25: brilho pintado das janelas (SHFX) */surfPatch(M.wall,'wall'); /* v3 r33: tijolo/reboco/concreto (SURF) */
 
  M.plant=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.95});
  M.plant.onBeforeCompile=sh=>{windUniforms(sh);M.plant.userData.sh=sh;
@@ -5952,7 +6023,7 @@ async function generateCity(){
   for(const q of city.bridges){const o=RW/2;if(!segExists(q[1],q[2],q[0]==='h'?0:1))continue;if(q[0]==='h')em(q[1]*P+o,(q[1]+1)*P-o,q[2]*P-o,q[2]*P+o);else em(q[1]*P-o,q[1]*P+o,q[2]*P+o,(q[2]+1)*P-o)}
   asph.repeat.set(1,1);gnd=mb.mesh(new THREE.MeshStandardMaterial({map:asph,roughness:.95}),false,true)}
  else{gnd=new THREE.Mesh(new THREE.PlaneGeometry(gsize,gsize),new THREE.MeshStandardMaterial({map:asph,roughness:.95}));asph.repeat.set(gsize/9,gsize/9);gnd.rotation.x=-Math.PI/2;gnd.position.set(E/2,0,E/2)}
- gnd.receiveShadow=true;grp.add(gnd);if(city.haze)gnd.visible=false; /* v78: em Point Haze o chão é o hazeTerrain */city.groundMat=gnd.material;bridgeVisualMaterial(gnd.material);if(S.style==='inverted')rotMat(gnd.material); /* v2 r1: podridão também no asfalto */if(st.synth&&!city.haze)synthGroundGrid(gnd.material,E);
+ gnd.receiveShadow=true;grp.add(gnd);if(city.haze)gnd.visible=false; /* v78: em Point Haze o chão é o hazeTerrain */city.groundMat=gnd.material;bridgeVisualMaterial(gnd.material);surfPatch(gnd.material,'asph'); /* v3 r33: asfalto granulado (SURF) */if(S.style==='inverted')rotMat(gnd.material); /* v2 r1: podridão também no asfalto */if(st.synth&&!city.haze)synthGroundGrid(gnd.material,E);
  R();
  {city.coastSpan=coastSpanFor(E);
   // urban core: the seed decides where the skyline grows; everything else follows from the distance to it
@@ -17591,8 +17662,8 @@ $('#optHud').addEventListener('change',e=>{S.showHud=e.target.checked;applyInter
 $('#optBloom').addEventListener('change',e=>{S.bloom=e.target.checked;saveCfg()});
 $('#optRefl').addEventListener('change',e=>{S.refl=e.target.checked;saveCfg()});
 /* v3 r25: chaves dos efeitos leves de shader (SHFX): só mudam o uniform fxK, sem recompilar */
-function fxUI(){for(const k of ['fxWet','fxGlow','fxPaint']){const e=$('#'+k);if(e)e.checked=S[k]!==false}}
-for(const k of ['fxWet','fxGlow','fxPaint'])$('#'+k).addEventListener('change',e=>{S[k]=e.target.checked;shfxApply();try{graphicsPresetUI()}catch(_){}saveCfg()});
+function fxUI(){for(const k of ['fxWet','fxGlow','fxPaint','fxSurf']){const e=$('#'+k);if(e)e.checked=S[k]!==false}}
+for(const k of ['fxWet','fxGlow','fxPaint','fxSurf'])$('#'+k).addEventListener('change',e=>{S[k]=e.target.checked;shfxApply();try{graphicsPresetUI()}catch(_){}saveCfg()});
 $('#fpsLimit').addEventListener('change',e=>{S.fpsLimit=Number(e.target.value);fpsAccumulator=0;saveCfg()});
 $('#renderScale').addEventListener('input',e=>{S.renderScale=Number(e.target.value);applyRenderScale();saveCfg()});
 $('#drawDistance').addEventListener('input',e=>{S.drawDistance=clamp(+e.target.value,0,200);drawDistanceUI();syncFogDrawDistance();saveCfg()});
@@ -17611,11 +17682,11 @@ $('#optPoleShadows').addEventListener('change',e=>{S.poleShadows=e.target.checke
 const IS_MOBILE=pixelIsMobile();
 const GRAPHICS_PRESETS={
  LOW:{traffic:25,peds:25,drawDistance:0,objectDistance:0,shadowDistance:0,renderScale:40,
-      shadows:false,shadowQuality:1,detailedShadows:false,poleShadows:false,bloom:false,refl:false,lampLighting:false,lampCount:1,sprite8:false,cloudQ:1,waterQ:0,fxWet:false,fxGlow:true,fxPaint:false},
+      shadows:false,shadowQuality:1,detailedShadows:false,poleShadows:false,bloom:false,refl:false,lampLighting:false,lampCount:1,sprite8:false,cloudQ:1,waterQ:0,fxWet:false,fxGlow:true,fxPaint:false,fxSurf:false},
  MEDIUM:{traffic:50,peds:50,drawDistance:150,objectDistance:25,shadowDistance:0,renderScale:90,
-       shadows:true,shadowQuality:1,detailedShadows:true,poleShadows:false,bloom:true,refl:true,lampLighting:!MOB_LITE,lampCount:4,sprite8:false,cloudQ:1,waterQ:1,fxWet:true,fxGlow:true,fxPaint:true},
+       shadows:true,shadowQuality:1,detailedShadows:true,poleShadows:false,bloom:true,refl:true,lampLighting:!MOB_LITE,lampCount:4,sprite8:false,cloudQ:1,waterQ:1,fxWet:true,fxGlow:true,fxPaint:true,fxSurf:true},
  HIGH:{traffic:50,peds:50,drawDistance:200,objectDistance:100,shadowDistance:100,renderScale:100,
-      shadows:true,shadowQuality:4,detailedShadows:true,poleShadows:true,bloom:true,refl:true,lampLighting:true,lampCount:4,sprite8:true,cloudQ:2,waterQ:2,fxWet:true,fxGlow:true,fxPaint:true}
+      shadows:true,shadowQuality:4,detailedShadows:true,poleShadows:true,bloom:true,refl:true,lampLighting:true,lampCount:4,sprite8:true,cloudQ:2,waterQ:2,fxWet:true,fxGlow:true,fxPaint:true,fxSurf:true}
 };
 function graphicsPresetSelected(){
  for(const [name,values] of Object.entries(GRAPHICS_PRESETS))
@@ -17753,7 +17824,7 @@ $('#padAdaptiveTest').addEventListener('click',async()=>{
  PAD.adaptive=true;$('#pad_adaptive').checked=true;saveCfg();DUAL.testUntil=performance.now()+1800;DUAL.lastTick=0;dualTick();dualStatus();
 });
 
-const CFG_DEF={cloudQ:1,waterQ:1,fxWet:true,fxGlow:true,fxPaint:true,mobLite:false,motion:{mode:'off',sens:1,dz:2,invert:false},vol:{master:.85,music:.25,sfx:.85,interior:.2},shadows:true,shadowQuality:1,bloom:true,refl:!MOB_LITE,sound:true,traffic:50,peds:50,showMinimap:true,miniAuto:true,touchHide:'auto',showHud:true,fpsLimit:0,renderScale:100,drawDistance:50,objectDistance:50,shadowDistance:50,detailedShadows:false,lang:((navigator.language||"pt-BR").toLowerCase().startsWith("pt")?"br":"en"),lampLighting:!MOB_LITE,lampCount:4,pad:{vib:1,sens:1,dz:.15,inv:false,adaptive:false,triggerForce:.65,speakerVolume:1,speakerEnabled:true,lightbar:true}};
+const CFG_DEF={cloudQ:1,waterQ:1,fxWet:true,fxGlow:true,fxPaint:true,fxSurf:true,mobLite:false,motion:{mode:'off',sens:1,dz:2,invert:false},vol:{master:.85,music:.25,sfx:.85,interior:.2},shadows:true,shadowQuality:1,bloom:true,refl:!MOB_LITE,sound:true,traffic:50,peds:50,showMinimap:true,miniAuto:true,touchHide:'auto',showHud:true,fpsLimit:0,renderScale:100,drawDistance:50,objectDistance:50,shadowDistance:50,detailedShadows:false,lang:((navigator.language||"pt-BR").toLowerCase().startsWith("pt")?"br":"en"),lampLighting:!MOB_LITE,lampCount:4,pad:{vib:1,sens:1,dz:.15,inv:false,adaptive:false,triggerForce:.65,speakerVolume:1,speakerEnabled:true,lightbar:true}};
 {let armT=0;$('#cfgReset').addEventListener('click',()=>{const b=$('#cfgReset');if(performance.now()-armT>3000){armT=performance.now();b.textContent='CLIQUE DE NOVO PARA CONFIRMAR';$('#cfgResetMsg').textContent='Volta áudio e controle ao padrão e os gráficos ao MÉDIO.';setTimeout(()=>{if(performance.now()-armT>=2900){b.textContent='RESTAURAR PADRÕES';$('#cfgResetMsg').textContent=''}},3100);return}
   armT=0;applyCfgObj(JSON.parse(JSON.stringify(CFG_DEF)));try{graphicsPresetApply('MEDIUM')}catch(e){console.error(e)}/* v78: gráficos padrão = preset MÉDIO */refreshLampLighting();saveCfg();applyVolumes();try{applyShadows()}catch(e){}cfgUI();b.textContent='RESTAURAR PADRÕES';$('#cfgResetMsg').textContent='Configurações restauradas.';setTimeout(()=>$('#cfgResetMsg').textContent='',2500)})}
 $('#padTest').addEventListener('click',()=>{if(!PAD.on){toast('NENHUM CONTROLE<br><small style="font-size:11px;color:#fff">conecte e aperte um botão</small>');return}PAD.until=0;rumble(1,.2,350);setTimeout(()=>{PAD.until=0;rumble(.1,1,350)},450)});
@@ -24580,7 +24651,7 @@ Object.assign(LANG_EN,{"Minimapa só quando em uso": "Minimap only when in use",
 Object.assign(LANG_EN,{"Este jogo requer tela cheia para ser jogado.": "This game requires fullscreen to play.", "GIRAR E JOGAR": "ROTATE AND PLAY"});
 Object.assign(LANG_EN,{"ação do lugar: entrar / sair do veículo, lojas, bar, mesas, TV, guarda-roupa, médico": "context action: enter / exit vehicle, shops, bar, tables, TV, wardrobe, medic","segure: correr · na cela: segure para cavar · no carro: nitro": "hold: sprint · in jail: hold to dig · in a car: nitro","ESQUEMA MODERNO": "MODERN LAYOUT","(CONFIG → CONTROLE): a pé, ✕ pula, □ dá soco e L3 liga a corrida": "(SETTINGS → CONTROLLER): on foot, ✕ jumps, □ punches and L3 toggles sprint","celular (abre e fecha) · clique da rodinha também": "phone (open/close) · middle click too","Segure ARMA e arraste: roda de armas": "Hold WEAPON and drag: weapon wheel","CONFIG → CONTROLES DE TOQUE → EDITAR BOTÕES: posição, tamanho e transparência": "SETTINGS → TOUCH CONTROLS → EDIT BUTTONS: position, size and transparency","Com controle conectado os botões somem até você tocar na tela": "With a controller connected the buttons hide until you touch the screen","online: conversa (no táxi, viatura ou ambulância o T fica com a missão)": "online: chat (in a taxi, police car or ambulance T starts the mission)","ESQUEMA DE BOTÕES": "BUTTON LAYOUT","Clássico: ✕ corre, □ pula (padrão)": "Classic: ✕ sprints, □ jumps (default)","Moderno: L3 corre, ✕ pula, □ soco": "Modern: L3 sprints, ✕ jumps, □ punches","EDITAR BOTÕES": "EDIT BUTTONS","ARRASTE UM BOTÃO": "DRAG A BUTTON","BOTÕES NO LUGAR PADRÃO": "BUTTONS RESET","SÓ EM TELA DE TOQUE": "TOUCHSCREEN ONLY","ARRASTE E SOLTE PARA ESCOLHER": "DRAG AND RELEASE TO PICK","ANALÓGICO ESCOLHE · SOLTE PARA CONFIRMAR": "STICK PICKS · RELEASE TO CONFIRM","MOUSE ESCOLHE · SOLTE PARA CONFIRMAR": "MOUSE PICKS · RELEASE TO CONFIRM"}); /* v3 r17 controles */
 Object.assign(LANG_EN,{"Recursos do Jogo!": "Game Features!", "Canal anterior": "Previous channel", "Próximo canal": "Next channel", "Guia de canais": "Channel guide", "Fechar TV": "Close TV", "RECURSOS DO JOGO!": "GAME FEATURES!"});
-Object.assign(LANG_EN,{"Brilho do sol e da lua no asfalto molhado": "Sun and moon glare on wet asphalt", "Brilho de janelas e neons à noite": "Window and neon glow at night", "Reflexo do céu na lataria": "Sky reflection on car paint"});
+Object.assign(LANG_EN,{"Brilho do sol e da lua no asfalto molhado": "Sun and moon glare on wet asphalt", "Brilho de janelas e neons à noite": "Window and neon glow at night", "Reflexo do céu na lataria": "Sky reflection on car paint", "Texturas de areia, asfalto e prédios": "Sand, asphalt and building textures"});
 Object.assign(LANG_EN,{"ÁGUA": "WATER", "Ondas, reflexo do céu e luz no fundo de rios e mar.": "Waves, sky reflection and light on the bottom of rivers and sea.", "NUVENS": "CLOUDS", "Altura das nuvens: 1×, 2× ou 4×. ALTO pesa mais na GPU.": "Cloud height: 1×, 2× or 4×. HIGH is heavier on the GPU."});
 Object.assign(LANG_EN,{"NÍVEL 0": "LEVEL 0", "DE VOLTA À REALIDADE": "BACK TO REALITY", "NÃO DÁ PARA SALVAR NAS BACKROOMS": "CAN'T SAVE IN THE BACKROOMS", "VOCÊ NÃO ESTÁ SOZINHO": "YOU ARE NOT ALONE", "ENTIDADE · −20 HP": "ENTITY · −20 HP", "PEGO POR UMA ENTIDADE": "CAUGHT BY AN ENTITY"});
 const LANG_EXACT=new Map(Object.entries(LANG_EN));
@@ -26363,7 +26434,7 @@ function loop(now){requestAnimationFrame(loop);
  try{ostTick()}catch(e){}
  try{mcpTick()}catch(e){}
  boomLight.visible=true;monGpu(true);if(!(typeof RIFT!=='undefined'&&RIFT.cover))render(); /* v2 r1: a Fenda cobre a tela inteira → não desenha o 3D por baixo */monGpu(false);monEnd(_t0,now)}
-function applyCfgObj(c){if(!c)return;if(typeof c.mobLite==='boolean')MOB_LITE=c.mobLite;if(c.motion){MOTION.mode=['off','dual','phone'].includes(c.motion.mode)?c.motion.mode:'off';MOTION.sens=clamp(+c.motion.sens||1,.25,2);MOTION.dz=clamp(+c.motion.dz||0,0,10);MOTION.invert=c.motion.mode==='dual'&&c.motion.dirVersion!==2?false:!!c.motion.invert;motionReset();motionUI();}Object.assign(VOL,c.vol||{});if(!(VOL.interior>=0&&VOL.interior<=1)||!c.iv2)VOL.interior=.2;if(!c.mv2){VOL.music=.25;setTimeout(()=>{try{saveCfg()}catch(e){}},0)}if(typeof c.shadows==='boolean')S.shadows=c.shadows;if([1,2,4].includes(c.shadowQuality))S.shadowQuality=c.shadowQuality;S.cloudQ=[0,1,2].includes(c.cloudQ)?c.cloudQ:(S.shadowQuality>=4||c.sprite8===true?2:1);S.waterQ=[0,1,2].includes(c.waterQ)?c.waterQ:(S.shadowQuality>=4||c.sprite8===true?2:c.shadows===false&&c.bloom===false?0:1);try{waterQApply()}catch(e){}{const lo=c.shadows===false&&c.bloom===false;for(const k of ['fxWet','fxGlow','fxPaint'])S[k]=typeof c[k]==='boolean'?c[k]:!(lo&&(k==='fxWet'||k==='fxPaint'))}try{shfxApply()}catch(e){}if(typeof c.bloom==='boolean')S.bloom=c.bloom;if(typeof c.refl==='boolean')S.refl=c.refl;if(typeof c.sound==='boolean')S.sound=c.sound;if(typeof c.traffic==='number')S.traffic=clamp(c.traffic,0,100);if(typeof c.peds==='number')S.peds=clamp(c.peds,0,100);if(typeof c.showMinimap==='boolean')S.showMinimap=c.showMinimap;if(typeof c.miniAuto==='boolean')S.miniAuto=c.miniAuto;if(['auto','fade','off'].includes(c.touchHide))S.touchHide=c.touchHide;if(typeof c.showHud==='boolean')S.showHud=c.showHud;if([0,30,45,60].includes(c.fpsLimit))S.fpsLimit=c.fpsLimit;if(Number.isFinite(c.renderScale))S.renderScale=Math.max(0,Math.min(100,Math.round(c.renderScale)));if(Number.isFinite(c.drawDistance))S.drawDistance=clamp(Math.round(c.drawDistance),0,200);if(Number.isFinite(c.objectDistance))S.objectDistance=clamp(Math.round(c.objectDistance),0,100);if(Number.isFinite(c.shadowDistance))S.shadowDistance=clamp(Math.round(c.shadowDistance),0,100);if(typeof c.detailedShadows==='boolean')S.detailedShadows=c.detailedShadows;if(typeof c.poleShadows==='boolean')S.poleShadows=c.poleShadows;if(typeof c.sprite8==='boolean'){S.sprite8=c.sprite8;const e=$('#optSprite8');if(e)e.checked=!!S.sprite8;if(S.sprite8)try{applyPlayerLook()}catch(_){}}if(c.lang==='br'||c.lang==='en')S.lang=c.lang;if(typeof c.lampLighting==='boolean')S.lampLighting=c.lampLighting;if(Number.isFinite(c.lampCount))S.lampCount=Math.max(1,Math.min(NEAR_LAMP_COUNT,Math.round(c.lampCount)));if(c.mode==='free'||c.mode==='campaign')S.mode=c.mode;if(c.touchSteer==='stick'||c.touchSteer==='arrows')S.touchSteer=c.touchSteer;if(c.touchLayout&&typeof c.touchLayout==='object')S.touchLayout=touchLayoutClean(c.touchLayout);if(c.pad){for(const k of ['vib','sens','dz'])if(typeof c.pad[k]==='number')PAD[k]=c.pad[k];PAD.inv=!!c.pad.inv;if(typeof c.pad.adaptive==='boolean')PAD.adaptive=c.pad.adaptive;if(typeof c.pad.speakerEnabled==='boolean')PAD.speakerEnabled=c.pad.speakerEnabled;if(Number.isFinite(c.pad.speakerVolume))PAD.speakerVolume=clamp(c.pad.speakerVolume,0,1);if(typeof c.pad.lightbar==='boolean')PAD.lightbar=c.pad.lightbar;PAD.scheme=c.pad.scheme==='modern'?'modern':'classic';if(Number.isFinite(c.pad.triggerForce))PAD.triggerForce=clamp(c.pad.triggerForce,.1,1);dualExtraUI();if(!PAD.adaptive)dualClear();if(PAD.adaptive||MOTION.mode==='dual')dualReconnect()}}
+function applyCfgObj(c){if(!c)return;if(typeof c.mobLite==='boolean')MOB_LITE=c.mobLite;if(c.motion){MOTION.mode=['off','dual','phone'].includes(c.motion.mode)?c.motion.mode:'off';MOTION.sens=clamp(+c.motion.sens||1,.25,2);MOTION.dz=clamp(+c.motion.dz||0,0,10);MOTION.invert=c.motion.mode==='dual'&&c.motion.dirVersion!==2?false:!!c.motion.invert;motionReset();motionUI();}Object.assign(VOL,c.vol||{});if(!(VOL.interior>=0&&VOL.interior<=1)||!c.iv2)VOL.interior=.2;if(!c.mv2){VOL.music=.25;setTimeout(()=>{try{saveCfg()}catch(e){}},0)}if(typeof c.shadows==='boolean')S.shadows=c.shadows;if([1,2,4].includes(c.shadowQuality))S.shadowQuality=c.shadowQuality;S.cloudQ=[0,1,2].includes(c.cloudQ)?c.cloudQ:(S.shadowQuality>=4||c.sprite8===true?2:1);S.waterQ=[0,1,2].includes(c.waterQ)?c.waterQ:(S.shadowQuality>=4||c.sprite8===true?2:c.shadows===false&&c.bloom===false?0:1);try{waterQApply()}catch(e){}{const lo=c.shadows===false&&c.bloom===false;for(const k of ['fxWet','fxGlow','fxPaint','fxSurf'])S[k]=typeof c[k]==='boolean'?c[k]:!(lo&&(k==='fxWet'||k==='fxPaint'||k==='fxSurf'))}try{shfxApply()}catch(e){}if(typeof c.bloom==='boolean')S.bloom=c.bloom;if(typeof c.refl==='boolean')S.refl=c.refl;if(typeof c.sound==='boolean')S.sound=c.sound;if(typeof c.traffic==='number')S.traffic=clamp(c.traffic,0,100);if(typeof c.peds==='number')S.peds=clamp(c.peds,0,100);if(typeof c.showMinimap==='boolean')S.showMinimap=c.showMinimap;if(typeof c.miniAuto==='boolean')S.miniAuto=c.miniAuto;if(['auto','fade','off'].includes(c.touchHide))S.touchHide=c.touchHide;if(typeof c.showHud==='boolean')S.showHud=c.showHud;if([0,30,45,60].includes(c.fpsLimit))S.fpsLimit=c.fpsLimit;if(Number.isFinite(c.renderScale))S.renderScale=Math.max(0,Math.min(100,Math.round(c.renderScale)));if(Number.isFinite(c.drawDistance))S.drawDistance=clamp(Math.round(c.drawDistance),0,200);if(Number.isFinite(c.objectDistance))S.objectDistance=clamp(Math.round(c.objectDistance),0,100);if(Number.isFinite(c.shadowDistance))S.shadowDistance=clamp(Math.round(c.shadowDistance),0,100);if(typeof c.detailedShadows==='boolean')S.detailedShadows=c.detailedShadows;if(typeof c.poleShadows==='boolean')S.poleShadows=c.poleShadows;if(typeof c.sprite8==='boolean'){S.sprite8=c.sprite8;const e=$('#optSprite8');if(e)e.checked=!!S.sprite8;if(S.sprite8)try{applyPlayerLook()}catch(_){}}if(c.lang==='br'||c.lang==='en')S.lang=c.lang;if(typeof c.lampLighting==='boolean')S.lampLighting=c.lampLighting;if(Number.isFinite(c.lampCount))S.lampCount=Math.max(1,Math.min(NEAR_LAMP_COUNT,Math.round(c.lampCount)));if(c.mode==='free'||c.mode==='campaign')S.mode=c.mode;if(c.touchSteer==='stick'||c.touchSteer==='arrows')S.touchSteer=c.touchSteer;if(c.touchLayout&&typeof c.touchLayout==='object')S.touchLayout=touchLayoutClean(c.touchLayout);if(c.pad){for(const k of ['vib','sens','dz'])if(typeof c.pad[k]==='number')PAD[k]=c.pad[k];PAD.inv=!!c.pad.inv;if(typeof c.pad.adaptive==='boolean')PAD.adaptive=c.pad.adaptive;if(typeof c.pad.speakerEnabled==='boolean')PAD.speakerEnabled=c.pad.speakerEnabled;if(Number.isFinite(c.pad.speakerVolume))PAD.speakerVolume=clamp(c.pad.speakerVolume,0,1);if(typeof c.pad.lightbar==='boolean')PAD.lightbar=c.pad.lightbar;PAD.scheme=c.pad.scheme==='modern'?'modern':'classic';if(Number.isFinite(c.pad.triggerForce))PAD.triggerForce=clamp(c.pad.triggerForce,.1,1);dualExtraUI();if(!PAD.adaptive)dualClear();if(PAD.adaptive||MOTION.mode==='dual')dualReconnect()}}
 // Repara a preferência contaminada pelo benchmark v152–v156: a migração de
 // áudio antiga salvava o preset temporário, ocultando HUD e minimapa no próximo jogo.
 // Só faz a recuperação quando o registro corresponde *exatamente* a um dos
@@ -26506,8 +26577,8 @@ const TVCAT=[
   g:['A água tem ondas em camadas, reflete o céu e o brilho do sol, e a luz dança no fundo do raso. Rios perto das indústrias ficam poluídos. No mar, dois navios cargueiros passam devagar: dá para subir de lancha ou pousar o helicóptero no convés. Na foz, o rio abre em curva pela areia até o mar; o farol tem pedras no pé. Barcos, jet skis e o hovercraft balançam com as ondas. Depois da praia o fundo despenca num talude, e lá embaixo há carcaças de lanchas. Os rios são mais fundos no meio e também escondem lanchas afundadas.','Water has layered waves, reflects the sky and the sun glare, and light dances on the shallow bottom. Rivers near industry get polluted. At sea, two cargo ships sail slowly by: you can climb aboard from a boat or land the helicopter on deck. At the river mouth the channel flares out across the sand to the sea; the lighthouse sits on a rock base. Boats, jet skis and the hovercraft rock with the waves. Past the beach the seabed drops off a steep slope, with boat wrecks at the bottom. Rivers are deeper in the middle and hide sunken boats too.'],
   p:[tvcP('agua_tarde',['MAR NO PÔR DO SOL','SEA AT SUNSET']),tvcP('agua_raso',['LUZ NO RASO','LIGHT IN THE SHALLOWS']),tvcP('agua_rio',['ONDAS NO RIO','RIVER WAVES']),tvcP('tv_pollution',['POLUIÇÃO','POLLUTION']),tvcP('ship2',['NAVIOS CARGUEIROS','CARGO SHIPS']),tvcP('foz',['FOZ DO RIO','RIVER MOUTH']),tvcP('farol',['PÉ DO FAROL','LIGHTHOUSE BASE']),tvcP('talude',['O FUNDO DESPENCA','THE DROP-OFF']),tvcP('rio_fundo',['LANCHA NO FUNDO DO RIO','BOAT AT THE RIVER BOTTOM'])]},
  {k:'shfx',ic:'✨',c:'#ffd27a',l:'alt',n:['EFEITOS VISUAIS','VISUAL EFFECTS'],
-  g:['A lataria dos carros reflete o céu. Depois da chuva o asfalto molhado espelha o sol e a lua. À noite janelas e neons brilham. Cada efeito liga e desliga em Gráficos.','Car paint reflects the sky. After rain the wet asphalt mirrors the sun and the moon. At night windows and neons glow. Each effect can be toggled in Graphics.'],
-  p:[tvcP('fx_carro',['CÉU NA LATARIA','SKY ON CAR PAINT']),tvcP('fx_chuva_tarde',['ASFALTO MOLHADO NO PÔR DO SOL','WET ASPHALT AT SUNSET']),tvcP('fx_chuva_noite',['CHUVA À NOITE','RAINY NIGHT']),tvcP('fx_janelas',['JANELAS ACESAS','LIT WINDOWS'])]},
+  g:['A lataria dos carros reflete o céu. Depois da chuva o asfalto molhado espelha o sol e a lua. À noite janelas e neons brilham. A areia tem poros e marcas de vento, o asfalto é granulado e os prédios têm tijolo, reboco ou concreto. Cada efeito liga e desliga em Gráficos.','Car paint reflects the sky. After rain the wet asphalt mirrors the sun and the moon. At night windows and neons glow. Sand has pores and wind ripples, asphalt is grainy and buildings show brick, plaster or concrete. Each effect can be toggled in Graphics.'],
+  p:[tvcP('fx_carro',['CÉU NA LATARIA','SKY ON CAR PAINT']),tvcP('fx_chuva_tarde',['ASFALTO MOLHADO NO PÔR DO SOL','WET ASPHALT AT SUNSET']),tvcP('fx_chuva_noite',['CHUVA À NOITE','RAINY NIGHT']),tvcP('fx_janelas',['JANELAS ACESAS','LIT WINDOWS']),tvcP('fx_areia',['AREIA','SAND']),tvcP('fx_asfalto',['ASFALTO','ASPHALT']),tvcP('fx_parede',['TIJOLO E CONCRETO','BRICK AND CONCRETE'])]},
  {k:'obra',ic:'🦺',c:'#ffb020',l:'1',n:['OBRAS NA RUA','ROADWORKS'],
   g:['Todo dia uma rua fecha para obra, o dia inteiro. O GPS e o trânsito desviam, e no mapa ela aparece pontilhada de vermelho. O fundo do buraco falha: é a entrada das Backrooms.','Every day one street closes for roadworks, all day long. GPS and traffic detour, and the map shows it dotted in red. The bottom of the hole glitches: it is the way into the Backrooms.'],
   p:[tvcP('obra',['RUA FECHADA','STREET CLOSED'])]},

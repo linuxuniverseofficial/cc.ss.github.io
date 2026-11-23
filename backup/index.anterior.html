@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 (function(){const h0=Math.hypot,sq=Math.sqrt,ab=Math.abs;Math.hypot=function hypot(a,b,c,d){if(d!==undefined)return h0(a,b,c,d);if(c!==undefined)return sq(a*a+b*b+c*c);if(b!==undefined)return sq(a*a+b*b);return a===undefined?0:ab(+a)}})();
 /* v78 · BUILD: número da entrega. Ao abrir, o jogo lê version.txt (poucos bytes, sem cache) e, se a build no servidor for outra
    (navegador/celular servindo cópia velha), recarrega uma vez. Saves e configurações (localStorage) NÃO são apagados. */
-var BUILD_TAG='r31';
+var BUILD_TAG='r32';
 (function(){try{if(!/^https?:$/.test(location.protocol))return;const k='ps_build_reload';
  fetch(new URL('version.txt?b='+Date.now(),location.href).href,{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=/^\s*((?:dev\s+)?r[\d.]+)\s*$/i.exec(t||'');if(!m||m[1].replace(/\s+/g,' ').toLowerCase()===BUILD_TAG.toLowerCase()){try{sessionStorage.removeItem(k)}catch(e){}return}
   let n=0;try{n=+sessionStorage.getItem(k)||0}catch(e){}if(n>=2)return;try{sessionStorage.setItem(k,String(n+1))}catch(e){}
@@ -2607,7 +2607,25 @@ function mouthGeo(){const sb=city.seaBranch;if(!sb)return null;let m=city._mouth
  return city._mouth={sb,c:city.coast,sp:city.coastSpan,a,b,mid:(a+b)/2,hw:(b-a)/2,u0:SAND0,u1:SHORE,N:1/(1-MOUTH.c)-1-MOUTH.c,beach,A:beach?MOUTH.A:0,pad:beach?MOUTH.pad:10}}
 function mouthF(m,u){const k=clamp((u-m.u0)/(m.u1-m.u0),0,1),c=MOUTH.c;return m.A*(1/(1-c*k)-1-c*k)/m.N}
 function mouthFd(m,u){const k=(u-m.u0)/(m.u1-m.u0);if(k<=0||k>=1)return 0;const c=MOUTH.c;return m.A*(c/((1-c*k)*(1-c*k))-c)/m.N/(m.u1-m.u0)}
-function mouthBed(u){const o=RW/2,u1=SHORE+2;return RY-1.45+(seabedY(u1)-(RY-1.45))*clamp((u+o)/(u1+o),0,1)}
+/* v3 r32 · rios 2x mais fundos: fundo raso junto ao muro (1,5 m) e fundo no meio (2,9 m = 2x o antigo 1,45). A profundidade segue a distância
+   até a margem (grade de 2 m sobre os retângulos de água + pontes, chamfer), então rio largo = mais fundo no meio; rio estreito fica mais raso. */
+const RIVBED={min:1.5,max:2.9,span:18,cell:2};
+function riverDistGrid(){if(city._rdg&&city._rdg.w===city.water)return city._rdg;const C=RIVBED.cell,E=city.ext||0,rs=[];
+ for(const r of city.water||[]){if(r.cutOnly)continue;const q=[r[0],r[1],r[2],r[3]];if(r.estuary){if(q[0]<=0)q[0]-=80;if(q[1]<=0)q[1]-=80;if(q[2]>=E)q[2]+=80;if(q[3]>=E)q[3]+=80}rs.push(q)}
+ for(const r of city.decks||[])if(waterAt((r[0]+r[2])/2,(r[1]+r[3])/2))rs.push(r);
+ if(!rs.length)return city._rdg={w:city.water,none:true};let x0=1e9,z0=1e9,x1=-1e9,z1=-1e9;for(const r of rs){x0=Math.min(x0,r[0]);z0=Math.min(z0,r[1]);x1=Math.max(x1,r[2]);z1=Math.max(z1,r[3])}
+ x0-=4;z0-=4;x1+=4;z1+=4;const nx=Math.ceil((x1-x0)/C)+1,nz=Math.ceil((z1-z0)/C)+1,d=new Float32Array(nx*nz);
+ for(const r of rs){const i0=Math.max(0,Math.ceil((r[0]-x0)/C-.5)),i1=Math.min(nx-1,Math.floor((r[2]-x0)/C-.5)),j0=Math.max(0,Math.ceil((r[1]-z0)/C-.5)),j1=Math.min(nz-1,Math.floor((r[3]-z0)/C-.5));
+  for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++)d[j*nx+i]=1e6}
+ const D=1.4142;for(let j=0;j<nz;j++)for(let i=0;i<nx;i++){const k=j*nx+i;if(!d[k])continue;let v=d[k];if(i>0)v=Math.min(v,d[k-1]+1);if(j>0){v=Math.min(v,d[k-nx]+1);if(i>0)v=Math.min(v,d[k-nx-1]+D);if(i<nx-1)v=Math.min(v,d[k-nx+1]+D)}d[k]=v}
+ for(let j=nz-1;j>=0;j--)for(let i=nx-1;i>=0;i--){const k=j*nx+i;if(!d[k])continue;let v=d[k];if(i<nx-1)v=Math.min(v,d[k+1]+1);if(j<nz-1){v=Math.min(v,d[k+nx]+1);if(i<nx-1)v=Math.min(v,d[k+nx+1]+D);if(i>0)v=Math.min(v,d[k+nx-1]+D)}d[k]=v}
+ return city._rdg={w:city.water,x0,z0,nx,nz,d}}
+function riverBedY(x,z){const G=riverDistGrid(),B=RIVBED;if(G.none)return RY-B.min;const C=B.cell,fx=(x-G.x0)/C-.5,fz=(z-G.z0)/C-.5;
+ const i=clamp(Math.floor(fx),0,G.nx-2),j=clamp(Math.floor(fz),0,G.nz-2),ax=clamp(fx-i,0,1),az=clamp(fz-j,0,1),k=j*G.nx+i,dd=G.d;
+ const dc=((dd[k]*(1-ax)+dd[k+1]*ax)*(1-az)+(dd[k+G.nx]*(1-ax)+dd[k+G.nx+1]*ax)*az)*C-C*.5,q=clamp(dc/B.span,0,1);return RY-(B.min+(B.max-B.min)*q*q*(3-2*q))}
+function riverBedCol(y,night){const f=clamp((RY-RIVBED.min-y)/(RIVBED.max-RIVBED.min),0,1);
+ return f<.5?COL(night?'#5a5a7a':'#d8d4c8').lerp(COL(night?'#3a3c5e':'#8a968c'),f*2):COL(night?'#3a3c5e':'#8a968c').lerp(COL(night?'#1c1e3a':'#3e5458'),(f-.5)*2)}
+function mouthBed(u){const o=RW/2,u1=SHORE+2,b=RY-RIVBED.max;return b+(seabedY(u1)-b)*clamp((u+o)/(u1+o),0,1)}
 function sminK(a,b,k){if(k<=0)return Math.min(a,b);const h=clamp(.5+.5*(b-a)/k,0,1);return b+(a-b)*h-k*h*(1-h)}
 /* altura do chão da foz em (t,u); null = fora da influência (chão normal da praia/calçadão) */
 function mouthY(m,t,u){const dt=Math.abs(t-m.mid),fd=mouthFd(m,u),F=dt-m.hw-mouthF(m,u);
@@ -3519,7 +3537,7 @@ function coastWalls(grp,night){const E=city.ext,o=RW/2,br=beachRange(),mb=new MB
  const m=mb.mesh(new THREE.MeshStandardMaterial({vertexColors:true,roughness:.92,metalness:0}),false,true);if(m)grp.add(m)}
 function aqSea(grp,night){const E=city.ext,c=city.coast;
  if(city.haze){hazeShore(grp);const W=5000,deep=new THREE.Color('#1e3438');
-  const deepP=new THREE.Mesh(new THREE.PlaneGeometry(W,W),new THREE.MeshBasicMaterial({color:deep}));deepP.rotation.x=-Math.PI/2;deepP.position.set(E/2,SEABED.floor-.06,E/2);grp.add(deepP);
+  const deepP=new THREE.Mesh(new THREE.PlaneGeometry(W,W),new THREE.MeshBasicMaterial({color:deep}));deepP.rotation.x=-Math.PI/2;deepP.position.set(E/2,SEABED.floor-.06,E/2);grp.add(deepP);seaWrecks(grp,night);
   const wt=aqWaveTex().clone();wt.needsUpdate=true;wt.repeat.set(1,1);const wm=new THREE.MeshBasicMaterial({map:wt,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:.3});
   const wv=new THREE.Mesh(seaSurfaceGeo(.02),wm);wv.renderOrder=2;grp.add(wv);AQ.seaWave=wt;AQ.inl=[0,1];wtrSwell(.5);return}
  // fundo do mar: faixa de areia com pedras e algas que afunda e escurece até o azul profundo
@@ -3537,15 +3555,21 @@ function aqSea(grp,night){const E=city.ext,c=city.coast;
 /* v3 r31 · carcaças de lanchas no fundo: posições sorteadas por gerador próprio da seed (não mexe no R()), deitadas/afundadas no piso,
    escuras e enferrujadas; um único lote (1 draw call), dentro do grupo da cidade (some na troca de mundo). */
 function seaWrecks(grp,night){const E=city.ext,c=city.coast,r=mulberry32((S.seed^0x5eab0a7)>>>0),mb=new MB(),Sb=SEABED,u0=SHORE+2+Sb.shelf+Sb.slope+14,W=new THREE.Matrix4(),L=new THREE.Matrix4(),Mx=new THREE.Matrix4();
+ /* v3 r32: 16 no total = 8 no mar (Point Haze: em volta da ilha) + 8 no fundo dos rios (menores, abaixo da superfície; faltando rio, o resto vai para o mar) */
+ const spots=[],riv=(city.water||[]).filter(w=>!w.cutOnly&&!w.estuary&&w[2]-w[0]>=40&&w[3]-w[1]>=40&&w[2]-w[0]<=90&&w[3]-w[1]<=90&&w[0]>=0&&w[2]<=E&&w[1]>=0&&w[3]<=E);
+ for(let k=riv.length-1;k>0;k--){const j=Math.floor(r()*(k+1));[riv[k],riv[j]]=[riv[j],riv[k]]}
+ for(const w of riv.slice(0,8)){const x=(w[0]+w[2])/2+(r()-.5)*12,z=(w[1]+w[3])/2+(r()-.5)*12;spots.push({x,z,y:riverBedY(x,z),s:.7,riv:true})}
+ const ns=16-spots.length;for(let k=0;k<ns;k++){const u=u0+r()*(SHORE+(city.haze?120:150)-u0);let p,y;
+  if(city.haze){p=hazeRay((k+r()*.8)/ns*6.2832,u);y=seabedY(u)}else{const t=-260+(E+520)*(k+r()*.8)/ns;p=wTU(c,t,u);y=seabedYt(t,u)}spots.push({x:p[0],z:p[1],y,s:1})}city.wrecks=spots;
  const hullC=['#2c3236','#3a2c24','#30363a','#423024','#262a2e'],dim=night?.55:1;
  const part=(g,x,y,z,sx,sy,sz,rx,ry,rz,col)=>{L.copy(mtx(x,y,z,sx,sy,sz,rx,ry,rz));Mx.multiplyMatrices(W,L);mb.geo(g,Mx,COL(col).multiplyScalar(dim*(.8+r()*.25)))};
- const n=16;for(let k=0;k<n;k++){const t=-260+(E+520)*(k+r()*.8)/n,u=u0+r()*(SHORE+150-u0),p=wTU(c,t,u),Lh=5+r()*5,Bh=Lh*.34,roll=(r()<.5?-1:1)*(.25+r()*.9),pitch=(r()-.5)*.25,a=r()*6.283,hc=hullC[Math.floor(r()*hullC.length)];
-  W.compose(new THREE.Vector3(p[0],seabedYt(t,u)+.25+Math.abs(roll)*.25,p[1]),new THREE.Quaternion().setFromEuler(new THREE.Euler(roll,a,pitch,'YXZ')),new THREE.Vector3(1,1,1));
+ for(const sp of spots){const Lh=5+r()*5,Bh=Lh*.34,roll=(r()<.5?-1:1)*(.25+r()*.9)*(sp.riv?.6:1),pitch=(r()-.5)*.25,a=r()*6.283,hc=hullC[Math.floor(r()*hullC.length)],ss=sp.s;
+  W.compose(new THREE.Vector3(sp.x,sp.y+(.25+Math.abs(roll)*.25)*ss,sp.z),new THREE.Quaternion().setFromEuler(new THREE.Euler(roll,a,pitch,'YXZ')),new THREE.Vector3(ss,ss,ss));
   part(BOXG,-Lh*.1,.35,0,Lh*.8,.75,Bh,0,0,0,hc);part(BOXG,-Lh*.1,-.05,0,Lh*.7,.35,Bh*.55,0,0,0,hc);  /* casco: costado + quilha */
   part(GEO.cone,Lh*.38,.3,0,Bh*.5,Lh*.24,.75*.6,0,0,-Math.PI/2,hc);                                  /* proa */
   part(BOXG,-Lh*.48,.45,0,.18,.85,Bh*.95,0,0,0,'#1e2226');                                           /* popa */
   if(r()<.7)part(BOXG,-Lh*.15+r()*.4,1.05,(r()-.5)*.3,Lh*.28,.65+r()*.3,Bh*.62,(r()-.5)*.3,0,(r()-.5)*.35,r()<.5?'#5a5a56':'#4a4038'); /* cabine quebrada */
-  if(r()<.5)part(BOXG,-Lh*.15,1.6,0,.1,1.4,.1,(r()-.5)*.6,0,(r()-.5)*.9,'#2a2a2a');                    /* mastro torto */
+  if(r()<.5&&!sp.riv)part(BOXG,-Lh*.15,1.6,0,.1,1.4,.1,(r()-.5)*.6,0,(r()-.5)*.9,'#2a2a2a');                    /* mastro torto */
   if(r()<.6)part(BOXG,Lh*.05,.78,Bh*.51,Lh*.35,.12,.05,0,0,0,'#6a3c26')}                              /* faixa de ferrugem */
  const m=mb.mesh(new THREE.MeshLambertMaterial({vertexColors:true}),false,false);if(m){m.frustumCulled=true;grp.add(m)}}
 function wtrSwell(k){const u=city.waterMat&&city.waterMat.userData.wSw;if(u)u.value.set(AQ.inl[0],AQ.inl[1],k)}
@@ -3554,7 +3578,7 @@ function hazeShore(grp){const K=240,us=[RW/2-.02,RW/2,RW/2+4,RW/2+8,SAND0-.5,SAN
  const hy=u=>u<RW/2?0:u<SAND0?.2:u<=SHORE+2?beachProfile(u)+.02:seabedY(u);
  for(let k=0;k<K;k++){const a=k/K*6.2832;for(let j=0;j<nu;j++){const u=us[j],p=hazeRay(a,u),n=Math.sin(p[0]*.37)*Math.cos(p[1]*.29)*.5+Math.sin(p[0]*.11+p[1]*.13)*.5;let c;
    if(u<SAND0-.4)c=grass.clone().multiplyScalar(.97+.06*n);else if(u<=SHORE)c=wetSand(sand.clone().multiplyScalar(.9+.1*n).lerp(grass,clamp((SAND0+3-u)/4,0,1)*.5),u);
-   else c=bed.clone().lerp(deep,clamp((u-SHORE)/120,0,1));
+   else{const y0=beachProfile(SHORE+2),f=clamp((y0-hy(u))/(y0-SEABED.floor),0,1);c=bed.clone().lerp(deep,f<.12?f/.12*.45:.45+.55*Math.pow((f-.12)/.88,.55))} /* v3 r32: escurece pela profundidade (talude) */
    pos.push(p[0],hy(u),p[1]);col.push(c.r,c.g,c.b);uv.push(p[0]/7,p[1]/7)}}
  {const E=city.ext,R=new Float32Array(K*nu);for(let i=0;i<K*nu;i++)R[i]=Math.hypot(pos[i*3]-E/2,pos[i*3+2]-E/2);city.hzShore={K,nu,us,R,hy:us.map(hy),c:E/2}} // v78: colisão da areia = a própria malha
  for(let k=0;k<K;k++){const k2=(k+1)%K;for(let j=0;j<nu-1;j++){const a=k*nu+j,b=k2*nu+j,c=a+1,d=b+1;idx.push(a,c,b,b,c,d)}}
@@ -8862,20 +8886,25 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
  /* --- rivers: water, parapets along every water edge, bridge decoration --- */
  if(city.water&&city.water.length){const wc=COL(night?'#141a40':'#2a78a4'),pc=COL(night?'#4a4460':'#c8c2b4'),pc2=pc.clone().multiplyScalar(.8);
   const PL2=city.poll,cw=COL(night?'#3a3448':'#8a857c'),cw2=COL(night?'#2a2436':'#5a5a52');
+  /* v3 r32: leito do rio em grade de 4 m com altura de riverBedY e cor por profundidade (pv = sujeira do rio poluído) */
+  const rbed=(X0,Z0,X1,Z1,pv)=>{const nx=Math.max(1,Math.round((X1-X0)/4)),nz=Math.max(1,Math.round((Z1-Z0)/4)),dirt=COL(night?'#2a2018':'#5a4630'),st=bedMb.p.length;
+   for(let i=0;i<nx;i++)for(let j=0;j<nz;j++){const xa=X0+(X1-X0)*i/nx,xb=X0+(X1-X0)*(i+1)/nx,za=Z0+(Z1-Z0)*j/nz,zb=Z0+(Z1-Z0)*(j+1)/nz;
+    bedMb.qa([xa,riverBedY(xa,zb),zb],[xb,riverBedY(xb,zb),zb],[xb,riverBedY(xb,za),za],[xa,riverBedY(xa,za),za],COL('#ffffff'),[(xa+xb)/2,RY-20,(za+zb)/2])}
+   for(let k=st;k<bedMb.p.length;k+=3){const q=k/3,cc=riverBedCol(bedMb.p[k+1],night);if(pv)cc.lerp(dirt,clamp(pv*1.4,0,1));bedMb.u[q*2]=bedMb.p[k]/8;bedMb.u[q*2+1]=bedMb.p[k+2]/8;bedMb.c[k]=cc.r;bedMb.c[k+1]=cc.g;bedMb.c[k+2]=cc.b}};
   for(const r of city.water){if(r.cutOnly)continue;const mx=(r[0]+r[2])/2,mz=(r[1]+r[3])/2;if(!own(clamp(mx,0,E-1),clamp(mz,0,E-1)))continue;
    if(r.estuary){
-    const a=city.seaBranch.a*P+o,b=(city.seaBranch.a+1)*P-o,pt=(t,u,y)=>{const q=TU(city.coast,t,u);return[q[0],y,q[1]]},u1=SHORE+2,floor=u=>RY-1.45+(seabedY(u1)-(RY-1.45))*clamp((u+o)/(u1+o),0,1);
+    const a=city.seaBranch.a*P+o,b=(city.seaBranch.a+1)*P-o,pt=(t,u,y)=>{const q=TU(city.coast,t,u);return[q[0],y,q[1]]},u1=SHORE+2,floor=(t,u)=>{const q=pt(t,u,0),f=clamp((u+o)/(2*o),0,1),s=f*f*(3-2*f);return riverBedY(q[0],q[2])*(1-s)+mouthBed(u)*s};
     for(let u=-o;u<o-.3;u+=4){const v=Math.min(o-.3,u+4); /* v3 r27: daqui para o mar o leito é da mouthMesh */
      for(let t=a;t<b;t+=4){const end=Math.min(b,t+4),center=(t+end)/2,world=pt(center,(u+v)/2,0),inlet=pt(center,-o,0);
       const pollution=Math.max(pollAt(world[0],world[2]),pollAt(inlet[0],inlet[2])*(1-.35*clamp((u-o)/(SHORE-o),0,1)));
       const bed=COL(night?'#5a5a7a':'#d8d4c8').lerp(COL(night?'#6a6488':'#ffffff'),clamp((u+o)/(u1+o),0,1)).lerp(COL(night?'#2a2018':'#5a4630'),clamp(pollution*1.4,0,1)),st=bedMb.p.length;
-      bedMb.qa(pt(t,u,floor(u)),pt(end,u,floor(u)),pt(end,v,floor(v)),pt(t,v,floor(v)),bed,pt(t,u,-20));
-      for(let k=st;k<bedMb.p.length;k+=3){const q=k/3;bedMb.u[q*2]=bedMb.p[k]/8;bedMb.u[q*2+1]=bedMb.p[k+2]/8}}}
+      bedMb.qa(pt(t,u,floor(t,u)),pt(end,u,floor(end,u)),pt(end,v,floor(end,v)),pt(t,v,floor(t,v)),bed,pt(t,u,-20));
+      for(let k=st;k<bedMb.p.length;k+=3){const q=k/3;bedMb.u[q*2]=bedMb.p[k]/8;bedMb.u[q*2+1]=bedMb.p[k+2]/8;const uu=outDist(bedMb.p[k],bedMb.p[k+2]),f=clamp((uu+o)/(2*o),0,1),cc=riverBedCol(bedMb.p[k+1],night).lerp(bed,f*f*(3-2*f));bedMb.c[k]=cc.r;bedMb.c[k+1]=cc.g;bedMb.c[k+2]=cc.b}}}
     continue}
    const pr=PL2?Math.hypot(clamp(PL2.x,r[0],r[2])-PL2.x,clamp(PL2.z,r[1],r[3])-PL2.z):1e9;const dirty=PL2&&pr<PL2.R*1.4;
-   if(!dirty)bedMb.quad([r[0],RY-1.45,r[3]],[r[2],RY-1.45,r[3]],[r[2],RY-1.45,r[1]],[r[0],RY-1.45,r[1]],0,1,0,[r[0]/8,r[3]/8,r[2]/8,r[1]/8],COL(night?'#5a5a7a':'#d8d4c8'));
+   if(!dirty)rbed(r[0],r[1],r[2],r[3],null);
    if(!dirty)waveMb.quad([r[0],RY+.012,r[3]],[r[2],RY+.012,r[3]],[r[2],RY+.012,r[1]],[r[0],RY+.012,r[1]],0,1,0,[r[0]/16,r[3]/16,r[2]/16,r[1]/16],COL('#ffffff'));
-   if(PL2&&pr<PL2.R*1.4){const ts=5;for(let x=r[0];x<r[2]-.01;x+=ts)for(let z=r[1];z<r[3]-.01;z+=ts){const x1=Math.min(r[2],x+ts),z1=Math.min(r[3],z+ts);wat.flat(x,z,x1,z1,RY,waterCol((x+x1)/2,(z+z1)/2,wc,night));const pv=pollAt((x+x1)/2,(z+z1)/2);bedMb.quad([x,RY-1.45,z1],[x1,RY-1.45,z1],[x1,RY-1.45,z],[x,RY-1.45,z],0,1,0,[x/8,z1/8,x1/8,z/8],COL(night?'#5a5a7a':'#d8d4c8').lerp(COL(night?'#2a2018':'#5a4630'),clamp(pv*1.4,0,1)));if(pv<.25)waveMb.quad([x,RY+.012,z1],[x1,RY+.012,z1],[x1,RY+.012,z],[x,RY+.012,z],0,1,0,[x/16,z1/16,x1/16,z/16],COL('#ffffff').multiplyScalar(1-pv*4))}
+   if(PL2&&pr<PL2.R*1.4){const ts=5;for(let x=r[0];x<r[2]-.01;x+=ts)for(let z=r[1];z<r[3]-.01;z+=ts){const x1=Math.min(r[2],x+ts),z1=Math.min(r[3],z+ts);wat.flat(x,z,x1,z1,RY,waterCol((x+x1)/2,(z+z1)/2,wc,night));const pv=pollAt((x+x1)/2,(z+z1)/2);rbed(x,z,x1,z1,pv);if(pv<.25)waveMb.quad([x,RY+.012,z1],[x1,RY+.012,z1],[x1,RY+.012,z],[x,RY+.012,z],0,1,0,[x/16,z1/16,x1/16,z/16],COL('#ffffff').multiplyScalar(1-pv*4))}
     const jr=mulberry32(((Math.round(r[0])*73856093)^(Math.round(r[1])*19349663)^S.seed)>>>0);const n=Math.round((r[2]-r[0])*(r[3]-r[1])/160);
     for(let k=0;k<n;k++){const x=r[0]+1+jr()*(r[2]-r[0]-2),z=r[1]+1+jr()*(r[3]-r[1]-2),pv=pollAt(x,z);if(jr()>pv)continue;const t=jr();
      if(t<.35)det.geo(GEO.cyl,mtx(x,RY+.18,z,.32,.75,.32,Math.PI/2,jr()*6,0),COL(jr()<.5?'#c8a020':'#3a6a3a'));else if(t<.75){const sc=waterCol(x,z,COL(night?'#141a40':'#2a78a4'),night).multiplyScalar(.78).lerp(COL(night?'#2a2a3a':'#3a3a30'),.25),k=2+Math.floor(jr()*3);for(let q=0;q<k;q++){const r1=.8+jr()*1.8;wat.geo(GEO.disc,mtx(x+(jr()-.5)*2.4,RY+.015+q*.002,z+(jr()-.5)*2.4,r1*(.7+jr()*.6),r1*(.7+jr()*.6),1,-Math.PI/2,0,jr()*6.28),sc)}}else det.box(x-.4,RY-.02,z-.3,x+.4,RY+.17,z+.3,COL('#e8e4dc'))}}
@@ -8890,11 +8919,11 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
        {const ix=nx?(nx>0?r[2]-.35:r[0]+.35):0,iz=nz?(nz>0?r[3]-.35:r[1]+.35):0,A=nx?[ix,0,Math.min(az,bz2)]:[Math.min(ax,bx2),0,iz],B=nx?[ix,0,Math.max(az,bz2)]:[Math.max(ax,bx2),0,iz];
         det.qa(A,B,[B[0],RY-1.5,B[2]],[A[0],RY-1.5,A[2]],cw,[(A[0]+B[0])/2+nx*5,-1,(A[2]+B[2])/2+nz*5]);det.qa([A[0],RY+.35,A[2]],[B[0],RY+.35,B[2]],[B[0],RY-.05,B[2]],[A[0],RY-.05,A[2]],cw2,[(A[0]+B[0])/2+nx*5,-1,(A[2]+B[2])/2+nz*5]);worldFoamBank(foamMb,A,B,nx,nz)}}a=null}}}}
   for(const r of city.decks||[]){const mx=(r[0]+r[2])/2,mz=(r[1]+r[3])/2;if(!own(clamp(mx,0,E-1),clamp(mz,0,E-1)))continue;// Sobre a foz a água e o leito já vêm do mar/canal; nas demais pontes são desenhados sob a laje.
-   const overSea=mouthChannel(mx,mz);det.box(r[0],-1.3,r[1],r[2],-.01,r[3],cw,{noTop:true,bottom:true});if(!overSea){wat.flat(r[0],r[1],r[2],r[3],RY,waterCol(mx,mz,wc,night));waveMb.quad([r[0],RY+.012,r[3]],[r[2],RY+.012,r[3]],[r[2],RY+.012,r[1]],[r[0],RY+.012,r[1]],0,1,0,[r[0]/16,r[3]/16,r[2]/16,r[1]/16],COL('#ffffff'));bedMb.quad([r[0],RY-1.45,r[3]],[r[2],RY-1.45,r[3]],[r[2],RY-1.45,r[1]],[r[0],RY-1.45,r[1]],0,1,0,[r[0]/8,r[3]/8,r[2]/8,r[1]/8],COL(night?'#5a5a7a':'#d8d4c8'));}
+   const overSea=mouthChannel(mx,mz);det.box(r[0],-1.3,r[1],r[2],-.01,r[3],cw,{noTop:true,bottom:true});if(!overSea){wat.flat(r[0],r[1],r[2],r[3],RY,waterCol(mx,mz,wc,night));waveMb.quad([r[0],RY+.012,r[3]],[r[2],RY+.012,r[3]],[r[2],RY+.012,r[1]],[r[0],RY+.012,r[1]],0,1,0,[r[0]/16,r[3]/16,r[2]/16,r[1]/16],COL('#ffffff'));rbed(r[0],r[1],r[2],r[3],null);}
    for(const[x0,z0,x1,z1,nx,nz] of [[r[0],r[1],r[2],r[1],0,-1],[r[0],r[3],r[2],r[3],0,1],[r[0],r[1],r[0],r[3],-1,0],[r[2],r[1],r[2],r[3],1,0]]){const px=(x0+x1)/2+nx*.7,pz=(z0+z1)/2+nz*.7;
     let xa=nx?(nx>0?r[2]-.35:r[0]):x0,xb=nx?(nx>0?r[2]:r[0]+.35):x1,za=nz?(nz>0?r[3]-.35:r[1]):z0,zb=nz?(nz>0?r[3]:r[1]+.35):z1;
     if(!waterAt(px,pz)&&!mouthChannel(px,pz)){if(!riverZone(px,pz))det.box(xa,RY-.4,za,xb,-1.3,zb,cw2);continue}det.box(xa,0,za,xb,1.0,zb,pc);det.box(xa-.05,1.0,za-.05,xb+.05,1.12,zb+.05,pc2);addCol(xa,za,xb,zb,'rock').low=1.15}}
-  for(const p of city.pillars||[]){const mx=(p[0]+p[2])/2,mz=(p[1]+p[3])/2;if(!own(clamp(mx,0,E-1),clamp(mz,0,E-1)))continue;det.box(p[0],RY-1,p[1],p[2],-1.3,p[3],cw2)}
+  for(const p of city.pillars||[]){const mx=(p[0]+p[2])/2,mz=(p[1]+p[3])/2;if(!own(clamp(mx,0,E-1),clamp(mz,0,E-1)))continue;det.box(p[0],RY-RIVBED.max-.2,p[1],p[2],-1.3,p[3],cw2)}
   // Agrupa trechos contiguos da mesma ponte antes de construir os arcos.
   // Assim o arco acompanha o comprimento real da travessia, mesmo quando
   // o rio ocupa varios quarteiroes consecutivos.
@@ -14719,7 +14748,8 @@ function syncCar(c,dt){
   {const A=t.arch;if(A){let ex=0;for(let k=0;k<4;k++){const xl=k<2?t.wb:-t.wb,zl=(k%2?1:-1)*tw,cyk=xl*Math.sin((c.pitch||0)+Sp.p)-zl*Math.sin((c.roll||0)+Sp.r),cap=k<2?A.capF:A.capR,up=Math.min(A.r0-t.wr,(cap>5?9:cap)-2*t.wr)-.012;ex=Math.max(ex,H[k]-c.gy-cyk-up)}if(ex>0){c.gy+=ex;if(Sp.v<0)Sp.v=0}}}}
  else if(c.air?.bridge){c.gy=0;c.susp=null;c.wh=null;c.whs=null}
  else if(dt===0&&c.susp){}
- else{c.susp=null;c.wh=null;c.whs=null;c.gy+=((c.sunk?-3.4:groundY(c.x,c.z))-c.gy)*Math.min(1,dt*(c.sunk?.7:10))}
+ else{c.susp=null;c.wh=null;c.whs=null;if(c.sunk&&c.sunkY==null)c.sunkY=waterAt(c.x,c.z)?Math.min(-3.4,riverBedY(c.x,c.z)+.6):-3.4; /* v3 r32: no rio afunda até o fundo novo */
+  c.gy+=((c.sunk?c.sunkY:groundY(c.x,c.z))-c.gy)*Math.min(1,dt*(c.sunk?.7:10))}
  if(c.hopV||c.hopY>0){c.hopY=(c.hopY||0);c.hopV-=22*dt;c.hopY+=c.hopV*dt;if(c.hopY<0){c.hopY=0;c.hopV=c.hopV<-3?-c.hopV*.3:0}}
  const ca=Math.cos(c.a),sa=Math.sin(c.a);const lng=c.ax*ca+c.az*sa,lat=-c.ax*sa+c.az*ca;
  if(!c.t.boat)c.roll+=((c.type==='moto'?clamp(lat*.04,-.6,.6):clamp(-lat*.009,-.07,.07))-c.roll)*Math.min(1,dt*6);if(!c.t.boat)c.pitch+=((c.airY>0?clamp((c.airV||0)/Math.max(8,Math.abs(c.fwd))*.6,-.35,.35):c.rampY>0?.28:clamp(lng*.006,-.05,.05))-c.pitch)*Math.min(1,dt*6);
@@ -26473,8 +26503,8 @@ const TVCAT=[
   g:['Eclipses solares podem acontecer no jogo, assim como fortes tempestades que cobrem o céu de forma realista. Nuvens que passam pelo sol fazem sombra no chão. Cada cidade tem o seu clima. Cada minuto do relógio dura 3 segundos: um dia inteiro leva 72 minutos.','Solar eclipses can happen in the game, as well as strong storms that cover the sky realistically. Clouds passing over the sun cast shadows on the ground. Every city has its own weather. Each clock minute lasts 3 seconds: a full day takes 72 minutes.'],
   p:[tvcP('storm2',['TEMPESTADE','STORM'],'rain'),tvcP('clouds',['SOMBRA DAS NUVENS','CLOUD SHADOWS']),tvcP('clouds_ind',['NUVENS DA ZONA INDUSTRIAL','INDUSTRIAL ZONE CLOUDS']),tvcP('clouds_vol',['NUVENS COM VOLUME','PUFFY CLOUDS']),tvcP('clouds_sunset',['NUVENS NO PÔR DO SOL','SUNSET CLOUDS']),tvcP('clouds_rain',['NUVEM DE CHUVA','RAIN CLOUD']),tvcP('clouds_storm',['FRENTE DA TEMPESTADE','STORM FRONT']),tvcP('clouds_synth',['NUVENS NO SYNTHWAVE','SYNTHWAVE CLOUDS']),tvcP('clouds_inv',['NUVENS DO MUNDO INVERTIDO','UPSIDE DOWN CLOUDS'],null,{br:1.6}),tvcP('eclipse2',['ECLIPSE SOLAR','SOLAR ECLIPSE'],'corona')]},
  {k:'sea',ic:'🚢',c:'#4ab8e8',l:'alt',n:['RIOS E MAR','RIVERS AND SEA'],
-  g:['A água tem ondas em camadas, reflete o céu e o brilho do sol, e a luz dança no fundo do raso. Rios perto das indústrias ficam poluídos. No mar, dois navios cargueiros passam devagar: dá para subir de lancha ou pousar o helicóptero no convés. Na foz, o rio abre em curva pela areia até o mar; o farol tem pedras no pé. Barcos, jet skis e o hovercraft balançam com as ondas. Depois da praia o fundo despenca num talude, e lá embaixo há carcaças de lanchas.','Water has layered waves, reflects the sky and the sun glare, and light dances on the shallow bottom. Rivers near industry get polluted. At sea, two cargo ships sail slowly by: you can climb aboard from a boat or land the helicopter on deck. At the river mouth the channel flares out across the sand to the sea; the lighthouse sits on a rock base. Boats, jet skis and the hovercraft rock with the waves. Past the beach the seabed drops off a steep slope, with boat wrecks at the bottom.'],
-  p:[tvcP('agua_tarde',['MAR NO PÔR DO SOL','SEA AT SUNSET']),tvcP('agua_raso',['LUZ NO RASO','LIGHT IN THE SHALLOWS']),tvcP('agua_rio',['ONDAS NO RIO','RIVER WAVES']),tvcP('tv_pollution',['POLUIÇÃO','POLLUTION']),tvcP('ship2',['NAVIOS CARGUEIROS','CARGO SHIPS']),tvcP('foz',['FOZ DO RIO','RIVER MOUTH']),tvcP('farol',['PÉ DO FAROL','LIGHTHOUSE BASE']),tvcP('talude',['O FUNDO DESPENCA','THE DROP-OFF'])]},
+  g:['A água tem ondas em camadas, reflete o céu e o brilho do sol, e a luz dança no fundo do raso. Rios perto das indústrias ficam poluídos. No mar, dois navios cargueiros passam devagar: dá para subir de lancha ou pousar o helicóptero no convés. Na foz, o rio abre em curva pela areia até o mar; o farol tem pedras no pé. Barcos, jet skis e o hovercraft balançam com as ondas. Depois da praia o fundo despenca num talude, e lá embaixo há carcaças de lanchas. Os rios são mais fundos no meio e também escondem lanchas afundadas.','Water has layered waves, reflects the sky and the sun glare, and light dances on the shallow bottom. Rivers near industry get polluted. At sea, two cargo ships sail slowly by: you can climb aboard from a boat or land the helicopter on deck. At the river mouth the channel flares out across the sand to the sea; the lighthouse sits on a rock base. Boats, jet skis and the hovercraft rock with the waves. Past the beach the seabed drops off a steep slope, with boat wrecks at the bottom. Rivers are deeper in the middle and hide sunken boats too.'],
+  p:[tvcP('agua_tarde',['MAR NO PÔR DO SOL','SEA AT SUNSET']),tvcP('agua_raso',['LUZ NO RASO','LIGHT IN THE SHALLOWS']),tvcP('agua_rio',['ONDAS NO RIO','RIVER WAVES']),tvcP('tv_pollution',['POLUIÇÃO','POLLUTION']),tvcP('ship2',['NAVIOS CARGUEIROS','CARGO SHIPS']),tvcP('foz',['FOZ DO RIO','RIVER MOUTH']),tvcP('farol',['PÉ DO FAROL','LIGHTHOUSE BASE']),tvcP('talude',['O FUNDO DESPENCA','THE DROP-OFF']),tvcP('rio_fundo',['LANCHA NO FUNDO DO RIO','BOAT AT THE RIVER BOTTOM'])]},
  {k:'shfx',ic:'✨',c:'#ffd27a',l:'alt',n:['EFEITOS VISUAIS','VISUAL EFFECTS'],
   g:['A lataria dos carros reflete o céu. Depois da chuva o asfalto molhado espelha o sol e a lua. À noite janelas e neons brilham. Cada efeito liga e desliga em Gráficos.','Car paint reflects the sky. After rain the wet asphalt mirrors the sun and the moon. At night windows and neons glow. Each effect can be toggled in Graphics.'],
   p:[tvcP('fx_carro',['CÉU NA LATARIA','SKY ON CAR PAINT']),tvcP('fx_chuva_tarde',['ASFALTO MOLHADO NO PÔR DO SOL','WET ASPHALT AT SUNSET']),tvcP('fx_chuva_noite',['CHUVA À NOITE','RAINY NIGHT']),tvcP('fx_janelas',['JANELAS ACESAS','LIT WINDOWS'])]},
