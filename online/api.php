@@ -13,6 +13,9 @@
    r23: call/callok/callno {to} (agenda: pedido de encontro).
    r18: login {name,pass} → {acct,new} (passo 1 da tela); join aceita preset {look,car} e grava na conta.
    r17: join devolve house (0..23, -1 = sem casa).
+   v3 r27: TRÁFEGO E VIATURAS DO SERVIDOR. O servidor decide quantos carros existem, de que tipo (t = trânsito, p = viatura) e quem
+   simula cada um ("host" = um jogador perto). tick leva nh (1 = posso simular), np [[id,x,z,a,v,f,tipo,cor],...] (os meus) e nx [ids] (sumiram);
+   recebe npc [[id,k,host,tipo,cor,x,z,a,v,f],...] (os meus + os que estão perto). Evento nph {to,id,jx,jz,d} = batida num carro de outro host.
    r15: wx {d} = estado do clima do jogador de menor id (os outros copiam).
    A cidade inteira sai da seed (igual para todos); o servidor só guarda jogadores e eventos (chat, dano, mortes). */
 declare(strict_types=1);
@@ -58,6 +61,13 @@ const HACK_MIN_BAL= 100;     // vítima com menos que isso não vale a pena
 const HACK_CD     = 90.0;    // s de recarga de quem hackeia
 const HACK_SHIELD = 300.0;   // s em que a vítima não pode ser hackeada de novo    // s que um evento fica guardado
 const TZ          = 'America/Sao_Paulo';
+/* v3 r27: trânsito leve e viaturas do servidor (cada jogador simula os seus; os outros só desenham) */
+const NPC_PER_PLAYER = 2;     // carros de trânsito em volta de cada jogador
+const NPC_POL_MAX    = 6;     // viaturas no mapa inteiro
+const NPC_POL_PER    = 3;     // 1 viatura a cada N jogadores (mínimo 1)
+const NPC_POL_GAP    = 25;    // s entre uma viatura nova e outra (no servidor todo)
+const NPC_STALE      = 12.0;  // s sem posição do host = carro some (o servidor cria outro)
+const NPC_VIEW       = 320.0; // m: carros mais longe que isso não vão na resposta
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -93,6 +103,8 @@ function db(): PDO {
   $cols = array_column($pdo->query('PRAGMA table_info(players)')->fetchAll(), 'name'); if (!in_array('kick', $cols, true)) $pdo->exec('ALTER TABLE players ADD COLUMN kick INTEGER DEFAULT 0');
   /* v3 r9: hack de PIX (alvo e início da transferência em andamento, recarga de quem hackeia, proteção de quem foi hackeado) */
   foreach (['hack_to INTEGER DEFAULT 0', 'hack_t REAL DEFAULT 0', 'hack_cd REAL DEFAULT 0', 'hacked_t REAL DEFAULT 0'] as $c) { $n = strtok($c, ' '); if (!in_array($n, $cols, true)) $pdo->exec('ALTER TABLE players ADD COLUMN ' . $c); }
+  $pdo->exec('CREATE TABLE IF NOT EXISTS npc(id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT, host INTEGER, t TEXT, col TEXT, x REAL, z REAL, a REAL, v REAL, f INTEGER DEFAULT 0, seen REAL)');
+  $pdo->exec('CREATE INDEX IF NOT EXISTS npc_host ON npc(host)');
   $cols = array_column($pdo->query('PRAGMA table_info(accounts)')->fetchAll(), 'name'); if (!in_array('sigblock', $cols, true)) $pdo->exec('ALTER TABLE accounts ADD COLUMN sigblock INTEGER DEFAULT 0');
   return $pdo;
 }
@@ -159,6 +171,44 @@ function cleanup(PDO $db): void {
   foreach ($q->fetchAll() as $r) wput($db, $r['k'], $r['kind'], null, 0, 1);
   $db->prepare('DELETE FROM world WHERE gone=1 AND t<?')->execute([$t - WORLD_GONE]);
   $db->prepare('DELETE FROM accounts WHERE seen<?')->execute([$t - ACCOUNT_TTL]);
+  /* v3 r27: carro sem host (saiu) ou sem posição nova há NPC_STALE s */
+  $db->prepare('DELETE FROM npc WHERE seen<? OR host NOT IN (SELECT id FROM players)')->execute([$t - NPC_STALE]);
+}
+/* v3 r27: posições dos carros que eu simulo + o servidor cria carro novo quando falta (2 de trânsito por jogador, viaturas pelo total) */
+function npcTick(PDO $db, int $id, array $b, ?string $state, float $t): void {
+  if (empty($b['nh'])) { $db->prepare('DELETE FROM npc WHERE host=?')->execute([$id]); return; }
+  $u = $db->prepare('UPDATE npc SET x=?,z=?,a=?,v=?,f=?,t=?,col=?,seen=? WHERE id=? AND host=?');
+  foreach (is_array($b['np'] ?? null) ? array_slice($b['np'], 0, 12) : [] as $r) {
+    if (!is_array($r) || count($r) < 6) continue;
+    $ty = mb_substr(preg_replace('/[^a-z0-9_]/', '', (string)($r[6] ?? '')), 0, 16); $co = preg_match('/^#[0-9a-fA-F]{6}$/', (string)($r[7] ?? '')) ? (string)$r[7] : null;
+    $u->execute([round(num($r[1], -2000, 4000), 2), round(num($r[2], -2000, 4000), 2), round(num($r[3], -7, 7), 3), round(num($r[4], -80, 80), 2), empty($r[5]) ? 0 : 1, $ty ?: 'sedan', $co, $t, (int)$r[0], $id]);
+  }
+  $d = $db->prepare('DELETE FROM npc WHERE id=? AND host=?');
+  foreach (is_array($b['nx'] ?? null) ? array_slice($b['nx'], 0, 12) : [] as $x) $d->execute([(int)$x, $id]);
+  $s = $state ? json_decode($state, true) : null;
+  if (!is_array($s) || ($s['st'] ?? '') === 'dead' || !empty($s['w']) || !empty($s['tj']) || ($s['wk'] ?? 'modern') !== 'modern') return;
+  $q = $db->prepare("SELECT kind, COUNT(*) n, SUM(x IS NULL) p FROM npc WHERE host=? GROUP BY kind"); $q->execute([$id]);
+  $mine = ['t' => [0, 0], 'p' => [0, 0]]; foreach ($q->fetchAll() as $r) $mine[$r['kind']] = [(int)$r['n'], (int)$r['p']];
+  $ins = $db->prepare('INSERT INTO npc(kind,host,seen) VALUES(?,?,?)');
+  if ($mine['t'][0] < NPC_PER_PLAYER && $mine['t'][1] === 0) $ins->execute(['t', $id, $t]);
+  if ($mine['p'][0] === 0) {
+    $n = (int)$db->query('SELECT COUNT(*) n FROM players')->fetch()['n'];
+    $pol = (int)$db->query("SELECT COUNT(*) n FROM npc WHERE kind='p'")->fetch()['n'];
+    $gap = (int)($db->query("SELECT v FROM meta WHERE k='npcPolT'")->fetch()['v'] ?? 0);
+    if ($pol < min(NPC_POL_MAX, max(1, (int)ceil($n / NPC_POL_PER))) && $t >= $gap) {
+      $ins->execute(['p', $id, $t]);
+      $db->prepare("INSERT INTO meta(k,v) VALUES('npcPolT',?) ON CONFLICT(k) DO UPDATE SET v=excluded.v")->execute([(int)$t + NPC_POL_GAP]);
+    }
+  }
+}
+/* os meus (mesmo sem posição ainda) + os de outros hosts perto de mim */
+function npcList(PDO $db, int $id, ?string $state): array {
+  $s = $state ? json_decode($state, true) : null; $x = is_array($s) && is_numeric($s['x'] ?? null) ? (float)$s['x'] : null; $z = $x !== null && is_numeric($s['z'] ?? null) ? (float)$s['z'] : null;
+  if ($x === null || $z === null) { $q = $db->prepare('SELECT * FROM npc WHERE host=?'); $q->execute([$id]); }
+  else { $q = $db->prepare('SELECT * FROM npc WHERE host=? OR (x IS NOT NULL AND ABS(x-?)<? AND ABS(z-?)<?)'); $q->execute([$id, $x, NPC_VIEW, $z, NPC_VIEW]); }
+  $o = [];
+  foreach ($q->fetchAll() as $r) $o[] = [(int)$r['id'], $r['kind'], (int)$r['host'], (string)$r['t'], $r['col'], $r['x'] === null ? null : (float)$r['x'], $r['z'] === null ? null : (float)$r['z'], (float)$r['a'], (float)$r['v'], (int)$r['f']];
+  return $o;
 }
 /* jogador saiu dirigindo: o carro fica onde ele estava para todos */
 function releaseCars(PDO $db, int $id, ?string $state): void {
@@ -231,7 +281,7 @@ try {
       $n = (int)$db->query("SELECT COUNT(*) n FROM accounts WHERE name_lc<>'" . ADMIN_NAME . "'")->fetch()['n'];
       $db->prepare('UPDATE players SET kick=1 WHERE name_lc<>?')->execute([ADMIN_NAME]);
       $db->prepare('DELETE FROM accounts WHERE name_lc<>?')->execute([ADMIN_NAME]);
-      $db->exec('DELETE FROM world'); $db->exec('DELETE FROM events');
+      $db->exec('DELETE FROM world'); $db->exec('DELETE FROM events'); $db->exec('DELETE FROM npc');
       addEv($db, 0, 0, 'sys', ['m' => 'O servidor foi zerado pelo admin', 'en' => 'The server was reset by the admin']);
       txCommit($db); out(['ok' => true, 'accounts' => $n]); }
     txRollback($db); fail('comando desconhecido');
@@ -303,7 +353,10 @@ try {
         $killer = null;
         if ($by > 0 && $by !== $id) { $db->prepare('UPDATE players SET kills=kills+1 WHERE id=?')->execute([$by]);
           $q = $db->prepare('SELECT name FROM players WHERE id=?'); $q->execute([$by]); $killer = $q->fetch()['name'] ?? null; }
-        addEv($db, $id, 0, 'dead', ['n' => $p['name'], 'by' => $killer, 'byId' => $by]);
+        $dd = ['n' => $p['name'], 'by' => $killer, 'byId' => $by];   /* v3 r27: lugar e causa vão para a manchete da banca */
+        if (is_numeric($e['x'] ?? null) && is_numeric($e['z'] ?? null)) { $dd['x'] = (int)num($e['x'], -2000, 4000); $dd['z'] = (int)num($e['z'], -2000, 4000); }
+        if (isset($e['c'])) $dd['c'] = mb_substr(preg_replace('/[^\p{L}\p{N} ]/u', '', (string)$e['c']), 0, 24);
+        addEv($db, $id, 0, 'dead', $dd);
       } elseif ($k === 'boom') {
         addEv($db, $id, 0, 'boom', ['x' => (float)($e['x'] ?? 0), 'z' => (float)($e['z'] ?? 0)]);
       } elseif ($k === 'car') {
@@ -368,11 +421,15 @@ try {
         $db->prepare('UPDATE players SET hack_to=0, hack_t=0, hack_cd=? WHERE id=?')->execute([$t + HACK_CD, $id]); $p['hack_to'] = 0; $p['hack_cd'] = $t + HACK_CD;
         $db->prepare('UPDATE players SET hacked_t=? WHERE id=?')->execute([$t, $to]);
         addEv($db, $id, $to, 'pixed', ['n' => $p['name'], 'm' => $m]); addEv($db, 0, $id, 'hk', ['st' => 'ok', 'm' => $m, 'n' => $v['name'], 'to' => $to]);
-        addEv($db, 0, 0, 'sys', ['m' => $p['name'] . ' hackeou o PIX de ' . $v['name'], 'en' => $p['name'] . ' hacked ' . $v['name'] . "'s PIX"]);
+        addEv($db, 0, 0, 'sys', ['m' => $p['name'] . ' hackeou o PIX de ' . $v['name'], 'en' => $p['name'] . ' hacked ' . $v['name'] . "'s PIX", 'pix' => ['a' => $p['name'], 'b' => $v['name'], 'm' => $m]]);
+      } elseif ($k === 'nph') {
+        /* v3 r27: bati num carro do servidor que outro jogador simula: ele aplica o empurrão e o dano */
+        $to = (int)($e['to'] ?? 0); if ($to > 0 && $to !== $id) addEv($db, $id, $to, 'nph', ['id' => (int)($e['id'] ?? 0), 'jx' => round(num($e['jx'] ?? 0, -40, 40), 2), 'jz' => round(num($e['jz'] ?? 0, -40, 40), 2), 'd' => round(num($e['d'] ?? 0, 0, 250), 1)]);
       } elseif (in_array($k, ['jack', 'ride', 'unride', 'call', 'callok', 'callno'], true)) { /* r52: unride = carona substituída (quem estava sai do carro) */
         $to = (int)($e['to'] ?? 0); if ($to > 0 && $to !== $id) addEv($db, $id, $to, $k, ['n' => $p['name']]);
       }
     }
+    npcTick($db, $id, $b, $state, $t);
     txCommit($db);
     if (mt_rand(0, 19) === 0) { txBegin($db); cleanup($db); txCommit($db); }
     /* jogadores: aparência só para quem ainda não tem a versão atual (kv = "id:versão,...") */
@@ -395,7 +452,7 @@ try {
     if ($ws === 0) { $wv = (int)($db->query("SELECT IFNULL(v,0) v FROM meta WHERE k='wv'")->fetch()['v'] ?? 0); $q = $db->query('SELECT k,kind,data,owner,gone FROM world WHERE gone=0'); }
     else { $q = $db->prepare('SELECT k,kind,data,owner,gone,v FROM world WHERE v>? ORDER BY v LIMIT 300'); $q->execute([$ws]); }
     foreach ($q->fetchAll() as $r) { if ($ws) $wv = max($wv, (int)$r['v']); $w[] = ['k' => $r['k'], 'o' => (int)$r['owner'], 'g' => (int)$r['gone'], 'd' => $r['data'] ? json_decode((string)$r['data'], true) : null]; }
-    out(['ok' => true, 'now' => $t, 'tod' => gameTod(), 'players' => $players, 'ev' => $ev, 'last' => $last, 'w' => $w, 'wv' => $wv, 'me' => ['k' => (int)$p['kills'], 'd' => (int)$p['deaths'], 'bl' => acctSig($db, (string)$p['name_lc']) ? 1 : 0]]);
+    out(['ok' => true, 'now' => $t, 'tod' => gameTod(), 'players' => $players, 'ev' => $ev, 'last' => $last, 'w' => $w, 'wv' => $wv, 'npc' => npcList($db, $id, $state), 'me' => ['k' => (int)$p['kills'], 'd' => (int)$p['deaths'], 'bl' => acctSig($db, (string)$p['name_lc']) ? 1 : 0]]);
   }
   if ($a === 'leave') {
     $b = body(); $token = $b['token'] ?? ($_GET['token'] ?? null);
