@@ -68,7 +68,7 @@ mecânicas houver (20, 30…). Coisas pequenas podem dividir canal (ex.: eclipse
 | 36 | FLORESTA E CEMITÉRIO | 2 | poi_forest · poi_cem |
 | 37 | MICRO-ILHA · PEDÁGIO | 1 | isle |
 | 38 | SKATE | 2 | skate_pl · scn_skate |
-| 38b | EMOJIS NA CAMISETA E NO SKATE (v3 r2; r3: peds) | 4 | emo_kb · emo_shirt · emo_skate · emo_peds (capturados com script avulso em 3D/PT; recorte 960×540) |
+| 38b | EMOJIS NA CAMISETA E NO SKATE (v3 r2; r3: peds; r28: online + controle/toque) | 5 | emo_kb · emo_shirt · emo_skate · emo_peds · emo_online (r28: tela de personagem do online, print do teste em 1280×720 reduzido para 960×540) |
 | 39 | HELICÓPTERO, VORTEX E JET SKI | 3 | veh_heli · veh_vortex · veh_jet |
 | 40 | TÁXI E MISSÕES DE VEÍCULO | 1 | taxi |
 | 41 | SHOPPING | 1 | mall_int |
