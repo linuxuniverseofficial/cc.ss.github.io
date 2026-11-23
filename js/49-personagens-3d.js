@@ -171,7 +171,9 @@ function c3Place(o){const sp=o.sp;if(!sp||!sp.isSprite)return;
  const still=lying||sitting||skate||!!ride||o.balcony;
  st.spd=(st.spd||0)+((still?0:Math.min(spd,9))-(st.spd||0))*k;
  const amtT=Math.min(1,st.spd/1.2),runT=Math.max(0,Math.min(1,(st.spd-2.6)/2.2));st.amt+=(amtT-st.amt)*k;st.run+=(runT-st.run)*k;
- const stride=1.05+.75*st.run;st.ph+=(st.spd*dt)/stride*Math.PI*2*(st.amt>.02?1:0);if(st.amt<.05)st.ph+=dt*.0;
+ /* r44: passada casada com o deslocamento (sem "patinar"): a perna gira ±θ no quadril (θ = amt·(0,42+0,22·run), igual ao shader)
+    e o pé de apoio anda para trás a L·θ·ω no meio do passo; ω = v/(L·θ) → ciclo = 2π·L·θ (L ≈ 0,72 com o joelho; ×1,5 no top-down) */
+ const c3sc=camMode==='top'&&!VIEW.orbit?1.5:1,c3th=Math.max(.04,st.amt*(.42+.22*st.run)),stride=Math.PI*2*.72*c3th*c3sc;st.ph+=(st.spd*dt)/stride*Math.PI*2*(st.amt>.02?1:0);
  st.idle=(st.idle||0)+dt;
  /* mira / soco / pulo / sentado */
  const aimT=ride==='moto'?.7:o===PL&&(C3AIM.on||typeof GUN!=='undefined'&&GUN.has&&GUN.w!=='jammer'&&(GUN.firing||GUN.cd>0))?1:0,punchT=o===PL&&typeof MELEE!=='undefined'&&MELEE.t>0?1:0;
