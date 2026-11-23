@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 (function(){const h0=Math.hypot,sq=Math.sqrt,ab=Math.abs;Math.hypot=function hypot(a,b,c,d){if(d!==undefined)return h0(a,b,c,d);if(c!==undefined)return sq(a*a+b*b+c*c);if(b!==undefined)return sq(a*a+b*b);return a===undefined?0:ab(+a)}})();
 /* v78 · BUILD: número da entrega. Ao abrir, o jogo lê version.txt (poucos bytes, sem cache) e, se a build no servidor for outra
    (navegador/celular servindo cópia velha), recarrega uma vez. Saves e configurações (localStorage) NÃO são apagados. */
-var BUILD_TAG='r33';
+var BUILD_TAG='r34';
 (function(){try{if(!/^https?:$/.test(location.protocol))return;const k='ps_build_reload';
  fetch(new URL('version.txt?b='+Date.now(),location.href).href,{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=/^\s*((?:dev\s+)?r[\d.]+)\s*$/i.exec(t||'');if(!m||m[1].replace(/\s+/g,' ').toLowerCase()===BUILD_TAG.toLowerCase()){try{sessionStorage.removeItem(k)}catch(e){}return}
   let n=0;try{n=+sessionStorage.getItem(k)||0}catch(e){}if(n>=2)return;try{sessionStorage.setItem(k,String(n+1))}catch(e){}
@@ -2438,6 +2438,29 @@ class MB{constructor(indexed=true){this.p=[];this.n=[];this.u=[];this.c=[];this.
   if(this.idx)g.setIndex(this.idx);
   g.computeBoundingSphere();const m=new THREE.Mesh(g,mat);m.castShadow=cast;m.receiveShadow=recv;return m}}
 for(const k of ['box','cbox']){const f=MB.prototype[k];MB.prototype[k]=function(){let a=arguments;if(ZF.on&&k==='box'){a=[...a];const v=zfBoxAdj(a.slice(0,6));for(let i=0;i<6;i++)a[i]=v[i]}ZF.box++;try{return f.apply(this,a)}finally{ZF.box--}}} // anti z-fight: faces de caixa fechada recuam (zfFix)
+/* v3 r34 · BLDX: cor e formato dos prédios do Modern. pc = fração com cor nova (metade branco-concreto, metade amarelado-areia),
+   pe = chance de um prédio elegível sair redondo (cilindro ou oval). Sorteios com gerador próprio (bldxRng), nunca o R(): a cidade não muda.
+   Elegível (opts.exo): quarteirão sem becos internos do L, sem beco encostado (city.bxAl), sem L/casa segura/pátio/paraquedas/neon/Neon Road. */
+const BLDX={pc:.2,pe:.3,white:['#dcd9d1','#e4e1da','#d1cfc7'],sand:['#d4bc86','#cbb07a','#d9c391']};
+function bldxRng(x,z,salt){return mulberry32(((Math.round(x*11)*2246822519)^(Math.round(z*11)*374761393)^(S.seed*7+salt))>>>0)}
+function bldxColor(r){const a=r(),k=r(),v=r();if(a>=BLDX.pc)return null;const L=a<BLDX.pc/2?BLDX.white:BLDX.sand;return COL(L[Math.floor(k*L.length)]).multiplyScalar(.95+v*.08)}
+function mbOvalN(rx,rz){const per=Math.PI*(3*(rx+rz)-Math.sqrt((3*rx+rz)*(rx+3*rz)));return Math.max(4,Math.floor(per/3.5))}
+function mbOval(mb,top,cx,cz,rx,rz,y0,y1,col,tc,o){o=o||{};const nb=mbOvalN(rx,rz),sub=2,n=nb*sub,W=o.win,P=k=>{const t=k/n*Math.PI*2;return[cx+Math.cos(t)*rx,cz+Math.sin(t)*rz]};
+ const nz0=top&&top._nz;if(top)top._nz=true;
+ for(let k=0;k<n;k++){const a=P(k+1),b=P(k);let nx=-(b[1]-a[1]),nzz=b[0]-a[0];const L=Math.hypot(nx,nzz)||1;nx/=L;nzz/=L;
+  const uv=W?[W[0]+(n-k-1)/(8*sub),y0/25.6+W[1],W[0]+(n-k)/(8*sub),y1/25.6+W[1]]:[0,0,1,1];
+  mb.quad([a[0],y0,a[1]],[b[0],y0,b[1]],[b[0],y1,b[1]],[a[0],y1,a[1]],nx,0,nzz,uv,col);
+  if(top)top.quad([cx,y1,cz],[a[0],y1,a[1]],[b[0],y1,b[1]],[b[0],y1,b[1]],0,1,0,[0,0,1,1],tc||col)}
+ if(top)top._nz=nz0}
+function mbOvalRim(mb,cx,cz,rx,rz,y0,y1,t,col){const n=mbOvalN(rx,rz)*2,P=(k,e)=>{const a=k/n*Math.PI*2;return[cx+Math.cos(a)*(rx-e),cz+Math.sin(a)*(rz-e)]};const nz0=mb._nz;mb._nz=true;
+ for(let k=0;k<n;k++){const a=P(k+1,0),b=P(k,0),ai=P(k+1,t),bi=P(k,t);let nx=-(b[1]-a[1]),nzz=b[0]-a[0];const L=Math.hypot(nx,nzz)||1;nx/=L;nzz/=L;
+  mb.quad([a[0],y0,a[1]],[b[0],y0,b[1]],[b[0],y1,b[1]],[a[0],y1,a[1]],nx,0,nzz,[0,0,1,1],col);
+  mb.quad([bi[0],y0,bi[1]],[ai[0],y0,ai[1]],[ai[0],y1,ai[1]],[bi[0],y1,bi[1]],-nx,0,-nzz,[0,0,1,1],col);
+  mb.quad([a[0],y1,a[1]],[b[0],y1,b[1]],[bi[0],y1,bi[1]],[ai[0],y1,ai[1]],0,1,0,[0,0,1,1],col)}
+ mb._nz=nz0}
+/* colisor do prédio redondo: faixas ao longo do eixo maior, cada uma com a largura da elipse no lado mais perto do centro (cobre a forma toda) */
+function bldxCols(e,n){const r=[],ax=e.rx>=e.rz;const A=ax?e.rx:e.rz,B=ax?e.rz:e.rx;for(let i=0;i<n;i++){const u0=-A+2*A*i/n,u1=-A+2*A*(i+1)/n,un=Math.min(Math.abs(u0),Math.abs(u1))*(u0<0&&u1>0?0:1),hb=B*Math.sqrt(Math.max(0,1-(un/A)**2));
+ r.push(ax?[e.cx+u0,e.cz-hb,e.cx+u1,e.cz+hb]:[e.cx-hb,e.cz+u0,e.cx+hb,e.cz+u1])}return r}
 const GEO={crown:new THREE.SphereGeometry(1,10,6).toNonIndexed(),crownSmall:new THREE.SphereGeometry(1,8,5).toNonIndexed(),cyl16:new THREE.CylinderGeometry(1,1,1,16).toNonIndexed(),sph:new THREE.SphereGeometry(1,18,12).toNonIndexed(),ico:new THREE.IcosahedronGeometry(1,0),leaf:new THREE.IcosahedronGeometry(1,1),cyl:new THREE.CylinderGeometry(1,1,1,9).toNonIndexed(),cone:new THREE.ConeGeometry(1,1,12).toNonIndexed(),disc:new THREE.CircleGeometry(1,8).toNonIndexed(),hemi:new THREE.SphereGeometry(1,32,12,0,Math.PI*2,0,Math.PI/2).toNonIndexed()};
 GEO.box=new THREE.BoxGeometry(1,1,1).toNonIndexed();
 {const P=MB.prototype,wrap=(name,fn)=>{const o=P[name];P[name]=function(...a){if(!MB_DROP||MB_DROP_IN)return o.apply(this,a);fn(a);MB_DROP_IN++;try{return o.apply(this,a)}finally{MB_DROP_IN--}}};
@@ -3524,7 +3547,7 @@ vec3 sfSand(vec2 p,float px){float t=mix(.9,1.07,sfV(p*.06)*.6+sfV(p*.19+5.)*.4)
  return vec3(t,t,t*mix(1.,.97,step(1.,t)));}
 vec2 sfRip(vec2 p,float px){float a=sfAA(px,2.2)*smoothstep(.25,.6,sfV(p*.11+2.));if(a<.01)return vec2(0.);vec2 d=normalize(vec2(.8,.6));float w=sfV(p*.35)*5.;float ph=dot(p,d)*5.2+w;float s=cos(ph)+.35*cos(ph*2.+1.);return d*s*a*.2;}
 vec3 sfWall(vec3 w,vec3 n,vec3 bc,float px){vec2 tg=normalize(vec2(-n.z,n.x));float s=dot(w.xz,tg),y=w.y;vec2 q=vec2(s,y);
- float mx=max(bc.r,max(bc.g,bc.b)),warm=(bc.r-bc.b)/max(mx,.001);float kb=smoothstep(.22,.27,warm),kp=smoothstep(.1,.13,warm)*(1.-kb);
+ float mx=max(bc.r,max(bc.g,bc.b)),warm=(bc.r-bc.b)/max(mx,.001);float kb=smoothstep(.22,.27,warm)*(1.-smoothstep(.58,.66,(bc.g-bc.b)/max(bc.r-bc.b,.001))),kp=smoothstep(.1,.13,warm)*(1.-kb);
  float t=1.+(sfV(q*vec2(.35,.5)+4.)-.5)*.1;vec3 col=vec3(t);
  if(kb>0.){float bw=.5,bh=.17,row=floor(y/bh);float u=s/bw+.5*mod(row,2.);float fu=fract(u),fv=fract(y/bh);
   float a=sfAA(px,1./bh);float mwu=max(.05,px/bw*.8),mwv=max(.12,px/bh*.8);float mort=1.-smoothstep(0.,mwu,min(fu,1.-fu))*smoothstep(0.,mwv,min(fv,1.-fv));
@@ -5851,7 +5874,7 @@ async function generateCity(){
  const st=STYLES[S.style],night=!!st.synth,N=city.haze?3:S.size;city.N=N;city.ext=N*P;city.st=st;const E=city.ext;
  if(city.group){scene.remove(city.group);disposeGroup(city.group)}
  city.mats.forEach(t=>t.dispose&&!disposeShared(t)&&t.dispose());city.mats=[];for(const m of [...DN_SIGNS])if(m.userData.dnClone)DN_SIGNS.delete(m);FAR_MATERIALS=new WeakMap();FAR_MATERIAL_PAIRS.length=0;
- grid=new Map();colliders=[];fallers.length=0;DEBRIS.restore.length=0;tumblers.length=0;city.rects=[];city.info=[];city.segOff=new Set();city.chunks=new Map();city.empParkingSlots=[];city.parkingLots=[];city.heliRects=[];city.motel=null;city.motelRi=null;city.tireRi=null;city.tireOffice=null;city.tireNone=false;city.parkingFloorGrid=new Map();city.parkingFloorReady=false;city.gasFc=null;PARKVIS.t=8;city.delSlot=null;city.picked=new Set();city.taken=new Set();VINYL.got=new Set();VINYL.bag=new Set();VINYL.cheat=false;VINYL.rewInit=false;VINYL.carInit=false;city.ring=[];city.air=null;city.airZoning=null;city.poll=null;city.safeFail=false;city.safeLot=null;city.safeHelipad=null;city.tuneLot=null;city.neonRoad=null;city.nrShop=null;SAFE.slotsNext=null;SAFE.msgFor=null;city.cc=new Map();city.neonPlan=null;city.garSlots=null;city.startCar=null;city.stunts=new Set();city.piers=[];city.ramps=[];city.alleySites=[];city.urbanLBlocks=new Set();city.urbanAlleyCount=0;city.urbanLCount=0;city.denseAlleySites=[];city.denseWalkPaths=[];city.denseLParcels=[];city.denseHouseCount=0;city.buildingFootprints=[];city.airHouses=[];city.gaps=[];city.wild=[];city.forest=null;FOREST.enemy=null;city.hosp=null;city.bankDoor=null;city.bankCell=null;city.bankReserveRi=-1;city.dbReserved=null;city.doors=new Map();city.core=null;city.ind=null;city.lms=[];city.chimneys=[];cityAgeSootReset();city.coastSpan=null;city.brokenTL=new Set();city.broken=new Set();
+ grid=new Map();colliders=[];fallers.length=0;DEBRIS.restore.length=0;tumblers.length=0;city.rects=[];city.info=[];city.segOff=new Set();city.chunks=new Map();city.empParkingSlots=[];city.parkingLots=[];city.heliRects=[];city.motel=null;city.motelRi=null;city.tireRi=null;city.tireOffice=null;city.tireNone=false;city.parkingFloorGrid=new Map();city.parkingFloorReady=false;city.gasFc=null;PARKVIS.t=8;city.delSlot=null;city.picked=new Set();city.taken=new Set();VINYL.got=new Set();VINYL.bag=new Set();VINYL.cheat=false;VINYL.rewInit=false;VINYL.carInit=false;city.ring=[];city.air=null;city.airZoning=null;city.poll=null;city.safeFail=false;city.safeLot=null;city.safeHelipad=null;city.tuneLot=null;city.neonRoad=null;city.nrShop=null;SAFE.slotsNext=null;SAFE.msgFor=null;city.cc=new Map();city.neonPlan=null;city.garSlots=null;city.startCar=null;city.stunts=new Set();city.piers=[];city.ramps=[];city.alleySites=[];city.bxAl=[];city.urbanLBlocks=new Set();city.urbanAlleyCount=0;city.urbanLCount=0;city.denseAlleySites=[];city.denseWalkPaths=[];city.denseLParcels=[];city.denseHouseCount=0;city.buildingFootprints=[];city.airHouses=[];city.gaps=[];city.wild=[];city.forest=null;FOREST.enemy=null;city.hosp=null;city.bankDoor=null;city.bankCell=null;city.bankReserveRi=-1;city.dbReserved=null;city.doors=new Map();city.core=null;city.ind=null;city.lms=[];city.chimneys=[];cityAgeSootReset();city.coastSpan=null;city.brokenTL=new Set();city.broken=new Set();
  /* --- rivers: run parallel to the beach, meander in steps (GTA 1 style) and split the city into islands linked by bridges --- */
  city.coast=Math.floor(mulberry32((S.seed^0x1b873593)>>>0)()*4);
  {const rv=mulberry32((S.seed^0x5f356495)>>>0),cs=city.coast,flowX=cs<2;city.flowX=flowX;city.riv=new Set();city.bridges=[];city.water=[];city.mouths=[[],[],[],[]];
@@ -6980,11 +7003,19 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
    const airCap=opts.linkedL?Math.min(localAirCap,opts.linkedL.airCap):localAirCap;
    h=opts.linkedL?opts.linkedL.h:Math.min(h,35.2,Number.isFinite(airCap)?Math.max(5.8,airCap-5):Infinity);
   const airRoof={x0,z0,x1,z1,ri:curRi,y:h+2};if(curRi>=0)city.buildingFootprints.push(airRoof);const fp=facadePlan(S.seed,x0,z0,h,opts.simple,opts.safe||opts.patio),facadeWalls=fp.abandoned&&!opts.linkedL?abWalls:walls;const NS=night&&!opts.patio&&neonStreet(opts.face,x0,z0,x1,z1);det.ab=0;
-  const wc=opts.pal?COL(opts.pal[0]):COL(pick(st.walls)).multiplyScalar(rr(.9,1.08)), rc=opts.pal?COL(opts.pal[1]):COL(pick(st.roof)).multiplyScalar(rr(.9,1.1));(ch.bwc||(ch.bwc=[])).push({x0,z0,x1,z1,wc,ri:curRi});
-  ri(0,7);ri(0,7);if(fp.abandoned&&!opts.linkedL)wc.lerp(COL('#918777'),.32);facadeWalls.box(x0,0,z0,x1,h,z1,wc,{top:roofs,topCol:rc,win:[0,0],facadeGrid:true});
-  addCol(x0,z0,x1,z1,'bld').top=h;
+  const wc=opts.pal?COL(opts.pal[0]):COL(pick(st.walls)).multiplyScalar(rr(.9,1.08)), rc=opts.pal?COL(opts.pal[1]):COL(pick(st.roof)).multiplyScalar(rr(.9,1.1));
+  /* v3 r34 · BLDX: cor nova (~20%) e prédio redondo (elegíveis), sorteio próprio pela seed + posição */
+  if(!opts.pal&&st===STYLES.modern&&!city.haze){const nc=bldxColor(bldxRng(x0,z0,0x0e5));if(nc)wc.copy(nc)}
+  let EX=null;const exIn=(x,z,m)=>{if(!EX)return[x,z];const rx=Math.max(.2,EX.rx-m),rz=Math.max(.2,EX.rz-m),q=Math.hypot((x-EX.cx)/rx,(z-EX.cz)/rz);return q>1?[EX.cx+(x-EX.cx)/q,EX.cz+(z-EX.cz)/q]:[x,z]};
+  if(opts.exo&&!night&&!city.haze&&!opts.pal&&!opts.linkedL&&!opts.safe&&!opts.patio&&!opts.para&&!opts.tour&&!opts.nrf&&Math.min(x1-x0,z1-z0)>=9){const er=bldxRng(x0,z0,0x7a3),e0=er(),e1=er();
+   if(e0<BLDX.pe&&!(city.bxAl||[]).some(a=>a[0]<x1+3&&a[2]>x0-3&&a[1]<z1+3&&a[3]>z0-3)){const hw=(x1-x0)/2,hd=(z1-z0)/2,oval=e1<.5&&Math.max(hw,hd)/Math.min(hw,hd)>1.15,r=Math.min(hw,hd);
+    let cx=(x0+x1)/2,cz=(z0+z1)/2;if(!oval&&opts.face){const f=opts.face;if(f==='n')cz=z0+r;else if(f==='s')cz=z1-r;else if(f==='w')cx=x0+r;else cx=x1-r}
+    EX={cx,cz,rx:oval?hw:r,rz:oval?hd:r,oval}}}
+  (ch.bwc||(ch.bwc=[])).push({x0,z0,x1,z1,wc,ri:curRi});
+  ri(0,7);ri(0,7);if(fp.abandoned&&!opts.linkedL)wc.lerp(COL('#918777'),.32);if(EX){mbOval(facadeWalls,roofs,EX.cx,EX.cz,EX.rx,EX.rz,0,h,wc,rc,{win:[0,0]});(ch.bldx||(ch.bldx=[])).push(EX)}else facadeWalls.box(x0,0,z0,x1,h,z1,wc,{top:roofs,topCol:rc,win:[0,0],facadeGrid:true});
+  if(EX){for(const q of bldxCols(EX,8))addCol(q[0],q[1],q[2],q[3],'bld').top=h}else addCol(x0,z0,x1,z1,'bld').top=h;
   /* r33 · pichação perto das esquinas, mais nas faces de beco (as que não dão pra rua) */
-  if(!opts.safe&&!opts.patio&&!city.haze&&h>3){const gr=mulberry32(((Math.round(x0*17)*2246822519)^(Math.round(z0*17)*3266489917)^(S.seed*13+0x6f1))>>>0),grr=(a,b)=>a+gr()*(b-a);
+  if(!EX&&!opts.safe&&!opts.patio&&!city.haze&&h>3){const gr=mulberry32(((Math.round(x0*17)*2246822519)^(Math.round(z0*17)*3266489917)^(S.seed*13+0x6f1))>>>0),grr=(a,b)=>a+gr()*(b-a);
    const ext0=[];if(curI){if(z0<curI[1]+1.5)ext0.push('n');if(z1>curI[3]-1.5)ext0.push('s');if(x0<curI[0]+1.5)ext0.push('w');if(x1>curI[2]-1.5)ext0.push('e')}
    for(const f of ['n','s','w','e']){if(gr()>(ext0.includes(f)?.12:.38))continue;const ns=f==='n'||f==='s',L=ns?x1-x0:z1-z0;if(L<3)continue;
     const W=grr(2,3.2),Hh=W*grr(.6,.85),end=gr()<.5,t=end?grr(.3,Math.min(2.6,L*.3)):L-grr(.3,Math.min(2.6,L*.3))-W,y0=grr(.3,.8),y1=Math.min(h-.2,y0+Hh),tile=Math.floor(gr()*GRAF.N),o=.04;
@@ -6994,27 +7025,27 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
     else if(f==='w'){const x=x0-o,a=z0+t;pts=[[x,y0,a],[x,y0,a+W],[x,y1,a+W],[x,y1,a]]}
     else{const x=x1+o,a=z0+t;pts=[[x,y0,a+W],[x,y0,a],[x,y1,a],[x,y1,a+W]]}
     (ch.graf=ch.graf||[]).push({pts,tile})}}
-  maybeBuildingClock(ch,x0,z0,x1,z1,h,opts.face);
+  if(!EX)maybeBuildingClock(ch,x0,z0,x1,z1,h,opts.face);
   let tx0=x0,tz0=z0,tx1=x1,tz1=z1,th=h;
   const w=x1-x0,d=z1-z0;
   if(!opts.simple&&R()<.38&&w>12&&d>12&&!opts.para){const ins=rr(2,Math.min(w,d)*.25);tx0=x0+ins;tz0=z0+ins;tx1=x1-ins;tz1=z1-ins;const h2=Math.min(Math.round((h+rr(4,night?14:10))/3.2)*3.2,41.6,Number.isFinite(airCap)?Math.max(h,airCap-4.1):Infinity);
-   const wc2=wc.clone().multiplyScalar(rr(.92,1.05));ri(0,7);ri(0,7);facadeWalls.box(tx0,h,tz0,tx1,h2,tz1,wc2,{top:roofs,topCol:rc,win:[0,0],facadeGrid:true});th=h2;
+   const wc2=wc.clone().multiplyScalar(rr(.92,1.05));ri(0,7);ri(0,7);if(EX){const E0=EX;EX={cx:E0.cx,cz:E0.cz,rx:Math.max(2,E0.rx-ins),rz:Math.max(2,E0.rz-ins),oval:E0.oval};mbOval(facadeWalls,roofs,EX.cx,EX.cz,EX.rx,EX.rz,h,h2,wc2,rc,{win:[0,0]});mbOvalRim(det,E0.cx,E0.cz,E0.rx,E0.rz,h,h+.6,.35,wc.clone().multiplyScalar(.8))}else{facadeWalls.box(tx0,h,tz0,tx1,h2,tz1,wc2,{top:roofs,topCol:rc,win:[0,0],facadeGrid:true});
    // parapet lower tier
    const pc=wc.clone().multiplyScalar(.8);
-   det.box(x0,h,z0,x1,h+.6,z0+.35,pc);det.box(x0,h,z1-.35,x1,h+.6,z1,pc);det.box(x0,h,z0,x0+.35,h+.6,z1,pc);det.box(x1-.35,h,z0,x1,h+.6,z1,pc);
+   det.box(x0,h,z0,x1,h+.6,z0+.35,pc);det.box(x0,h,z1-.35,x1,h+.6,z1,pc);det.box(x0,h,z0,x0+.35,h+.6,z1,pc);det.box(x1-.35,h,z0,x1,h+.6,z1,pc);}th=h2;
   }
   if(opts.para){ch.paraRoofs=ch.paraRoofs||[];ch.paraRoofs.push({x:(tx0+tx1)/2,z:(tz0+tz1)/2,y:th+.1,x0:tx0+.75,x1:tx1-.75,z0:tz0+.75,z1:tz1-.75,area:(tx1-tx0)*(tz1-tz0),ri:curRi})}
   airRoof.y=Number.isFinite(airCap)?Math.min(airCap,Math.max(h+2,th+3.2)):Math.max(h+2,th+3.2);
   const pc=wc.clone().multiplyScalar(.82);
-  det.box(tx0,th,tz0,tx1,th+.7,tz0+.4,pc);det.box(tx0,th,tz1-.4,tx1,th+.7,tz1,pc);det.box(tx0,th,tz0,tx0+.4,th+.7,tz1,pc);det.box(tx1-.4,th,tz0,tx1,th+.7,tz1,pc);
+  if(EX)mbOvalRim(det,EX.cx,EX.cz,EX.rx,EX.rz,th,th+.7,.4,pc);else{det.box(tx0,th,tz0,tx1,th+.7,tz0+.4,pc);det.box(tx0,th,tz1-.4,tx1,th+.7,tz1,pc);det.box(tx0,th,tz0,tx0+.4,th+.7,tz1,pc);det.box(tx1-.4,th,tz0,tx1,th+.7,tz1,pc)}
   // roof props
-  const nA=ri(1,3);for(let i=0;i<nA;i++){if(Number.isFinite(airCap)&&th+1.05>airCap)continue;const ax=rr(tx0+1.5,tx1-3),az=rr(tz0+1.5,tz1-(opts.ring?3.5:3));const s=rr(1,1.8);
+  const nA=ri(1,3);for(let i=0;i<nA;i++){if(Number.isFinite(airCap)&&th+1.05>airCap)continue;let ax=rr(tx0+1.5,tx1-3),az=rr(tz0+1.5,tz1-(opts.ring?3.5:3));const s=rr(1,1.8);if(EX){const q=exIn(ax+s/2,az+s*.4,s*.65+.6);ax=q[0]-s/2;az=q[1]-s*.4}
    det.box(ax,th,az,ax+s,th+.85,az+s*.8,night?COL('#3a3350'):COL('#b9b6ae'));det.box(ax+.15,th+.85,az+.15,ax+s-.15,th+1.05,az+s*.8-.15,night?COL('#24203a'):COL('#8d8a84'))}
-  if(R()<.35&&(tx1-tx0)>8&&(!Number.isFinite(airCap)||th+2.4<=airCap)){const ax=rr(tx0+2,tx1-5),az=rr(tz0+2,tz1-5);det.box(ax,th,az,ax+3,th+2.4,az+2.6,pc.clone().multiplyScalar(.95),{topCol:rc})}
+  if(R()<.35&&(tx1-tx0)>8&&(!Number.isFinite(airCap)||th+2.4<=airCap)){let ax=rr(tx0+2,tx1-5),az=rr(tz0+2,tz1-5);if(EX){const q=exIn(ax+1.5,az+1.3,2.6);ax=q[0]-1.5;az=q[1]-1.3}if(!EX||Math.min(EX.rx,EX.rz)>3.4)det.box(ax,th,az,ax+3,th+2.4,az+2.6,pc.clone().multiplyScalar(.95),{topCol:rc})}
   const tankRoll=R();
   if(opts.ring){
    // Reserve an equipment strip outside the random condenser range.
-   const ax=tx1-1.15,az=tz1-1.15,base=th+.32;
+   let ax=tx1-1.15,az=tz1-1.15;if(EX){const q=exIn(ax,az,1.2);ax=q[0];az=q[1]}const base=th+.32;
    det.box(ax-.34,th,az-.34,ax+.34,base,az+.34,pc);
    det.geo(GEO.cyl,mtx(ax,base+.57,az,.62,1.14,.62),COL(night?'#34324b':'#526f89'));
    det.geo(GEO.cyl,mtx(ax,base+1.19,az,.64,.10,.64),COL(night?'#424058':'#607f98'));
@@ -7026,7 +7057,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
   /* v78 · outdoor no telhado: ~1 em 4 prédios com fachada pra rua; armação no lote sem sombra, face no atlas do chunk */
   {const br=mulberry32(((Math.round(x0*7)*2654435761)^(Math.round(z0*7)*40503)^(S.seed*17+3))>>>0),f=opts.face||ext[0];
    const bw=Math.min(8.4,((f==='n'||f==='s')?(tx1-tx0):(tz1-tz0))-2),bh=bw*.5,yb=th+1.6,top=yb+bh;
-   if(f&&!opts.simple&&!opts.patio&&!opts.safe&&!abandoned&&br()<.26&&bw>=5&&(!Number.isFinite(airCap)||top+.6<=airCap)){
+   if(f&&!EX&&!opts.simple&&!opts.patio&&!opts.safe&&!abandoned&&br()<.26&&bw>=5&&(!Number.isFinite(airCap)||top+.6<=airCap)){
     const tile=Math.floor(br()*ADS.N),post=COL('#4a4c54'),back=COL('#2a2c34');
     const cx=(tx0+tx1)/2,cz=(tz0+tz1)/2,o=1.1;let pts,P=[];
     if(f==='n'){const z=tz0+o;pts=[[cx+bw/2,yb,z],[cx-bw/2,yb,z],[cx-bw/2,top,z],[cx+bw/2,top,z]];roofD.box(cx-bw/2-.1,yb-.1,z+.02,cx+bw/2+.1,top+.1,z+.18,back);P=[[cx-bw*.3,z+.4],[cx+bw*.3,z+.4]]}
@@ -7055,7 +7086,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
     else{const dp=f==='n'?[u,z0-.35]:f==='s'?[u,z1+.35]:f==='w'?[x0-.35,u]:[x1+.35,u];if(opts.safe)setSafeDoor(dp[0],dp[1],f);else regDoor(dp[0],dp[1],f,u,false)}
    }
   }
-  for(const f of ext){const[fs,flen]=FL(f),bays=facadeBays(fs,flen);
+  for(const f of EX?[]:ext){const[fs,flen]=FL(f),bays=facadeBays(fs,flen);
    // A continuous base and a single cornice frame the facade, without random mid-window stripes.
    fbox(x0,z0,x1,z1,f,fs,fs+flen,.25,.56,0,.07,lodNear,trim);
    fbox(x0,z0,x1,z1,f,fs-.04,fs+flen+.04,h-.28,h-.10,0,.13,lodNear,lightTrim);
@@ -7090,7 +7121,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
    }
   }
   /* v78 · toldos listrados nas lojas do térreo (fachada principal, fora da porta); sorteio próprio, 2 degraus por listra */
-  if(!abandoned&&!opts.patio&&!opts.safe&&!opts.simple&&!opts.tour&&opts.face&&!opts.linkedL){const tr=mulberry32(((Math.round(x0*5)*73856093)^(Math.round(z0*5)*83492791)^(S.seed*13+11))>>>0);
+  if(!EX&&!abandoned&&!opts.patio&&!opts.safe&&!opts.simple&&!opts.tour&&opts.face&&!opts.linkedL){const tr=mulberry32(((Math.round(x0*5)*73856093)^(Math.round(z0*5)*83492791)^(S.seed*13+11))>>>0);
    if(tr()<(fp.family==='residential'?.3:.55)){const f=opts.face,[fs,flen]=FL(f),bays=facadeBays(fs,flen),PAL=[['#d8202a','#f4f0e6'],['#1e7a46','#f4f0e6'],['#1e5aa8','#f4f0e6'],['#f2a21a','#5a3422'],['#7a2a6a','#f2d6a0'],['#2a9ab0','#f4f0e6'],['#c83a3a','#f2c21a']],nA=Math.min(3,1+Math.floor(tr()*3));
     const free=bays.filter(b=>b.step>=2.6&&(!doorInfo||Math.abs(b.u-doorInfo.u)>b.step*.5+1.4));
     for(let i=0;i<nA&&free.length;i++){const b=free.splice(Math.floor(tr()*free.length),1)[0],pl=PAL[Math.floor(tr()*PAL.length)],c1=COL(pl[0]),c2=COL(pl[1]),half=b.step*.5-.18,ns=Math.max(3,Math.round(half*2/.42)),sw=half*2/ns;
@@ -7104,7 +7135,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
   // roof antennas, masts and dishes
   det.ab=0;
   if((!opts.simple||ar()<.5)&&!Number.isFinite(airCap)){const pcl=COL(night?'#4a4460':'#6a6a6e'),na=ar()<.55?1+(ar()<.45?1:0)+(ar()<.2?1:0):0;
-   for(let i=0;i<na;i++){const ax=arr(tx0+1,tx1-1),az=arr(tz0+1,tz1-1),t=ar();
+   for(let i=0;i<na;i++){let ax=arr(tx0+1,tx1-1),az=arr(tz0+1,tz1-1);const t=ar();if(EX){const q=exIn(ax,az,1.3);ax=q[0];az=q[1]}
     if(t<.3&&th>22&&!opts.ring){const mh=arr(6,12);det.box(ax-.09,th,az-.09,ax+.09,th+mh,az+.09,pcl);for(let y=th+2;y<th+mh-.5;y+=arr(1.8,2.6))det.box(ax-.6,y,az-.04,ax+.6,y+.08,az+.04,pcl);
      neon.box(ax-.14,th+mh,az-.14,ax+.14,th+mh+.28,az+.14,COL('#ff2a1a'))}
     else if(t<.72){const mh=arr(2.2,4.2),alongX=ar()<.5;det.box(ax-.05,th,az-.05,ax+.05,th+mh,az+.05,pcl);
@@ -7139,7 +7170,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
   const collider=addCol(x0,z0,x1,z1,'bin');
   collider.bin={x,z,v0,v1:bins.p.length/3,ch,col,big,height:y1-y0};
  };
- const alley=(x0,z0,x1,z1,opts={})=>{const along=(x1-x0)<(z1-z0),site={x0,z0,x1,z1,along,bins:[],ramp:false,weapon:false,interior:!!opts.interior,ri:curRi};
+ const alley=(x0,z0,x1,z1,opts={})=>{(city.bxAl||(city.bxAl=[])).push([x0,z0,x1,z1]);const along=(x1-x0)<(z1-z0),site={x0,z0,x1,z1,along,bins:[],ramp:false,weapon:false,interior:!!opts.interior,ri:curRi};
   {const ah=mulberry32(((Math.round(x0*3)*73856093)^(Math.round(z0*3)*19349663)^S.seed^0x5bd1)>>>0);if(!opts.interior&&ah()<.4){const len=along?z1-z0:x1-x0;if(len>24){const back=ah()<.5,id='A'+Math.round(x0)+','+Math.round(z0);
    site.ramp=true;if(!city.ramps.some(r=>r.id===id)){const cx=(x0+x1)/2,cz=(z0+z1)/2,L=6,dx=along?0:(back?-1:1),dz=along?(back?-1:1):0,sx=along?cx:(back?x1-1-L:x0+1),sz=along?(back?z1-1-L:z0+1):cz;
     const r={x:along?cx:(back?x1-1:x0+1),z:along?(back?z1-1:z0+1):cz,dx,dz,L,w:3,h:1.5,kind:'alley',insane:false,id,need:16};city.ramps.push(r);site.ramp=true}}}}
@@ -8722,7 +8753,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
     const want=nx===4?(ur()<.78?4:3):2;let made=0;
     for(const grp of groups){if(made>=want||grp.cs.some(([a,b])=>occupied.has(uid(a,b))))continue;
      for(const [a,b] of grp.cs)occupied.add(uid(a,b));city.urbanLCount=(city.urbanLCount||0)+1;
-     const groupId=ri+':L'+made,palette=[pick(st.walls),pick(st.roof)],ht=Math.round((night?rr(16,32):rr(12,28))*(1+(1-dc)*(night?1.4:1.0))/3.2)*3.2;
+     const groupId=ri+':L'+made,palette=[pick(st.walls),pick(st.roof)],ht=Math.round((night?rr(16,32):rr(12,28))*(1+(1-dc)*(night?1.4:1.0))/3.2)*3.2;if(st===STYLES.modern&&!city.haze){const nc=bldxColor(bldxRng(ri*7.31+made,made*3.17+ri,0x1b5));if(nc)palette[0]='#'+nc.getHexString()} /* v3 r34: cor do L inteiro */
      const rows=[...new Set(grp.cs.map(q=>q[1]))].sort((a,b)=>a-b);
      const bigRow=rows.find(z=>grp.cs.filter(q=>q[1]===z).length===2);
      const narrow=grp.cs.find(q=>q[1]!==bigRow),wide=grp.cs.filter(q=>q[1]===bigRow).sort((a,b)=>a[0]-b[0]);
@@ -8828,7 +8859,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
     const m=um?0:Math.min(rr(1.35,1.65),Math.max(.55,(Math.min(x1-x0,z1-z0)-9)/2));let h=um?um.h:(night?rr(10,40):rr(8,30));if(!um){h*=1+(1-dc)*(night?1.9:1.4);if(R()<.07)h*=1.8;if(info.low)h=rr(6.4,12.8);if(info.para)h=Math.max(h,19.2)}
     {let a=x0+m,b=z0+m,c=x1-m,d=z1-m;const shoreFace=['n','s','w','e'][city.coast],coastDist=city.coast===0?z0:city.coast===1?E-z1:city.coast===2?x0:E-x1,ps=((Math.round(x0*17)*73856093)^(Math.round(z0*13)*19349663)^S.seed)>>>0,pr=mulberry32(ps),eligible=face===shoreFace&&coastDist<o+SW+3&&onBeach((x0+x1)/2,(z0+z1)/2)&&!sOK&&!info.safe&&!info.tune&&!info.garage,patio=eligible&&pr()<.65,hotel=pr()<.5;
      if(patio){if(face==='n')b+=3.3;if(face==='s')d-=3.3;if(face==='w')a+=3.3;if(face==='e')c-=3.3}
-     building(a,b,c,d,um?um.h:Math.round(h/3.2)*3.2,{face,nrf:NRb?nrFace(x0,z0,x1,z1):null,tour:info.tour,para:info.para,safe:sOK,patio,pal:um&&um.pal,simple:!!um,linkedL:um||null});if(patio)coastPatio(a,b,c,d,face,hotel,ps)};if(sOK&&city.safe&&!had)city.safeLot=lk;
+     building(a,b,c,d,um?um.h:Math.round(h/3.2)*3.2,{exo:!urbanPending.length,face,nrf:NRb?nrFace(x0,z0,x1,z1):null,tour:info.tour,para:info.para,safe:sOK,patio,pal:um&&um.pal,simple:!!um,linkedL:um||null});if(patio)coastPatio(a,b,c,d,face,hotel,ps)};if(sOK&&city.safe&&!had)city.safeLot=lk;
    }
    if(urbanPending.length){
     // v253: nao somar duas margens de 1.55m (cada lado e cada ponto):
@@ -9079,7 +9110,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
   if(!own((x0+x1)/2,(z0+z1)/2))continue;
   const starts=isoBuilders.map(b=>b.p.length/3);
   const colStart=ch.cols.length,pedStart=ch.peds.length,childStart=ch.group.children.length,isoStart=ISOFADE.items.length;
-  building(x0,z0,x1,z1,h,{simple:true,face,ring:true});
+  building(x0,z0,x1,z1,h,{simple:true,face,ring:true,exo:true});
   const ranges=isoBuilders.flatMap((builder,i)=>builder.p.length/3>starts[i]?[{builder,from:starts[i],to:builder.p.length/3}]:[]);
   ringGeometry.push({rp,ranges,col:ch.cols[colStart],actors:ch.peds.slice(pedStart),props:ch.group.children.slice(childStart),iso:ISOFADE.items[isoStart]});
  }
@@ -26577,8 +26608,8 @@ const TVCAT=[
   g:['A água tem ondas em camadas, reflete o céu e o brilho do sol, e a luz dança no fundo do raso. Rios perto das indústrias ficam poluídos. No mar, dois navios cargueiros passam devagar: dá para subir de lancha ou pousar o helicóptero no convés. Na foz, o rio abre em curva pela areia até o mar; o farol tem pedras no pé. Barcos, jet skis e o hovercraft balançam com as ondas. Depois da praia o fundo despenca num talude, e lá embaixo há carcaças de lanchas. Os rios são mais fundos no meio e também escondem lanchas afundadas.','Water has layered waves, reflects the sky and the sun glare, and light dances on the shallow bottom. Rivers near industry get polluted. At sea, two cargo ships sail slowly by: you can climb aboard from a boat or land the helicopter on deck. At the river mouth the channel flares out across the sand to the sea; the lighthouse sits on a rock base. Boats, jet skis and the hovercraft rock with the waves. Past the beach the seabed drops off a steep slope, with boat wrecks at the bottom. Rivers are deeper in the middle and hide sunken boats too.'],
   p:[tvcP('agua_tarde',['MAR NO PÔR DO SOL','SEA AT SUNSET']),tvcP('agua_raso',['LUZ NO RASO','LIGHT IN THE SHALLOWS']),tvcP('agua_rio',['ONDAS NO RIO','RIVER WAVES']),tvcP('tv_pollution',['POLUIÇÃO','POLLUTION']),tvcP('ship2',['NAVIOS CARGUEIROS','CARGO SHIPS']),tvcP('foz',['FOZ DO RIO','RIVER MOUTH']),tvcP('farol',['PÉ DO FAROL','LIGHTHOUSE BASE']),tvcP('talude',['O FUNDO DESPENCA','THE DROP-OFF']),tvcP('rio_fundo',['LANCHA NO FUNDO DO RIO','BOAT AT THE RIVER BOTTOM'])]},
  {k:'shfx',ic:'✨',c:'#ffd27a',l:'alt',n:['EFEITOS VISUAIS','VISUAL EFFECTS'],
-  g:['A lataria dos carros reflete o céu. Depois da chuva o asfalto molhado espelha o sol e a lua. À noite janelas e neons brilham. A areia tem poros e marcas de vento, o asfalto é granulado e os prédios têm tijolo, reboco ou concreto. Cada efeito liga e desliga em Gráficos.','Car paint reflects the sky. After rain the wet asphalt mirrors the sun and the moon. At night windows and neons glow. Sand has pores and wind ripples, asphalt is grainy and buildings show brick, plaster or concrete. Each effect can be toggled in Graphics.'],
-  p:[tvcP('fx_carro',['CÉU NA LATARIA','SKY ON CAR PAINT']),tvcP('fx_chuva_tarde',['ASFALTO MOLHADO NO PÔR DO SOL','WET ASPHALT AT SUNSET']),tvcP('fx_chuva_noite',['CHUVA À NOITE','RAINY NIGHT']),tvcP('fx_janelas',['JANELAS ACESAS','LIT WINDOWS']),tvcP('fx_areia',['AREIA','SAND']),tvcP('fx_asfalto',['ASFALTO','ASPHALT']),tvcP('fx_parede',['TIJOLO E CONCRETO','BRICK AND CONCRETE'])]},
+  g:['A lataria dos carros reflete o céu. Depois da chuva o asfalto molhado espelha o sol e a lua. À noite janelas e neons brilham. A areia tem poros e marcas de vento, o asfalto é granulado e os prédios têm tijolo, reboco ou concreto. Cada efeito liga e desliga em Gráficos. Na cidade também há prédios redondos ou ovais e fachadas em branco-concreto e amarelo-areia.','Car paint reflects the sky. After rain the wet asphalt mirrors the sun and the moon. At night windows and neons glow. Sand has pores and wind ripples, asphalt is grainy and buildings show brick, plaster or concrete. Each effect can be toggled in Graphics. The city also has round or oval buildings and facades in white concrete and sandy yellow.'],
+  p:[tvcP('fx_carro',['CÉU NA LATARIA','SKY ON CAR PAINT']),tvcP('fx_chuva_tarde',['ASFALTO MOLHADO NO PÔR DO SOL','WET ASPHALT AT SUNSET']),tvcP('fx_chuva_noite',['CHUVA À NOITE','RAINY NIGHT']),tvcP('fx_janelas',['JANELAS ACESAS','LIT WINDOWS']),tvcP('fx_areia',['AREIA','SAND']),tvcP('fx_asfalto',['ASFALTO','ASPHALT']),tvcP('fx_parede',['TIJOLO E CONCRETO','BRICK AND CONCRETE']),tvcP('predios_redondos',['PRÉDIOS REDONDOS E CORES NOVAS','ROUND BUILDINGS AND NEW COLORS'])]},
  {k:'obra',ic:'🦺',c:'#ffb020',l:'1',n:['OBRAS NA RUA','ROADWORKS'],
   g:['Todo dia uma rua fecha para obra, o dia inteiro. O GPS e o trânsito desviam, e no mapa ela aparece pontilhada de vermelho. O fundo do buraco falha: é a entrada das Backrooms.','Every day one street closes for roadworks, all day long. GPS and traffic detour, and the map shows it dotted in red. The bottom of the hole glitches: it is the way into the Backrooms.'],
   p:[tvcP('obra',['RUA FECHADA','STREET CLOSED'])]},

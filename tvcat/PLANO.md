@@ -48,7 +48,7 @@ mecânicas houver (20, 30…). Coisas pequenas podem dividir canal (ex.: eclipse
 | 18 | SYNTHWAVE · DeLOREAN | 2 | w_synth1 · w_synth2 |
 | 18b | BACKROOMS (v3 r10, r11) | 2 | w_back1 (queda: cidade vista por baixo, r11) · w_back2 (Nível 0) |
 | 19 | CLIMA (tempestade + eclipse + sombra das nuvens) | alt | storm2 (+relâmpago) · clouds (r70) · clouds_ind (v3 r12) · clouds_vol (v3 r17) · clouds_sunset (v3 r19) · clouds_rain + clouds_storm (v3 r21) · clouds_synth + clouds_inv (v3 r22) · eclipse2 (+disco do eclipse em HTML) |
-| 20 | RIOS E MAR (poluição + navios + foz + farol v3 r27, talude r31, fundo dos rios r32) | alt | agua_tarde · agua_raso · agua_rio · tv_pollution · ship2 · foz · farol · talude · rio_fundo |
+| 20 | RIOS E MAR (poluição + navios + foz + farol v3 r27, talude r31, fundo dos rios r32) | alt | agua_tarde · agua_raso · agua_rio · tv_pollution · ship2 · foz · farol · talude · rio_fundo · praia_borda (r35, print do jogo) |
 | 20b | EFEITOS VISUAIS (shaders leves, v3 r25; texturas r33) | alt | fx_carro · fx_chuva_tarde · fx_chuva_noite · fx_janelas · fx_areia · fx_asfalto · fx_parede (r33) · predios_redondos (r34, print do jogo) |
 | 21 | OBRAS NA RUA | 1 | obra |
 | 22 | PONTES LEVADIÇAS | 1 | poi_bridge |
