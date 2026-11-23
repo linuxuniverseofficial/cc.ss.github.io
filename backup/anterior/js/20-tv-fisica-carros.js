@@ -421,7 +421,7 @@ function carVsCar(A,B){const dx=A.x-B.x,dz=A.z-B.z,rs=A.t.R+B.t.R;if(dx*dx+dz*dz
   impact(A,-vn,bpx,bpz);impact(B,-vn,bpx,bpz);
   if(-vn>4){for(const C of [A,B])if(C.ai){C.ai.stun=1.5+Math.random()}}
   if(-vn>3&&PL.car&&(A===PL.car||B===PL.car))policeWitness(A===PL.car?B:A)}}
-function impact(c,v,px,pz){if(v<3)return;if(c===PL.car)rumble(clamp((v-3)/16,0,1),clamp((v-1)/11,.15,1),Math.min(420,110+v*14));
+function impact(c,v,px,pz){if(v<3)return;if(ONLINE.on)netCrash(c,v); /* v3 r38: batidas do ranking (Lataria de Papel) */if(c===PL.car)rumble(clamp((v-3)/16,0,1),clamp((v-1)/11,.15,1),Math.min(420,110+v*14));
  if(c===PL.car&&c.type==='moto'&&v>8.5&&!PL.dead){const vx=c.vx,vz=c.vz;enterExit();PL.down=1.6;PL.rot=Math.PI/2;PL.vx=vx*.55;PL.vz=vz*.55;PL.hp-=armorHit(Math.round(v*1.6));thud(v);if(PL.hp<=0)killPlayer()}
  if(v>6&&c.alive){c.hp-=(v-6)*3.2*(c===PL.car?.8:1)*CRASH_DMG;if(c.hp<=0)setOnFire(c)}
  carDent(c,v,px,pz);

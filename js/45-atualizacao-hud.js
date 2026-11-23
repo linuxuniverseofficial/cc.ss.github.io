@@ -116,7 +116,7 @@ function hudTx(sel,v){const e=hudEl(sel);if(e&&e._ht!==v){e._ht=v;e.textContent=
 function updateHUD(dt){if(TBAR.own&&simT-TBAR.t>.4){$('#tbar').hidden=true;TBAR.own=null}
  syncVehicleHUD();$('#taxiRideHint').hidden=!(PL.taxi&&TAXI.state==='ride');
  hudW('#hpbar i',Math.max(0,PL.hp));{const lk=charLock(),cs=$('#chsel');if(cs&&(cs.classList.contains('locked')!==lk||cs.classList.contains('vehicle')!==!!PL.car)){if(lk&&CHAR.open)charClose(false);charSelPaint()}}hudW('#armbar u',clamp(PL.armor||0,0,100));
- if(PL.car){const sp=Math.round(Math.abs(PL.car.fwd)*3.6),se=hudEl('#speed');if(se&&se._hs!==sp){se._hs=sp;se.firstChild.nodeValue=sp}hudW('#carbar i',Math.max(0,PL.car.hp))}
+ if(PL.car){const sp=Math.round(Math.abs(PL.car.fwd)*3.6),se=hudEl('#speed');if(se&&se._hs!==sp){se._hs=sp;se.firstChild.nodeValue=sp}{const rv=PL.car.fwd<-.3;if(se&&se._rv!==rv){se._rv=rv;se.classList.toggle('rev',rv)}}hudW('#carbar i',Math.max(0,PL.car.hp))}
  let near=false;if(!PL.car&&!PL.dead)for(const c of carsNearTmp(PL.x,PL.z,9)){if(c.alive&&Math.hypot(c.x-PL.x,c.z-PL.z)-c.t.W/2<5.5){near=true;break}}
  $('#prompt').hidden=!near;
  {const mv=PL.money||0,me=hudEl('#money');if(me&&me._hm!==mv){me._hm=mv;me.textContent='$ '+mv}}touchVisible();$('#gun').hidden=!GUN.has;if(GUN.has){hudTx('#gun b',GUN.ammo);hudTx('#gun span',WPN[GUN.w].name)}$('#xhair').hidden=!(GUN.has&&camMode==='fps'&&!PL.heli);

@@ -229,7 +229,7 @@ function waterLevel(x,z){return riverZone(x,z)?RY:SEA_Y}
 function jetOK(x,z){if(boatOK(x,z))return true;if(pierY(x,z)!==null)return false;return !riverZone(x,z)&&outDist(x,z)>SHORE-3.5}
 function boatOK(x,z){if(SHIPS.list.length&&shipAt(x,z,1))return false;for(const p of city.pillars||[])if(x>p[0]&&x<p[2]&&z>p[1]&&z<p[3])return false;if(pierY(x,z)!==null)return false;return mouthChannel(x,z,1)||riverZone(x,z)||outDist(x,z)>SHORE+1}
 function boatStep(c,h){const t=c.t,ca=Math.cos(c.a),sa=Math.sin(c.a);let vf=c.vx*ca+c.vz*sa,vl=-c.vx*sa+c.vz*ca;c.fwd=vf;
- c.steer+=(c.steerT-c.steer)*Math.min(1,h*5);let af=c.alive?(c.thr>0?c.thr*t.acc:c.thr*t.acc*.55):0;af-=vf*Math.abs(vf)*t.acc/(t.vmax*t.vmax)+vf*.12;if(c.hand)af-=vf*.8;
+ c.steer+=(c.steerT-c.steer)*Math.min(1,h*5);let af=c.alive?(c.thr>0?c.thr*t.acc:c.thr*t.acc*.55*revK(-vf)):0;af-=vf*Math.abs(vf)*t.acc/(t.vmax*t.vmax)+vf*.12;if(c.hand)af-=vf*.8;
  vf+=af*h;vl+=-vl*1.4*h;c.vx=vf*ca-vl*sa;c.vz=vf*sa+vl*ca;let wt=c.steer*clamp(vf/7,-1,1)*.95;
  if(c.donut){const damping=Math.exp(-h*3.5);c.vx*=damping;c.vz*=damping;wt=c.donut}
  c.w+=(wt-c.w)*Math.min(1,h*(c.donut?5:2.5));

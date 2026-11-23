@@ -36,6 +36,9 @@ for(const k in VPERF){const t=VT[k],[top,t100,ng,gp]=VPERF[k],vt=top/3.6,capA=2*
  let lo=1,hi=40;for(let i=0;i<28;i++){const mid=(lo+hi)/2;if(sim(mid)>t100)lo=mid;else hi=mid}const acc=(lo+hi)/2,thr=Math.min(acc,capA);
  t.acc=acc;t.eng=t.m*acc;t.kr=t.m*.6*thr/(4*vt);t.cd=t.m*.4*thr/(vt*vt);t.top=vt;t.gears=ng;t.gp=gp}
 /* marcha atual pelo desempenho do tipo: trocas mais curtas no começo e mais longas no fim (curva gp); barcos e hover ficam com o esquema antigo */
+/* v3 r39: marcha ré = 1 marcha só, até 30 km/h (REV_MAX em m/s). revK = fração da força de ré conforme a velocidade de ré (rv>0):
+   cheia até ~0,45 m/s antes do limite, zero logo acima dele e negativa acima (segura o carro em descida/empurrão). Física (carStep/boatStep), som e HUD usam. */
+const REV_MAX=30/3.6;function revK(rv){return rv<=0?1:clamp((REV_MAX+.15-rv)/.6,-1,1)}
 function engGear(c,sp){const t=c.t;if(!t.gears){const G=ENG_GEARS,gs=Math.max(2.5,t.vmax*.14);const g=Math.min(G-1,Math.floor(sp/gs));let r=(sp-g*gs)/gs;if(g===G-1)r=Math.min(1.6,r);return[g,r]}
  const n=t.gears,top=t.top*.97,f=Math.min(1,sp/top);let g=0;while(g<n-1&&f>Math.pow((g+1)/n,t.gp))g++;const a=Math.pow(g/n,t.gp),b=Math.pow((g+1)/n,t.gp);let r=(f-a)/Math.max(.001,b-a);if(sp>top)r=1+(sp-top)/top*2;return[g,Math.min(1.6,r)]}
 function randomType(st,x,z){const b=randomType0(st,x,z),r=R2();return b==='sedan'&&r<.33?'wagon':b==='suv'&&r<.45?'crossover':b==='hatch'&&r<.4?'mini':b==='conv'&&r<.45?'roadster':b}

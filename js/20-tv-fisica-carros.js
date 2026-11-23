@@ -356,7 +356,7 @@ function carStep(c,h){
   if(Math.abs(fl)>cap){fl=Math.sign(fl)*cap;slip=Math.abs(vl)}
   let ff=-t.kr*(c.turbo?.5:1)*vf;
   if(c.thr>0&&!front&&c.alive){ff+=c.thr*t.eng*drive/2*(c.nitro?1.75:1);if(!hb)ff=Math.min(ff,cap*1.25)}
-  if(c.thr<0){ if(vfB>.8)ff+=-clamp(vf*c.m*3,-Nw*.95,Nw*.95)*(-c.thr); else if(!front&&c.alive)ff+=c.thr*t.eng*drive*.45/2; }
+  if(c.thr<0){ if(vfB>.8)ff+=-clamp(vf*c.m*3,-Nw*.95,Nw*.95)*(-c.thr); else if(!front&&c.alive)ff+=c.thr*t.eng*drive*.45/2*revK(-vfB); }
   if(hb)ff+=-clamp(vf*c.m*3,-Nw*.85,Nw*.85);
   const tot=Math.hypot(ff,fl),cap2=cap*1.3;if(tot>cap2){const s=cap2/tot;ff*=s;fl*=s;slip=Math.max(slip,!front&&c.thr>.5&&Math.abs(vfB)<14?6:Math.abs(vl)+1)}
   if(c.ws[k]<slip)c.ws[k]=slip;

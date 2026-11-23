@@ -10,13 +10,13 @@
 <meta name="apple-mobile-web-app-title" content="Coastal Chaos">
 <link rel="icon" type="image/png" sizes="180x180" href="./appicons/icon-180.png">
 <link rel="apple-touch-icon" href="./appicons/icon-180.png">
-<script src="js/inicio-pwa.js?v=r37"></script>
-<script src="js/inicio-versao.js?v=r37"></script>
+<script src="js/inicio-pwa.js?v=r38"></script>
+<script src="js/inicio-versao.js?v=r38"></script>
 <link rel="stylesheet" href="lib/fonts.css">
-<link rel="stylesheet" href="css/01-base.css?v=r37">
-<link rel="stylesheet" href="css/02-menus.css?v=r37">
-<link rel="stylesheet" href="css/03-hud-toque.css?v=r37">
-<link rel="stylesheet" href="css/04-menus-ux.css?v=r37">
+<link rel="stylesheet" href="css/01-base.css?v=r38">
+<link rel="stylesheet" href="css/02-menus.css?v=r38">
+<link rel="stylesheet" href="css/03-hud-toque.css?v=r38">
+<link rel="stylesheet" href="css/04-menus-ux.css?v=r38">
 
 <canvas id="gl"></canvas>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="vhsF" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feGaussianBlur in="SourceGraphic" stdDeviation="1 0" result="soft"/><feColorMatrix in="soft" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="r"/><feOffset in="r" dx="-2" result="r2"/><feColorMatrix in="soft" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="g"/><feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="b"/><feGaussianBlur in="b" stdDeviation="3.5 0" result="b1"/><feOffset in="b1" dx="3" result="b2"/><feBlend in="r2" in2="g" mode="screen" result="rg"/><feBlend in="rg" in2="b2" mode="screen"/></filter></svg>
@@ -290,7 +290,7 @@
  <button type="button" class="mpT" id="mpFree" data-m="free"><canvas width="192" height="192"></canvas><span>MODO LIVRE</span></button>
  <button type="button" class="mpT" id="mpOnline" data-m="online"><canvas width="192" height="192"></canvas><span>ONLINE</span></button></div>
  <p class="mpHint">ESC / ○ volta ao menu</p></div></div>
-<div id="onJoin" hidden role="dialog" aria-modal="true" aria-labelledby="onT"><div class="onBox"><h2 id="onT">ONLINE</h2><p id="onInfo" class="onInfo"></p><div id="onStep1" class="onStep"><label id="onLName">NOME<input id="onName" maxlength="16" autocomplete="username" spellcheck="false"></label><label id="onLPass">SENHA<input id="onPass" type="password" maxlength="64" autocomplete="current-password" spellcheck="false" placeholder="mín. 6"></label><p class="onHint" id="onHint">nome novo cria a conta</p><label id="onLSrv">SERVIDOR<input id="onSrv" autocomplete="off" spellcheck="false" placeholder="Automático"></label></div><div id="onStep2" class="onStep" hidden><div class="onCols"><div class="onLeft"><div class="onSex"><button type="button" class="btn sm" id="onSexN">NATHAN</button><button type="button" class="btn sm" id="onSexC">CLAIRE</button></div><canvas id="onPrev" width="208" height="150"></canvas><label id="onLCar">VEÍCULO<select id="onCar"></select></label><canvas id="onCarPrev" width="464" height="232"></canvas><div class="onRow"><label id="onLCol" class="onColL">COR<input id="onCol" type="color" value="#d62828"></label><label id="onLPlate">PLACA<input id="onPlate" maxlength="7" autocomplete="off" spellcheck="false"></label></div><div class="onBtns onL"><button type="button" class="btn sm" id="onExp">EXPORTAR</button><button type="button" class="btn sm" id="onImp">IMPORTAR</button><input type="file" id="onImpF" accept=".json,application/json" hidden></div></div><div class="onWear" id="onWear"></div></div></div><p id="onErr" class="onErr" aria-live="polite"></p><div class="onBtns"><button type="button" class="btn" id="onBack">VOLTAR</button><button type="button" class="btn primary" id="onGo">ENTRAR</button></div></div></div></div>
+<div id="onJoin" hidden role="dialog" aria-modal="true" aria-labelledby="onT"><div class="onBox"><h2 id="onT">ONLINE</h2><p id="onInfo" class="onInfo"></p><div id="onStep1" class="onStep"><div class="onFields"><label id="onLName">NOME<input id="onName" maxlength="16" autocomplete="username" spellcheck="false"></label><label id="onLPass">SENHA<input id="onPass" type="password" maxlength="64" autocomplete="current-password" spellcheck="false" placeholder="mín. 6"></label><p class="onHint" id="onHint">nome novo cria a conta</p><label id="onLSrv">SERVIDOR<input id="onSrv" autocomplete="off" spellcheck="false" placeholder="Automático"></label></div><div id="onRank" class="onRank" hidden></div></div><div id="onStep2" class="onStep" hidden><div class="onCols"><div class="onLeft"><div class="onSex"><button type="button" class="btn sm" id="onSexN">NATHAN</button><button type="button" class="btn sm" id="onSexC">CLAIRE</button></div><canvas id="onPrev" width="208" height="150"></canvas><label id="onLCar">VEÍCULO<select id="onCar"></select></label><canvas id="onCarPrev" width="464" height="232"></canvas><div class="onRow"><label id="onLCol" class="onColL">COR<input id="onCol" type="color" value="#d62828"></label><label id="onLPlate">PLACA<input id="onPlate" maxlength="7" autocomplete="off" spellcheck="false"></label></div><div class="onBtns onL"><button type="button" class="btn sm" id="onExp">EXPORTAR</button><button type="button" class="btn sm" id="onImp">IMPORTAR</button><input type="file" id="onImpF" accept=".json,application/json" hidden></div></div><div class="onWear" id="onWear"></div></div></div><p id="onErr" class="onErr" aria-live="polite"></p><div class="onBtns"><button type="button" class="btn" id="onBack">VOLTAR</button><button type="button" class="btn primary" id="onGo">ENTRAR</button></div></div></div></div>
 <div id="onChat"><div id="onChatLog"></div><input id="onChatIn" maxlength="120" autocomplete="off" spellcheck="false" hidden placeholder="mensagem…"></div><button type="button" id="onChatBtn" class="btn">💬</button>
 <div id="deal" hidden role="dialog" aria-labelledby="dealT"><div class="card px">
   <div class="row"><h2 id="dealT">CONCESSIONÁRIA COASTAL</h2></div>
@@ -489,10 +489,10 @@
  <div id="mapLegendList" tabindex="0" aria-label="Lista dos símbolos do mapa"></div>
  <div id="mapLegendFoot">Role para ver os demais pontos · L: ocultar</div>
 </aside>
-<link rel="stylesheet" href="css/05-fenda.css?v=r37">
+<link rel="stylesheet" href="css/05-fenda.css?v=r38">
 <div id="timeFade" hidden></div>
 <div id="rotatePhone" role="dialog" aria-modal="true" hidden><strong class="rpV">Gire o celular para jogar</strong><span class="rpV">Coastal Chaos usa a tela em modo paisagem.</span><strong class="rpH">Este jogo requer tela cheia para ser jogado.</strong><button type="button" class="btn" id="landscapeBtn"><span class="rpV">GIRAR E JOGAR</span><span class="rpH">ABRIR EM TELA CHEIA</span></button></div>
-<script src="js/inicio-orientacao.js?v=r37"></script>
+<script src="js/inicio-orientacao.js?v=r38"></script>
 <div id="psaveErrorDialog" role="alertdialog" aria-modal="true" aria-labelledby="psaveErrorTitle" aria-describedby="psaveErrorMessage" hidden><div id="psaveErrorBox"><h2 id="psaveErrorTitle">Erro no carregamento do arquivo:</h2><p id="psaveErrorMessage">Save inválido, corrompido ou adulterado detectado.</p><button type="button" class="btn" id="psaveErrorOk">OK</button></div></div>
 <div id="paraPrompt" hidden style="position:fixed;bottom:24%;left:50%;transform:translateX(-50%);padding:10px;background:#080810dd;color:#fff;z-index:12;font:700 16px system-ui;pointer-events:none"></div>
 <div id="loading" hidden><canvas id="loadMap" width="1" height="1" hidden aria-hidden="true"></canvas><div id="loadText">GERANDO CIDADE…</div><div id="loadTrack" role="progressbar" aria-label="Progresso do carregamento" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="loadFill"></div></div><div id="loadPercent">0%</div></div>
@@ -505,53 +505,53 @@
 <script src="lib/three/postprocessing/ShaderPass.js"></script>
 <script src="lib/three/postprocessing/UnrealBloomPass.js"></script>
 <!-- Jogo: scripts clássicos em ordem (mesmo escopo global). Mapa dos arquivos em CONTEXT.md §0. -->
-<script src="js/00-carga.js?v=r37"></script>
-<script src="js/01-base.js?v=r37"></script>
-<script src="js/02-render.js?v=r37"></script>
-<script src="js/03-texturas-malhas.js?v=r37"></script>
-<script src="js/04-cidade-costa.js?v=r37"></script>
-<script src="js/05-mundo-placas.js?v=r37"></script>
-<script src="js/06-posto-rodas.js?v=r37"></script>
-<script src="js/07-agua.js?v=r37"></script>
-<script src="js/08-shopping.js?v=r37"></script>
-<script src="js/09-cemiterio-pointhaze.js?v=r37"></script>
-<script src="js/10-cidade-geracao.js?v=r37"></script>
-<script src="js/11-buildChunk.js?v=r37"></script>
-<script src="js/12-chunks-lod.js?v=r37"></script>
-<script src="js/13-postes-armas.js?v=r37"></script>
-<script src="js/14-clima-policia.js?v=r37"></script>
-<script src="js/15-mapa.js?v=r37"></script>
-<script src="js/16-sprites-peds.js?v=r37"></script>
-<script src="js/17-veiculos.js?v=r37"></script>
-<script src="js/18-barcos-ceu-personagens.js?v=r37"></script>
-<script src="js/19-celular-eventos.js?v=r37"></script>
-<script src="js/20-tv-fisica-carros.js?v=r37"></script>
-<script src="js/21-transito-peds.js?v=r37"></script>
-<script src="js/22-jogador.js?v=r37"></script>
-<script src="js/23-audio.js?v=r37"></script>
-<script src="js/24-camera-input.js?v=r37"></script>
-<script src="js/25-controle.js?v=r37"></script>
-<script src="js/26-pocas-monitor-bench.js?v=r37"></script>
-<script src="js/27-ui.js?v=r37"></script>
-<script src="js/28-save-carga.js?v=r37"></script>
-<script src="js/29-campanha-abertura.js?v=r37"></script>
-<script src="js/30-toque-missoes.js?v=r37"></script>
-<script src="js/31-casa-segura-assalto.js?v=r37"></script>
-<script src="js/32-imperio-banco-cassino.js?v=r37"></script>
-<script src="js/33-sinuca-skate-dados.js?v=r37"></script>
-<script src="js/34-aeroporto-pontes.js?v=r37"></script>
-<script src="js/35-historia-missoes.js?v=r37"></script>
-<script src="js/36-municao-cadeia.js?v=r37"></script>
-<script src="js/37-save-garagem.js?v=r37"></script>
-<script src="js/38-cheats.js?v=r37"></script>
-<script src="js/39-online.js?v=r37"></script>
-<script src="js/40-console-cheats.js?v=r37"></script>
-<script src="js/41-lang-en.js?v=r37"></script>
-<script src="js/42-idioma-config.js?v=r37"></script>
-<script src="js/43-interiores-lab.js?v=r37"></script>
-<script src="js/44-backrooms.js?v=r37"></script>
-<script src="js/45-atualizacao-hud.js?v=r37"></script>
-<script src="js/46-campanha-missoes.js?v=r37"></script>
-<script src="js/47-laco-principal.js?v=r37"></script>
-<script src="js/48-tvcat.js?v=r37"></script>
-<script src="js/99-pos-carga.js?v=r37"></script>
+<script src="js/00-carga.js?v=r38"></script>
+<script src="js/01-base.js?v=r38"></script>
+<script src="js/02-render.js?v=r38"></script>
+<script src="js/03-texturas-malhas.js?v=r38"></script>
+<script src="js/04-cidade-costa.js?v=r38"></script>
+<script src="js/05-mundo-placas.js?v=r38"></script>
+<script src="js/06-posto-rodas.js?v=r38"></script>
+<script src="js/07-agua.js?v=r38"></script>
+<script src="js/08-shopping.js?v=r38"></script>
+<script src="js/09-cemiterio-pointhaze.js?v=r38"></script>
+<script src="js/10-cidade-geracao.js?v=r38"></script>
+<script src="js/11-buildChunk.js?v=r38"></script>
+<script src="js/12-chunks-lod.js?v=r38"></script>
+<script src="js/13-postes-armas.js?v=r38"></script>
+<script src="js/14-clima-policia.js?v=r38"></script>
+<script src="js/15-mapa.js?v=r38"></script>
+<script src="js/16-sprites-peds.js?v=r38"></script>
+<script src="js/17-veiculos.js?v=r38"></script>
+<script src="js/18-barcos-ceu-personagens.js?v=r38"></script>
+<script src="js/19-celular-eventos.js?v=r38"></script>
+<script src="js/20-tv-fisica-carros.js?v=r38"></script>
+<script src="js/21-transito-peds.js?v=r38"></script>
+<script src="js/22-jogador.js?v=r38"></script>
+<script src="js/23-audio.js?v=r38"></script>
+<script src="js/24-camera-input.js?v=r38"></script>
+<script src="js/25-controle.js?v=r38"></script>
+<script src="js/26-pocas-monitor-bench.js?v=r38"></script>
+<script src="js/27-ui.js?v=r38"></script>
+<script src="js/28-save-carga.js?v=r38"></script>
+<script src="js/29-campanha-abertura.js?v=r38"></script>
+<script src="js/30-toque-missoes.js?v=r38"></script>
+<script src="js/31-casa-segura-assalto.js?v=r38"></script>
+<script src="js/32-imperio-banco-cassino.js?v=r38"></script>
+<script src="js/33-sinuca-skate-dados.js?v=r38"></script>
+<script src="js/34-aeroporto-pontes.js?v=r38"></script>
+<script src="js/35-historia-missoes.js?v=r38"></script>
+<script src="js/36-municao-cadeia.js?v=r38"></script>
+<script src="js/37-save-garagem.js?v=r38"></script>
+<script src="js/38-cheats.js?v=r38"></script>
+<script src="js/39-online.js?v=r38"></script>
+<script src="js/40-console-cheats.js?v=r38"></script>
+<script src="js/41-lang-en.js?v=r38"></script>
+<script src="js/42-idioma-config.js?v=r38"></script>
+<script src="js/43-interiores-lab.js?v=r38"></script>
+<script src="js/44-backrooms.js?v=r38"></script>
+<script src="js/45-atualizacao-hud.js?v=r38"></script>
+<script src="js/46-campanha-missoes.js?v=r38"></script>
+<script src="js/47-laco-principal.js?v=r38"></script>
+<script src="js/48-tvcat.js?v=r38"></script>
+<script src="js/99-pos-carga.js?v=r38"></script>
