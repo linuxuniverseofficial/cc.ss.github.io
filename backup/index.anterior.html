@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 (function(){const h0=Math.hypot,sq=Math.sqrt,ab=Math.abs;Math.hypot=function hypot(a,b,c,d){if(d!==undefined)return h0(a,b,c,d);if(c!==undefined)return sq(a*a+b*b+c*c);if(b!==undefined)return sq(a*a+b*b);return a===undefined?0:ab(+a)}})();
 /* v78 · BUILD: número da entrega. Ao abrir, o jogo lê version.txt (poucos bytes, sem cache) e, se a build no servidor for outra
    (navegador/celular servindo cópia velha), recarrega uma vez. Saves e configurações (localStorage) NÃO são apagados. */
-var BUILD_TAG='r30';
+var BUILD_TAG='r31';
 (function(){try{if(!/^https?:$/.test(location.protocol))return;const k='ps_build_reload';
  fetch(new URL('version.txt?b='+Date.now(),location.href).href,{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=/^\s*((?:dev\s+)?r[\d.]+)\s*$/i.exec(t||'');if(!m||m[1].replace(/\s+/g,' ').toLowerCase()===BUILD_TAG.toLowerCase()){try{sessionStorage.removeItem(k)}catch(e){}return}
   let n=0;try{n=+sessionStorage.getItem(k)||0}catch(e){}if(n>=2)return;try{sessionStorage.setItem(k,String(n+1))}catch(e){}
@@ -2576,7 +2576,13 @@ function hazeTerrain(){const E=city.ext,o=RW/2,stp=2,n=Math.ceil((E+2*o)/stp),x0
 // rampa constante (~9°) até a água; além de SHORE segue submersa com a mesma inclinação.
 function beachProfile(u){if(u<=SAND_FLAT)return .17;const k=(u-SAND_FLAT)/(SHORE-SAND_FLAT),k0=.3,f=k<k0?k*k/(2*k0):(k-k0/2)/(1-k0/2);return .17-(.17-SEA_Y)*f}
 // Fundo do mar: continua a areia submersa e afunda até ~4,5 m abaixo da superfície.
-function seabedY(u){const u0=SHORE+2,y0=beachProfile(u0);if(u<=u0)return beachProfile(u);return y0-4.2*Math.pow(clamp((u-u0)/138,0,1),1.1)}
+/* v3 r31 · TALUDE: depois da linha d'água a areia segue descendo devagar (plataforma de SEABED.shelf m, ~5,5 cm/m), faz a curva e despenca
+   (smootherstep de SEABED.slope m) até o fundo plano em SEABED.floor (4× o fundo antigo: −18,6 m abaixo do mar contra −4,65). */
+const SEABED={shelf:33,slope:30,lin:.055,floor:SEA_Y-18.6};
+function seabedY(u){const u0=SHORE+2,y0=beachProfile(u0);if(u<=u0)return beachProfile(u);const S=SEABED,a=u-u0,end=S.shelf+S.slope,lin=y0-S.lin*Math.min(a,end),q=clamp((a-S.shelf)/S.slope,0,1);
+ return lin-(y0-S.lin*end-S.floor)*q*q*q*(q*(q*6-15)+10)}
+/* borda do talude ondulada ao longo da costa (só da plataforma para fora): a malha do fundo e a saia do farol usam esta */
+function seabedYt(t,u){const u0=SHORE+2;if(u<=u0)return seabedY(u);const w=7*Math.sin(t*.011+1.3)+3.5*Math.sin(t*.041),k=clamp((u-u0)/12,0,1);return seabedY(u-w*k)}
 // Topo do terreno junto à praia (usado nas margens da foz): calçadão/grama planos, depois o perfil da areia.
 function coastTop(u){return u<SAND0?.17:beachProfile(u)}
 function coastSpanFor(E){if(city.haze)return null;const br=mulberry32((S.seed^0x2545f491)>>>0);return br()<.5?null:(br()<.5?[-1e9,E/2]:[E/2,1e9])}
@@ -3513,19 +3519,35 @@ function coastWalls(grp,night){const E=city.ext,o=RW/2,br=beachRange(),mb=new MB
  const m=mb.mesh(new THREE.MeshStandardMaterial({vertexColors:true,roughness:.92,metalness:0}),false,true);if(m)grp.add(m)}
 function aqSea(grp,night){const E=city.ext,c=city.coast;
  if(city.haze){hazeShore(grp);const W=5000,deep=new THREE.Color('#1e3438');
-  const deepP=new THREE.Mesh(new THREE.PlaneGeometry(W,W),new THREE.MeshBasicMaterial({color:deep}));deepP.rotation.x=-Math.PI/2;deepP.position.set(E/2,SEA_Y-4.65,E/2);grp.add(deepP);
+  const deepP=new THREE.Mesh(new THREE.PlaneGeometry(W,W),new THREE.MeshBasicMaterial({color:deep}));deepP.rotation.x=-Math.PI/2;deepP.position.set(E/2,SEABED.floor-.06,E/2);grp.add(deepP);
   const wt=aqWaveTex().clone();wt.needsUpdate=true;wt.repeat.set(1,1);const wm=new THREE.MeshBasicMaterial({map:wt,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:.3});
   const wv=new THREE.Mesh(seaSurfaceGeo(.02),wm);wv.renderOrder=2;grp.add(wv);AQ.seaWave=wt;AQ.inl=[0,1];wtrSwell(.5);return}
  // fundo do mar: faixa de areia com pedras e algas que afunda e escurece até o azul profundo
- const T0=-1600,T1=E+1600,U0=SHORE+2,U1=SHORE+140,nt=40,nu=14,pos=[],col=[],uv=[],idx=[];const deep=new THREE.Color(night?'#0a1030':'#0e3a58'),near=new THREE.Color(night?'#6a6488':'#ffffff');
- for(let j=0;j<=nu;j++)for(let i=0;i<=nt;i++){const t=T0+(T1-T0)*i/nt,k=j/nu,u=U0+(U1-U0)*k,p=wTU(c,t,u),y=seabedY(u);pos.push(p[0],y,p[1]);const cc=near.clone().lerp(deep,Math.pow(k,.8));col.push(cc.r,cc.g,cc.b);uv.push(p[0]/8,p[1]/8)}
+ /* v3 r31: linhas em u = plataforma a cada 3 m, talude a cada 1,5 m, fundo a cada 12 m; cor escurece com a PROFUNDIDADE (a luz entra pouco) */
+ const T0=-1600,T1=E+1600,U0=SHORE+2,Sb=SEABED,uT=U0+Sb.shelf,us=[];for(let u=U0;u<uT-4;u+=3)us.push(u);for(let u=uT-4;u<uT+Sb.slope+4;u+=1.5)us.push(u);for(let u=uT+Sb.slope+4;u<SHORE+170;u+=12)us.push(u);us.push(SHORE+170);
+ const nt=180,nu=us.length-1,pos=[],col=[],uv=[],idx=[],y0=seabedY(U0);const deep=new THREE.Color(night?'#070a22':'#0a2c44'),near=new THREE.Color(night?'#5e5a7c':'#e4e0d4'),mid=new THREE.Color(night?'#2a2c50':'#4a8296');
+ for(let j=0;j<=nu;j++)for(let i=0;i<=nt;i++){const t=T0+(T1-T0)*i/nt,u=us[j],p=wTU(c,t,u),y=seabedYt(t,u),f=clamp((y0-y)/(y0-Sb.floor),0,1);pos.push(p[0],y,p[1]);const cc=f<.12?near.clone().lerp(mid,f/.12*.55):mid.clone().lerp(deep,Math.pow((f-.12)/.88,.55));col.push(cc.r,cc.g,cc.b);uv.push(p[0]/8,p[1]/8)}
  for(let j=0;j<nu;j++)for(let i=0;i<nt;i++){const a=j*(nt+1)+i,b=a+1,d=a+nt+1,e=d+1;idx.push(a,d,b,b,d,e)}
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();
  const m=causticPatch(new THREE.MeshStandardMaterial({map:aqBedTex(),vertexColors:true,roughness:1,side:THREE.DoubleSide}),SEA_Y);const bed=new THREE.Mesh(g,m);bed.receiveShadow=true;grp.add(bed);
  const W=5000,ps=c===0?[E/2,-SHORE-W/2]:c===1?[E/2,E+SHORE+W/2]:c===2?[-SHORE-W/2,E/2]:[E+SHORE+W/2,E/2];
- const deepP=new THREE.Mesh(new THREE.PlaneGeometry(W,W),new THREE.MeshBasicMaterial({color:deep}));deepP.rotation.x=-Math.PI/2;deepP.position.set(ps[0],SEA_Y-4.65,ps[1]);grp.add(deepP);
+ const deepP=new THREE.Mesh(new THREE.PlaneGeometry(W,W),new THREE.MeshBasicMaterial({color:deep}));deepP.rotation.x=-Math.PI/2;deepP.position.set(ps[0],SEABED.floor-.06,ps[1]);grp.add(deepP);seaWrecks(grp,night); /* v3 r31: plano fundo no piso novo + carcaças */
  const wt=aqWaveTex().clone();wt.needsUpdate=true;wt.repeat.set(1,1);const wm=new THREE.MeshBasicMaterial({map:wt,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:night?.22:.38});
  const wv=new THREE.Mesh(seaSurfaceGeo(.02),wm);coastWalls(grp,night);wv.renderOrder=2;grp.add(wv);AQ.seaWave=wt;AQ.inl=c===0?[0,1]:c===1?[0,-1]:c===2?[1,0]:[-1,0];wtrSwell(1)}
+/* v3 r31 · carcaças de lanchas no fundo: posições sorteadas por gerador próprio da seed (não mexe no R()), deitadas/afundadas no piso,
+   escuras e enferrujadas; um único lote (1 draw call), dentro do grupo da cidade (some na troca de mundo). */
+function seaWrecks(grp,night){const E=city.ext,c=city.coast,r=mulberry32((S.seed^0x5eab0a7)>>>0),mb=new MB(),Sb=SEABED,u0=SHORE+2+Sb.shelf+Sb.slope+14,W=new THREE.Matrix4(),L=new THREE.Matrix4(),Mx=new THREE.Matrix4();
+ const hullC=['#2c3236','#3a2c24','#30363a','#423024','#262a2e'],dim=night?.55:1;
+ const part=(g,x,y,z,sx,sy,sz,rx,ry,rz,col)=>{L.copy(mtx(x,y,z,sx,sy,sz,rx,ry,rz));Mx.multiplyMatrices(W,L);mb.geo(g,Mx,COL(col).multiplyScalar(dim*(.8+r()*.25)))};
+ const n=16;for(let k=0;k<n;k++){const t=-260+(E+520)*(k+r()*.8)/n,u=u0+r()*(SHORE+150-u0),p=wTU(c,t,u),Lh=5+r()*5,Bh=Lh*.34,roll=(r()<.5?-1:1)*(.25+r()*.9),pitch=(r()-.5)*.25,a=r()*6.283,hc=hullC[Math.floor(r()*hullC.length)];
+  W.compose(new THREE.Vector3(p[0],seabedYt(t,u)+.25+Math.abs(roll)*.25,p[1]),new THREE.Quaternion().setFromEuler(new THREE.Euler(roll,a,pitch,'YXZ')),new THREE.Vector3(1,1,1));
+  part(BOXG,-Lh*.1,.35,0,Lh*.8,.75,Bh,0,0,0,hc);part(BOXG,-Lh*.1,-.05,0,Lh*.7,.35,Bh*.55,0,0,0,hc);  /* casco: costado + quilha */
+  part(GEO.cone,Lh*.38,.3,0,Bh*.5,Lh*.24,.75*.6,0,0,-Math.PI/2,hc);                                  /* proa */
+  part(BOXG,-Lh*.48,.45,0,.18,.85,Bh*.95,0,0,0,'#1e2226');                                           /* popa */
+  if(r()<.7)part(BOXG,-Lh*.15+r()*.4,1.05,(r()-.5)*.3,Lh*.28,.65+r()*.3,Bh*.62,(r()-.5)*.3,0,(r()-.5)*.35,r()<.5?'#5a5a56':'#4a4038'); /* cabine quebrada */
+  if(r()<.5)part(BOXG,-Lh*.15,1.6,0,.1,1.4,.1,(r()-.5)*.6,0,(r()-.5)*.9,'#2a2a2a');                    /* mastro torto */
+  if(r()<.6)part(BOXG,Lh*.05,.78,Bh*.51,Lh*.35,.12,.05,0,0,0,'#6a3c26')}                              /* faixa de ferrugem */
+ const m=mb.mesh(new THREE.MeshLambertMaterial({vertexColors:true}),false,false);if(m){m.frustumCulled=true;grp.add(m)}}
 function wtrSwell(k){const u=city.waterMat&&city.waterMat.userData.wSw;if(u)u.value.set(AQ.inl[0],AQ.inl[1],k)}
 function hazeShore(grp){const K=240,us=[RW/2-.02,RW/2,RW/2+4,RW/2+8,SAND0-.5,SAND0+.5];for(let u=SAND_FLAT;u<SHORE+8;u+=2.5)us.push(u);for(let u=SHORE+8;u<=SHORE+140;u+=9)us.push(u);
  const grass=hazeBaseCol().clone(),sand=COL('#b3a066'),bed=COL('#6a6248'),deep=COL('#24383a'),pos=[],col=[],uv=[],idx=[],nu=us.length;
@@ -5390,6 +5412,7 @@ let ROCK_GEOS=null;
 function rockGeos(){return ROCK_GEOS||(ROCK_GEOS=[0,1,2,3,4,5].map(i=>rockGeoMake(0x5eed1+i*977,1)))}
 function mbGeoTint(mb,g,m,col){const c0=mb.c.length;mb.geo(g,m,col);const ca=g.attributes.color;if(!ca)return;const ix=(!mb.idx&&g.index)?g.index:null,n=(mb.c.length-c0)/3;
  for(let i=0;i<n;i++){const k=ca.getX(ix?ix.getX(i):i),q=c0+i*3;mb.c[q]*=k;mb.c[q+1]*=k;mb.c[q+2]*=k}}
+function lhSkY(p){return Math.min(SEA_Y-1,seabedYt(city.coast<2?p[0]:p[1],outDist(p[0],p[1]))-.4)}
 function worldLighthouse(K){const L=city.lh,{det,neon,hwin,sandMb,signs,night}=K,s=L.s,wt=(t,u)=>wTU(s,t,u);
  const sandC=COL(night?'#5a4a62':'#e3cf9a'),skirt=sandC,Y=.18; /* v79r2: mesmo tom da praia principal (sem o ×1,12 que deixava a areia clara) */
  const sandFace=(a,b,c,d)=>{const start=sandMb.p.length;
@@ -5411,7 +5434,7 @@ function worldLighthouse(K){const L=city.lh,{det,neon,hwin,sandMb,signs,night}=K
     const edge=v=>wt(lhC(L,v)+sd*lhW(L,v),v),inPad=v=>{const e=edge(v);return Math.hypot(e[0]-L.cx,e[1]-L.cz)<L.pad};if(inPad(u))continue;let ue=u1;
     if(inPad(u1)){let lo=u,hi=u1;for(let k=0;k<20;k++){const m=(lo+hi)/2;if(inPad(m))hi=m;else lo=m}ue=hi}
     const e0=edge(u),e1=edge(ue),o0=wt(lhC(L,u)+sd*(lhW(L,u)+sk),u),o1=wt(lhC(L,ue)+sd*(lhW(L,ue)+sk),ue),mid=wt(lhC(L,(u+ue)/2),(u+ue)/2);
-    sandMb.qa([e0[0],Y,e0[1]],[e1[0],Y,e1[1]],[o1[0],SEA_Y-1,o1[1]],[o0[0],SEA_Y-1,o0[1]],skirt,[mid[0],SEA_Y-3,mid[1]]);
+    sandMb.qa([e0[0],Y,e0[1]],[e1[0],Y,e1[1]],[o1[0],lhSkY(o1),o1[1]],[o0[0],lhSkY(o0),o0[1]],skirt,[mid[0],SEA_Y-3,mid[1]]); /* v3 r31: saia desce até o fundo (talude) */
     /* v3 r27: enrocamento — pedras lisas assentadas na saia (descendo até a água) + algumas pequenas no topo; todas com colisão */
     if(rr2()<.92){const uu=u+rr2()*stp,e=.35+rr2()*1.25,sc=.75+rr2()*.75,p=wt(lhC(L,uu)+sd*(lhW(L,uu)+e),uu);
       if(Math.hypot(p[0]-L.cx,p[1]-L.cz)>L.pad+.8)rockAt(p[0],skY(e)+sc*.2,p[1],sc*(1+rr2()*.5),sc*(.6+rr2()*.3),sc*(1+rr2()*.4),rr2()*6.28,rockC[Math.floor(rr2()*3)])}
@@ -5421,7 +5444,7 @@ function worldLighthouse(K){const L=city.lh,{det,neon,hwin,sandMb,signs,night}=K
   for(let k=0;k<N;k++){const a0=k/N*6.2832,a1=(k+1)/N*6.2832,p0=[cx+Math.cos(a0)*pr,cz+Math.sin(a0)*pr],p1=[cx+Math.cos(a1)*pr,cz+Math.sin(a1)*pr];
    sandFace([cx,Y,cz],[p0[0],Y,p0[1]],[p1[0],Y,p1[1]],[p1[0],Y,p1[1]]);
    // saia em volta da ponta inteira (o lado da barra fica escondido sob o topo do caminho)
-   sandMb.qa([p0[0],Y,p0[1]],[p1[0],Y,p1[1]],[cx+Math.cos(a1)*(pr+sk),SEA_Y-1,cz+Math.sin(a1)*(pr+sk)],[cx+Math.cos(a0)*(pr+sk),SEA_Y-1,cz+Math.sin(a0)*(pr+sk)],skirt,[cx,SEA_Y-3,cz])}
+   {const q1=[cx+Math.cos(a1)*(pr+sk),cz+Math.sin(a1)*(pr+sk)],q0=[cx+Math.cos(a0)*(pr+sk),cz+Math.sin(a0)*(pr+sk)];sandMb.qa([p0[0],Y,p0[1]],[p1[0],Y,p1[1]],[q1[0],lhSkY(q1),q1[1]],[q0[0],lhSkY(q0),q0[1]],skirt,[cx,SEA_Y-3,cz])}}
   /* v3 r27: pé do farol — enrocamento em volta da ponta redonda (fora do lado que liga ao caminho), duas camadas */
   for(let k=0;k<34;k++){const a=(k+rr2()*.6)/34*6.2832,ca=Math.cos(a),sa=Math.sin(a);if(outDist(cx+ca*pr,cz+sa*pr)<L.uC-1)continue;
    for(let q=0;q<2;q++){const e=q?1.5+rr2()*.9:.3+rr2()*.7,sc=q?.9+rr2()*.7:.7+rr2()*.6;rockAt(cx+ca*(pr+e),skY(e)+sc*.2,cz+sa*(pr+e),sc*(1+rr2()*.5),sc*(.6+rr2()*.35),sc*(1+rr2()*.4),rr2()*6.28,rockC[Math.floor(rr2()*3)])}}}
@@ -26450,8 +26473,8 @@ const TVCAT=[
   g:['Eclipses solares podem acontecer no jogo, assim como fortes tempestades que cobrem o céu de forma realista. Nuvens que passam pelo sol fazem sombra no chão. Cada cidade tem o seu clima. Cada minuto do relógio dura 3 segundos: um dia inteiro leva 72 minutos.','Solar eclipses can happen in the game, as well as strong storms that cover the sky realistically. Clouds passing over the sun cast shadows on the ground. Every city has its own weather. Each clock minute lasts 3 seconds: a full day takes 72 minutes.'],
   p:[tvcP('storm2',['TEMPESTADE','STORM'],'rain'),tvcP('clouds',['SOMBRA DAS NUVENS','CLOUD SHADOWS']),tvcP('clouds_ind',['NUVENS DA ZONA INDUSTRIAL','INDUSTRIAL ZONE CLOUDS']),tvcP('clouds_vol',['NUVENS COM VOLUME','PUFFY CLOUDS']),tvcP('clouds_sunset',['NUVENS NO PÔR DO SOL','SUNSET CLOUDS']),tvcP('clouds_rain',['NUVEM DE CHUVA','RAIN CLOUD']),tvcP('clouds_storm',['FRENTE DA TEMPESTADE','STORM FRONT']),tvcP('clouds_synth',['NUVENS NO SYNTHWAVE','SYNTHWAVE CLOUDS']),tvcP('clouds_inv',['NUVENS DO MUNDO INVERTIDO','UPSIDE DOWN CLOUDS'],null,{br:1.6}),tvcP('eclipse2',['ECLIPSE SOLAR','SOLAR ECLIPSE'],'corona')]},
  {k:'sea',ic:'🚢',c:'#4ab8e8',l:'alt',n:['RIOS E MAR','RIVERS AND SEA'],
-  g:['A água tem ondas em camadas, reflete o céu e o brilho do sol, e a luz dança no fundo do raso. Rios perto das indústrias ficam poluídos. No mar, dois navios cargueiros passam devagar: dá para subir de lancha ou pousar o helicóptero no convés. Na foz, o rio abre em curva pela areia até o mar; o farol tem pedras no pé. Barcos, jet skis e o hovercraft balançam com as ondas.','Water has layered waves, reflects the sky and the sun glare, and light dances on the shallow bottom. Rivers near industry get polluted. At sea, two cargo ships sail slowly by: you can climb aboard from a boat or land the helicopter on deck. At the river mouth the channel flares out across the sand to the sea; the lighthouse sits on a rock base. Boats, jet skis and the hovercraft rock with the waves.'],
-  p:[tvcP('agua_tarde',['MAR NO PÔR DO SOL','SEA AT SUNSET']),tvcP('agua_raso',['LUZ NO RASO','LIGHT IN THE SHALLOWS']),tvcP('agua_rio',['ONDAS NO RIO','RIVER WAVES']),tvcP('tv_pollution',['POLUIÇÃO','POLLUTION']),tvcP('ship2',['NAVIOS CARGUEIROS','CARGO SHIPS']),tvcP('foz',['FOZ DO RIO','RIVER MOUTH']),tvcP('farol',['PÉ DO FAROL','LIGHTHOUSE BASE'])]},
+  g:['A água tem ondas em camadas, reflete o céu e o brilho do sol, e a luz dança no fundo do raso. Rios perto das indústrias ficam poluídos. No mar, dois navios cargueiros passam devagar: dá para subir de lancha ou pousar o helicóptero no convés. Na foz, o rio abre em curva pela areia até o mar; o farol tem pedras no pé. Barcos, jet skis e o hovercraft balançam com as ondas. Depois da praia o fundo despenca num talude, e lá embaixo há carcaças de lanchas.','Water has layered waves, reflects the sky and the sun glare, and light dances on the shallow bottom. Rivers near industry get polluted. At sea, two cargo ships sail slowly by: you can climb aboard from a boat or land the helicopter on deck. At the river mouth the channel flares out across the sand to the sea; the lighthouse sits on a rock base. Boats, jet skis and the hovercraft rock with the waves. Past the beach the seabed drops off a steep slope, with boat wrecks at the bottom.'],
+  p:[tvcP('agua_tarde',['MAR NO PÔR DO SOL','SEA AT SUNSET']),tvcP('agua_raso',['LUZ NO RASO','LIGHT IN THE SHALLOWS']),tvcP('agua_rio',['ONDAS NO RIO','RIVER WAVES']),tvcP('tv_pollution',['POLUIÇÃO','POLLUTION']),tvcP('ship2',['NAVIOS CARGUEIROS','CARGO SHIPS']),tvcP('foz',['FOZ DO RIO','RIVER MOUTH']),tvcP('farol',['PÉ DO FAROL','LIGHTHOUSE BASE']),tvcP('talude',['O FUNDO DESPENCA','THE DROP-OFF'])]},
  {k:'shfx',ic:'✨',c:'#ffd27a',l:'alt',n:['EFEITOS VISUAIS','VISUAL EFFECTS'],
   g:['A lataria dos carros reflete o céu. Depois da chuva o asfalto molhado espelha o sol e a lua. À noite janelas e neons brilham. Cada efeito liga e desliga em Gráficos.','Car paint reflects the sky. After rain the wet asphalt mirrors the sun and the moon. At night windows and neons glow. Each effect can be toggled in Graphics.'],
   p:[tvcP('fx_carro',['CÉU NA LATARIA','SKY ON CAR PAINT']),tvcP('fx_chuva_tarde',['ASFALTO MOLHADO NO PÔR DO SOL','WET ASPHALT AT SUNSET']),tvcP('fx_chuva_noite',['CHUVA À NOITE','RAINY NIGHT']),tvcP('fx_janelas',['JANELAS ACESAS','LIT WINDOWS'])]},
