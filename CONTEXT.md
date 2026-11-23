@@ -9,15 +9,89 @@ Regras de edição e funções comuns: `CLAUDE.md`. Em conflito vale: pedido atu
 ## 0. Como registrar mudanças
 
 - **v3 r1 (21/11/2026): depois da v2 r70 a numeração passou para v3 r1** (`GAME_VER=3`, zip `coastal-chaos-v3-rN.zip`; saves v1/v2 continuam abrindo).
+- **v3 r37: o jogo foi dividido em arquivos (§0b).** Daqui pra frente: editar só o arquivo afetado, subir a build com `sh tools/nova-build.sh rN` e dizer na entrega quais arquivos mudaram.
 - Cada entrega = `rN` novo. **Numeração reorganizada: depois da v79 r49 vem v1 r1** (`GAME_VER=1`). Subir `BUILD_TAG` (topo do `index.html`) e `version.txt` juntos. Zip `coastal-chaos-v1-rN.zip` com a pasta `v77/`. `backup/index.anterior.html` = build entregue anterior.
 - Registrar no **§9 Registro recente** (topo da lista): causa, o que mudou, o que foi testado e o que NÃO foi. Quando uma regra nova nascer de uma correção, levar a regra para a seção do sistema (§2–§8) e enxugar o registro.
 - Saves: `GAME_VER=1` (era 79; a lista de compatíveis aceita 1–79, então saves antigos abrem), schema `v:1`, série `pixelcity-restart-1`. `saveVersionCompatible` lista as versões aceitas; não confundir com `BUILD_TAG`.
+
+## 0b. Mapa dos arquivos (desde a v3 r37)
+
+O antigo `index.html` de 3,5 MB virou: `index.html` (só HTML, 116 KB) + `css/` + `js/`. **Editar só o arquivo afetado**; cada entrega continua sendo o zip completo, dizendo quais arquivos mudaram.
+
+- **Como carrega:** `<script src>` clássicos (não são módulos ES), na ordem do número, todos no mesmo escopo global (funciona em `file://`, no GitHub Pages e no `php -S`). Cada `js/NN-*.js` começa com `'use strict';` (o script antigo inteiro era strict). O `?v=rN` em cada `<script>`/`<link>` é a build (`sh tools/nova-build.sh rN` troca tudo de uma vez).
+- **Regra da carga (armadilha 0 do CLAUDE.md):** `function`/`var` de um arquivo só existem depois que ele carregou. Código que roda na carga (fora de função) só usa o que está no mesmo arquivo ou antes. Por isso: `28-save-carga.js` tem `storyOn`, `saveVersionCompatible` (**a lista de versões do save fica aqui**), `readSave`, `alignSaveToLoad` e `syncSave` (o `syncSave()` roda no fim do `29-campanha-abertura.js`); e o anti z-fight dos interiores (`ibox=…`, `buildSafehouse=zfWrap(…)`, … `gasVisual=zfWrap(…)`) fica no `99-pos-carga.js`. No lugar antigo ficou um comentário apontando.
+- **`00-carga.js` / `99-pos-carga.js`:** entre um arquivo e outro o navegador pode rodar timers; o 00 segura `setTimeout`/`setInterval`/`requestAnimationFrame` que dispararem antes do fim e o 99 devolve as funções originais e solta a fila na mesma ordem (no index antigo nada rodava no meio do script). Não pôr nada depois do 99.
+- **Como foi conferido na r37:** juntando os arquivos e devolvendo os trechos movidos, o código fica **idêntico byte a byte** ao script da r36; o estado global depois da carga (3.501 nomes: funções pelo texto, objetos pelas chaves) é igual ao da r36; seed 716540 gera a mesma cidade.
+- **Achar algo:** `grep -n "function nome(" js/*.js` (ou `grep -ln "NOME" js/*.js`). Funções do CLAUDE.md: `generateCity` 10 · `buildChunk` 11 · `chunkLod`/`cullChunks` 12 · `groundY` 04 · `MB`/`ZF`/`zfWrap` 03 · `makeVehicle` 17 · `syncCar` 20 · `spawnPed`/`updatePeds`/`circleVsWorld`/`trafficCalm` 21 · `updatePlayer` 22 · `updateAudio`/`sceneRadioStart`/`boomUpdate`/`actorShowNow`/`weaponTick`/`audioCutKeepScene` 23 · `updateCamera` 24 · `padPoll`/`padNavFocus` 25 · `toast` 27 · `startGame`/`prologue*` 29 · `money` 30 · `casinoBuild`/`clubInteriorTick`/`tableGameOpen` 32 · `POOL`/`DICE`/`SKATE`/`MG` 33 · `dbTick` 34 · `storyOK`/`blitzMake` 35 · `recordsAdd`/`jailEscapeTick` 36 · `buildSave`/`applySave`/`safeGarage`/`GAME_VER` 37 · `cheatWarp`/`CHEAT`/`ITS` 38 · `netTick`/`netFrame` 39 · `CHC` 40 · `LANG_EN` 41 · `translatePlain`/`applyLanguage` 42 · `roomStageEnter`/`roomStageLocalTick` 43 · `BR` 44 · `update` (mundo por quadro)/`updateHUD` 45 · `CAMP` 46 · `loop`/`cfgUI`/`applyCfgObj` 47 · `TVCAT` 48 · `charModel3D`/`atlas8Build` 16 · `charSwitch`/`specTick`/`beachTick` 18.
+
+| Arquivo | Tamanho | O que tem |
+|---|---|---|
+| `js/inicio-pwa.js` | — | Botão de instalar + registro do service worker (no `<head>`) |
+| `js/inicio-versao.js` | — | `BUILD_TAG` + recarga quando `version.txt` do servidor é outra build (no `<head>`) |
+| `js/inicio-orientacao.js` | — | Aviso "gire o celular" e `MOB_LITE` (no meio do `<body>`, logo depois do `#rotatePhone`) |
+| `css/01-base.css` | 49 KB | Layout, HUD, mesas do cassino |
+| `css/02-menus.css` | 52 KB | Menu inicial, pausa, modo missão, benchmark, tarja de missão |
+| `css/03-hud-toque.css` | 30 KB | Interface automática, velocímetro, botões de toque, troca de personagem |
+| `css/04-menus-ux.css` | 34 KB | Menu inicial em duas colunas, menu de pausa em lista, painel CENÁRIO e o resto |
+| `css/05-fenda.css` | 3 KB | Travessia da Fenda (riftFx) |
+| `js/00-carga.js` | 2 KB | Segura timers/rAF disparados no meio da carga dos arquivos (ver 99-pos-carga.js) |
+| `js/01-base.js` | 8 KB | Utilitários, constantes, configurações, volume |
+| `js/02-render.js` | 31 KB | Renderer, sombras, pós-processamento, shaders comuns |
+| `js/03-texturas-malhas.js` | 33 KB | Texturas, construtor de malhas (MB), grade de colisão, anti z-fight (ZF) |
+| `js/04-cidade-costa.js` | 44 KB | Cidade em chunks, costa/praia/fundo do mar |
+| `js/05-mundo-placas.js` | 8 KB | Placas de neon, areia, espuma, decisões de geração |
+| `js/06-posto-rodas.js` | 70 KB | Soco, rodas de arma/rádio, zerinho, combustível, posto, conveniência, setas, perseguição |
+| `js/07-agua.js` | 39 KB | Água viva (fundo, ondas, cardumes) |
+| `js/08-shopping.js` | 170 KB | Shopping center (fachada, interior, lojas) |
+| `js/09-cemiterio-pointhaze.js` | 100 KB | Fantasma do cemitério, travessia da Point Haze, quintal, cemitério, delegacia, farol |
+| `js/10-cidade-geracao.js` | 106 KB | Móveis da casa segura, vento/folhas, aeroporto (zoneamento), generateCity, placas de rua, iso-fade, guarda-sóis |
+| `js/11-buildChunk.js` | 295 KB | Outdoors/grafites + buildChunk (monta cada pedaço da cidade) |
+| `js/12-chunks-lod.js` | 12 KB | Mapa de carregamento, distância, LOD e culling dos chunks |
+| `js/13-postes-armas.js` | 111 KB | Postes, cabos, árvores, jammer, armas, colecionáveis, projéteis, granada, bomba, sangue, policiais a pé |
+| `js/14-clima-policia.js` | 52 KB | Clima, raios, polícia, dia/noite, fogo e explosões |
+| `js/15-mapa.js` | 63 KB | Minimapa, mapa grande, marcador e GPS |
+| `js/16-sprites-peds.js` | 62 KB | Faróis do jogador, sprites de pixel, personagens 3D (atlas8) |
+| `js/17-veiculos.js` | 83 KB | Veículos e ferramentas de modelagem |
+| `js/18-barcos-ceu-personagens.js` | 80 KB | Tráfego fluvial, praia, céu, helicóptero, Nathan e Claire, táxi, cães e gatos |
+| `js/19-celular-eventos.js` | 122 KB | Celular, aves, eventos aleatórios, obras, cenas de rua, reação ao carro, gangues |
+| `js/20-tv-fisica-carros.js` | 45 KB | TV da casa segura, instancing de carros, física dos carros |
+| `js/21-transito-peds.js` | 58 KB | Trânsito (faixas, semáforos) e pedestres |
+| `js/22-jogador.js` | 38 KB | Jogador, partículas e marcas de pneu |
+| `js/23-audio.js` | 63 KB | Áudio, rádio, OST de cena, sons curtos + funções comuns (actorShowNow, audioCutKeepScene…) |
+| `js/24-camera-input.js` | 24 KB | Câmera, teclado e mouse |
+| `js/25-controle.js` | 35 KB | Controle (gamepad, DualSense WebHID) |
+| `js/26-pocas-monitor-bench.js` | 77 KB | Asfalto molhado, MONITOR, debug de colisões, benchmark |
+| `js/27-ui.js` | 77 KB | UI (menus), modo foto, Top Secret (viagem entre dimensões) |
+| `js/28-save-carga.js` | 3 KB | Funções do save que já rodam na carga (syncSave() no fim de 29-campanha-abertura.js): versão compatível, ler save, alinhar botão. O resto do save fica em 37-save-garagem.js |
+| `js/29-campanha-abertura.js` | 74 KB | Campanha: abertura, tutorial, startGame |
+| `js/30-toque-missoes.js` | 59 KB | Controles de toque, píeres/rampas, missões paralelas, tuning |
+| `js/31-casa-segura-assalto.js` | 54 KB | Casa segura (setas amarelas), assalto a residências, casa de penhores, polícia (níveis, blitz), jet ski |
+| `js/32-imperio-banco-cassino.js` | 107 KB | Império, banco, cassino |
+| `js/33-sinuca-skate-dados.js` | 96 KB | Sinuca, skate, minigames, agiota, dado mentiroso |
+| `js/34-aeroporto-pontes.js` | 74 KB | Aeroporto, navios, pontes levadiças, vortex, banca, eventos do mapa |
+| `js/35-historia-missoes.js` | 62 KB | Modo história, missões (blocos/cutscene), concessionária, blitz |
+| `js/36-municao-cadeia.js` | 83 KB | Micro-ilha/DeLorean, loja de munição, balões de fala, diálogo, câmera pro céu, delegacia e cadeia |
+| `js/37-save-garagem.js` | 29 KB | Garagem, casa segura, save (.psave), versão do save, menu inicial |
+| `js/38-cheats.js` | 21 KB | Laço principal (variáveis), cheats, Themask, ImpossibleToSee |
+| `js/39-online.js` | 86 KB | Modo online |
+| `js/40-console-cheats.js` | 12 KB | Console de cheats, teclado na tela, entrada de texto |
+| `js/41-lang-en.js` | 216 KB | Traduções LANG_EN |
+| `js/42-idioma-config.js` | 11 KB | Tradução em tempo real, menu de configurações |
+| `js/43-interiores-lab.js` | 83 KB | Crime, palco de interiores (motel, laboratório, danceteria, roomStage) |
+| `js/44-backrooms.js` | 36 KB | Backrooms |
+| `js/45-atualizacao-hud.js` | 16 KB | update() do mundo por quadro, HUD e render |
+| `js/46-campanha-missoes.js` | 65 KB | Campanha: missões 2 a 5 |
+| `js/47-laco-principal.js` | 12 KB | Laço principal (loop), configurações salvas e início (modo mobile) |
+| `js/48-tvcat.js` | 48 KB | TV de recursos (Recursos do Jogo!) |
+| `js/99-pos-carga.js` | 1 KB | Anti z-fight dos interiores (zfWrap) + fim da proteção de carga |
+
+Os CSS entram na ordem do número (a cascata depende disso); `05-fenda.css` fica no meio do `<body>` como no index antigo. `online/api.php`, `sw.js`, `lib/`, `radios/` etc. não mudaram.
 
 ---
 
 ## 1. Base técnica
 
-- Tudo em `index.html`: three.js r128 local (`lib/`), scripts inline, HUD em DOM/CSS, Canvas 2D para atlas/texturas/mapas, Web Audio. PWA: `sw.js`, `manifest.webmanifest`, `appicons/` (não `icons/`: o Apache do Debian/php:apache tem `Alias /icons/` para os ícones dele e a pasta do jogo nunca é servida). Sem backend.
+- `index.html` + `css/` + `js/` (mapa em §0b; até a r36 era tudo inline no `index.html`): three.js r128 local (`lib/`), HUD em DOM/CSS, Canvas 2D para atlas/texturas/mapas, Web Audio. PWA: `sw.js`, `manifest.webmanifest`, `appicons/` (não `icons/`: o Apache do Debian/php:apache tem `Alias /icons/` para os ícones dele e a pasta do jogo nunca é servida). Sem backend.
 - Unidades: `BS=60`, `RW=16`, `P=76`, `SW=4` (calçada), chunk = 2×2 quadras. A cidade vai de **0 a `city.ext`** nos dois eixos (X leste, Z sul): o **(0,0) é o canto noroeste**, não o centro. Rios em `RY=-3`; ver `SEA_Y`/`waterLevel` antes de mexer em alturas.
 - Tamanhos: 7×7 (Mobile) e 14×14 (Normal). Point Haze é ilha `N=3`.
 - Determinismo: geração estática usa `R()` (mulberry32 da seed). Um `R()` a mais muda o resto da cidade. Aleatório novo na geração → gerador próprio (`const R0=R;R=mulberry32(..);try{..}finally{R=R0}`). Sistemas de jogo (trânsito, peds, clima, skatistas) usam `Math.random`/`R2`, nunca `R`.
@@ -233,6 +307,11 @@ Estágios (`PROLOGUE`, Ctrl+Shift+F9 pula em debug): `dealer` → `driveFirst` (
 - **Janela nova com botões precisa funcionar no controle (v3 r28).** Ou entra no `padDialog` (navegação espacial `padNavFocus`, ○ fecha, ✕ clica; campo de texto → `padTextKey`/MINIKEY; cor → `padColorStep`), ou ganha um handler próprio no `padPoll` como `skUiPad`. Se o clique redesenha os botões (`innerHTML=''`), devolver o foco ao mesmo lugar. Antes da r28 a tela do online e a skate shop não navegavam no controle.
 
 ## 9. Registro recente (v79 r1–r49 → v1)
+
+- **v3 r37 · Jogo dividido em arquivos (HTML + CSS + JS por assunto).** Pedido do José: separar o `index.html` de 3,5 MB em arquivos menores para editar e mandar só o que muda. Feito em cima da r36 (tem tudo da r33–r36).
+  - Mudou: `index.html` ficou só com o HTML; `css/01..05` (os dois `<style>`); `js/00..48` + `99` (o `<script>` principal cortado em 50 pedaços por assunto, na mesma ordem) e `js/inicio-*.js` (os três scripts pequenos). Movidos de lugar por causa da ordem de carga (ver §0b): 5 funções do save para `28-save-carga.js` e as reatribuições do anti z-fight para `99-pos-carga.js`. Novo: `00-carga.js`/`99-pos-carga.js` (timers na carga), `tools/nova-build.sh`; `tools/zfight-detector.js` agora mostra `arquivo.js:linha`. `backup/index.anterior.html` = r36.
+  - Testado (Chromium headless swiftshader): remontagem dos arquivos = script da r36 byte a byte; análise estática de tudo que roda na carga (nenhuma função/var de arquivo posterior usada antes da hora, fora 2 falsos alarmes com `typeof`/redeclaração); estado global depois da carga igual ao da r36 (mesmo `Math.random` com semente; diferenças só de tempo, iguais às de r36 contra r36); seed 716540 no modo livre gera a mesma cidade (mesmos números de malhas/vértices que a r36 em execuções equivalentes); 49 controles das opções (Gráficos/Áudio/etc., 129 mudanças) sem erro; abrir por `file://` sem erro; carga com 400 ms de atraso por arquivo sem erro e com o mesmo estado; online com 2 jogadores no `php -S` (os dois se veem, mesma seed do servidor); `node --check` em todos; `zfight-detector` igual ao da r36 (os mesmos 8 conflitos na casa segura, 4 na loja e 2 no shopping, que já existiam).
+  - NÃO testado: GPU real/celular/iPhone, GitHub Pages de verdade (só servidor local), modo história do começo ao fim, Synthwave/Point Haze/Backrooms andando (o código é o mesmo, só mudou de arquivo).
 
 - **v3 r36 · Bueiros, bocas-de-lobo, fumaça no centro e faixas gastas.** Pedido do José: tampas de bueiro redondas, mais escuras e granuladas em alguns cruzamentos; bocas-de-lobo (retângulo preto com gradinha) junto ao meio-fio, 1 ou 2 por quarteirão; no centro, fumaça leve saindo dos bueiros (como a das chaminés, bem mais fraca); depois: faixas de pedestre e amarelas com textura porosa/desgastada em ~40% da cidade. Tudo só textura. Feito em cima da r35.
   - Mudou: `SURF` ganhou `sfSeed`, `sfSt`, `sfStK`; `sfStreet` no asfalto; tipo `'paint'` em `M.mark`; `streetTexBuild` e `manholeSmokeTick` (ver §7 e §2b). TV: canal EFEITOS VISUAIS (frase + quadro `fx_bueiro`).

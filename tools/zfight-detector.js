@@ -10,7 +10,7 @@
      · são visíveis (um ponto 1,2 cm à frente da face não fica dentro de outro sólido nem fora do
        ambiente fechado — nos interiores, o raio tem que bater em algo nas 6 direções).
    Para cada conflito informa: ambiente, eixo, posição no mundo, área, distância entre os planos e as
-   LINHAS do index.html que geraram cada face (rastreia MB.quad). Ignora materiais com polygonOffset,
+   LINHAS (arquivo.js:linha) que geraram cada face (rastreia MB.quad). Ignora materiais com polygonOffset,
    sem depthTest ou invisíveis.
 
    Uso (servidor local servindo a pasta do jogo, ex.: python3 -m http.server 8791):
@@ -82,17 +82,21 @@ function scanInPage(cfg){
  await pg.evaluate(o=>{ // rastreio de linhas: quem chamou MB.quad (pula o próprio MB, ibox e wrappers)
   window.__ZFQ=[];const own=new Set();const q0=MB.prototype.quad;
   MB.prototype.quad=function(a,b,c,d,nx,ny,nz){let ax=-1;if(Math.abs(nx)>.999)ax=0;else if(Math.abs(ny)>.999)ax=1;else if(Math.abs(nz)>.999)ax=2;
-   if(ax>=0&&window.__ZFQ.length<4e6){const u=(ax+1)%3,w=(ax+2)%3,P=[a,b,c,d];const fr=(new Error().stack||'').split('\n').slice(2).map(l=>{const m=l.match(/:(\d+):\d+\)?$/);return m?+m[1]:0}).filter(Boolean);
-    const skip=n=>(n<=window.__ZFmbEnd&&n>=window.__ZFmbStart)||(window.__ZFskip||[]).includes(n);const st=fr.filter(n=>!skip(n)).slice(0,3).join('>');
+   if(ax>=0&&window.__ZFQ.length<4e6){const u=(ax+1)%3,w=(ax+2)%3,P=[a,b,c,d];const fr=(new Error().stack||'').split('\n').slice(2).map(l=>{const m=l.match(/\/([^\/?#:]+\.(?:js|html))(?:\?[^:]*)?:(\d+):\d+\)?$/);return m?m[1]+':'+m[2]:0}).filter(Boolean);
+    const skip=n=>{const [f,ln]=n.split(':');return (f===window.__ZFmbFile&&+ln<=window.__ZFmbEnd&&+ln>=window.__ZFmbStart)||(window.__ZFskip||[]).includes(n)};const st=fr.filter(n=>!skip(n)).slice(0,3).join('>');
     window.__ZFQ.push({ax,c:a[ax],u0:Math.min(...P.map(p=>p[u])),u1:Math.max(...P.map(p=>p[u])),w0:Math.min(...P.map(p=>p[w])),w1:Math.max(...P.map(p=>p[w])),st})}
    return q0.apply(this,arguments)};
   window.__ZFmbStart=0;window.__ZFmbEnd=0; // preenchido abaixo pelo script Node (linhas da class MB)
   if(o.off&&typeof zfBegin==='function')zfBegin=function(){};
   S.renderScale=60;modeSel='free';GAMEMODE='free';S.size=o.size;S.seed=o.seed;S.hour=15;startGame(null)},opt);
  // faixa de linhas da class MB/ibox para não poluir o rastreio
- try{const src=await (await pg.request.get(opt.url)).text(),L=src.split('\n');let s0=L.findIndex(l=>/^class MB\b/.test(l)),s1=s0;for(let i=s0;i<L.length&&i<s0+200;i++)if(/^const GEO=/.test(L[i])){s1=i;break}
-  const sk=[];L.forEach((l,i)=>{if(/^function ibox\b|^ibox=\(f=>|^for\(const k of \['box','cbox'\]\)|^function zf[A-Z]/.test(l))sk.push(i+1)});
-  await pg.evaluate(([a,b,sk])=>{window.__ZFmbStart=a;window.__ZFmbEnd=b;window.__ZFskip=sk},[s0+1,s1+1,sk])}catch(e){}
+ try{/* v3 r37: o jogo agora é index.html + js/NN-*.js → as linhas viram "arquivo.js:linha" */
+  const html=await (await pg.request.get(opt.url)).text();const names=[...html.matchAll(/<script src="(js\/[^"?]+)/g)].map(m=>m[1]);
+  let mbF='',a=0,b=0;const sk=[];
+  for(const n of names){const src=await (await pg.request.get(new URL(n,opt.url).href)).text(),L=src.split('\n'),f=n.split('/').pop();
+   const s0=L.findIndex(l=>/^class MB\b/.test(l));if(s0>=0){let s1=s0;for(let i=s0;i<L.length&&i<s0+200;i++)if(/^const GEO=/.test(L[i])){s1=i;break}mbF=f;a=s0+1;b=s1+1}
+   L.forEach((l,i)=>{if(/^function ibox\b|^ibox=\(f=>|^for\(const k of \['box','cbox'\]\)|^function zf[A-Z]/.test(l))sk.push(f+':'+(i+1))})}
+  await pg.evaluate(([mf,a,b,sk])=>{window.__ZFmbFile=mf;window.__ZFmbStart=a;window.__ZFmbEnd=b;window.__ZFskip=sk},[mbF,a,b,sk])}catch(e){}
  await pg.waitForFunction(()=>played&&$('#loading').hidden,null,{timeout:600000});await pg.waitForTimeout(1500);
  const report={opt,when:new Date().toISOString(),interiors:{},exteriors:null,errors:[]};
  // interiores: remonta cada um (registra as linhas) e varre

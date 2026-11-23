@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 (function(){const h0=Math.hypot,sq=Math.sqrt,ab=Math.abs;Math.hypot=function hypot(a,b,c,d){if(d!==undefined)return h0(a,b,c,d);if(c!==undefined)return sq(a*a+b*b+c*c);if(b!==undefined)return sq(a*a+b*b);return a===undefined?0:ab(+a)}})();
 /* v78 · BUILD: número da entrega. Ao abrir, o jogo lê version.txt (poucos bytes, sem cache) e, se a build no servidor for outra
    (navegador/celular servindo cópia velha), recarrega uma vez. Saves e configurações (localStorage) NÃO são apagados. */
-var BUILD_TAG='r35';
+var BUILD_TAG='r36';
 (function(){try{if(!/^https?:$/.test(location.protocol))return;const k='ps_build_reload';
  fetch(new URL('version.txt?b='+Date.now(),location.href).href,{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=/^\s*((?:dev\s+)?r[\d.]+)\s*$/i.exec(t||'');if(!m||m[1].replace(/\s+/g,' ').toLowerCase()===BUILD_TAG.toLowerCase()){try{sessionStorage.removeItem(k)}catch(e){}return}
   let n=0;try{n=+sessionStorage.getItem(k)||0}catch(e){}if(n>=2)return;try{sessionStorage.setItem(k,String(n+1))}catch(e){}
@@ -3539,8 +3539,8 @@ function fxNeonPatch(mat){if(!mat||mat.userData.fxNeon||!mat.isMeshBasicMaterial
    Só na parede lisa (a moldura e o vidro das janelas ficam como estavam). Detalhe fino some sozinho com a distância
    (pegada do pixel por fwidth = sem chiado/moiré) e tudo corta a 170 m. Chave: Gráficos › Texturas de areia, asfalto e
    prédios (S.fxSurf → uniform sfOn, sem recompilar). Remover de vez: tirar as chamadas surfPatch(...) (ver CONTEXT §2b). */
-const SURF={U:{sfOn:{value:1}}};
-const SURF_GLSL=`uniform float sfOn;varying vec3 sfW;varying vec3 sfN;
+const SURF={U:{sfOn:{value:1},sfSeed:{value:0},sfSt:{value:null},sfStK:{value:new THREE.Vector4(76,1,8,0)}}};
+const SURF_GLSL=`uniform float sfOn;uniform float sfSeed;uniform sampler2D sfSt;uniform vec4 sfStK;varying vec3 sfW;varying vec3 sfN;
 float sfH(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}
 float sfV(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(sfH(i),sfH(i+vec2(1.,0.)),f.x),mix(sfH(i+vec2(0.,1.)),sfH(i+vec2(1.,1.)),f.x),f.y);}
 float sfAA(float px,float fq){return 1.-smoothstep(.3,.9,px*fq);}
@@ -3561,6 +3561,23 @@ vec3 sfSand(vec2 p,float px){float t=mix(.9,1.07,sfV(p*.06)*.6+sfV(p*.19+5.)*.4)
  if(a2>0.)t*=1.+a2*(sfH(floor(p*30.))-.5)*.14;
  t*=1.+a3*(sfV(p*2.5+1.7)-.5)*.08;
  return vec3(t,t,t*mix(1.,.97,step(1.,t)));}
+/* v3 r36 · STREET: tampas de bueiro (cruzamentos) e bocas-de-lobo (meio-fio). Quem tem o quê vem da textura sfSt (1 texel por nó da grade de ruas, feita em JS pela seed):
+   R = tampa (0 nenhuma; 1+q = deslocamento q), G = bocas na rua horizontal a leste do nó (4 bits lado norte + 4 bits lado sul), B = idem na rua vertical ao sul (oeste/leste). */
+vec3 sfStreet(vec2 p,float px){vec3 m=vec3(1.);if(sfStK.w<.5)return m;float Pp=sfStK.x,n=sfStK.y,o=sfStK.z,aa=max(px,.01);
+ vec2 nd=floor(p/Pp+.5);
+ if(nd.x>=0.&&nd.y>=0.&&nd.x<n&&nd.y<n){float r=floor(texture2D(sfSt,(nd+.5)/n).r*255.+.5);
+  if(r>0.){float q=r-1.;vec2 l=p-nd*Pp-vec2(mod(q,4.)-1.5,floor(q/4.)-1.5)*1.7;float rr=length(l);float cov=1.-smoothstep(.62-aa,.62+aa,rr);
+   if(cov>0.){float g=.6+.16*(sfH(floor(l*38.)+3.)-.5)*sfAA(px,38.)+.06*(sfV(l*9.)-.5);
+    float groove=smoothstep(.5-aa,.5,rr)*(1.-smoothstep(.555,.555+aa,rr));float rim=smoothstep(.555,.58,rr);
+    float grid=sfAA(px,7.)*max(step(.8,fract(l.x*7.)),step(.8,fract(l.y*7.)))*step(rr,.47);
+    float t=g*(1.-groove*.5)+rim*.08+grid*.1;m=mix(m,vec3(t*.96,t*.96,t),cov);}}}
+ for(int ax=0;ax<2;ax++){float cu=ax==0?p.y:p.x,al=ax==0?p.x:p.y,k=floor(cu/Pp+.5),v=cu-k*Pp,av=abs(v);
+  if(av>o-.56&&av<o+.05){float j=floor(al/Pp),sl=al-j*Pp;if(sl>o&&sl<Pp-o){vec2 ni=ax==0?vec2(j,k):vec2(k,j);
+   if(ni.x>=0.&&ni.y>=0.&&ni.x<n&&ni.y<n){vec4 d=texture2D(sfSt,(ni+.5)/n);float c=floor((ax==0?d.g:d.b)*255.+.5);float f=v<0.?mod(c,16.):floor(c/16.);
+    if(f>0.){float s0=o+4.+(f-1.)/14.*(Pp-2.*o-8.),ds=abs(sl-s0);if(ds<.6){float cov=(1.-smoothstep(.5-aa,.5+aa,ds))*(1.-smoothstep(.46-aa,.46+aa,o-av));
+     float bars=sfAA(px,9.)*step(.5,fract(sl*9.));float fr=max(step(.42,ds),max(step(o-.06,av),step(av,o-.39)));
+     float t=mix(.08+.2*bars,.4,fr);m=mix(m,vec3(t),cov);}}}}}}
+ return m;}
 vec3 sfSide(vec2 p,float px){float t=mix(.95,1.04,sfV(p*.08)*.6+sfV(p*.31+2.)*.4);float a1=sfAA(px,14.),a2=sfAA(px,40.),a3=sfAA(px,4.);
  if(a1>0.)t*=1.-a1*sfDot(p+.5,14.,.68,.3)*.08;if(a2>0.)t*=1.+a2*(sfH(floor(p*40.))-.5)*.07;t*=1.+a3*(sfV(p*4.)-.5)*.05;return vec3(t);}
 vec2 sfRip(vec2 p,float px){float a=sfAA(px,2.2)*smoothstep(.25,.6,sfV(p*.11+2.));if(a<.01)return vec2(0.);vec2 d=normalize(vec2(.8,.6));float w=sfV(p*.35)*5.;float ph=dot(p,d)*5.2+w;float s=cos(ph)+.35*cos(ph*2.+1.);return d*s*a*.2;}
@@ -3581,12 +3598,19 @@ vec3 sfWall(vec3 w,vec3 n,vec3 bc,float px){vec2 tg=normalize(vec2(-n.z,n.x));fl
 function surfVert(sh){sh.vertexShader='varying vec3 sfW;varying vec3 sfN;\n'+sh.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\n sfW=(modelMatrix*vec4(transformed,1.)).xyz;sfN=normalize(mat3(modelMatrix)*objectNormal);')}
 // kind: 'asph' (chão de asfalto), 'sand' (areia da praia), 'wall' (paredes de prédios/casas, com janelas no map)
 function surfPatch(mat,kind){if(!mat||mat.userData.surf)return mat;mat.userData.surf=kind;const old=mat.onBeforeCompile,key=(mat.customProgramCacheKey&&mat.customProgramCacheKey())||'';
- mat.onBeforeCompile=(sh,r)=>{if(old)old.call(mat,sh,r);sh.uniforms.sfOn=SURF.U.sfOn;surfVert(sh);
+ mat.onBeforeCompile=(sh,r)=>{if(old)old.call(mat,sh,r);sh.uniforms.sfOn=SURF.U.sfOn;sh.uniforms.sfSeed=SURF.U.sfSeed;sh.uniforms.sfSt=SURF.U.sfSt;sh.uniforms.sfStK=SURF.U.sfStK;surfVert(sh);
   const head=`float sfD=distance(sfW,cameraPosition);float sfF=sfOn*(1.-smoothstep(120.,170.,sfD));float sfPx=length(fwidth(sfW));`;
   let fs=SURF_GLSL+'\n'+sh.fragmentShader;
   if(kind==='sand')fs=fs.replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
    {${head}if(sfF>.01&&sfN.y>.6){vec2 g=sfRip(sfW.xz,sfPx)*sfF;normal=normalize(normal+(viewMatrix*vec4(-g.x,0.,-g.y,0.)).xyz);}}`);
-  const body=kind==='asph'?`if(sfN.y>.6)diffuseColor.rgb*=mix(vec3(1.),sfAsph(sfW.xz,sfPx),sfF);`
+  const body=kind==='asph'?`if(sfN.y>.6){diffuseColor.rgb*=mix(vec3(1.),sfAsph(sfW.xz,sfPx),sfF);diffuseColor.rgb*=mix(vec3(1.),sfStreet(sfW.xz,sfPx),smoothstep(.0,.25,sfF));}`
+   :kind==='paint'?`{vec3 bc=vec3(1.);
+     #ifdef USE_COLOR
+     bc=vColor;
+     #endif
+     float lum=dot(bc,vec3(.3,.59,.11));if(sfN.y>.6&&(lum>.72||(bc.r>.6&&bc.g>.42&&bc.b<.4))&&sfH(floor(sfW.xz/76.+.5)*1.37+sfSeed)<.4){
+      float a1=sfAA(sfPx,5.),a2=sfAA(sfPx,22.),big=sfV(sfW.xz*.45+3.);float nn=.5+a1*(sfV(sfW.xz*5.)-.5)*.9+a2*(sfH(floor(sfW.xz*22.))-.5)*.7;
+      float th=(.22+.22*smoothstep(.5,.85,big))*a1*sfF;if(nn<th)discard;diffuseColor.rgb*=1.-.12*sfF*(1.-smoothstep(th,th+.25,nn));}}`
    :kind==='side'?`if(sfN.y>.6){vec3 bc=vec3(.6);
      #ifdef USE_COLOR
      bc=vColor;
@@ -3607,6 +3631,21 @@ function surfPatch(mat,kind){if(!mat||mat.userData.surf)return mat;mat.userData.
   sh.fragmentShader=fs};
  mat.customProgramCacheKey=()=>key+'|surf-'+kind;mat.needsUpdate=true;return mat}
 function surfApply(){SURF.U.sfOn.value=S.fxSurf!==false?1:0}
+/* v3 r36 · STREET: sorteio próprio da seed (não mexe no R()). Tampas só em cruzamentos (3+ ruas) de asfalto; bocas-de-lobo em cada lado de
+   cada trecho de rua com 35% (≈1–2 por quarteirão). Fora: zona rural/terra, pontes, água, Point Haze. city.manholes = lista para a fumaça. */
+function streetTexBuild(){const N=city.N|0,n=N+1,data=new Uint8Array(n*n*4),r=mulberry32((S.seed^0x6b0e1d3)>>>0),list=[];city.manholes=list;
+ const ok=(x,z)=>{if(city.haze||isRural(x,z))return false;for(const d of city.decks||[])if(x>d[0]-2&&x<d[2]+2&&z>d[1]-2&&z<d[3]+2)return false;try{if(waterAt(x,z))return false}catch(e){}return true};
+ const core=city.core;
+ for(let kz=0;kz<=N;kz++)for(let kx=0;kx<=N;kx++){const i=(kz*n+kx)*4,x=kx*P,z=kz*P,a=r(),q=Math.floor(r()*16),sm=r(),g1=r(),g2=r(),f1=1+Math.floor(r()*14),f2=1+Math.floor(r()*14),b1=r(),b2=r(),e1=1+Math.floor(r()*14),e2=1+Math.floor(r()*14);
+  if(nodeDeg(kx,kz)>=3&&a<.45&&ok(x,z)){data[i]=1+q;const mx=x+(q%4-1.5)*1.7,mz=z+(Math.floor(q/4)-1.5)*1.7;list.push({x:mx,z:mz,smoke:!!core&&Math.hypot(mx-core.x,mz-core.z)<170&&sm<.7})}
+  if(segExists(kx,kz,0)&&ok(x+P/2,z))data[i+1]=(g1<.35?f1:0)+(g2<.35?f2*16:0);
+  if(segExists(kx,kz,1)&&ok(x,z+P/2))data[i+2]=(b1<.35?e1:0)+(b2<.35?e2*16:0)}
+ const old=SURF.U.sfSt.value;const t=new THREE.DataTexture(data,n,n,THREE.RGBAFormat);t.magFilter=t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;t.needsUpdate=true;
+ SURF.U.sfSt.value=t;SURF.U.sfStK.value.set(P,n,RW/2,city.haze?0:1);SURF.U.sfSeed.value=(S.seed%9973)*.731;if(old)old.dispose()}
+/* fumaça leve dos bueiros do centro (mesmo emit da fuligem das chaminés, bem mais fraca) */
+function manholeSmokeTick(dt){const L=city.manholes;if(!L||!L.length||city.haze||PL.inside)return;const pp=PL.car||PL;
+ for(let i=0;i<L.length;i++){const m=L[i];if(!m.smoke||Math.abs(m.x-pp.x)>80||Math.abs(m.z-pp.z)>80)continue;
+  if(Math.random()<dt*2.2)emit(m.x+(Math.random()-.5)*.6,.08,m.z+(Math.random()-.5)*.6,(WX.wx||1)*.22+(Math.random()-.5)*.25,.45+Math.random()*.35,(WX.wz||.6)*.22+(Math.random()-.5)*.25,3.6,.7,3.4,0xdedcd6,false,.32)}}
 // Superfície do mar em coordenadas de mundo: o mar aberto a partir de SHORE e o canal da foz até a
 // ponte da avenida (mesmo material e mesmo nível do rio, então a água do rio entra no mar sem degrau).
 // UV = mundo/22, para o mesmo padrão de ondas cobrir mar e canal sem emenda.
@@ -6040,7 +6079,7 @@ async function generateCity(){
  M.hwin=jammerMaterial(new THREE.MeshStandardMaterial({vertexColors:true,roughness:.3,emissive:0xffc880,emissiveIntensity:0}));
  // v78: vidros grandes de prédios especiais (delegacia, hospital, conveniência) — mesmo tom, emissão bem menor à noite
  M.hwinSoft=jammerMaterial(new THREE.MeshStandardMaterial({vertexColors:true,roughness:.3,emissive:0xffc880,emissiveIntensity:0}));
- M.mark=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.8,emissive:night?0x262428:0,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});if(S.style==='inverted')rotMat(M.mark); /* v2 r1: podridão nas estradas de terra e faixas */
+ M.mark=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.8,emissive:night?0x262428:0,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});if(S.style==='inverted')rotMat(M.mark); /* v2 r1: podridão nas estradas de terra e faixas */surfPatch(M.mark,'paint'); /* v3 r36: faixas desgastadas em ~40% da cidade (SURF) */
  M.glow=jammerBasicMaterial(new THREE.MeshBasicMaterial({map:glowTex,vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-4,polygonOffsetUnits:-4}));
  M.pole=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.6,metalness:.3});
  M.head=new THREE.MeshBasicMaterial({vertexColors:true});
@@ -6435,7 +6474,7 @@ async function generateCity(){
  if(city.haze&&(!city.safe||![...city.chunks.values()].some(ch=>ch.hazeCastleMesh)))throw Error('Point Haze: castelo da casa segura não foi montado');if(city.haze&&!city.hazeTerrainMesh){hazeTerrain();hazeHatchBuild()}
  if(city.isle&&!city.delSlot)console.error('DeLorean: garagem da micro-ilha não foi criada para a seed',S.seed);
  if(!city.haze&&city.beachRi>=0&&(!city.info[city.beachRi]?.para||city.info[city.beachRi]?.kind!=='bld'))throw Error('Quadra de praia obrigatoria nao gerada: '+S.seed);
- try{vinylPlace()}catch(e){console.error(e)}try{islePlace()}catch(e){console.error(e)}paraInit();tommyInit();try{brInitCity()}catch(e){console.error(e)}spawnPlayer();
+ try{vinylPlace()}catch(e){console.error(e)}try{islePlace()}catch(e){console.error(e)}paraInit();tommyInit();try{brInitCity()}catch(e){console.error(e)}try{streetTexBuild()}catch(e){console.error(e)}spawnPlayer();
  buildCarHash();buildLanes();populate(true);
  for(let i=0;i<pedTarget();i++)spawnPed({x:PL.x,z:PL.z,min:0,max:200});
  buildSafehouse();buildJail();invertInitCity();
@@ -25942,6 +25981,7 @@ function update(dt){if(SKATE.ui)return;if(POOL.on){poolTick(dt);return}if(DICE.o
    p._npcChatLeader=true;q._npcChatLeader=false;p._npcVoiceTurn=false;p._npcVoiceAt=simT+.35;}}
  }
  if(city.chimneys&&city.chimneys.length&&S.style!=='inverted'){const pp=PL.car||PL;for(const c of city.chimneys){if(Math.abs(c.x-pp.x)>240||Math.abs(c.z-pp.z)>240)continue;const dd=Math.hypot(c.x-pp.x,c.z-pp.z);if(Math.random()<dt*(dd<115?1.35:.48))emit(c.x,c.y,c.z,(WX.wx||1.5)*.4+(Math.random()-.5),1.6+Math.random(),(WX.wz||.8)*.4+(Math.random()-.5),4.2,2,8,STYLES[S.style].synth?0x4a4458:0x9a9894,false,.45)}}
+ manholeSmokeTick(dt); /* v3 r36 */
  invertTick(dt);hazeTick(dt);heliTick(dt);taxiTick(dt);ambTick(dt);phoneTick(dt);try{animalsTick(dt);petsTick(dt)}catch(e){console.error(e)}heldGunTick();worldUpdate(dt);updateParts(dt);timeJumpTick(dt);
 }
 function syncVehicleHUD(){const c=PL.car,show=!!c&&!PL.dead;$('#vbars').hidden=!show;$('#carbar').hidden=!show;$('#speed').hidden=!show;$('#fuelbar').hidden=!(show&&c.alive&&!c.t.boat&&Number.isFinite(c.fuel))}
@@ -26640,8 +26680,8 @@ const TVCAT=[
   g:['A água tem ondas em camadas, reflete o céu e o brilho do sol, e a luz dança no fundo do raso. Rios perto das indústrias ficam poluídos. No mar, dois navios cargueiros passam devagar: dá para subir de lancha ou pousar o helicóptero no convés. Na foz, o rio abre em curva pela areia até o mar; o farol tem pedras no pé. Barcos, jet skis e o hovercraft balançam com as ondas. Depois da praia o fundo despenca num talude, e lá embaixo há carcaças de lanchas. Os rios são mais fundos no meio e também escondem lanchas afundadas. A beira da praia é irregular: em alguns trechos a areia avança no mar em pontas, em outros fica reta.','Water has layered waves, reflects the sky and the sun glare, and light dances on the shallow bottom. Rivers near industry get polluted. At sea, two cargo ships sail slowly by: you can climb aboard from a boat or land the helicopter on deck. At the river mouth the channel flares out across the sand to the sea; the lighthouse sits on a rock base. Boats, jet skis and the hovercraft rock with the waves. Past the beach the seabed drops off a steep slope, with boat wrecks at the bottom. Rivers are deeper in the middle and hide sunken boats too. The shoreline is irregular: in some stretches the sand reaches into the sea in points, in others it stays straight.'],
   p:[tvcP('agua_tarde',['MAR NO PÔR DO SOL','SEA AT SUNSET']),tvcP('agua_raso',['LUZ NO RASO','LIGHT IN THE SHALLOWS']),tvcP('agua_rio',['ONDAS NO RIO','RIVER WAVES']),tvcP('tv_pollution',['POLUIÇÃO','POLLUTION']),tvcP('ship2',['NAVIOS CARGUEIROS','CARGO SHIPS']),tvcP('foz',['FOZ DO RIO','RIVER MOUTH']),tvcP('farol',['PÉ DO FAROL','LIGHTHOUSE BASE']),tvcP('talude',['O FUNDO DESPENCA','THE DROP-OFF']),tvcP('rio_fundo',['LANCHA NO FUNDO DO RIO','BOAT AT THE RIVER BOTTOM']),tvcP('praia_borda',['PRAIA IRREGULAR','IRREGULAR SHORELINE'])]},
  {k:'shfx',ic:'✨',c:'#ffd27a',l:'alt',n:['EFEITOS VISUAIS','VISUAL EFFECTS'],
-  g:['A lataria dos carros reflete o céu. Depois da chuva o asfalto molhado espelha o sol e a lua. À noite janelas e neons brilham. A areia tem poros e marcas de vento, o asfalto é granulado, as calçadas têm um grão leve e os prédios têm tijolo, reboco ou concreto. Cada efeito liga e desliga em Gráficos. Na cidade também há prédios redondos ou ovais e fachadas em branco-concreto e amarelo-areia.','Car paint reflects the sky. After rain the wet asphalt mirrors the sun and the moon. At night windows and neons glow. Sand has pores and wind ripples, asphalt is grainy, sidewalks have a light grain and buildings show brick, plaster or concrete. Each effect can be toggled in Graphics. The city also has round or oval buildings and facades in white concrete and sandy yellow.'],
-  p:[tvcP('fx_carro',['CÉU NA LATARIA','SKY ON CAR PAINT']),tvcP('fx_chuva_tarde',['ASFALTO MOLHADO NO PÔR DO SOL','WET ASPHALT AT SUNSET']),tvcP('fx_chuva_noite',['CHUVA À NOITE','RAINY NIGHT']),tvcP('fx_janelas',['JANELAS ACESAS','LIT WINDOWS']),tvcP('fx_areia',['AREIA','SAND']),tvcP('fx_asfalto',['ASFALTO','ASPHALT']),tvcP('fx_parede',['TIJOLO E CONCRETO','BRICK AND CONCRETE']),tvcP('predios_redondos',['PRÉDIOS REDONDOS E CORES NOVAS','ROUND BUILDINGS AND NEW COLORS'])]},
+  g:['A lataria dos carros reflete o céu. Depois da chuva o asfalto molhado espelha o sol e a lua. À noite janelas e neons brilham. A areia tem poros e marcas de vento, o asfalto é granulado, as calçadas têm um grão leve e os prédios têm tijolo, reboco ou concreto. Nas ruas há tampas de bueiro (no centro soltam fumaça), bocas-de-lobo no meio-fio e faixas gastas em parte da cidade. Cada efeito liga e desliga em Gráficos. Na cidade também há prédios redondos ou ovais e fachadas em branco-concreto e amarelo-areia.','Car paint reflects the sky. After rain the wet asphalt mirrors the sun and the moon. At night windows and neons glow. Sand has pores and wind ripples, asphalt is grainy, sidewalks have a light grain and buildings show brick, plaster or concrete. Streets have manhole covers (steaming downtown), storm drains along the curb and worn paint in part of the city. Each effect can be toggled in Graphics. The city also has round or oval buildings and facades in white concrete and sandy yellow.'],
+  p:[tvcP('fx_carro',['CÉU NA LATARIA','SKY ON CAR PAINT']),tvcP('fx_chuva_tarde',['ASFALTO MOLHADO NO PÔR DO SOL','WET ASPHALT AT SUNSET']),tvcP('fx_chuva_noite',['CHUVA À NOITE','RAINY NIGHT']),tvcP('fx_janelas',['JANELAS ACESAS','LIT WINDOWS']),tvcP('fx_areia',['AREIA','SAND']),tvcP('fx_asfalto',['ASFALTO','ASPHALT']),tvcP('fx_parede',['TIJOLO E CONCRETO','BRICK AND CONCRETE']),tvcP('predios_redondos',['PRÉDIOS REDONDOS E CORES NOVAS','ROUND BUILDINGS AND NEW COLORS']),tvcP('fx_bueiro',['BUEIRO E FAIXA GASTA','MANHOLE AND WORN PAINT'])]},
  {k:'obra',ic:'🦺',c:'#ffb020',l:'1',n:['OBRAS NA RUA','ROADWORKS'],
   g:['Todo dia uma rua fecha para obra, o dia inteiro. O GPS e o trânsito desviam, e no mapa ela aparece pontilhada de vermelho. O fundo do buraco falha: é a entrada das Backrooms.','Every day one street closes for roadworks, all day long. GPS and traffic detour, and the map shows it dotted in red. The bottom of the hole glitches: it is the way into the Backrooms.'],
   p:[tvcP('obra',['RUA FECHADA','STREET CLOSED'])]},

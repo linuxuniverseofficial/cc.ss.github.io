@@ -7,7 +7,7 @@ mecânicas houver (20, 30…). Coisas pequenas podem dividir canal (ex.: eclipse
 
 ## Estado atual (v2 r68)
 - **TV implementada no jogo.** Botão 📺 no menu (início e pausa) → `#tvcat`. 44 canais no array `TVCAT`
-  (bloco "TV DE RECURSOS" no fim do script principal do `index.html`). Ordem e conteúdo estão lá; esta tabela é o resumo.
+  (`js/48-tvcat.js`; até a r36 era o bloco "TV DE RECURSOS" no fim do script do `index.html`). Ordem e conteúdo estão lá; esta tabela é o resumo.
 - Controles: ←/→, A/D, L1/R1, direcional ou arrastar o dedo/clique na tela = canal (com chiado de imagem e som);
   números 0–9 = ir direto ao canal; G / ↑↓ / △ = guia de canais; Esc / Backspace / ○ / OPTIONS = sai (volta ao menu).
 - Texto PT/EN mora no próprio canal (`n`, `g`, legenda dos quadros) e vai para a tela por `data-t` + CSS `::before`,

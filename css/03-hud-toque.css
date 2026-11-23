@@ -1,0 +1,289 @@
+/* Coastal Chaos · css/03-hud-toque.css — Interface automática, velocímetro, botões de toque, troca de personagem. Os arquivos css/ entram na ordem do número (a ordem importa na cascata). */
+/* v3 r2: interface automática. Minimapa sem uso (sem GPS/missão/polícia) recolhe no canto (origem por JS: miniRestOrigin);
+   botões de toque somem 3 s após o último toque (touch-idle) ou ficam translúcidos (touch-fade). Botão de contexto (.hot) não apaga. */
+#mini{transition:transform .35s ease,opacity .35s ease}
+body.mini-rest #mini{transform:scale(.34);opacity:.62}
+body.mini-rest #mini:hover{transform:none;opacity:1}
+#hpwrap{transition:transform .35s ease}body.mini-rest #hpwrap{transform:translateY(var(--kitDrop,0px))}
+body.mini-rest:has(#mini:hover) #hpwrap{transform:none}
+#speed{transition:translate .35s ease}body.mini-rest #speed{translate:var(--spdDX,0px) var(--spdDY,0px)}body.mini-rest:has(#mini:hover) #speed{translate:none}
+#touch .tb,#tjoy,#tsteer .tsa,#tpedal .tpd{transition:opacity .45s ease}
+body.touch-fade #touch .tb,body.touch-fade #tjoy,body.touch-fade #tsteer .tsa,body.touch-fade #tpedal .tpd{opacity:.42}
+body.touch-idle #touch .tb,body.touch-idle #tjoy,body.touch-idle #tsteer .tsa,body.touch-idle #tpedal .tpd{opacity:.1}
+body.touch-idle #touch .tb.hot,body.touch-fade #touch .tb.hot,#touch .tb.on,body.touch-idle #touch #tmore .tb,body.touch-fade #touch #tmore .tb{opacity:1;transition:opacity .15s}
+#touch .tb.hot.pop{animation:tbHotPop .5s ease-out 2}
+@keyframes tbHotPop{40%{transform:scale(1.16)}}
+#ctxp:not([hidden]),#prompt:not([hidden]){animation:ctxIn .22s ease-out}
+@keyframes ctxIn{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
+body.hide-gamehud #clock,body.hide-gamehud #stylelabel,body.hide-gamehud #money,
+body.hide-gamehud #hpwrap,body.hide-gamehud #speed,body.hide-gamehud #radio,
+body.hide-gamehud #gun,body.hide-gamehud #wanted,body.hide-gamehud #wzone{display:none!important}
+
+/* HUD cruzado. O minimapa conserva seu tamanho original. */
+#mini{left:calc(16px + env(safe-area-inset-left,0px));right:auto;bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+#hpwrap{left:calc(16px + env(safe-area-inset-left,0px));bottom:calc(16px + 180px + 18px + env(safe-area-inset-bottom,0px));width:180px;gap:7px}
+#hpwrap .bar{box-sizing:border-box;width:180px;height:22px;border-width:2px}
+#hpwrap .bar b{font-size:11px}
+#hpwrap #vbars{width:180px;gap:6px}
+#hpwrap #vbars .bar.half{width:87px}
+#hpwrap #vbars .bar.half b{font-size:8px;letter-spacing:0}
+#clock{display:none!important}
+#money{left:auto;right:calc(16px + env(safe-area-inset-right,0px));top:calc(96px + env(safe-area-inset-top,0px));text-align:right}
+#wzone{left:auto;right:calc(16px + env(safe-area-inset-right,0px));top:calc(14px + env(safe-area-inset-top,0px));justify-content:flex-end;white-space:nowrap}
+#wzone:not([hidden]) .ic.on{animation:wzonePulse .85s steps(2,end) infinite}
+@keyframes wzonePulse{50%{background:#ff343499;box-shadow:0 0 11px #f33c;color:#fff}}
+/* v130: procurado junto ao canto superior direito, abaixo do indicador de busca regional. */
+#wanted{top:calc(49px + env(safe-area-inset-top,0px));right:calc(10px + env(safe-area-inset-right,0px));text-align:right;max-width:min(350px,55vw)}
+/* v3 r4 (PC): o kit (arma, vida, colete, câmera lenta, veículo) sai de cima do minimapa e vai para o canto superior direito
+   (o radar recolhe sozinho e o kit ficava descendo junto); zona de busca e procurado descem para baixo dele. Toque não muda. */
+body:not(.touch) #hpwrap{left:auto;right:calc(16px + env(safe-area-inset-right,0px));bottom:auto;top:calc(16px + env(safe-area-inset-top,0px));justify-items:end}
+body:not(.touch).mini-rest #hpwrap{transform:none}
+body:not(.touch) #wzone{top:calc(104px + env(safe-area-inset-top,0px))}
+body:not(.touch) #wanted{top:calc(139px + env(safe-area-inset-top,0px))}
+/* velocímetro à direita do minimapa, alinhado pela base. */
+#speed{left:calc(16px + 180px + 22px + env(safe-area-inset-left,0px));right:auto;bottom:calc(18px + env(safe-area-inset-bottom,0px));text-align:left}
+body.touch #speed{left:calc(16px + 118px + 16px + env(safe-area-inset-left,0px));right:auto;top:calc(80px + 118px - 48px + env(safe-area-inset-top,0px));bottom:auto;text-align:left;font-size:27px}
+body.touch #speed small{font-size:10px}
+/* ESC continua abrindo o menu; no mobile o botão MENU permanece acessível. */
+body:not(.touch) #topbar{display:none}
+body.touch #topbar{left:calc(16px + env(safe-area-inset-left,0px));right:auto;top:calc(14px + env(safe-area-inset-top,0px))}
+body.touch #topbar #menuBtn{font-size:10px;padding:5px 8px}
+body.touch #mini{left:calc(16px + env(safe-area-inset-left,0px));right:auto;top:calc(80px + env(safe-area-inset-top,0px));bottom:auto;width:118px;height:118px}
+body.touch #hpwrap{left:calc(16px + env(safe-area-inset-left,0px));top:calc(80px + 118px + 14px + env(safe-area-inset-top,0px));bottom:auto;width:118px}
+body.touch #hpwrap .bar{width:118px;height:16px}
+body.touch #hpwrap #vbars{width:118px;gap:4px}
+body.touch #hpwrap #vbars .bar.half{width:57px}
+body.touch #clock{display:none!important}
+body.touch #money{left:auto;right:calc(14px + env(safe-area-inset-right,0px));top:calc(86px + env(safe-area-inset-top,0px));font-size:16px;text-align:right}
+body.touch #wzone{left:auto;right:calc(14px + env(safe-area-inset-right,0px));top:calc(8px + env(safe-area-inset-top,0px));font-size:9px;gap:3px}
+body.touch #wzone .ic{width:22px;height:22px}
+body.touch #wanted{right:calc(10px + env(safe-area-inset-right,0px));top:calc(40px + env(safe-area-inset-top,0px));max-width:calc(100vw - 165px)}
+body.touch #wanted b{font-size:20px}body.touch #wanted span{font-size:10px}
+#money{display:none!important}
+#monBtn{white-space:nowrap}#monBtn.monitor-on{color:#ff4a4a;border-color:#ff4a4a}
+#benchBtn{color:#ff4fa3!important;border-color:#ff4fa3!important;background:var(--panel)!important}
+#benchBtn:hover{color:#ff83c5!important;border-color:#ff83c5!important}
+.lang-select{display:flex;gap:14px;align-items:center}.lang-select .btn{display:inline-flex;align-items:center;gap:9px;min-width:126px;justify-content:center}
+.lang-select .btn[aria-pressed="true"]{border-color:var(--acc);color:var(--acc)}
+.flag-br,.flag-us{display:inline-block;width:28px;height:18px;border:1px solid #777;position:relative;flex:none;overflow:hidden}
+.flag-br{background:#198a3e}.flag-br:before{content:"";position:absolute;width:15px;height:15px;left:6px;top:1px;transform:rotate(45deg);background:#ffdc32}.flag-br:after{content:"";position:absolute;background:#2855b0;width:10px;height:10px;border-radius:50%;top:4px;left:9px}
+.flag-us{background:repeating-linear-gradient(to bottom,#bb273c 0 2px,#fff 2px 4px)}.flag-us:after{content:"";position:absolute;top:0;left:0;width:12px;height:10px;background:#23488a}
+
+#rotatePhone{position:fixed;inset:0;z-index:99999;background:#100d1c;color:white;display:grid;place-content:center;text-align:center;gap:16px;padding:20px;font:600 18px system-ui}#rotatePhone[hidden]{display:none}#rotatePhone .rpH,#rotatePhone.fs-only .rpV{display:none}#rotatePhone.fs-only .rpH{display:block}#landscapeBtn{background:linear-gradient(180deg,#36c96a,#1f9a4c);color:#fff;border-color:#0b3d1d;text-shadow:0 1px 0 #0b3d1d}
+/* Aviso modal de importacao PSAVE: visivel tambem no menu inicial */
+#psaveErrorDialog[hidden]{display:none!important}
+#psaveErrorDialog{position:fixed;inset:0;z-index:100010;background:#05040bc9;display:flex;align-items:center;justify-content:center;padding:18px}
+#psaveErrorBox{width:min(420px,100%);background:#181529;color:#f8f5ff;border:3px solid #f59acb;box-shadow:7px 7px 0 #05040b;padding:22px;text-align:center;font-family:system-ui,sans-serif}
+#psaveErrorBox h2{font-size:20px;margin:0 0 12px;color:#ff9bc8}
+#psaveErrorBox p{font-size:14px;line-height:1.55;margin:0 0 20px;white-space:pre-line}
+#psaveErrorOk{min-width:120px}
+
+/* Commerce menus: shared AMOnições visual language, individual store accents. */
+#tune{--shop-accent:#efa950;--shop-selected:#493929}
+#ward{--shop-accent:#e98dbb;--shop-selected:#492c43}
+#ward[data-store="jewel"]{--shop-accent:#e4c478;--shop-selected:#443c2a}#ward[data-store="optic"]{--shop-accent:#5fe0e8;--shop-selected:#1f3e44}#ward[data-store="shoes"]{--shop-accent:#ff8a5a;--shop-selected:#44261c}#ward[data-store="beach"]{--shop-accent:#5fd0f0;--shop-selected:#173e4a}
+#tech{--shop-accent:#74cddd;--shop-selected:#243e48}
+#tech[data-store="bag"]{--shop-accent:#a4c28c;--shop-selected:#34402f}
+#deal{--shop-accent:#81bde8;--shop-selected:#293d50}
+#ammoStore{--shop-accent:#e890af;--shop-selected:#462c42}
+:is(#tune,#ward,#tech,#deal,#ammoStore){--acc:var(--shop-accent);font-family:'Segoe UI',system-ui,sans-serif}
+:is(#tune,#ward,#deal) .card,#tech,#ammoStore>div{background:#171620!important;color:#efedf4!important;border:1px solid #484158!important;border-radius:7px!important;box-shadow:0 15px 55px #0009!important;padding:22px!important}
+:is(#tune,#ward,#tech,#deal,#ammoStore) .px{outline:none!important}
+:is(#tune,#ward,#deal) .card{outline:none!important}
+:is(#tune,#ward,#tech,#deal,#ammoStore) h2{color:var(--shop-accent)!important;font:700 18px 'Segoe UI',system-ui,sans-serif!important;letter-spacing:.12em!important}
+:is(#tune,#ward,#tech,#deal,#ammoStore) .msec{border-top:1px solid #40394f;padding-top:16px;margin-top:2px}
+:is(#tune,#ward,#tech,#deal,#ammoStore) :is(.msec h2,h3){font:700 12px 'Segoe UI',system-ui,sans-serif!important;letter-spacing:.14em!important;color:#aaa1b8!important}
+:is(#tune,#ward,#tech,#deal,#ammoStore) :is(.btn:not(.sw),button:not(.sw)){background:#202330!important;color:#eceaf1!important;border:1px solid #49415f!important;border-radius:4px!important;box-shadow:none!important;outline:none;padding:10px 12px;min-height:42px;font:700 13px 'Segoe UI',system-ui,sans-serif!important;letter-spacing:0!important;line-height:1.35}
+:is(#tune,#ward,#tech,#deal,#ammoStore) :is(.btn,button):hover{border-color:var(--shop-accent)!important}
+:is(#tune,#ward,#tech,#deal,#ammoStore) :is(button,input):focus-visible{outline:2px solid var(--shop-accent)!important;outline-offset:3px!important}
+:is(#tune,#ward,#tech,#deal,#ammoStore) :is(button.selected,.primary){background:var(--shop-selected)!important;border-color:var(--shop-accent)!important;color:#fff!important}
+:is(#tune,#ward,#tech,#deal,#ammoStore) button:disabled{opacity:.38;cursor:default}
+:is(#tune,#ward,#deal) .sw{border:2px solid #171620!important;border-radius:4px;box-shadow:0 0 0 1px #49415f!important;height:40px}
+:is(#tune,#ward,#deal) .sw:focus-visible{box-shadow:0 0 0 3px var(--shop-accent)!important}
+#tune .row{gap:8px}#tune label{font-size:14px!important}
+#tune :is(#tuneNitroInfo,.msec span){font-size:12px!important;line-height:1.5}
+#tech h3{margin:18px 0 10px!important}#tech .tgrid{gap:8px}
+#ammoStore .arow{border-color:#40394f!important;padding:12px 0!important}
+#ammoStore>div>div:nth-child(2){display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+#ammoStore button{margin:0!important}#ammoStore .astat{color:#aaa1b8!important}
+@media(max-width:640px),(max-height:500px){
+ :is(#tune,#ward){padding:8px!important}
+ :is(#tune,#ward,#deal) .card,#tech,#ammoStore>div{padding:14px!important;max-height:calc(100dvh - 16px);overflow:auto;box-sizing:border-box}
+ #ward .card>div:nth-child(2){grid-template-columns:minmax(0,1fr)!important}
+ #wardSecs{max-height:none!important}
+ #ammoStore>div>div:nth-child(2){grid-template-columns:repeat(auto-fit,minmax(110px,1fr))}
+}
+
+
+#touch{--touch-size:58px;--touch-alpha:.82}
+#touch .tb{width:var(--touch-size);height:var(--touch-size);min-width:48px;min-height:48px;border:1px solid #ffffff66;background:rgba(18,22,32,var(--touch-alpha));border-radius:16px;box-shadow:0 3px 12px #0005;font:700 10px system-ui;letter-spacing:.02em;color:#f4f0e9;transition:background .1s}
+#touch .tb:active,#touch .tb.on{background:#e6bf61;color:#18131d;border-color:#fff}
+#touch .tb.big{background:rgba(139,48,59,.85);width:calc(var(--touch-size) + 10px);height:calc(var(--touch-size) + 10px)}
+#tbtns{direction:ltr;grid-template-columns:repeat(3,calc(var(--touch-size) + 10px));gap:12px;align-items:center;justify-items:center}
+#ttop{right:calc(16px + env(safe-area-inset-right,0px));top:calc(12px + env(safe-area-inset-top,0px));gap:10px}
+#ttop .tb{width:auto;min-width:52px;height:48px;padding:0 10px;border-radius:12px}
+#tmore{position:absolute;right:calc(16px + env(safe-area-inset-right,0px));top:calc(70px + env(safe-area-inset-top,0px));display:grid;grid-template-columns:repeat(4,70px);gap:8px;padding:12px;background:#151722ee;border:1px solid #777586;border-radius:14px;pointer-events:auto}
+#tbtns [data-t="interact"]{grid-column:3;grid-row:2;border-color:#e6bf61;color:#ffe39b}
+#tmore[hidden],#touch button[hidden]{display:none!important}
+#tmore .tb{width:70px;height:50px;font-size:9px;border-radius:10px}
+@media(max-height:420px){#touch{--touch-size:48px}#tbtns{gap:8px}#tjoy{width:120px;height:120px;bottom:12px}#tmore{grid-template-columns:repeat(4,64px)}#tmore .tb{width:64px}}
+
+/* v77 · TOQUE: botões de ação em arco ao redor do polegar direito (ação principal maior no canto, as outras a um
+   arco de distância), contexto decide o que aparece (INTERAGIR só quando há algo para interagir, BUZINA só no
+   carro), o vão entre botões não bloqueia o arrasto da câmera. Joystick à esquerda, sistema no topo direito. */
+#tbtns{display:block!important;position:absolute;width:270px;height:240px;pointer-events:none!important;direction:ltr!important;transform-origin:100% 100%}
+#tbtns .tb{position:absolute;pointer-events:auto;width:60px;height:60px;border-radius:50%;font-size:10px;line-height:1.05;padding:2px}
+#tbtns [data-t="fire"]{right:0;bottom:0;width:86px;height:86px;font-size:12px}
+#tbtns [data-t="space"]{right:114px;bottom:13px}
+#tbtns [data-t="f"]{right:84px;bottom:84px}
+#tbtns [data-t="run"]{right:13px;bottom:114px}
+#tbtns [data-t="wpn"]{right:182px;bottom:58px;width:54px;height:54px}
+#tbtns [data-t="horn"]{right:270px;bottom:58px;width:54px;height:54px}
+#tbtns [data-t="interact"]{right:150px;bottom:150px;width:auto;min-width:96px;height:44px;border-radius:22px;padding:0 14px;grid-column:auto;grid-row:auto;border-color:#e6bf61;color:#ffe39b;background:rgba(60,44,10,.88);animation:tbPulse 1.6s ease-in-out infinite}
+#tbtns [data-t="motionGas"]{right:200px;bottom:120px;border-radius:14px;width:70px}
+#tbtns [data-t="motionBrake"]{right:200px;bottom:-4px;border-radius:14px;width:70px}
+@keyframes tbPulse{50%{box-shadow:0 0 0 4px #e6bf6144,0 3px 12px #0005}}
+@media(max-height:420px){#tbtns{transform:scale(.86)}}
+@media(max-height:340px){#tbtns{transform:scale(.74)}}
+/* v78 · TOQUE NOVO: botões redondos com ícone (sem texto), translúcidos; no veículo setas ← → à esquerda e pedais à
+   direita (S.touchSteer 'arrows' padrão | 'stick'); um botão de CONTEXTO (ENTRAR perto de veículo, INTERAGIR perto de
+   loja/porta/NPC, SAIR dentro do veículo) no mesmo lugar, só quando há o que fazer. */
+#tsteer[hidden],#tpedal[hidden],#tjoy[hidden]{display:none!important}
+/* v3 r17: editor dos botões de toque */
+body.touch-edit #menu,body.touch-edit #cfg,body.touch-edit #menuPreparing{display:none!important}
+body.touch-edit::before{content:'';position:fixed;inset:0;background:#05070ccc;z-index:2;pointer-events:auto}
+body.touch-edit #touch{visibility:visible!important}
+body.touch-edit #touch .tb,body.touch-edit #tjoy,body.touch-edit #tsteer .tsa,body.touch-edit #tpedal .tpd{opacity:1!important;animation:none!important}
+body.touch-edit #touch .te-sel{outline:3px dashed #e6bf61;outline-offset:4px}
+#tedit{position:fixed;left:0;right:0;top:0;z-index:4;pointer-events:none;display:flex;justify-content:flex-start;padding:calc(8px + env(safe-area-inset-top,0px)) 16px 0 calc(12px + env(safe-area-inset-left,0px))}
+#tedit[hidden]{display:none}
+#tedit .te-bar{pointer-events:auto;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;max-width:min(520px,calc(100vw - 250px));background:#12141cf0;border:1px solid #ffffff40;border-radius:12px;padding:8px 12px;font:700 11px system-ui;color:#fff}
+#tedit .te-bar b{flex:1 1 100%;font-size:12px;color:#e6bf61}
+#tedit .te-bar label{display:flex;align-items:center;gap:6px}
+#tedit .te-bar input{width:90px}
+#tedit.none .te-bar label{opacity:.35;pointer-events:none}
+#tedit .te-row{display:flex;gap:8px;margin-left:auto}
+#tedit .btn{padding:6px 12px;font-size:11px}
+
+#touch .tb{background:rgba(16,18,26,.42);border:1.5px solid #ffffff59;box-shadow:0 2px 10px #0004;-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);color:#fff;display:grid;place-items:center;overflow:visible}
+#ttop .tb,#tmore .tb{position:relative}#touch #tbtns .tb{position:absolute;border-radius:50%}
+#touch .tb svg,#tsteer svg,#tpedal svg{width:56%;height:56%;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none;filter:drop-shadow(0 1px 1px #0008)}
+#touch .tb i{position:absolute;left:50%;top:calc(100% + 3px);transform:translateX(-50%);font:700 9px/1 system-ui;font-style:normal;letter-spacing:.04em;white-space:nowrap;color:#fff;text-shadow:0 1px 2px #000,0 0 4px #000;pointer-events:none}
+#touch .tb:active,#touch .tb.on{background:rgba(230,191,97,.85);border-color:#fff}
+#touch .tb.on svg{stroke:#18131d;filter:none}
+#tbtns [data-t="fire"]{background:rgba(139,48,59,.55)!important}
+#tbtns [data-t="f"]{width:70px;height:70px}
+#tbtns [data-t="f"].ctx{border:2px solid #e6bf61;background:rgba(70,52,12,.6);animation:tbPulse 1.6s ease-in-out infinite}
+#tbtns [data-t="interact"]{width:56px!important;min-width:0!important;height:56px!important;border-radius:50%!important;padding:0!important;right:160px;bottom:160px}
+#ttop .tb{width:46px!important;min-width:0!important;height:46px!important;border-radius:50%!important;padding:0!important}
+#ttop .tb svg{width:52%;height:52%}
+#tmore .tb{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:68px;height:58px;border-radius:14px}
+#tmore .tb svg{width:24px;height:24px}
+#tmore .tb i{position:static;transform:none;font-size:8px;text-shadow:none}
+#tsteer{position:absolute;left:calc(16px + env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));display:flex;gap:14px;pointer-events:auto;touch-action:none}
+#tsteer .tsa{width:96px;height:96px;border-radius:50%;background:rgba(16,18,26,.42);border:1.5px solid #ffffff59;display:grid;place-items:center;box-shadow:0 2px 10px #0004}
+#tsteer svg{stroke-width:2.6}
+#tpedal{position:absolute;right:calc(14px + env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;gap:12px;align-items:flex-end;pointer-events:auto;touch-action:none}
+#tpedal .tpd{width:86px;height:114px;border-radius:24px;background:rgba(16,18,26,.42);border:1.5px solid #ffffff59;display:grid;place-items:center;box-shadow:0 2px 10px #0004}
+#tpedal .tpd[data-p="brake"]{width:80px;height:96px}
+#tsteer .tsa.on,#tpedal .tpd.on{background:rgba(230,191,97,.85);border-color:#fff}
+#tsteer .tsa.on svg,#tpedal .tpd.on svg{stroke:#18131d;filter:none}
+#touch.drive #tbtns{bottom:calc(142px + env(safe-area-inset-bottom,0px))}
+#touch.drive #tbtns [data-t="fire"]{right:0;bottom:0;width:60px;height:60px}
+#touch.drive #tbtns [data-t="run"]{right:72px;bottom:0;width:56px;height:56px}
+#touch.drive #tbtns [data-t="space"]{right:140px;bottom:0;width:56px;height:56px}
+#touch.drive #tbtns [data-t="horn"]{right:208px;bottom:2px;width:52px;height:52px}
+#touch.drive #tbtns [data-t="wpn"]{right:4px;bottom:72px;width:52px;height:52px}
+#touch.drive #tbtns [data-t="f"]{right:0;bottom:142px;width:58px;height:58px}
+/* v78: troca de personagem no canto superior ESQUERDO (menor, acima do radar); relógio ao lado; radar e barras descem.
+   O canto direito fica só para os botões (SAIR do veículo na borda direita, longe dos pedais). */
+/* v78: troca de personagem ao lado do botão CÂMERA, do mesmo tamanho (46 px); o kit e o radar sobem pro canto esquerdo */
+body.touch #chsel{left:auto;bottom:auto;right:calc(16px + 3*46px + 2*10px + 10px + env(safe-area-inset-right,0px));top:calc(12px + env(safe-area-inset-top,0px));width:46px;height:46px;border-width:2px;box-shadow:0 0 0 1.5px #ffffff99;transform-origin:100% 0}
+body.touch #chsel .half canvas{width:44px;height:44px;image-rendering:pixelated}body.touch #chsel .nm{display:none}
+body.touch #clock{left:calc(80px + env(safe-area-inset-left,0px));top:calc(18px + env(safe-area-inset-top,0px))}
+/* v78: como no PC, o kit (arma/vida/especial/veículo) fica ACIMA e o minimapa embaixo dele; o topo do radar acompanha a altura do kit (--miniTop, touchVisible) */
+body.touch #hpwrap{top:var(--kitTop,calc(12px + env(safe-area-inset-top,0px)))}
+/* v78: objetivo (laranja) no toque: aparece 15 s e vira um botão quadrado laranja (ícone de texto) acima do kit; tocar mostra de novo */
+body.touch #storyGuide.gmin{display:none!important}
+#guideBtn{position:fixed;left:calc(12px + env(safe-area-inset-left,0px));top:calc(10px + env(safe-area-inset-top,0px));width:36px;height:36px;z-index:60;border:2px solid #ff921f;border-radius:6px;background:rgba(40,18,6,.85);display:grid;place-items:center;padding:0;pointer-events:auto;touch-action:manipulation;box-shadow:0 2px 8px #0006}
+#guideBtn[hidden]{display:none!important}#guideBtn svg{width:22px;height:22px;fill:none;stroke:#ff951f;stroke-width:2.4;stroke-linecap:round}
+#guideBtn.new{animation:tbPulse 1.2s ease-in-out 3}
+#skipHint{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:100001;background:rgba(0,0,0,.72);color:#fff;font:700 12px/1 system-ui;letter-spacing:.12em;padding:10px 16px;border-radius:20px;border:1px solid #ffffff44;pointer-events:none;white-space:nowrap}
+#skipHint[hidden]{display:none!important}
+body.touch #mini{top:var(--miniTop,calc(130px + env(safe-area-inset-top,0px)))}
+body.touch.hide-gamehud #mini{top:calc(12px + env(safe-area-inset-top,0px))}
+@media(max-height:400px){body.touch #mini{width:104px;height:104px}}
+@media(max-height:420px){#tsteer .tsa{width:84px;height:84px}#tpedal .tpd{width:74px;height:98px}#tpedal .tpd[data-p="brake"]{width:70px;height:84px}#touch.drive #tbtns{bottom:calc(118px + env(safe-area-inset-bottom,0px))}}
+@media(max-height:340px){#tsteer .tsa{width:72px;height:72px}#tpedal .tpd{width:64px;height:84px}#tpedal .tpd[data-p="brake"]{width:60px;height:72px}#touch.drive #tbtns{bottom:calc(98px + env(safe-area-inset-bottom,0px))}}
+
+
+/* Channel identities: CSS-only broadcast graphics, no extra scene/postprocessing. */
+#tvbar[data-channel]{--tv-accent:#ffd21a;--tv-panel:#121c32;--tv-ink:#fff;background:repeating-linear-gradient(0deg,#0000000a 0 1px,transparent 1px 4px);box-shadow:inset 0 0 100px #0005}
+#tvbar[data-channel] .tvlogo{display:flex;align-items:center;gap:10px;font-size:clamp(14px,2vw,22px);letter-spacing:.08em;background:var(--tv-panel);padding:10px 14px;text-shadow:none;border-bottom:3px solid var(--tv-accent)}
+#tvbar[data-channel] .tvlogo b{display:block;color:var(--tv-accent);font-size:.52em;letter-spacing:.24em;margin-top:3px}
+#tvbar .tvmark{display:block;width:32px;height:32px;flex:none;fill:none;stroke:var(--tv-accent);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+#tvbar[data-channel] .tvlive{animation:none;background:var(--tv-panel);border-left:3px solid var(--tv-accent);font-size:11px;padding:8px 12px;letter-spacing:.1em}
+#tvbar[data-channel] .tvhead{left:22px;right:auto;max-width:calc(100% - 44px);bottom:50px;background:var(--tv-panel);border-left:5px solid var(--tv-accent);font-size:clamp(14px,2vw,23px);line-height:1.2;padding:12px 18px;box-sizing:border-box;text-shadow:none;letter-spacing:.03em}
+#tvbar[data-channel] .tvhead:before{content:attr(data-kicker);display:block;color:var(--tv-accent);font-size:10px;letter-spacing:.22em;margin-bottom:6px}
+#tvbar[data-channel] .tvtick{background:var(--tv-panel);color:var(--tv-ink);border-top:1px solid var(--tv-accent);font-family:var(--f-ui, sans-serif);font-weight:500}
+#tvbar[data-channel] .tvoff{bottom:148px;right:22px;background:#0b101bd9;padding:6px 8px;border:1px solid #ffffff40;font-size:10px}
+#tvbar[data-channel] .tvoff .btn{padding:7px 10px;font-size:11px;min-height:32px}
+#tvbar[data-channel] .tvoff small{display:block;margin-top:4px;font-size:9px;color:#ccd5df}
+#tvbar[data-channel="storm"]{--tv-accent:#7deeff;--tv-panel:#073965ed;background:linear-gradient(120deg,#079acd19,transparent 35%),repeating-linear-gradient(0deg,#00000008 0 1px,transparent 1px 4px)}
+#tvbar[data-channel="storm"] .tvlogo{border-radius:0 0 18px 0;border-bottom:0;border-right:4px solid var(--tv-accent)}
+#tvbar[data-channel="storm"] .tvhead{background:linear-gradient(100deg,#0766a9f5,#063459ed);border-radius:0 22px 0 0;border-left:0;border-top:3px solid #7deeff}
+#tvbar[data-channel="storm"] .tvmark{animation:tv-weather-breathe 5s ease-in-out infinite}
+@keyframes tv-weather-breathe{50%{opacity:.65}}
+#tvbar[data-channel="chase"]{--tv-accent:#ff725d;--tv-panel:#52121af2}
+#tvbar[data-channel="chase"] .tvhead{right:22px;background:linear-gradient(100deg,#9b1828,#371523);border-left:7px solid var(--tv-accent)}
+#tvbar[data-channel="blitz"]{--tv-accent:#ffc75a;--tv-panel:#102742f0}
+#tvbar[data-channel="blitz"] .tvlogo{left:22px;right:auto;border-left:5px solid var(--tv-accent);border-bottom:0}
+#tvbar[data-channel="blitz"] .tvlive{left:auto;right:22px;top:22px}
+#tvbar[data-channel="blitz"] .tvhead{border-left:0;border-bottom:4px solid var(--tv-accent);padding-left:20px}
+#tvbar[data-channel="pollution"]{--tv-accent:#92d665;--tv-panel:#142d23ed;--tv-ink:#e2efd7;background:none;box-shadow:inset 0 0 90px #0004}
+#tvbar[data-channel="pollution"] .tvlogo{left:22px;right:auto;background:#11251dd9;border:0;padding:12px 16px}
+#tvbar[data-channel="pollution"] .tvmark{width:34px;height:40px;stroke-width:3}
+#tvbar[data-channel="pollution"] .tvlive{left:auto;right:22px;background:#11251dbb}
+#tvbar[data-channel="pollution"] .tvhead{max-width:min(620px,calc(100% - 44px));border-left:3px solid var(--tv-accent);font-weight:500;background:linear-gradient(90deg,#142d23f5,#142d23bd)}
+#tvbar[data-channel="parachute"]{--tv-accent:#ffb897;--tv-panel:#43263dee;--tv-ink:#fff0e3}
+#tvbar[data-channel="parachute"] .tvlogo{transform:rotate(-2deg);border:2px solid var(--tv-accent);box-shadow:4px 4px 0 #be565c}
+#tvbar[data-channel="parachute"] .tvhead{border:0;border-top:4px solid var(--tv-accent);background:linear-gradient(100deg,#9b405aef,#43263ded)}
+#tvbar[data-channel="airport"]{--tv-accent:#8de0db;--tv-panel:#122e3cf0;--tv-ink:#e6f4f6}
+#tvbar[data-channel="airport"] .tvlogo{border-bottom:0;border-top:2px solid var(--tv-accent)}
+#tvbar[data-channel="airport"] .tvhead{border-left:0;border-top:2px solid var(--tv-accent);letter-spacing:.09em}
+@media(max-width:700px),(max-height:480px){
+ #tvbar[data-channel] .tvlogo{top:10px;right:12px;padding:6px 9px;gap:7px;font-size:14px}
+ #tvbar[data-channel="blitz"] .tvlogo,#tvbar[data-channel="pollution"] .tvlogo{left:12px;right:auto}
+ #tvbar[data-channel] .tvmark{width:25px;height:28px}
+ #tvbar[data-channel] .tvlive{left:12px;top:12px;padding:6px 8px;font-size:9px}
+ #tvbar[data-channel="blitz"] .tvlive,#tvbar[data-channel="pollution"] .tvlive{left:auto;right:12px}
+ #tvbar[data-channel] .tvhead{left:12px;bottom:39px;max-width:calc(100% - 24px);padding:8px 12px;font-size:14px}
+ #tvbar[data-channel="chase"] .tvhead{right:12px}
+ #tvbar[data-channel] .tvhead:before{font-size:8px;margin-bottom:4px}
+ #tvbar[data-channel] .tvtick{bottom:6px;height:26px;line-height:26px;font-size:11px}
+ #tvbar[data-channel] .tvoff{right:12px;bottom:121px;padding:4px 6px}
+ #tvbar[data-channel] .tvoff small{display:none}
+ #tvbar[data-channel] .tvoff .btn{font-size:10px;padding:5px 8px}
+}
+#tvbar[data-channel="forest"]{--tv-accent:#cfb3f2;--tv-panel:#211e32ee;--tv-ink:#e4dcf0;background:radial-gradient(ellipse at center,transparent 45%,#15132055)}
+#tvbar[data-channel="forest"] .tvlogo{border-bottom:1px solid var(--tv-accent);background:#211e32dd}
+#tvbar[data-channel="forest"] .tvhead{max-width:min(760px,calc(100% - 44px));border-left:2px solid var(--tv-accent);background:linear-gradient(90deg,#211e32f5,#211e32c9)}
+@media(max-width:700px),(max-height:480px){#tvbar[data-channel="forest"] .tvhead{max-width:calc(100% - 24px)}}
+@media(prefers-reduced-motion:reduce){#tvbar[data-channel] .tvmark{animation:none}}
+
+body.prologue-active #chsel,body.prologue-active #tSwitch,body.prologue-active #touch [data-t="char"],body.prologue-active [data-action="switch"]{display:none!important}
+body.prologue-active.story-cinematic #touch{display:none!important}
+body,body *{font-family:'Segoe UI',system-ui,-apple-system,Arial,sans-serif!important}
+#storyGuide,#storyCheckpoint,.note,#toast{letter-spacing:.015em!important;line-height:1.5;text-shadow:1px 1px 2px #000}
+#prologueTitle{position:fixed;left:50%;top:50%;width:min(1100px,94vw);height:auto;z-index:10000;pointer-events:none;opacity:0;transform:translate(-50%,-50%) scale(1);transform-origin:center;filter:none}
+body.touch #topbar #menuBtn,body.touch #jailBailTag{display:none!important}
+body.story-cinematic #storyGuide,body.story-cinematic #jailBailTag,body.story-cinematic #ctxp,body.story-cinematic #prompt{display:none!important}
+#prologueTitle[hidden]{display:none}
+#dualPanel{margin-top:20px;border:1px solid #49415f;border-radius:12px;overflow:hidden;background:#171620}
+#dualPanel header{padding:18px;background:#202330}#dualPanel header h2{margin:0 0 5px}#dualPanel header span{font-size:11px;letter-spacing:.1em;color:#b6adc5}
+#dualPanel .dualSection{padding:16px 18px;border-top:1px solid #40394f}#dualPanel h3{font-size:13px;margin:0 0 12px;color:#f4d36e;letter-spacing:.08em}
+#dualPanel p{font-size:14px;line-height:1.5;color:#bbb3ca;margin:10px 0 0}#dualPanel .dualTip{margin:14px 18px;padding:10px 12px;border-left:3px solid #f0c85a;background:#282332;color:#f3dfae}
+#dualPanel .row{gap:8px;flex-wrap:wrap}#dualPanel .field{margin:14px 0}#dualPanel select{width:100%;margin-top:12px;max-width:100%;box-sizing:border-box}
+#dualPanel .dualHealth{display:flex;flex-wrap:wrap;gap:12px;margin-top:14px;font-size:11px}#dualPanel .dualHealth span{border-left:4px solid var(--health);padding-left:7px}
+#dualPanel summary{cursor:pointer;font-weight:700;color:#f4d36e}#dualPanel pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#0d1018;padding:12px;border-radius:6px;font-size:12px;line-height:1.5;user-select:text;-webkit-user-select:text}#dualLinuxCopyStatus{display:block;font-size:13px;margin-top:8px}
+
