@@ -133,13 +133,13 @@ void main(){
  #include <fog_vertex>
 }`;
 const C3_FS=`
-uniform sampler2D map;varying vec2 vUv;varying vec3 vLight;
+uniform sampler2D map;uniform float uAlpha;varying vec2 vUv;varying vec3 vLight;
 #include <fog_pars_fragment>
-void main(){vec3 c=texture2D(map,vUv).rgb*vLight;c=floor(c*31.+.5)/31.;gl_FragColor=vec4(c,1.);
+void main(){vec3 c=texture2D(map,vUv).rgb*vLight;c=floor(c*31.+.5)/31.;gl_FragColor=vec4(c,uAlpha);
  #include <fog_fragment>
 }`;
 function c3Material(){if(!C3.base)C3.base=new THREE.ShaderMaterial({vertexShader:C3_VS,fragmentShader:C3_FS,fog:true,
-  uniforms:THREE.UniformsUtils.merge([THREE.UniformsLib.fog,{map:{value:null},uTile:{value:new THREE.Vector2()},uPhase:{value:0},uAmt:{value:0},uRun:{value:0},uAim:{value:0},uPunch:{value:0},uSit:{value:0},uAir:{value:0},uIdle:{value:0},uLight:{value:new THREE.Color(1,1,1)},uSunDir:{value:new THREE.Vector3(0,1,0)}}])});
+  uniforms:THREE.UniformsUtils.merge([THREE.UniformsLib.fog,{map:{value:null},uTile:{value:new THREE.Vector2()},uPhase:{value:0},uAmt:{value:0},uRun:{value:0},uAim:{value:0},uPunch:{value:0},uSit:{value:0},uAir:{value:0},uIdle:{value:0},uAlpha:{value:1},uLight:{value:new THREE.Color(1,1,1)},uSunDir:{value:new THREE.Vector3(0,1,0)}}])});
  const m=C3.base.clone();m.uniforms.map.value=c3Atlas();m.uniforms.uSunDir.value=C3.sunDir;return m}
 /* ---------- boneco preso a um sprite de personagem ---------- */
 function c3Make(o){const sp=o.sp,mat=c3Material(),mesh=new THREE.Mesh(c3Geo(),mat);mesh.matrixAutoUpdate=false;mesh.layers.set(1);mesh.castShadow=mesh.receiveShadow=false;mesh.raycast=()=>{};mesh.name='char3d';
@@ -163,40 +163,47 @@ function c3Place(o){const sp=o.sp;if(!sp||!sp.isSprite)return;
  if(!st.slot||C3.slots.get(st.key)!==st.slot){st.slot=c3Slot(st.key,pal);const n=C3.AW/C3.T;st.mat.uniforms.uTile.value.set((st.slot.i%n)*C3.T/C3.AW,-Math.floor(st.slot.i/n)*C3.T/C3.AH)}else st.slot.last=now;
  /* velocidade pelo deslocamento real (suaviza troca entre parado/andar/correr) */
  let spd=0;if(st.lx!==null&&dt>0){const dx=o.x-st.lx,dz=o.z-st.lz,d=Math.hypot(dx,dz);if(d<3){spd=d/dt;st.mvx=dx;st.mvz=dz}else{st.ang=null}}st.lx=o.x;st.lz=o.z;
- const k=1-Math.exp(-dt*7),patio=o.state==='patio'&&o.patioSpot,lying=patio?o.patioSpot.kind==='recline':Math.abs(o.rot||0)>1,sitting=patio&&!lying;
- const skate=o===PL&&typeof SKATE!=='undefined'&&SKATE.ride,still=lying||sitting||skate||o.balcony;
+ const k=1-Math.exp(-dt*7),patio=o.state==='patio'&&o.patioSpot,lying=patio?o.patioSpot.kind==='recline':Math.abs(o.rot||0)>1;let sitting=patio&&!lying;
+ const skate=o===PL&&typeof SKATE!=='undefined'&&SKATE.ride||!!o.skb;
+ /* r41: quem anda de carona (moto, conversível, caçamba, lancha) não "anda": senta/fica parado e olha para a frente do veículo */
+ let rideV=null,ride=null;if(o!==PL){if(RIDERS.has(o)){ride='moto';rideV=RIDERS.get(o)}else if(CONVR.has(o)){ride='seat';rideV=CONVR.get(o)}else if(BEDR.has(o)){ride='stand';rideV=BEDR.get(o)}else if(PBOAT.o===o){ride='stand';rideV=PL.car}}else if(PL.car){ride='moto';rideV=PL.car} /* jogador visível dentro de veículo = moto/jet ski */
+ if(ride==='moto'||ride==='seat')sitting=true;
+ const still=lying||sitting||skate||!!ride||o.balcony;
  st.spd=(st.spd||0)+((still?0:Math.min(spd,9))-(st.spd||0))*k;
  const amtT=Math.min(1,st.spd/1.2),runT=Math.max(0,Math.min(1,(st.spd-2.6)/2.2));st.amt+=(amtT-st.amt)*k;st.run+=(runT-st.run)*k;
  const stride=1.05+.75*st.run;st.ph+=(st.spd*dt)/stride*Math.PI*2*(st.amt>.02?1:0);if(st.amt<.05)st.ph+=dt*.0;
  st.idle=(st.idle||0)+dt;
  /* mira / soco / pulo / sentado */
- const aimT=o===PL&&(C3AIM.on||typeof GUN!=='undefined'&&GUN.has&&GUN.w!=='jammer'&&(GUN.firing||GUN.cd>0))?1:0,punchT=o===PL&&typeof MELEE!=='undefined'&&MELEE.t>0?1:0;
+ const aimT=ride==='moto'?.7:o===PL&&(C3AIM.on||typeof GUN!=='undefined'&&GUN.has&&GUN.w!=='jammer'&&(GUN.firing||GUN.cd>0))?1:0,punchT=o===PL&&typeof MELEE!=='undefined'&&MELEE.t>0?1:0;
  st.aim+=(aimT-st.aim)*(1-Math.exp(-dt*(aimT?18:5)));st.punch+=(punchT-st.punch)*(1-Math.exp(-dt*(punchT?30:8)));
- const airT=(o.jy||0)>.08?1:0;st.air+=(airT-st.air)*(1-Math.exp(-dt*10));st.sit+=((sitting?1:0)-st.sit)*(1-Math.exp(-dt*10));
+ const airT=(o.jy||0)>.08?1:0;st.air+=(airT-st.air)*(1-Math.exp(-dt*10));st.sit+=((sitting?1:skate?.14:0)-st.sit)*(1-Math.exp(-dt*10)); /* skate: joelho levemente dobrado */
  /* direção: para onde olha/anda; gira suave */
  let fx=0,fz=0;if(patio){fx=Math.sin(o.patioSpot.angle||0);fz=Math.cos(o.patioSpot.angle||0)}
- else if(skate){fx=Math.cos(SKATE.ride.a);fz=Math.sin(SKATE.ride.a)}
+ else if(rideV){fx=Math.cos(rideV.a);fz=Math.sin(rideV.a)}
+ else if(skate&&o===PL){fx=Math.cos(SKATE.ride.a);fz=Math.sin(SKATE.ride.a)}
  else if(o===PL&&MELEE&&MELEE.t>0){fx=MELEE.d[0];fz=MELEE.d[1]}
  else if(o===PL&&C3AIM.on){fx=C3AIM.x;fz=C3AIM.z}
  else if(o===PL&&PL.face){fx=PL.face[0];fz=PL.face[1]}
  else if(Math.hypot(o.mx||0,o.mz||0)>1e-3){fx=o.mx;fz=o.mz}
  else if(o.face&&o.face.length===2){fx=o.face[0];fz=o.face[1]}
  if(Math.hypot(fx,fz)<1e-3&&st.mvx!==undefined&&st.spd>.2){fx=st.mvx;fz=st.mvz}
- if(Math.hypot(fx,fz)>1e-3){const ta=Math.atan2(fx,fz);st.ang=st.ang===null?ta:c3AngTo(st.ang,ta,1-Math.exp(-dt*14))}
+ if(Math.hypot(fx,fz)>1e-3){const ta=Math.atan2(fx,fz)+(skate?1.15:0); /* r41: no skate fica de lado na prancha */st.ang=st.ang===null?ta:c3AngTo(st.ang,ta,1-Math.exp(-dt*14))}
  if(st.ang===null)st.ang=0;
  const U=st.mat.uniforms;U.uPhase.value=st.amt>.02?st.ph:st.idle*1.3;U.uAmt.value=st.amt;U.uRun.value=st.run;U.uAim.value=st.aim;U.uPunch.value=st.punch;U.uSit.value=st.sit;U.uAir.value=st.air;U.uIdle.value=1-st.amt;
+ /* transparência do sprite (fantasma da proteção do online, aparições, revive) vale para o boneco */
+ {const op=sp.material.opacity;if(op<.995){if(!st.mat.transparent){st.mat.transparent=true;st.mat.depthWrite=false}U.uAlpha.value=op}else if(st.mat.transparent){st.mat.transparent=false;st.mat.depthWrite=true;U.uAlpha.value=1}}
  /* matriz local = escala inversa do sprite · desce o "lift" do sprite · gira · deita */
  const top=camMode==='top'&&!VIEW.orbit,sc=top?1.5:1;let lift=0,ly=0;
  if(patio)lift=lying?.86:.22;else{lift=(top?.9:0)+((o.rot&&Math.abs(o.rot)>1&&!top)?.3:0)+(o.jy||0)*0}
- if(sitting)ly=-.33;if(lying)ly=.15;
+ if(sitting)ly=ride==='moto'?-.12:-.33;if(lying)ly=.15;
  _c3e.set(0,st.ang,0,'YXZ');if(lying){_c3e.set(o.rot<0&&!patio?Math.PI/2:-Math.PI/2,st.ang,0,'YXZ')}else if(Math.abs(o.rot||0)>.01)_c3e.set(0,st.ang,-(o.rot||0),'YXZ');
  _c3q.setFromEuler(_c3e);_c3v.set(0,-lift+ly,0);_c3s.set(sc,sc,sc);_c3a.compose(_c3v,_c3q,_c3s);
  const s=sp.scale;_c3m.makeScale(1/(s.x||1),1/(s.y||1),1/(s.z||1));st.mesh.matrix.multiplyMatrices(_c3m,_c3a);st.mesh.matrixWorldNeedsUpdate=true}
 /* sol: direção da luz principal (uma vez por quadro, usada por todos os bonecos) */
 function c3Frame(){if(!C3_ON())return;try{C3.sunDir.copy(sun.position).sub(sun.target.position).normalize();if(C3.sunDir.y<.15){C3.sunDir.y=.15;C3.sunDir.normalize()}}catch(e){}
- if(++C3.frame%120===0){for(const st of C3.list)if(!st.o||!st.o.sp||!st.o.sp.parent&&!st.mesh.parent){C3.list.delete(st);st.mat.dispose()}}}
+ if(++C3.frame%120===0){for(const st of C3.list)if(!st.o||!st.o.sp||!st.o.sp.parent){if(st.o&&st.o.sp&&st.o.sp.userData.c3===st)c3Drop(st.o.sp);else{C3.list.delete(st);if(st.mesh.parent)st.mesh.parent.remove(st.mesh);st.mat.dispose()}}}}
 /* troca de modo: liga/desliga em todos os personagens já criados */
-function c3ApplyMode(){const all=[PL,...peds];for(const o of all){if(!o||!o.sp)continue;if(!C3_ON())c3Drop(o.sp);else{try{c3Place(o)}catch(e){console.error(e)}}}}
+function c3ApplyMode(){if(!C3_ON()){for(const st of [...C3.list]){if(st.o&&st.o.sp&&st.o.sp.userData.c3===st)c3Drop(st.o.sp);else{C3.list.delete(st);if(st.mesh.parent)st.mesh.parent.remove(st.mesh);st.mat.dispose()}}}const all=[PL,...peds];for(const o of all){if(!o||!o.sp)continue;if(!C3_ON())c3Drop(o.sp);else{try{c3Place(o)}catch(e){console.error(e)}}}}
 /* gancho: todo personagem posicionado por placeSprite ganha o boneco 3D (quando a opção está ligada) */
 placeSprite=(f=>function(o){const r=f.apply(this,arguments);if(o&&o.sp){try{const fr=renderer.info.render.frame;if(C3.lastF!==fr){C3.lastF=fr;c3Frame()}c3Place(o)}catch(e){if(!C3.err){C3.err=1;console.error(e)}}}return r})(placeSprite);
 /* arma na mão: no 3D o jogador vira para a mira e a arma vai para a mão direita (no 2D ela fica do lado do sprite) */
@@ -209,4 +216,9 @@ heldGunTick=(f=>function(){const r=f.apply(this,arguments);C3AIM.on=false;
   const fw=(.12+.5*u)*k,lat=.27*k,hy=(.86+.44*u)*k;
   HELD.g.position.set(PL.x+fx*fw-fz*lat,PL.gy+(PL.jy||0)+hy,PL.z+fz*fw+fx*lat);HELD.g.scale.setScalar((GUN.w==='rpg'?.36:.24)*k);HELD.g.rotation.set(0,Math.atan2(-fz,fx),0)}
  return r})(heldGunTick);
+/* r41: ped criado durante diálogo/cena (que pausam updatePeds) já nasce com o boneco, em vez de ficar 2D até a cena acabar */
+spawnPed=(f=>function(){const q=f.apply(this,arguments);if(q&&q.sp&&C3_ON()){try{c3Place(q)}catch(e){}}return q})(spawnPed);
+spawnLying=(f=>function(){const q=f.apply(this,arguments);if(q&&q.sp&&C3_ON()){try{c3Place(q)}catch(e){}}return q})(spawnLying);
+/* r41: ped removido solta o boneco na hora (antes o sprite fora da cena segurava a malha e a lista crescia a cada troca de cidade) */
+removePed=(f=>function(p){try{if(p&&p.sp)c3Drop(p.sp)}catch(e){}return f.apply(this,arguments)})(removePed);
 window.c3Debug=()=>({on:C3_ON(),chars:C3.list.size,slots:C3.slots.size,free:C3.free.length,tris:C3.geo?C3.geo.index.count/3:0});

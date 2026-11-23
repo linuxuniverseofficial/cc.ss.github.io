@@ -43,7 +43,7 @@ function saveCfg(){if(BENCH_CFG_LOCK||(typeof ONLINE!=='undefined'&&ONLINE.on))r
 function supportedCitySize(n){return Number(n)===7||Number(n)===14}
 function normalizeCitySize(n){return Number(n)===7?7:14}
 const CITY_CACHE={ready:false,building:false};
-const S={cloudQ:1,waterQ:1,fxWet:true,fxGlow:true,fxPaint:true,fxSurf:true,mode:'campaign',hour:8,view:'fps',style:'modern',seed:(Math.random()*1e6)|0,size:14,rain:true,storm:true,traffic:50,peds:50,shadows:true,poleShadows:false,shadowQuality:1,bloom:true,refl:true,sprite8:false,sound:true,showMinimap:true,miniAuto:true,touchHide:'auto',showHud:true,fpsLimit:0,renderScale:90,drawDistance:150,objectDistance:25,shadowDistance:0,detailedShadows:true,/* v78: padrão = preset MÉDIO (peds 2D; 3D só no ALTO) */lang:((navigator.language||'pt-BR').toLowerCase().startsWith('pt')?'br':'en'),lampLighting:!pixelIsMobile(),lampCount:4,touchSteer:'arrows'};
+const S={char3d:false,cloudQ:1,waterQ:1,fxWet:true,fxGlow:true,fxPaint:true,fxSurf:true,mode:'campaign',hour:8,view:'fps',style:'modern',seed:(Math.random()*1e6)|0,size:14,rain:true,storm:true,traffic:50,peds:50,shadows:true,poleShadows:false,shadowQuality:1,bloom:true,refl:true,sprite8:false,sound:true,showMinimap:true,miniAuto:true,touchHide:'auto',showHud:true,fpsLimit:0,renderScale:90,drawDistance:150,objectDistance:25,shadowDistance:0,detailedShadows:true,/* v78: padrão = preset MÉDIO (peds 2D; 3D só no ALTO) */lang:((navigator.language||'pt-BR').toLowerCase().startsWith('pt')?'br':'en'),lampLighting:!pixelIsMobile(),lampCount:4,touchSteer:'arrows'};
 
 const STYLES={
  modern:{label:'MODERN',sky:[0x6fa6de,0xd4e4ef],fog:0xc9d4dc,fogNear:160,fogFar:600,bg:0x55585c,

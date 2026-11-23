@@ -69,7 +69,7 @@ $('#drawDistance').addEventListener('input',e=>{S.drawDistance=clamp(+e.target.v
 $('#objectDistance').addEventListener('input',e=>{S.objectDistance=clamp(+e.target.value,0,100);objectDistanceUI();saveCfg()});
 $('#shadowDistance').addEventListener('input',e=>{S.shadowDistance=clamp(+e.target.value,0,100);shadowDistanceUI();renderer.shadowMap.needsUpdate=true;shadowRefreshAt=-1;saveCfg()});
 $('#optDetailedShadows').addEventListener('change',e=>{S.detailedShadows=e.target.checked;renderer.shadowMap.needsUpdate=true;shadowRefreshAt=-1;saveCfg()});
-{const e=$('#optSprite8');if(e){e.checked=S.sprite8===true;e.addEventListener('change',ev=>{S.sprite8=!!ev.target.checked;atlasCache.clear();saveCfg();try{applyPlayerLook()}catch(err){console.error(err)}try{charPreload3D()}catch(err){console.error(err)}try{spritesRefreshPeds()}catch(err){console.error(err)}try{charFaces()}catch(err){}})}}
+{const e=$('#optCharMode');if(e){e.value=charModeOf();e.addEventListener('change',ev=>{const v=ev.target.value;S.char3d=v==='3d';S.sprite8=v==='25d';atlasCache.clear();saveCfg();try{c3ApplyMode()}catch(err){console.error(err)}try{applyPlayerLook()}catch(err){console.error(err)}try{charPreload3D()}catch(err){console.error(err)}try{spritesRefreshPeds()}catch(err){console.error(err)}try{charFaces()}catch(err){}})}}
 $('#optPoleShadows').addEventListener('change',e=>{S.poleShadows=e.target.checked;renderer.shadowMap.needsUpdate=true;shadowRefreshAt=-1;try{graphicsPresetUI()}catch(_){}saveCfg()});
 // v263: PRESETS DE GRÁFICOS. NÃO ALTERAR AQUI os sprites protegidos da v258.
 // Apenas configurações públicas já existentes; nenhuma alteração em SpriteMaterial,
@@ -103,7 +103,7 @@ function graphicsPresetApply(name){
  const oldShadows=S.shadows,oldQuality=S.shadowQuality,oldLamp=S.lampLighting,oldLampCount=S.lampCount;
  const oldScale=S.renderScale,oldDraw=S.drawDistance,oldDetail=S.detailedShadows,oldPole=S.poleShadows,oldShadowDistance=S.shadowDistance,oldSprite=S.sprite8===true;
  Object.assign(S,values);try{waterQApply()}catch(err){}try{shfxApply();fxUI()}catch(err){}
- if(oldSprite!==(S.sprite8===true)){const e=$('#optSprite8');if(e)e.checked=S.sprite8===true;atlasCache.clear();try{applyPlayerLook()}catch(err){console.error(err)}try{charPreload3D()}catch(err){console.error(err)}try{spritesRefreshPeds()}catch(err){console.error(err)}try{charFaces()}catch(err){}}
+ if(oldSprite!==(S.sprite8===true)){if(S.sprite8===true&&S.char3d===true){S.char3d=false;try{c3ApplyMode()}catch(err){}}const e=$('#optCharMode');if(e)e.value=charModeOf();atlasCache.clear();try{applyPlayerLook()}catch(err){console.error(err)}try{charPreload3D()}catch(err){console.error(err)}try{spritesRefreshPeds()}catch(err){console.error(err)}try{charFaces()}catch(err){}}
  // Atualiza SOMENTE os mecanismos normais dos controles da aba Gráficos.
  if(oldShadows!==S.shadows)applyShadows();
  else if(oldQuality!==S.shadowQuality)applyShadowQuality();
