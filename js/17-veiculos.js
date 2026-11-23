@@ -85,11 +85,11 @@ function carHoleMat(c,burnt){const t=c.t,k=c.type+(burnt?'#b':'');let m=HOLE_MAT
  m.customProgramCacheKey=()=>'carHoleL';m.userData.carBody=true;HOLE_MATS.set(k,m);return m}
 const wheelMat=new THREE.MeshStandardMaterial({color:0x151515,roughness:.8});
 const hubMat=new THREE.MeshStandardMaterial({color:0x9a9a9a,roughness:.4,metalness:.5});
-const wheelGeo=new THREE.CylinderGeometry(1,1,.32,20);wheelGeo.rotateX(Math.PI/2);
+const wheelGeo=new THREE.CylinderGeometry(1,1,.32,16);wheelGeo.rotateX(Math.PI/2);
 // v101: roda de liga com aro, 5 raios e cubo (antes era só um disco minúsculo no centro do pneu)
-const hubGeo=(()=>{const m=new MB(),c=new THREE.Color(1,1,1),ring=new THREE.RingGeometry(.5,.64,24).toNonIndexed(),sp=new THREE.BoxGeometry(.16,.44,.035).toNonIndexed();
+const hubGeo=(()=>{const m=new MB(),c=new THREE.Color(1,1,1),ring=new THREE.RingGeometry(.5,.64,12).toNonIndexed(),sp=new THREE.BoxGeometry(.16,.44,.035).toNonIndexed();
  for(const s of [1,-1]){m.geo(ring,mtx(0,0,s*.171,1,1,1,0,s>0?0:Math.PI,0),c);for(let k=0;k<5;k++){const a=k*Math.PI*2/5;m.geo(sp,mtx(-Math.sin(a)*.29,Math.cos(a)*.29,s*.163,1,1,1,0,0,a),c)}}
- m.geo(new THREE.CylinderGeometry(.13,.13,.37,10).toNonIndexed(),mtx(0,0,0,1,1,1,Math.PI/2,0,0),c);
+ m.geo(new THREE.CylinderGeometry(.13,.13,.37,8).toNonIndexed(),mtx(0,0,0,1,1,1,Math.PI/2,0,0),c);
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(m.p,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(m.n,3));if(m.idx)g.setIndex(m.idx);return g})();
 const CAR_WHEEL_CAP=512,CAR_WHEEL_IM=new THREE.InstancedMesh(wheelGeo,wheelMat,CAR_WHEEL_CAP),CAR_HUB_IM=new THREE.InstancedMesh(hubGeo,hubMat,CAR_WHEEL_CAP);
 CAR_WHEEL_IM.castShadow=true;CAR_WHEEL_IM.receiveShadow=false;CAR_WHEEL_IM.frustumCulled=false;CAR_WHEEL_IM.count=0;CAR_WHEEL_IM.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -145,6 +145,13 @@ function mbTube(mb,a,b,r,col,seg){const dx=b[0]-a[0],dy=b[1]-a[1],dz=b[2]-a[2],L
 // z da lateral da carroceria numa seção (pontos [z,y] do lado direito, de baixo pra cima)
 function carZAt(P,y){if(y<=P[0][1])return P[0][0];let best=P[0][0];for(let i=0;i<P.length-1;i++){const a=P[i],b=P[i+1];if(a[0]<=0||b[0]<=0||b[1]<a[1])break;if(y<=b[1]){const k=(y-a[1])/((b[1]-a[1])||1);return a[0]+(b[0]-a[0])*k}best=b[0]}return best}
 const CAR_PLATE_BASE={}; // alturas reais das placas originais, determinadas pelo para-choque
+/* v3 r43 · CARG: esferas/cilindros PRÓPRIOS dos veículos, com menos lados que o GEO geral (GEO.sph = 18×12 = 396 triângulos;
+   eram ~70% dos triângulos de cada carro: 2 faróis + 2 lanternas + 2 espelhos + 4 setas). Normais continuam lisas: a luz fica redonda,
+   só o contorno fica poligonal (visual PS2). Por tamanho: sph (peças grandes: motor de popa, tanque da moto) 12×8 = 168,
+   mid (frisos/saias) 10×6 = 100, lamp (faróis/lanternas) 8×6 = 80, mirror (retrovisor) 8×5 = 64, tiny (setas/neblina) 6×4 = 36, cyl 10 lados, rod (varetas finas: guidão, corrimão, antena) 6 lados.
+   O LOD instanciado (buildInstancing) troca estes campos por versões ainda menores durante a montagem e devolve no fim. */
+const CARG={sph:new THREE.SphereGeometry(1,12,8).toNonIndexed(),mid:new THREE.SphereGeometry(1,10,6).toNonIndexed(),lamp:new THREE.SphereGeometry(1,8,6).toNonIndexed(),
+ mirror:new THREE.SphereGeometry(1,8,5).toNonIndexed(),tiny:new THREE.SphereGeometry(1,6,4).toNonIndexed(),cyl:new THREE.CylinderGeometry(1,1,1,10).toNonIndexed(),rod:new THREE.CylinderGeometry(1,1,1,6).toNonIndexed()};
 function carParts(type,colHex,st,body,li,cargoHex,riderMB,detail=false){
  const t=VT[type],L=t.L,W=t.W,hw=W/2;
  const col=COL(colHex),dark=COL('#1c1c20'),glass=COL(st.synth?'#151a2a':'#1e2836'),hl=COL('#fff4cc'),tl=COL('#ff1a2a');
@@ -172,12 +179,12 @@ function carParts(type,colHex,st,body,li,cargoHex,riderMB,detail=false){
   if(detail){body.geo(new THREE.TorusGeometry(.16,.022,6,18).toNonIndexed(),mtx(.02,1.47,-.42,1,1,1,0,Math.PI/2,-.5),blk);body.cbox(.04,1.36,-.46,.12,1.44,-.38,blk,.02);
    for(const[x,z] of [[L/2-.55,0],[-L/2+.25,-hw+.2],[-L/2+.25,hw-.2]])body.cbox(x-.08,.99,z-.03,x+.08,1.04,z+.03,chr,.015)}
   // motor de popa: carenagem arredondada, perna, placa anticavitação e hélice
-  {const ex=-L/2-.28;body.geo(GEO.sph,mtx(ex,1.32,0,.36,.42,.3),blk);body.geo(GEO.sph,mtx(ex+.02,1.42,0,.3,.22,.26),col);body.cbox(ex-.12,.3,-.09,ex+.1,1.05,.09,blk,.05);body.cbox(ex-.22,.36,-.2,ex+.14,.4,.2,blk,.02);
-   body.geo(GEO.sph,mtx(ex-.02,.26,0,.2,.07,.07),blk);if(detail)for(let k=0;k<3;k++){const a=k*2.094;body.cbox(ex-.21,.24+Math.sin(a)*.1-.02,Math.cos(a)*.1-.04,ex-.17,.24+Math.sin(a)*.1+.02,Math.cos(a)*.1+.04,COL('#8a8f96'),.01)}
+  {const ex=-L/2-.28;body.geo(CARG.sph,mtx(ex,1.32,0,.36,.42,.3),blk);body.geo(CARG.sph,mtx(ex+.02,1.42,0,.3,.22,.26),col);body.cbox(ex-.12,.3,-.09,ex+.1,1.05,.09,blk,.05);body.cbox(ex-.22,.36,-.2,ex+.14,.4,.2,blk,.02);
+   body.geo(CARG.sph,mtx(ex-.02,.26,0,.2,.07,.07),blk);if(detail)for(let k=0;k<3;k++){const a=k*2.094;body.cbox(ex-.21,.24+Math.sin(a)*.1-.02,Math.cos(a)*.1-.04,ex-.17,.24+Math.sin(a)*.1+.02,Math.cos(a)*.1+.04,COL('#8a8f96'),.01)}
    body.cbox(ex+.08,.85,-.12,-L/2+.06,1.05,.12,blk,.03);for(const zs of [-1,1])body.cbox(-L/2-.32,.55,zs*(hw-.55)-.32,-L/2+.02,.6,zs*(hw-.55)+.32,deck,.02)}
   if(detail){const chr=COL('#c4c8ce'),pt=[];for(let f=.6;f<=.975;f+=.075){const x=-L/2+f*L,b=Math.max(0,(f-.48)/.52),h=Math.max(.05,hw*(1-Math.pow(b,1.9)*.97))-.08,y=.95+.16*Math.pow(b,1.6);pt.push([x,y,h])}
-   for(const zs of [-1,1]){for(const[x,y,h] of pt)body.geo(GEO.cyl16,mtx(x,y+.16,zs*h,.018,.32,.018),chr);for(let i=0;i<pt.length-1;i++){const[a,ya,ha]=pt[i],[b,yb,hb2]=pt[i+1],dx=b-a,dz=zs*(hb2-ha);body.geo(GEO.cyl16,mtx((a+b)/2,(ya+yb)/2+.32,zs*(ha+hb2)/2,.02,Math.hypot(dx,dz,yb-ya),.02,0,Math.atan2(dz,-dx),Math.PI/2),chr)}}
-   const e=pt[pt.length-1];body.geo(GEO.cyl16,mtx(e[0],e[1]+.32,0,.02,e[2]*2,.02,Math.PI/2,0,0),chr)}
+   for(const zs of [-1,1]){for(const[x,y,h] of pt)body.geo(CARG.rod,mtx(x,y+.16,zs*h,.018,.32,.018),chr);for(let i=0;i<pt.length-1;i++){const[a,ya,ha]=pt[i],[b,yb,hb2]=pt[i+1],dx=b-a,dz=zs*(hb2-ha);body.geo(CARG.rod,mtx((a+b)/2,(ya+yb)/2+.32,zs*(ha+hb2)/2,.02,Math.hypot(dx,dz,yb-ya),.02,0,Math.atan2(dz,-dx),Math.PI/2),chr)}}
+   const e=pt[pt.length-1];body.geo(CARG.rod,mtx(e[0],e[1]+.32,0,.02,e[2]*2,.02,Math.PI/2,0,0),chr)}
   li.box(L/2-1.5,1.0,-.1,L/2-1.35,1.12,.1,hl);li.box(-L/2+.05,1.0,-hw+.1,-L/2+.2,1.1,-hw+.25,COL('#ff2a2a'));li.box(-L/2+.05,1.0,hw-.25,-L/2+.2,1.1,hw-.1,COL('#2aff5a'));
  }else if(type==='vortex'){const blk=COL('#1c1c22'),wh=COL('#f2f2ee'),blk2=COL('#26262c'),chr=COL('#b8bcc4');
   // v105: saia inflada em gomos (superelipse), casco com borda arredondada, cabine em bolha e duto do ventilador em toro com grade e lemes
@@ -192,23 +199,23 @@ function carParts(type,colHex,st,body,li,cargoHex,riderMB,detail=false){
   if(detail){body.box(-L/2-.06,.45,-.2,-L/2-.045,.58,.2,wh);body.box(-L/2-.065,.548,-.195,-L/2-.060,.578,.195,COL('#1f4fb4'));body.box(L/2+.045,.45,-.2,L/2+.06,.58,.2,wh);body.box(L/2+.060,.548,-.195,L/2+.065,.578,.195,COL('#1f4fb4'));}
   // duto do ventilador traseiro (toro), cubo, pás e grade
   {const fx=-L/2+.55,fy=1.35;body.geo(new THREE.TorusGeometry(.8,.13,detail?10:6,detail?32:16).toNonIndexed(),mtx(fx,fy,0,1,1,1,0,Math.PI/2,0),blk);
-   body.geo(GEO.cyl16,mtx(fx+.05,fy,0,.8,.18,.8,0,0,Math.PI/2),COL('#3a3a40'));body.geo(GEO.sph,mtx(fx-.05,fy,0,.2,.16,.16),col);
+   body.geo(CARG.cyl,mtx(fx+.05,fy,0,.8,.18,.8,0,0,Math.PI/2),COL('#3a3a40'));body.geo(CARG.sph,mtx(fx-.05,fy,0,.2,.16,.16),col);
    for(let k=0;k<5;k++){const a=k*Math.PI*2/5,m=new THREE.Matrix4().makeRotationX(a).premultiply(new THREE.Matrix4().makeTranslation(fx,fy,0));const bl=new MB();bl.cbox(-.04,.12,-.09,.04,.72,.09,COL('#55555c'),.02);mbAddXf(body,bl,m)}
    if(detail){for(const d of [-.5,-.25,0,.25,.5]){const hh=Math.sqrt(.8*.8-d*d);mbTube(body,[fx-.17,fy-hh,d],[fx-.17,fy+hh,d],.012,chr);mbTube(body,[fx-.17,fy+d,-hh],[fx-.17,fy+d,hh],.012,chr)}}
    for(const zs of [-1,1])mbTube(body,[fx+.15,.72,zs*.55],[fx+.05,fy-.55,zs*.55],.06,col);
    for(const zs of [-.35,.35])mbFoil(body,{le:-L/2+.18,te:-L/2-.22,s:.72,v:zs,t:.07},{le:-L/2+.12,te:-L/2-.2,s:1.95,v:zs,t:.05},col,true)}
   // corrimão, faróis e lanternas
   if(detail)for(const zs of [-1,1]){mbTube(body,[-1.2,.98,zs*(hw-.32)],[1.0,.98,zs*(hw-.32)],.022,chr);for(const x of [-1.2,-.1,1.0])mbTube(body,[x,.78,zs*(hw-.32)],[x,.98,zs*(hw-.32)],.02,chr)}
-  li.geo(GEO.sph,mtx(L/2-.2,.66,-hw+.55,.06,.07,.16),hl);li.geo(GEO.sph,mtx(L/2-.2,.66,hw-.55,.06,.07,.16),hl);li.geo(GEO.sph,mtx(-L/2+.55,.55,-.9,.04,.06,.1),tl);li.geo(GEO.sph,mtx(-L/2+.55,.55,.9,.04,.06,.1),tl);
+  li.geo(CARG.lamp,mtx(L/2-.2,.66,-hw+.55,.06,.07,.16),hl);li.geo(CARG.lamp,mtx(L/2-.2,.66,hw-.55,.06,.07,.16),hl);li.geo(CARG.lamp,mtx(-L/2+.55,.55,-.9,.04,.06,.1),tl);li.geo(CARG.lamp,mtx(-L/2+.55,.55,.9,.04,.06,.1),tl);
  }else if(type==='jetski'){const wh=COL('#f2f2ee'),blk=COL('#18181c');
-  body.cbox(-L/2,.12,-hw,L/2-.6,.5,hw,wh,.14);body.geo(GEO.sph,mtx(L/2-.62,.32,0,.62,.19,hw*.96),wh);
-  body.cbox(-L/2+.08,.5,-hw+.06,L/2-.7,.64,hw-.06,col,.08);body.geo(GEO.sph,mtx(L/2-.75,.6,0,.5,.14,hw*.8),col);
-  body.cbox(-L/2+.3,.64,-.24,.2,.86,.24,blk,.09);body.cbox(.3,.62,-.14,.62,1.0,.14,col,.06);body.geo(GEO.cyl16,mtx(.52,1.04,0,.03,.78,.03,Math.PI/2,0,0),blk);
-  for(const zs of [-1,1])body.cbox(-L/2+.4,.5,zs*(hw-.02)-.06,.4,.56,zs*(hw-.02)+.06,blk,.02);li.geo(GEO.sph,mtx(L/2-.3,.5,0,.05,.05,.12),hl);
+  body.cbox(-L/2,.12,-hw,L/2-.6,.5,hw,wh,.14);body.geo(CARG.sph,mtx(L/2-.62,.32,0,.62,.19,hw*.96),wh);
+  body.cbox(-L/2+.08,.5,-hw+.06,L/2-.7,.64,hw-.06,col,.08);body.geo(CARG.sph,mtx(L/2-.75,.6,0,.5,.14,hw*.8),col);
+  body.cbox(-L/2+.3,.64,-.24,.2,.86,.24,blk,.09);body.cbox(.3,.62,-.14,.62,1.0,.14,col,.06);body.geo(CARG.rod,mtx(.52,1.04,0,.03,.78,.03,Math.PI/2,0,0),blk);
+  for(const zs of [-1,1])body.cbox(-L/2+.4,.5,zs*(hw-.02)-.06,.4,.56,zs*(hw-.02)+.06,blk,.02);li.geo(CARG.lamp,mtx(L/2-.3,.5,0,.05,.05,.12),hl);
  }else if(type==='moto'){const blk=COL('#18181c'),chr=COL('#b8bcc4'),skin=COL('#e0b08a'),jak=COL(st.synth?'#3a2a5a':'#2a2a30'),pnt=COL('#22283a');
-  body.cbox(-.22,.38,-.15,.42,.78,.15,COL('#3a3a40'),.08);body.geo(GEO.cyl16,mtx(.1,.55,0,.13,.32,.13,Math.PI/2,0,0),COL('#55555c'));body.geo(GEO.sph,mtx(.32,.9,0,.33,.15,.21),col);body.cbox(-.58,.84,-.17,.14,.97,.17,blk,.06);body.geo(GEO.sph,mtx(-.66,.78,0,.36,.12,.12),col);body.geo(GEO.sph,mtx(.95,.62,0,.22,.05,.12),col);
-  for(const zs of [-.08,.08])body.geo(GEO.cyl16,mtx(.82,.72,zs,.03,.62,.03,0,0,.42),chr);body.geo(GEO.sph,mtx(.73,1.0,0,.13,.12,.16),col);body.geo(GEO.cyl16,mtx(.68,1.13,0,.025,.74,.025,Math.PI/2,0,0),blk);for(const zs of [-1,1])body.geo(GEO.cyl16,mtx(.68,1.13,zs*.36,.035,.12,.035,Math.PI/2,0,0),COL('#222'));body.geo(GEO.cyl16,mtx(-.22,.4,.17,.05,.75,.05,0,0,Math.PI/2-.08),chr);
-  li.geo(GEO.sph,mtx(.84,.99,0,.05,.08,.09),hl);li.geo(GEO.sph,mtx(-1.0,.78,0,.03,.04,.07),tl);
+  body.cbox(-.22,.38,-.15,.42,.78,.15,COL('#3a3a40'),.08);body.geo(CARG.cyl,mtx(.1,.55,0,.13,.32,.13,Math.PI/2,0,0),COL('#55555c'));body.geo(CARG.sph,mtx(.32,.9,0,.33,.15,.21),col);body.cbox(-.58,.84,-.17,.14,.97,.17,blk,.06);body.geo(CARG.sph,mtx(-.66,.78,0,.36,.12,.12),col);body.geo(CARG.sph,mtx(.95,.62,0,.22,.05,.12),col);
+  for(const zs of [-.08,.08])body.geo(CARG.rod,mtx(.82,.72,zs,.03,.62,.03,0,0,.42),chr);body.geo(CARG.sph,mtx(.73,1.0,0,.13,.12,.16),col);body.geo(CARG.rod,mtx(.68,1.13,0,.025,.74,.025,Math.PI/2,0,0),blk);for(const zs of [-1,1])body.geo(CARG.rod,mtx(.68,1.13,zs*.36,.035,.12,.035,Math.PI/2,0,0),COL('#222'));body.geo(CARG.cyl,mtx(-.22,.4,.17,.05,.75,.05,0,0,Math.PI/2-.08),chr);
+  li.geo(CARG.lamp,mtx(.84,.99,0,.05,.08,.09),hl);li.geo(CARG.lamp,mtx(-1.0,.78,0,.03,.04,.07),tl);
   // v201: suporte de placa traseira fixado à rabeta, atrás da roda. A base branca
   // também aparece no LOD instanciado; o texto real entra no modelo detalhado.
   for(const side of [-1,1])body.box(-1.255,.66,side*.135-.015,-.93,.70,side*.135+.015,blk);
@@ -242,15 +249,15 @@ function carParts(type,colHex,st,body,li,cargoHex,riderMB,detail=false){
     if(i===2)return dy>.35?glass:rc;if(i===5)return col;if(i===1||i===3)return rc;if(i===0||i===4)return((o.B&&A.x>=o.B[0]&&A.x<o.B[1])||a===0||a===CS.length-2||(o.solidSide&&o.solidSide(A.x)))?col:glass;return glass});softShell(start);return CS};
   let LB=null,LO=null,CO=null,BU=null,OV=null;
   const bump=(yf,yr,h)=>{BU={yf,yr,h};body.cbox(L/2-.16,yf,-hw+.12,L/2+.05,yf+h,hw-.12,dark,.06);body.cbox(-L/2-.05,yr,-hw+.12,-L/2+.16,yr+h,hw-.12,dark,.06)};
-  const ovals=(yh,yt,ins,sz)=>{sz=sz||1;OV={yh,yt,ins,sz};for(const zs of [-1,1]){li.geo(GEO.sph,mtx(L/2-.04,yh,zs*(hw-ins),.06,.075*sz,.2*sz),hl);li.geo(GEO.sph,mtx(-L/2+.03,yt,zs*(hw-ins+.06),.05,.07*sz,.22*sz),tl)}};
-  const mirrors=(x,y)=>{for(const zs of [-1,1])body.geo(GEO.sph,mtx(x,y,zs*(hw-.04),.1,.065,.12),col)};
+  const ovals=(yh,yt,ins,sz)=>{sz=sz||1;OV={yh,yt,ins,sz};for(const zs of [-1,1]){li.geo(CARG.lamp,mtx(L/2-.04,yh,zs*(hw-ins),.06,.075*sz,.2*sz),hl);li.geo(CARG.lamp,mtx(-L/2+.03,yt,zs*(hw-ins+.06),.05,.07*sz,.22*sz),tl)}};
+  const mirrors=(x,y)=>{for(const zs of [-1,1])body.geo(CARG.mirror,mtx(x,y,zs*(hw-.04),.1,.065,.12),col)};
   const handles=(xs,y)=>{for(const zs of [-1,1])for(const hx of xs)body.box(hx,y,zs*(hw-.02)-.01,hx+.18,y+.03,zs*(hw-.02)+.01,COL('#c8ccd2'))};
   if(type==='police'){const wb=COL(st.synth?'#1c1c30':'#f4f4f4'),bk=COL(st.synth?'#33e6e6':'#141414'),cc=col;
    low({y0:.3,yF:.8,dF:.1,yR:.83,dR:.05,col:(a,i,BS)=>{if(a<0||a>=BS.length-1)return wb;const x=(BS[a].x+BS[Math.min(BS.length-1,a+1)].x)/2;const side=i===1||i===2||i===12||i===13;return side&&x>-L*.3&&x<L*.22?bk:wb}});
    const ca=Object.assign;cab({xr0:-L*.34,xr1:-L*.2,xf1:L*.02,xf0:L*.19,yb:.8,yR:1.4,B:[-L*.1,-L*.06],roofCol:wb});
-   body.cbox(-.3,1.4,-.75,.2,1.47,.75,COL('#222'),.04);li.geo(GEO.sph,mtx(-.05,1.53,-.38,.2,.08,.3),COL('#ff2a2a'));li.geo(GEO.sph,mtx(-.05,1.53,.38,.2,.08,.3),COL('#2a5aff'));
+   body.cbox(-.3,1.4,-.75,.2,1.47,.75,COL('#222'),.04);li.geo(CARG.lamp,mtx(-.05,1.53,-.38,.2,.08,.3),COL('#ff2a2a'));li.geo(CARG.lamp,mtx(-.05,1.53,.38,.2,.08,.3),COL('#2a5aff'));
    bump(.3,.3,.18);body.box(L/2-.02,.5,-.42,L/2+.03,.64,.42,COL('#111114'));ovals(.62,.66,.42);handles([-.2,.55],.7);
-   for(const zs of [-1,1])body.geo(GEO.sph,mtx(L*.19-.12,.9,zs*(hw-.04),.1,.065,.12),wb);
+   for(const zs of [-1,1])body.geo(CARG.mirror,mtx(L*.19-.12,.9,zs*(hw-.04),.1,.065,.12),wb);
   }else if(type==='sedan'||type==='taxi'){
    low({y0:.3,yF:.82,dF:.115,yR:.86,dR:.04,pinch:.13,rnd:.76,rt:.23,waist:.025,haunch:.035});cab({xr0:-L*.33,xr1:-L*.19,xf1:L*.045,xf0:L*.235,yb:.82,yR:1.4,inT:.28,B:[-L*.1,-L*.06]});
    bump(.3,.3,.18);body.box(L/2-.02,.5,-.42,L/2+.03,.64,.42,COL('#111114'));mirrors(L*.19-.12,.9);handles([-.2,.55],.7);ovals(.62,.66,.42);
@@ -264,7 +271,7 @@ function carParts(type,colHex,st,body,li,cargoHex,riderMB,detail=false){
     // Silhueta inspirada no DeLorean: aço escovado, capô plano, vigas e venezianas traseiras.
     const steelD=COL('#636b74');
     body.cbox(-L/2-.05,1.0,-hw+.08,-L/2+.45,1.08,hw-.08,steelD,.03);
-    for(const zs of [-1,1]){body.box(-L/2+.2,.72,zs*.45-.05,-L/2+.3,1.0,zs*.45+.05,dark);body.geo(GEO.sph,mtx(-L*.02,.5,zs*(hw-.01),.5,.12,.06),steelD);
+    for(const zs of [-1,1]){body.box(-L/2+.2,.72,zs*.45-.05,-L/2+.3,1.0,zs*.45+.05,dark);body.geo(CARG.mid,mtx(-L*.02,.5,zs*(hw-.01),.5,.12,.06),steelD);
     }
     addRearGlassSlats(body,rearCab,-L*.42,-L*.12,steelD);
     li.box(-L/2-.03,.5,-hw+.3,-L/2+.03,.56,hw-.3,COL('#ff1a2a'));
@@ -273,7 +280,7 @@ function carParts(type,colHex,st,body,li,cargoHex,riderMB,detail=false){
     body.cbox(-L/2+.02,.8,-hw+.15,-L/2+.4,.85,hw-.15,dark,.02);
     // Sculpted hood rails and discreet side vents; no brand badges or copied body panels.
     for(const zs of [-1,1]){
-     if(detail)body.geo(GEO.sph,mtx(L*.27,.70,zs*.48,L*.21,.045,.11),col.clone().multiplyScalar(1.06));
+     if(detail)body.geo(CARG.mid,mtx(L*.27,.70,zs*.48,L*.21,.045,.11),col.clone().multiplyScalar(1.06));
      if(detail){body.cbox(L*.015,.43,zs>0?hw*.94:-hw*.98,L*.18,.59,zs>0?hw*.98:-hw*.94,dark,.025);body.cbox(-L*.13,.28,zs>0?hw*.88:-hw*.96,L*.18,.36,zs>0?hw*.96:-hw*.88,col,.03)}
     }
     body.cbox(L/2-.03,.32,-.48,L/2+.04,.47,.48,dark,.045);
@@ -300,7 +307,7 @@ function carParts(type,colHex,st,body,li,cargoHex,riderMB,detail=false){
    low({y0:.28,yF:.74,dF:.1,yR:.78,dR:.04,rnd:.7});const it=COL('#2a2224');
    // Assento acima do topo da carroceria (~.78), sem faces coplanares com a lataria.
    body.cbox(-L*.2,.795,-hw+.18,L*.1,.835,hw-.18,it,.025);for(const zs of [-1,1])body.cbox(-L*.18,.82,zs>0?.12:-hw+.3,-L*.18+.2,1.12,zs>0?hw-.3:-.12,it,.065);
-   for(const zs of [-1,1])body.geo(GEO.cyl16,mtx(-L*.26,.98,zs*.42,.05,.4,.05),dark);
+   for(const zs of [-1,1])body.geo(CARG.cyl,mtx(-L*.26,.98,zs*.42,.05,.4,.05),dark);
    {const W0=[L*.1,.76],W1=[L*.04,1.08];body.qa([W0[0],W0[1],-hw+.14],[W0[0],W0[1],hw-.14],[W1[0],W1[1],hw-.16],[W1[0],W1[1],-hw+.16],glass,[L,1,0]);body.qa([W0[0],W0[1],-hw+.14],[W0[0],W0[1],hw-.14],[W1[0],W1[1],hw-.16],[W1[0],W1[1],-hw+.16],glass,[-L,1,0])}
    body.cbox(-L/2+.1,.76,-hw+.14,-L*.24,.82,hw-.14,col.clone().multiplyScalar(.85),.03);bump(.28,.28,.16);mirrors(L*.1-.05,.82);ovals(.56,.6,.4);
   }else if(type==='suv'){
@@ -383,23 +390,23 @@ function carParts(type,colHex,st,body,li,cargoHex,riderMB,detail=false){
     const fy=BU.yf+(BU.h-.13)/2,ry=BU.yr+(BU.h-.13)/2;CAR_PLATE_BASE[type]={front:fy,rear:ry};plate(L/2+.045,L/2+.062,fy);plate(-L/2-.062,-L/2-.045,ry)}
    // escapamento (duplo nos esportivos) — caminhão usa chaminés
    if(BU&&type!=='truck'&&type!=='bus'){const two=type==='sports'||type==='super'||type==='roadster'||type==='conv'||type==='police',y=BU.yr-.03,r=two?.04:.035;
-    for(const z of two?[-hw*.45,hw*.45]:[-hw*.5]){body.geo(GEO.cyl16,mtx(-L/2+.06,y,z,r,.26,r,0,0,Math.PI/2),COL('#5d6066'));body.geo(GEO.cyl16,mtx(-L/2-.071,y,z,r*.7,.012,r*.7,0,0,Math.PI/2),COL('#050505'))}}
+    for(const z of two?[-hw*.45,hw*.45]:[-hw*.5]){body.geo(CARG.cyl,mtx(-L/2+.06,y,z,r,.26,r,0,0,Math.PI/2),COL('#5d6066'));body.geo(CARG.cyl,mtx(-L/2-.071,y,z,r*.7,.012,r*.7,0,0,Math.PI/2),COL('#050505'))}}
    // palhetas do para-brisa (e traseira nos hatch/peruas/SUVs)
    if(CO){const x=CO.xf0-.07,y=CO.yb+.01+(CO.yR-CO.yb-.01)*Math.cos(Math.PI/2*(x-CO.xf1)/Math.max(.01,CO.xf0-CO.xf1)),zz=hw-(CO.inB||.1)-.12;
     {const bl=Math.min(.5,zz*.62);body.box(x-.012,y+.01,-.1-bl,x+.012,y+.03,-.1,wip);body.box(x-.012,y+.01,.02,x+.012,y+.03,.02+bl*.9,wip);body.box(x-.01,y,-.12,x+.01,y+.03,-.08,wip);body.box(x-.01,y,0,x+.01,y+.03,.04,wip)}
     if(type==='hatch'||type==='wagon'||type==='suv'||type==='mini'||type==='crossover'){const xr=CO.xr0+(CO.xr1-CO.xr0)*.3,yr=CO.yb+.03+(CO.yR-CO.yb-.03)*Math.sin(Math.PI/2*.3);body.box(xr-.012,yr,-.03,xr+.012,yr+.02,.3,wip)}}
    // setas âmbar na frente e luz de ré branca atrás
-   if(OV){t.sigF={x:L/2-.02,y:OV.yh,z:hw-OV.ins-.27*OV.sz};t.sigR={y:OV.yt,z:hw-OV.ins+.06-.15*OV.sz}}if(OV)for(const zs of [-1,1]){body.geo(GEO.sph,mtx(L/2-.035,OV.yh,zs*(hw-OV.ins-.27*OV.sz),.03,.045*OV.sz,.05*OV.sz),COL('#9a6414'));li.geo(GEO.sph,mtx(-L/2+.025,OV.yt,zs*(hw-OV.ins+.06-.28*OV.sz),.03,.04*OV.sz,.05*OV.sz),rev)}
+   if(OV){t.sigF={x:L/2-.02,y:OV.yh,z:hw-OV.ins-.27*OV.sz};t.sigR={y:OV.yt,z:hw-OV.ins+.06-.15*OV.sz}}if(OV)for(const zs of [-1,1]){body.geo(CARG.tiny,mtx(L/2-.035,OV.yh,zs*(hw-OV.ins-.27*OV.sz),.03,.045*OV.sz,.05*OV.sz),COL('#9a6414'));li.geo(CARG.tiny,mtx(-L/2+.025,OV.yt,zs*(hw-OV.ins+.06-.28*OV.sz),.03,.04*OV.sz,.05*OV.sz),rev)}
    // faróis de neblina no para-choque
-   if(BU&&(type==='suv'||type==='crossover'||type==='pickup'||type==='police'||type==='sports'))for(const zs of [-1,1])li.geo(GEO.sph,mtx(L/2+.045,BU.yf+BU.h*.5,zs*(hw-.32),.02,.035,.06),COL('#fff6d8'));
+   if(BU&&(type==='suv'||type==='crossover'||type==='pickup'||type==='police'||type==='sports'))for(const zs of [-1,1])li.geo(CARG.tiny,mtx(L/2+.045,BU.yf+BU.h*.5,zs*(hw-.32),.02,.035,.06),COL('#fff6d8'));
    // antena no teto
-   if(CO&&(type==='sedan'||type==='taxi'||type==='wagon'||type==='police'))body.geo(GEO.cyl16,mtx(CO.xr1+.1-Math.sin(.3)*.2,CO.yR+Math.cos(.3)*.2,-.25,.008,.4,.008,0,0,.3),wip);
+   if(CO&&(type==='sedan'||type==='taxi'||type==='wagon'||type==='police'))body.geo(CARG.rod,mtx(CO.xr1+.1-Math.sin(.3)*.2,CO.yR+Math.cos(.3)*.2,-.25,.008,.4,.008,0,0,.3),wip);
    if(type==='taxi')strip(-L/2+.4,L/2-.4,.6,.66,COL('#111'),.006,.01); // faixa do táxi colada na lateral
    if(type==='police'){// quebra-mato
     for(const zs of [-1,1]){body.box(L/2+.15,.3,zs*.34-.03,L/2+.2,.78,zs*.34+.03,dark);body.box(L/2+.05,.42,zs*.34-.025,L/2+.15,.47,zs*.34+.025,dark)}
     for(const y of [.44,.7])body.box(L/2+.12,y,-.42,L/2+.18,y+.05,.42,dark)}
    if(type==='suv'){// estepe na tampa traseira
-    body.geo(GEO.cyl16,mtx(-L/2-.13,.98,0,.33,.2,.33,0,0,Math.PI/2),COL('#141416'));body.geo(GEO.cyl16,mtx(-L/2-.235,.98,0,.25,.02,.25,0,0,Math.PI/2),col);body.geo(GEO.cyl16,mtx(-L/2-.25,.98,0,.06,.02,.06,0,0,Math.PI/2),chrome)}
+    body.geo(CARG.cyl,mtx(-L/2-.13,.98,0,.33,.2,.33,0,0,Math.PI/2),COL('#141416'));body.geo(CARG.cyl,mtx(-L/2-.235,.98,0,.25,.02,.25,0,0,Math.PI/2),col);body.geo(CARG.cyl,mtx(-L/2-.25,.98,0,.06,.02,.06,0,0,Math.PI/2),chrome)}
    // rack de teto: acompanha a curva do teto (antes era uma barra reta que flutuava sobre o vidro traseiro)
    const roofY=x=>x<CO.xr1?CO.yb+.03+(CO.yR-CO.yb-.03)*Math.sin(Math.PI/2*Math.max(0,x-CO.xr0)/Math.max(.01,CO.xr1-CO.xr0)):x>CO.xf1?CO.yb+.01+(CO.yR-CO.yb-.01)*Math.cos(Math.PI/2*Math.min(1,(x-CO.xf1)/Math.max(.01,CO.xf0-CO.xf1))):CO.yR;
    const rails=(x0,x1)=>{const zr=hw-(CO.inT||.3)-.1,n=Math.max(2,Math.ceil((x1-x0)/.2));for(const zs of [-1,1]){for(let k=0;k<n;k++){const xa=x0+(x1-x0)*k/n,xb=x0+(x1-x0)*(k+1)/n,y=Math.min(roofY(xa),roofY(xb));body.box(xa,y-.01,zs*zr-.025,xb,y+.035,zs*zr+.025,dark)}
@@ -407,7 +414,7 @@ function carParts(type,colHex,st,body,li,cargoHex,riderMB,detail=false){
    if(CO&&(type==='crossover'||type==='wagon'||type==='suv'))rails(Math.max(CO.xr0+.1,CO.xr1-.25),CO.xf1+.02);
    if(type==='hatch'&&CO)body.cbox(CO.xr1-.18,CO.yR-.03,-hw+.24,CO.xr1+.04,CO.yR+.025,hw-.24,col.clone().multiplyScalar(.9),.02);
    if(type==='pickup'){// santantônio, frisos da caçamba e maçaneta da tampa
-    for(const zs of [-1,1])body.geo(GEO.cyl16,mtx(-.55,1.5,zs*(hw-.07),.035,.42,.035),trim);body.geo(GEO.cyl16,mtx(-.55,1.71,0,.035,(hw-.07)*2+.07,.035,Math.PI/2,0,0),trim);
+    for(const zs of [-1,1])body.geo(CARG.rod,mtx(-.55,1.5,zs*(hw-.07),.035,.42,.035),trim);body.geo(CARG.rod,mtx(-.55,1.71,0,.035,(hw-.07)*2+.07,.035,Math.PI/2,0,0),trim);
     for(const z of [-.5,-.17,.17,.5])body.box(-L/2+.2,1.04,z-.025,-.5,1.055,z+.025,COL('#2c2c30'));body.box(-L/2+.004,1.19,-.15,-L/2+.022,1.23,.15,trim)}
    if(type==='van'){// porta corrediça, trilho, porta dianteira e portas traseiras com vidro
     seam(L/2-1.05,yBase+.09,1.95);seam(L/2-2.3,yBase+.09,1.95);seam(L/2-3.5,yBase+.09,1.95);strip(-L/2+.35,L/2-3.5,1.2,1.24,trim,.01,.01);
@@ -417,8 +424,8 @@ function carParts(type,colHex,st,body,li,cargoHex,riderMB,detail=false){
     for(let x=-L/2+1.1;x<L/2-1.2;x+=1.25)for(const zs of [-1,1])body.box(x-.04,1.55,zs>0?hw+.03:-hw-.045,x+.04,2.55,zs>0?hw+.045:-hw-.03,dark);
     for(let j=0;j<5;j++){const y=.8+j*.11;body.box(-L/2-.012,y,-.8,-L/2+.002,y+.05,.8,dark)}}
    if(type==='truck'){// chaminés cromadas, tanque, para-barros e luzes laterais
-    for(const zs of [-1,1]){body.geo(GEO.cyl16,mtx(1.85,2.0,zs*(hw+.07),.055,2.6,.055),chrome);body.geo(GEO.cyl16,mtx(1.85,3.31,zs*(hw+.07),.06,.04,.06),COL('#222'));
-     body.geo(GEO.cyl16,mtx(.9,.48,zs*.92,.22,1.1,.22,0,0,Math.PI/2),COL('#a7abb2'));body.box(-t.wb-t.wr-.11,.12,zs>0?.75:-1.15,-t.wb-t.wr-.08,.62,zs>0?1.15:-.75,trim);
+    for(const zs of [-1,1]){body.geo(CARG.cyl,mtx(1.85,2.0,zs*(hw+.07),.055,2.6,.055),chrome);body.geo(CARG.cyl,mtx(1.85,3.31,zs*(hw+.07),.06,.04,.06),COL('#222'));
+     body.geo(CARG.cyl,mtx(.9,.48,zs*.92,.22,1.1,.22,0,0,Math.PI/2),COL('#a7abb2'));body.box(-t.wb-t.wr-.11,.12,zs>0?.75:-1.15,-t.wb-t.wr-.08,.62,zs>0?1.15:-.75,trim);
      for(let x=-L/2+.4;x<1.4;x+=1.1)li.box(x,.68,zs>0?hw:-hw-.012,x+.1,.73,zs>0?hw+.012:-hw,COL('#ffa21a'))}}
   }
  }

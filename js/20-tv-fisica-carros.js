@@ -246,13 +246,14 @@ function updateVehicleWrecks(dt){const pc=PL.car||PL,wrecks=vehicles.filter(c=>!
 function clearVehicles(){while(vehicles.length)removeVehicle(vehicles[0])}
 
 /* --- GPU instancing for every car without a detailed mesh --- */
-const INST={types:{},ug:null,beam:null,turnL:null,turnR:null,group:null,CAP:2600};const INST_LOW={sph:new THREE.SphereGeometry(1,8,6).toNonIndexed(),hemi:new THREE.SphereGeometry(1,10,4,0,Math.PI*2,0,Math.PI/2).toNonIndexed()},INST_PM=new THREE.Matrix4(),INST_FR=new THREE.Frustum(),INST_SP=new THREE.Sphere();
+const INST={types:{},ug:null,beam:null,turnL:null,turnR:null,group:null,CAP:2600};const INST_LOW={sph:new THREE.SphereGeometry(1,8,6).toNonIndexed(),lamp:new THREE.SphereGeometry(1,6,4).toNonIndexed(),tiny:new THREE.SphereGeometry(1,4,3).toNonIndexed(),cyl:new THREE.CylinderGeometry(1,1,1,6).toNonIndexed(),hemi:new THREE.SphereGeometry(1,10,4,0,Math.PI*2,0,Math.PI/2).toNonIndexed()},INST_PM=new THREE.Matrix4(),INST_FR=new THREE.Frustum(),INST_SP=new THREE.Sphere();
 const EU2=new THREE.Euler(0,0,0,'YXZ');
 function buildInstancing(st){
  if(INST.group){scene.remove(INST.group);INST.group.traverse(o=>{if(o.geometry&&!o.isSprite)o.geometry.dispose();if(o.material&&o.material!==carBodyMat&&o.material!==carLightMat)o.material.dispose()})}
  const grp=new THREE.Group();scene.add(grp);INST.group=grp;INST.types={};const CAP=INST.CAP;
  // v77: carros instanciados (os sem malha detalhada, ou seja, os mais distantes) usam esferas/cilindros de baixa resolução
- const G0={sph:GEO.sph,cyl16:GEO.cyl16,hemi:GEO.hemi};GEO.sph=INST_LOW.sph;GEO.cyl16=GEO.cyl;GEO.hemi=INST_LOW.hemi;
+ /* r43: carParts usa CARG (não GEO): troca CARG pelas versões do LOD e devolve no finally */
+ const G0=Object.assign({},CARG);CARG.sph=CARG.mid=INST_LOW.sph;CARG.lamp=CARG.mirror=INST_LOW.lamp;CARG.tiny=INST_LOW.tiny;CARG.cyl=CARG.rod=INST_LOW.cyl;
  try{
  for(const k in VT){const t=VT[k],body=new MB(),li=new MB();carParts(k,'#ffffff',st,body,li,'#ffffff');
   for(let w=0;w<(t.boat?0:4);w++){const x=w<2?t.wb:-t.wb,z=(w%2?1:-1)*(t.vtw!==undefined?t.vtw:t.tw);body.geo(k==='moto'?WHEEL_FULL:WHEEL_NI,mtx(x,t.wr,z,t.wr,t.wr,1),COL('#141414'))}
@@ -263,7 +264,7 @@ function buildInstancing(st){
   // v77: carros distantes (além do alcance da sombra) num 2º lote SEM castShadow — mesma geometria e material
   const fim=new THREE.InstancedMesh(bim.geometry,carBodyMat,CAP);fim.instanceColor=new THREE.InstancedBufferAttribute(new Float32Array(CAP*3),3);fim.instanceMatrix.setUsage(THREE.DynamicDrawUsage);fim.instanceColor.setUsage(THREE.DynamicDrawUsage);fim.castShadow=false;fim.receiveShadow=true;fim.frustumCulled=false;fim.count=0;
   grp.add(bim,lim,fim);INST.types[k]={bim,lim,fim,n:0,ln:0,fn:0}}
- }finally{Object.assign(GEO,G0)}
+ }finally{Object.assign(CARG,G0)}
  INST.ug=INST.beam=INST.turnL=INST.turnR=null;
  const ledGeo=new THREE.BoxGeometry(.055,.075,.115),ledMat=new THREE.MeshBasicMaterial({color:0xffb900, toneMapped:false});
  INST.turnL=new THREE.InstancedMesh(ledGeo,ledMat,CAP);INST.turnR=new THREE.InstancedMesh(ledGeo,ledMat,CAP);
