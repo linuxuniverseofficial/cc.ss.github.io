@@ -49,6 +49,7 @@ mecânicas houver (20, 30…). Coisas pequenas podem dividir canal (ex.: eclipse
 | 18b | BACKROOMS (v3 r10, r11) | 2 | w_back1 (queda: cidade vista por baixo, r11) · w_back2 (Nível 0) |
 | 19 | CLIMA (tempestade + eclipse + sombra das nuvens) | alt | storm2 (+relâmpago) · clouds (r70) · clouds_ind (v3 r12) · clouds_vol (v3 r17) · clouds_sunset (v3 r19) · clouds_rain + clouds_storm (v3 r21) · clouds_synth + clouds_inv (v3 r22) · eclipse2 (+disco do eclipse em HTML) |
 | 20 | RIOS E MAR (poluição + navios) | alt | tv_pollution · ship2 |
+| 20b | EFEITOS VISUAIS (shaders leves, v3 r25) | alt | fx_carro · fx_chuva_tarde · fx_chuva_noite · fx_janelas |
 | 21 | OBRAS NA RUA | 1 | obra |
 | 22 | PONTES LEVADIÇAS | 1 | poi_bridge |
 | 23 | PARAQUEDAS | 2 | tv_parachute · beach2 + alvo |
