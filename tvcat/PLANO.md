@@ -75,6 +75,7 @@ mecânicas houver (20, 30…). Coisas pequenas podem dividir canal (ex.: eclipse
 | 42 | NATHAN E CLAIRE | 1 | cartão HTML (N/C, Alt e Caps Lock) |
 | 43 | ONLINE | 1 | cartão HTML (carona) |
 | 43b | ONLINE · HACK DE PIX (v3 r9) | 1 | ph_prof + cartão HTML (Bloqueador de Sinal) |
+| 43c | ONLINE · RANKING (v3 r38: ranking, títulos, proteção ao renascer) | 2 | net_rank (print da tela de entrada 1280×800 recortado para 960×540) + cartão HTML netprot |
 | 44 | REGISTRO E ESTATÍSTICAS | 1 | cartão HTML |
 
 **Novos na v3 r1** (ordem no `TVCAT`: armas depois do hospital, eventos de pedestres depois de "pedestres e seu carro", carros e posto depois do carro sujo, residências depois dos discos, rampas depois dos veículos especiais, e rádio/notícias/modo foto/cheats antes das estatísticas):

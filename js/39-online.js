@@ -17,7 +17,42 @@ function netSrvUrl(v){v=String(v||'').trim();if(!v)return 'online/api.php';if(!/
 /* r14: 404/403 = endereço errado → sugere digitar outro servidor */
 function netSrvErr(st){const custom=!!String($('#onSrv').value||'').trim();if(st===404||st===403)return custom?'SERVIDOR NÃO ENCONTRADO · CONFIRA O ENDEREÇO OU DIGITE OUTRO':'SEM SERVIDOR NESTE SITE · DIGITE UM EM SERVIDOR';return custom?'SERVIDOR NÃO RESPONDE':'SEM SERVIDOR NESTE SITE · USE O CAMPO SERVIDOR'}
 function netSrvInfo(){const url=netSrvUrl($('#onSrv').value);ONLINE.url=url;$('#onInfo').textContent=translatePlain('CONECTANDO…');let st=0;
- fetch(url+'?a=info',{cache:'no-store'}).then(r=>{st=r.status;return r.json()}).then(r=>{if(!r.ok)throw 0;$('#onInfo').textContent=translatePlain('SESSÃO DE HOJE')+' · '+r.players+'/'+r.max+' '+(S.lang==='en'?'players':'jogadores')}).catch(()=>{$('#onInfo').textContent=translatePlain(netSrvErr(st))})}
+ fetch(url+'?a=info',{cache:'no-store'}).then(r=>{st=r.status;return r.json()}).then(r=>{if(!r.ok)throw 0;$('#onInfo').textContent=translatePlain('SESSÃO DE HOJE')+' · '+r.players+'/'+r.max+' '+(S.lang==='en'?'players':'jogadores');netRankPaint(r.rank,r.tit)}).catch(()=>{$('#onInfo').textContent=translatePlain(netSrvErr(st));netRankPaint(null)})}
+/* v3 r38: proteção ao renascer — NET_PROT s imortal (dano de jogador, atropelamento, explosão, queda: killPlayer devolve a vida)
+   e semitransparente para todos (estado s.g=1; o servidor também não conta a morte nesse tempo). Acaba antes se ele atacar outro jogador. */
+const NET_PROT=15;
+function netProt(){return ONLINE.on&&simT<(ONLINE.protT||0)}
+function netProtStart(){ONLINE.protT=simT+NET_PROT}
+function netProtEnd(){ONLINE.protT=0}
+/* sprite meio transparente: mesmo truque do fantasma da Maskara (alphaTest baixo enquanto a opacidade < 1, depois volta a .5) */
+function netGhost(sp,sh,on){if(!sp||!sp.material)return;const m=sp.material;
+ if(on){if(!sp.netGhost){sp.netGhost=true;m.alphaTest=.02;m.needsUpdate=true}m.opacity=.42}
+ else if(sp.netGhost){sp.netGhost=false;m.opacity=1;m.alphaTest=.5;m.needsUpdate=true}}
+function netProtFrame(){const on=netProt()&&!PL.dead;netGhost(PL.sp,PL.sh,on);
+ if(on&&!ONLINE.protTo){ONLINE.protTo=1;toast(netT('PROTEGIDO','PROTECTED')+'<br><small style="font-size:11px;color:#fff">'+NET_PROT+' s</small>')}
+ if(!on&&ONLINE.protTo){ONLINE.protTo=0;if(!PL.dead)toast(netT('PROTEÇÃO ACABOU','PROTECTION OVER'))}}
+/* v3 r38: estatísticas do ranking que só este jogo vê (carros roubados, tempo procurado, batidas): manda o que mudou desde o último tick */
+function netStatsOut(){const B=ONLINE.stB,j=STATS.stolen|0,w=+STATS.wanted||0,c=ONLINE.crN|0;
+ if(!B||j<B.j||w<B.w){ONLINE.stB={j,w,c};return}const dj=Math.min(3,j-B.j),dw=Math.min(6,w-B.w),dc=Math.min(3,c-B.c);
+ if(dj>0||dw>=.5||dc>0){ONLINE.out.push({k:'st',j:dj,w:+dw.toFixed(2),c:dc});B.j+=dj;B.w+=dw;B.c+=dc}}
+/* chamado pelo impact() (js/20): batida do meu carro com força */
+function netCrash(c,v){if(ONLINE.on&&c===PL.car&&v>9&&simT>(ONLINE.crT||0)){ONLINE.crT=simT+2;ONLINE.crN=(ONLINE.crN||0)+1}}
+/* v3 r38: títulos do ranking (chave do servidor = categoria + 0/1 quando há dois) */
+const NET_TIT={k0:['Exterminador de Bairro','Neighborhood Exterminator'],k1:['Ceifador da Orla','Boardwalk Reaper'],j0:['Mão Leve','Light Fingers'],j1:['Rei do Desmanche','Chop Shop King'],
+ d0:['Saco de Pancada','Punching Bag'],d1:['Usuário Premium do Hospital','Hospital Premium Member'],w0:['Tá devendo pensão','Dodging Child Support'],c0:['Lataria de Papel','Paper Bodywork'],
+ m0:['Magnata','Tycoon'],h0:['Clonador de Cartão','Card Cloner'],s0:['Duro de Matar','Die Hard']};
+const NET_TIT_WHY={k:['mais abates','most kills'],j:['mais carros roubados','most cars stolen'],d:['mais mortes','most deaths'],w:['mais tempo procurado','most time wanted'],c:['mais batidas','most crashes'],m:['mais dinheiro','richest'],h:['mais hacks de Pix','most Pix hacks'],s:['mais abates sem morrer','longest kill streak']};
+/* v3 r38: ranking na tela de entrada (top 10 por abates, guardado na conta pelo servidor). null = sem servidor (some); servidor antigo não manda rank (some) */
+function netRankPaint(rk,tit){const box=$('#onRank');if(!box)return;if(!Array.isArray(rk)){box.hidden=true;box.innerHTML='';$('#onJoin').classList.remove('rk');return}
+ const esc=s=>String(s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';'),me=String($('#onName').value||'').trim().toLowerCase();
+ let h='<div class="rkH"><b>🏆 '+netT('RANKING','RANKING')+'</b><em>'+netT('abates/mortes','kills/deaths')+'</em></div>';
+ h+='<div class="rkL">';if(!rk.length)h+='<p class="rkE">'+netT('Ninguém pontuou ainda','Nobody has scored yet')+'</p>';
+ else{const T=new Map();for(const t of Array.isArray(tit)?tit:[]){const L=NET_TIT[t.t];if(!L)continue;const key=String(t.n).toLowerCase();if(!T.has(key))T.set(key,{n:t.n,l:[]});T.get(key).l.push('<u title="'+esc(netT(...NET_TIT_WHY[t.t[0]]))+'">'+esc(netT(...L))+'</u>')}
+  const row=(r,pos,cls)=>{const key=String(r.n).toLowerCase(),t=T.get(key);T.delete(key);return '<li class="'+cls+(me&&key===me?' me':'')+'"><i>'+pos+'</i><b>'+esc(r.n)+(r.on?'<s title="'+netT('online agora','online now')+'"></s>':'')+(t?'<small>('+t.l.join(', ')+')</small>':'')+'</b><em>'+(r.k==null?'':(r.k|0)+'/'+(r.d|0))+'</em></li>'};
+  h+='<ol>'+rk.slice(0,10).map((r,i)=>row(r,i+1,i<3?'p'+(i+1):'')).join('')+'</ol>';
+  /* quem tem título e está fora do top 10 aparece embaixo, sem posição */
+  if(T.size)h+='<ol class="rkT">'+[...T.values()].map(t=>row({n:t.n},'★','')).join('')+'</ol>'}
+ box.innerHTML=h+'</div>';box.hidden=false;$('#onJoin').classList.add('rk')}
 const NET_CARS=['sedan','sports','hatch','suv','pickup','van','wagon','crossover','mini','roadster','conv','taxi','moto'];
 function netLookOf(pal){const o={};for(const k in pal){const v=pal[k];if(v===null||['string','number','boolean'].includes(typeof v))o[k]=v}o.pack=false;return o}
 function netLook(){return netLookOf(PLAYER_PAL)}
@@ -29,7 +64,7 @@ function netHidden(){return !!PL.inside||netTransit()}
 function netAway(){return netWorldKey()!=='modern'}
 function netPeerShown(s){return !!s&&!s.w&&(s.wk||'modern')===netWorldKey()}
 function netWorldOk(){return S.style==='modern'&&!city.haze&&!HAZE.switching&&!INVERT.switching&&!TIMEJUMP.busy}
-function netState(){const c=PL.car,s={x:+PL.x.toFixed(2),z:+PL.z.toFixed(2),f:+Math.atan2(PL.face[1],PL.face[0]).toFixed(3),m:Math.hypot(PL.vx||0,PL.vz||0)>.4?1:0,st:PL.dead?'dead':ONLINE.ride?'ride':c?'car':'foot',w:netHidden()&&!(PL.inside==='backrooms'&&!BR.busy)?1:0,wk:PL.inside==='backrooms'?'backrooms':netWorldKey()};if(netTransit())s.tj=1; /* r14: nas Backrooms aparece para quem também está lá */
+function netState(){const c=PL.car,s={x:+PL.x.toFixed(2),z:+PL.z.toFixed(2),f:+Math.atan2(PL.face[1],PL.face[0]).toFixed(3),m:Math.hypot(PL.vx||0,PL.vz||0)>.4?1:0,st:PL.dead?'dead':ONLINE.ride?'ride':c?'car':'foot',w:netHidden()&&!(PL.inside==='backrooms'&&!BR.busy)?1:0,wk:PL.inside==='backrooms'?'backrooms':netWorldKey()};if(netTransit())s.tj=1;if(netProt())s.g=1; /* r14: nas Backrooms aparece para quem também está lá */
  if(ONLINE.ride){s.r=ONLINE.ride;s.rt=ONLINE.rideT||0}if(PL.inside&&PL.inside!=='backrooms')s.in=1;
  if(c&&!c.t.boat){s.c={t:c.type,col:c.color,pl:c.plate||'',x:+c.x.toFixed(2),z:+c.z.toFixed(2),a:+c.a.toFixed(3),v:+(c.fwd||0).toFixed(2),f:c.onFire||!c.alive?1:0};if(c.neon&&c.neonCol)s.c.ne=c.neonCol;if(c.spotId)s.c.sid=c.spotId;netCarDmgOut(c,s.c)}return s}
 function netPost(a,body){return fetch(ONLINE.url+'?a='+a,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(body),cache:'no-store'}) /* text/plain = pedido "simples": servidor em outro endereço não precisa de preflight CORS */.then(r=>r.json().catch(()=>({ok:false,http:r.status,err:netSrvErr(r.status)})))}
@@ -139,7 +174,7 @@ async function netTick(){if(!played){return}
  if(!ONLINE.acctDone&&$('#loading').hidden){ONLINE.acctDone=true;netAcctApply(ONLINE.acct,ONLINE.acctNew)}
  if(netWorldOk()&&city&&ONLINE.cityRef!==city){ONLINE.cityRef=city;netHouseApply();netPvAdopt();netExtraCars();netReapply()}
  /* morte: avisa quem matou (último acerto em até 8 s) e larga o drop */
- if(PL.dead&&!ONLINE.wasDead){ONLINE.out.push({k:'dead',by:simT-ONLINE.lastHitT<8?ONLINE.lastHitBy:0,x:Math.round(PL.x),z:Math.round(PL.z),c:String(NEWS.cause||'').slice(0,24)});const dr=netDeathDrop();if(dr)ONLINE.out.push(dr)}ONLINE.wasDead=PL.dead;
+ if(PL.dead&&!ONLINE.wasDead){ONLINE.out.push({k:'dead',by:simT-ONLINE.lastHitT<8?ONLINE.lastHitBy:0,x:Math.round(PL.x),z:Math.round(PL.z),c:String(NEWS.cause||'').slice(0,24)});const dr=netDeathDrop();if(dr)ONLINE.out.push(dr)}if(ONLINE.wasDead&&!PL.dead)netProtStart();ONLINE.wasDead=PL.dead;netStatsOut();
  for(const [to,v] of ONLINE.dmg){ONLINE.out.push({k:'hit',to,d:Math.round(v.d*10)/10,car:v.car?1:0,w:v.w||''})}ONLINE.dmg.clear();
  if(netWorldOk())netCarTick();
  netWxTick();
@@ -178,7 +213,7 @@ function netEvent(e){const d=e.d||{};
  else if(e.k==='callno'){toast((d.n||'?')+' '+netT('NÃO ATENDEU','DID NOT ANSWER'));netChatSys((d.n||'?')+' '+netT('recusou a ligação','declined the call'))}
  else if(e.k==='sig'||e.k==='hk'||e.k==='hkw'||e.k==='hkx'||e.k==='pixed')netHackEvent(e.k,d,e.src);
  else if(e.k==='pay'){const m=Math.max(0,Math.min(2000,d.m|0));if(m){money(m);toast(netT('CORRIDA','FARE')+' · '+(d.n||'?')+'<br><small style="font-size:11px;color:#7dff8a">+$'+m+'</small>')}}
- else if(e.k==='hit'){if(PL.dead||PROLOGUE.active)return;ONLINE.lastHitBy=e.src;ONLINE.lastHitT=simT;const who=netPeerName(e.src);
+ else if(e.k==='hit'){if(PL.dead||PROLOGUE.active||netProt())return;ONLINE.lastHitBy=e.src;ONLINE.lastHitT=simT;const who=netPeerName(e.src);
   if(d.car&&PL.car&&PL.car.alive){const c=PL.car;c.hp-=d.d;c.sleep=false;try{thud(.25)}catch(_){}if(c.hp<=0)setOnFire(c)}
   else if(!d.car&&!PL.car){if(CHEAT.hp)return;PL.hp-=armorHit(d.d);try{bloodHit(PL.x,(PL.gy||0)+1.1,PL.z,new THREE.Vector3(0,0,0));rumble(.4,.6,120)}catch(_){}if(PL.hp<=0)killPlayer(translatePlain('ABATIDO POR')+' '+who)}}}
 /* ================= v3 r9 · HACK DE PIX ENTRE JOGADORES + BLOQUEADOR DE SINAL =================
@@ -213,7 +248,7 @@ function netNewsStory(n){const T=newsTL,bairro=n.d||T('a cidade','town'),em=T('e
  return H?[H[0]+UB,H[1]]:[T('MORTE NO ','DEATH IN ')+UB,T(B+' foi encontrado desacordado '+em+'. A polícia investiga.',B+' was found unconscious '+em+'. Police are investigating.')]}
 /* v3 r30: relógio do servidor em segundos (ponte levadiça, nuvens) */
 function netNow(){return Date.now()/1000+(ONLINE.srvOff||0)}
-function netHit(id,dmg,car,w){if(!ONLINE.on||!id||!(dmg>0))return;if(typeof id==='string'){if(id[0]==='n')netNpcDmg(+id.slice(1),dmg);return} /* v3 r27: carro do servidor de outro host */const v=ONLINE.dmg.get(id)||{d:0,car:!!car,w:w||''};v.d=Math.min(250,v.d+dmg);v.car=!!car;ONLINE.dmg.set(id,v)}
+function netHit(id,dmg,car,w){if(!ONLINE.on||!id||!(dmg>0))return;if(typeof id==='string'){if(id[0]==='n')netNpcDmg(+id.slice(1),dmg);return}if(netProt())netProtEnd(true); /* v3 r27: carro do servidor de outro host */const v=ONLINE.dmg.get(id)||{d:0,car:!!car,w:w||''};v.d=Math.min(250,v.d+dmg);v.car=!!car;ONLINE.dmg.set(id,v)}
 function netHitPed(p,dmg,w){if(p&&p.net){netHit(p.net,dmg,false,w);p.hp=3;try{ouch(p.x,p.z,p.pitch)}catch(_){}}}
 /* ================= r15 · CLIMA COMPARTILHADO =================
    O clima é sorteado (Math.random) em cada jogo, então cada um via um céu. Agora um jogador é o "dono do clima"
@@ -442,7 +477,7 @@ function netTagCar(p,c){const tag=p.tag;if(!tag)return;const h=c&&c.alive?Math.r
 function netTag(p){if(p.tag)return p.tag;const c=cv(256,48),g=c.getContext('2d');g.font='800 26px Segoe UI,Arial';g.textAlign='center';g.textBaseline='middle';g.lineWidth=6;g.strokeStyle='rgba(0,0,0,.85)';g.strokeText(p.name,128,24);g.fillStyle='#ffffff';g.fillText(p.name,128,24);
  const t=new THREE.CanvasTexture(c),sp=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthWrite:false,sizeAttenuation:false,fog:false,toneMapped:false}));sp.scale.set(.26,.049,1);sp.renderOrder=6;sp.position.set(0,-9999,0);scene.add(sp);p.tag=sp;return sp}
 function netAngLerp(a,b,k){let d=b-a;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;return a+d*k}
-function netFrame(dt){if(!ONLINE.on)return;const hideAll=netHidden(),k=1-Math.exp(-dt*12);
+function netFrame(dt){if(!ONLINE.on)return;const hideAll=netHidden(),k=1-Math.exp(-dt*12);netProtFrame();
  /* roubo: entra no quadro seguinte (o carro recém-criado já está na grade de carsNear) */
  if(ONLINE.jackGo){const c=ONLINE.jackGo;ONLINE.jackGo=null;if(c.alive&&vehicles.includes(c)&&!PL.car&&!PL.dead){PL.x=c.x+Math.cos(c.a+Math.PI/2)*(c.t.W/2+.6);PL.z=c.z+Math.sin(c.a+Math.PI/2)*(c.t.W/2+.6);enterExit()}}
  for(const p of ONLINE.peers.values()){const s=p.s,tag=netTag(p);
@@ -462,7 +497,7 @@ function netFrame(dt){if(!ONLINE.on)return;const hideAll=netHidden(),k=1-Math.ex
    p.sid=null;netTagCar(p,null);if(p.car){p.carT-=dt;if(p.carT<=0||!vehicles.includes(p.car)){if(vehicles.includes(p.car))removeVehicle(p.car);p.car=null}else{p.car.fwd=p.car.vx=p.car.vz=0}}
    if(s.st==='dead'||s.st==='ride'){if(p.ped&&peds.includes(p.ped))removePed(p.ped);p.ped=null;tag.visible=false;continue}
    if(!p.ped||!peds.includes(p.ped)){const q=spawnPed(null,{x:s.x,z:s.z,vx:0,vz:0,main:true,pal:{...(p.look||PLAYER_PAL),pack:false}});if(!q){tag.visible=false;continue}q.state='duoFollow';q.fixed=true;q.at={x:s.x,z:s.z};q.mx=Math.cos(s.f);q.mz=Math.sin(s.f);q.net=p.id;q.hp=3;q.duoMoving=false;p.ped=q;p.mk=(p.mk||0)+1}
-   const q=p.ped,tx=s.x,tz=s.z;if(Math.hypot(tx-q.at.x,tz-q.at.z)>12){q.at.x=tx;q.at.z=tz}else{q.at.x+=(tx-q.at.x)*k;q.at.z+=(tz-q.at.z)*k}q.mx=Math.cos(s.f);q.mz=Math.sin(s.f);q.duoMoving=!!s.m;q.hp=3;if(q.state!=='duoFollow'){q.state='duoFollow';q.fixed=true}
+   const q=p.ped,tx=s.x,tz=s.z;if(Math.hypot(tx-q.at.x,tz-q.at.z)>12){q.at.x=tx;q.at.z=tz}else{q.at.x+=(tx-q.at.x)*k;q.at.z+=(tz-q.at.z)*k}q.mx=Math.cos(s.f);q.mz=Math.sin(s.f);q.duoMoving=!!s.m;q.hp=3;if(q.state!=='duoFollow'){q.state='duoFollow';q.fixed=true}netGhost(q.sp,q.sh,!!s.g);
    ax=q.at.x;az=q.at.z;ay=(q.gy||groundY(ax,az))+2.05}
   tag.visible=Math.hypot(ax-camera.position.x,az-camera.position.z)<90;tag.position.set(ax,ay,az)}
  netNpcFrame(dt);netRideFrame();netCollide();netPvDueTick();netImpoundHint();

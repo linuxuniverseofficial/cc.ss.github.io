@@ -60,6 +60,7 @@ const HACK_CAP    = 5000;    // máximo por hack
 const HACK_MIN_BAL= 100;     // vítima com menos que isso não vale a pena
 const HACK_CD     = 90.0;    // s de recarga de quem hackeia
 const HACK_SHIELD = 300.0;   // s em que a vítima não pode ser hackeada de novo    // s que um evento fica guardado
+const SPAWN_PROT  = 15.0;    // v3 r38: s de proteção depois de renascer (morte nesse tempo não conta no ranking)
 const TZ          = 'America/Sao_Paulo';
 /* v3 r27: trânsito leve e viaturas do servidor (cada jogador simula os seus; os outros só desenham) */
 const NPC_PER_PLAYER = 2;     // carros de trânsito em volta de cada jogador
@@ -102,11 +103,34 @@ function db(): PDO {
   /* r25: kick = sessão removida pelo admin (o próximo tick recebe 410 e o jogo não reentra sozinho) */
   $cols = array_column($pdo->query('PRAGMA table_info(players)')->fetchAll(), 'name'); if (!in_array('kick', $cols, true)) $pdo->exec('ALTER TABLE players ADD COLUMN kick INTEGER DEFAULT 0');
   /* v3 r9: hack de PIX (alvo e início da transferência em andamento, recarga de quem hackeia, proteção de quem foi hackeado) */
-  foreach (['hack_to INTEGER DEFAULT 0', 'hack_t REAL DEFAULT 0', 'hack_cd REAL DEFAULT 0', 'hacked_t REAL DEFAULT 0'] as $c) { $n = strtok($c, ' '); if (!in_array($n, $cols, true)) $pdo->exec('ALTER TABLE players ADD COLUMN ' . $c); }
+  foreach (['hack_to INTEGER DEFAULT 0', 'hack_t REAL DEFAULT 0', 'hack_cd REAL DEFAULT 0', 'hacked_t REAL DEFAULT 0', 'prot REAL DEFAULT 0', 'streak INTEGER DEFAULT 0'] as $c) { $n = strtok($c, ' '); if (!in_array($n, $cols, true)) $pdo->exec('ALTER TABLE players ADD COLUMN ' . $c); }
   $pdo->exec('CREATE TABLE IF NOT EXISTS npc(id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT, host INTEGER, t TEXT, col TEXT, x REAL, z REAL, a REAL, v REAL, f INTEGER DEFAULT 0, seen REAL)');
   $pdo->exec('CREATE INDEX IF NOT EXISTS npc_host ON npc(host)');
   $cols = array_column($pdo->query('PRAGMA table_info(accounts)')->fetchAll(), 'name'); if (!in_array('sigblock', $cols, true)) $pdo->exec('ALTER TABLE accounts ADD COLUMN sigblock INTEGER DEFAULT 0');
+  /* v3 r38: ranking — abates/mortes somados na conta (o 0/0 do jogador é só da sessão e some quando ele sai) */
+  foreach (['kills INTEGER DEFAULT 0', 'deaths INTEGER DEFAULT 0', 'jacks INTEGER DEFAULT 0', 'wanted REAL DEFAULT 0', 'crashes INTEGER DEFAULT 0', 'hacks INTEGER DEFAULT 0', 'best INTEGER DEFAULT 0'] as $c) { $n = strtok($c, ' '); if (!in_array($n, $cols, true)) $pdo->exec('ALTER TABLE accounts ADD COLUMN ' . $c); }
   return $pdo;
+}
+/* v3 r38: ranking da tela de entrada — top 10 por abates (empate: menos mortes); on = está jogando agora */
+const RANK_TOP = 10;
+function rankTop(PDO $db): array {
+  $q = $db->query('SELECT a.name, a.kills, a.deaths, (SELECT COUNT(*) FROM players p WHERE p.name_lc=a.name_lc) on_ FROM accounts a WHERE a.kills>0 OR a.deaths>0 ORDER BY a.kills DESC, a.deaths ASC, a.name_lc ASC LIMIT ' . RANK_TOP);
+  $o = []; foreach ($q->fetchAll() as $r) $o[] = ['n' => $r['name'], 'k' => (int)$r['kills'], 'd' => (int)$r['deaths'], 'on' => (int)$r['on_'] > 0 ? 1 : 0];
+  return $o;
+}
+/* v3 r38: títulos — o líder de cada categoria (valor > 0; empate = nome em ordem alfabética). Categoria com dois títulos:
+   o líder fica com um deles, sorteado pelo nome (crc32), então não troca cada vez que a tela abre. O cliente traduz a chave (t). */
+const RANK_TIT = ['k' => 'kills', 'j' => 'jacks', 'd' => 'deaths', 'w' => 'wanted', 'c' => 'crashes', 'h' => 'hacks', 's' => 'best'];
+const RANK_TIT_N = ['k' => 2, 'j' => 2, 'd' => 2, 'w' => 1, 'c' => 1, 'm' => 1, 'h' => 1, 's' => 1];
+function rankTitles(PDO $db): array {
+  $lead = [];
+  foreach (RANK_TIT as $k => $col) { $r = $db->query("SELECT name, name_lc, $col v FROM accounts WHERE $col>0 ORDER BY $col DESC, name_lc ASC LIMIT 1")->fetch(); if ($r) $lead[$k] = $r; }
+  $bm = null; foreach ($db->query('SELECT name, name_lc, data FROM accounts')->fetchAll() as $r) { $m = (int)((json_decode((string)$r['data'], true) ?: [])['m'] ?? 0);
+    if ($m > 0 && (!$bm || $m > $bm['v'] || ($m === $bm['v'] && strcmp($r['name_lc'], $bm['name_lc']) < 0))) $bm = ['name' => $r['name'], 'name_lc' => $r['name_lc'], 'v' => $m]; }
+  if ($bm) $lead['m'] = $bm;
+  $o = []; foreach (['k', 'j', 'd', 'w', 'c', 'm', 'h', 's'] as $k) { if (!isset($lead[$k])) continue; $r = $lead[$k];
+    $o[] = ['n' => $r['name'], 't' => $k . (crc32($r['name_lc'] . '|' . $k) % RANK_TIT_N[$k]), 'v' => $k === 'w' ? (int)round((float)$r['v']) : (int)$r['v']]; }
+  return $o;
 }
 /* conta: nome + senha. Existe → confere; não existe → cria com o dinheiro inicial. Chamar dentro de transação. */
 function acctAuth(PDO $db, array $b): array {
@@ -291,7 +315,7 @@ try {
   if ($a === 'info') {
     cleanup($db); [$day, $seed] = daySeed();
     $n = (int)$db->query('SELECT COUNT(*) n FROM players')->fetch()['n'];
-    out(['ok' => true, 'players' => $n, 'max' => MAX_PLAYERS, 'day' => $day, 'seed' => $seed, 'size' => CITY_SIZE]);
+    out(['ok' => true, 'players' => $n, 'max' => MAX_PLAYERS, 'day' => $day, 'seed' => $seed, 'size' => CITY_SIZE, 'rank' => rankTop($db), 'tit' => rankTitles($db)]);
   }
   if ($a === 'login') {
     /* r18: passo 1 da tela ONLINE — cria a conta (nome novo) ou confere a senha; devolve o que está salvo (roupa, carro, dinheiro…) */
@@ -336,6 +360,10 @@ try {
       $db->prepare('UPDATE players SET look=?, lookv=lookv+1 WHERE id=?')->execute([$lk, $id]);
     }
     $db->prepare('UPDATE players SET state=?, seen=? WHERE id=?')->execute([$state, $t, $id]);
+    /* v3 r38: saiu de "morto" (renasceu) → SPAWN_PROT s em que a morte dele não conta (o jogo dele também fica imortal e semitransparente) */
+    $stOld = $p['state'] ? (json_decode((string)$p['state'], true)['st'] ?? '') : ''; $stNew = $state ? (json_decode($state, true)['st'] ?? '') : '';
+    if ($stOld === 'dead' && $stNew !== 'dead') { $db->prepare('UPDATE players SET prot=? WHERE id=?')->execute([$t + SPAWN_PROT, $id]); $p['prot'] = $t + SPAWN_PROT; }
+    elseif ((float)($p['prot'] ?? 0) > $t && $stNew !== 'dead' && empty(($state ? json_decode($state, true) : [])['g'])) { $db->prepare('UPDATE players SET prot=0 WHERE id=?')->execute([$id]); $p['prot'] = 0; } /* atacou alguém: a proteção acabou antes */
     if (isset($b['save']) && ($sv = cleanJson($b['save'], 8000)) !== null) $db->prepare('UPDATE accounts SET data=?, seen=? WHERE name_lc=?')->execute([$sv, $t, $p['name_lc'] ?? mb_strtolower($p['name'])]);
     /* eventos do jogador: chat, dano em outro jogador, morte (quem matou), explosão */
     $evs = is_array($b['ev'] ?? null) ? array_slice($b['ev'], 0, 24) : [];
@@ -350,15 +378,24 @@ try {
         $to = (int)($e['to'] ?? 0); $d = max(0.0, min(250.0, (float)($e['d'] ?? 0)));
         if ($to > 0 && $to !== $id && $d > 0) addEv($db, $id, $to, 'hit', ['d' => $d, 'car' => !empty($e['car']), 'w' => mb_substr((string)($e['w'] ?? ''), 0, 12)]);
       } elseif ($k === 'dead') {
-        $by = (int)($e['by'] ?? 0);
-        $db->prepare('UPDATE players SET deaths=deaths+1 WHERE id=?')->execute([$id]);
+        $by = (int)($e['by'] ?? 0); $cnt = $t >= (float)($p['prot'] ?? 0);   /* v3 r38: morte na proteção de renascer não conta */
+        $db->prepare('UPDATE players SET streak=0 WHERE id=?')->execute([$id]);   /* v3 r38: sequência de abates sem morrer (Duro de Matar) */
+        if ($cnt) { $db->prepare('UPDATE players SET deaths=deaths+1 WHERE id=?')->execute([$id]);
+          $db->prepare('UPDATE accounts SET deaths=deaths+1 WHERE name_lc=?')->execute([$p['name_lc'] ?? mb_strtolower($p['name'])]); }
         $killer = null;
-        if ($by > 0 && $by !== $id) { $db->prepare('UPDATE players SET kills=kills+1 WHERE id=?')->execute([$by]);
-          $q = $db->prepare('SELECT name FROM players WHERE id=?'); $q->execute([$by]); $killer = $q->fetch()['name'] ?? null; }
+        if ($by > 0 && $by !== $id) { if ($cnt) $db->prepare('UPDATE players SET kills=kills+1 WHERE id=?')->execute([$by]);
+          $q = $db->prepare('SELECT name, name_lc FROM players WHERE id=?'); $q->execute([$by]); $kr = $q->fetch(); $killer = $kr['name'] ?? null;
+          if ($kr && $cnt) { $db->prepare('UPDATE accounts SET kills=kills+1 WHERE name_lc=?')->execute([$kr['name_lc']]);
+            $db->prepare('UPDATE players SET streak=streak+1 WHERE id=?')->execute([$by]);
+            $db->prepare('UPDATE accounts SET best=MAX(best,(SELECT streak FROM players WHERE id=?)) WHERE name_lc=?')->execute([$by, $kr['name_lc']]); } }
         $dd = ['n' => $p['name'], 'by' => $killer, 'byId' => $by];   /* v3 r27: lugar e causa vão para a manchete da banca */
         if (is_numeric($e['x'] ?? null) && is_numeric($e['z'] ?? null)) { $dd['x'] = (int)num($e['x'], -2000, 4000); $dd['z'] = (int)num($e['z'], -2000, 4000); }
         if (isset($e['c'])) $dd['c'] = mb_substr(preg_replace('/[^\p{L}\p{N} ]/u', '', (string)$e['c']), 0, 24);
         addEv($db, $id, 0, 'dead', $dd);
+      } elseif ($k === 'st') {
+        /* v3 r38: estatísticas do ranking que só o jogo do jogador vê: carros roubados (j), segundos procurado (w), batidas (c). Limitado por tick. */
+        $j = (int)num($e['j'] ?? 0, 0, 3); $w = num($e['w'] ?? 0, 0, 6); $c = (int)num($e['c'] ?? 0, 0, 3);
+        if ($j || $w > 0 || $c) $db->prepare('UPDATE accounts SET jacks=jacks+?, wanted=wanted+?, crashes=crashes+? WHERE name_lc=?')->execute([$j, $w, $c, $p['name_lc'] ?? mb_strtolower($p['name'])]);
       } elseif ($k === 'boom') {
         addEv($db, $id, 0, 'boom', ['x' => (float)($e['x'] ?? 0), 'z' => (float)($e['z'] ?? 0)]);
       } elseif ($k === 'car') {
@@ -420,6 +457,7 @@ try {
         $bal = acctMoney($db, (string)$v['name_lc']); $m = (int)min(HACK_CAP, floor(max(0, $bal) * HACK_PCT));
         if ($bal < HACK_MIN_BAL || $m <= 0) { $no('poor'); continue; }
         acctMoneyAdd($db, (string)$v['name_lc'], -$m); acctMoneyAdd($db, (string)$p['name_lc'], $m);
+        $db->prepare('UPDATE accounts SET hacks=hacks+1 WHERE name_lc=?')->execute([(string)$p['name_lc']]);   /* v3 r38: Clonador de Cartão */
         $db->prepare('UPDATE players SET hack_to=0, hack_t=0, hack_cd=? WHERE id=?')->execute([$t + HACK_CD, $id]); $p['hack_to'] = 0; $p['hack_cd'] = $t + HACK_CD;
         $db->prepare('UPDATE players SET hacked_t=? WHERE id=?')->execute([$t, $to]);
         addEv($db, $id, $to, 'pixed', ['n' => $p['name'], 'm' => $m]); addEv($db, 0, $id, 'hk', ['st' => 'ok', 'm' => $m, 'n' => $v['name'], 'to' => $to]);
