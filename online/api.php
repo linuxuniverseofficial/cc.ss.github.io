@@ -143,8 +143,9 @@ function carData(array $e, ?array $old): array {
 }
 /* seed do dia: igual para todo mundo, muda à meia-noite (horário de Brasília) */
 function daySeed(): array { $day = date('Y-m-d'); return [$day, crc32('ccss-online|' . $day) & 0x7fffffff]; }
-/* relógio do jogo: 1 minuto de jogo por segundo real (o mesmo ritmo do jogo); o dia de jogo dura 24 min reais */
-function gameTod(): float { $t = now(); return fmod($t, 1440.0); }
+/* relógio do jogo: 1 minuto de jogo a cada 3 s reais (GMIN do index.html, v3 r23); o dia de jogo dura 72 min reais */
+const GAME_MIN_S = 3.0;
+function gameTod(): float { $t = now(); return fmod($t / GAME_MIN_S, 1440.0); }
 function cleanup(PDO $db): void {
   $cut = now() - TIMEOUT; $t = now();
   $gone = $db->prepare('SELECT id, name, state FROM players WHERE seen < ?'); $gone->execute([$cut]);
