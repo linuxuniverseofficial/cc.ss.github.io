@@ -365,6 +365,7 @@ Object.assign(LANG_EN,{"Sunset Shores… cidade nova, vida nova. Pelo menos é o
 LANG_EN["JAMMER ATIVO · APAGÃO E TRÂNSITO CAÓTICO · 100 m"]="JAMMER ACTIVE · BLACKOUT AND TRAFFIC CHAOS · 100 m";
 Object.assign(LANG_EN,{"5 pedestres atropelados": "5 pedestrians run over"});
 Object.assign(LANG_EN,{"Pedestres em 3D (Experimental)": "3D Pedestrians (Experimental)"});
+Object.assign(LANG_EN,{"Visual dos personagens:": "Character look:"});
 Object.assign(LANG_EN,{"PRAÇA DE ALIMENTAÇÃO": "FOOD COURT", "ESCADA ROLANTE": "ESCALATOR", "CAÇA-NÍQUEIS": "SLOT MACHINES", "VIDEOPÔQUER": "VIDEO POKER"});
 Object.assign(LANG_EN,{"SEMINOVOS · FINANCIAMOS": "USED CARS · FINANCING", "FINANCIAMOS": "FINANCING", "SEMINOVOS": "USED CARS"});
 Object.assign(LANG_EN,{"SEUS VEÍCULOS VOLTARAM PRA GARAGEM": "YOUR VEHICLES ARE BACK IN THE GARAGE", "SEU VEÍCULO VOLTOU PRA GARAGEM": "YOUR VEHICLE IS BACK IN THE GARAGE"});

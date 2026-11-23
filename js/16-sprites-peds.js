@@ -329,6 +329,8 @@ function charPreload3D(){if(S.sprite8!==true||typeof PED_PALS==='undefined')retu
 // Troca o atlas dos pedestres já na rua ao ligar/desligar a opção (só os que usam a textura original do makeCharacter).
 function spritesRefreshPeds(){for(const q of peds){if(!q||!q.pal||!q.sp)continue;const own=q.tex&&(q.sp.material.map===q.tex||(q.tex.isProxy&&q.sp.material.map===q.tex.shared));if(!own)continue;
  const old=q.tex;if(S.sprite8===true){const px=pedAtlas3Proxy(q.pal,true);q.tex=px;q.sp.userData.texProxy=px;q.sp.material.map=px.shared;if(px.standIn)ped3dQueue(q.pal,px,q.sp)}else{const pa=pedAtlasProxy(q.pal);if(pa){q.tex=pa;q.sp.userData.texProxy=pa;q.sp.material.map=pa.shared}else{const t=atlasTex(q.pal);q.tex=t;q.sp.userData.texProxy=null;q.sp.material.map=t}}q.sp.material.needsUpdate=true;charTexRelease(old)}}
+/* v3 r40: modo visual dos personagens no menu (2D / 2.5D = antigo "3D experimental" / 3D = boneco PS1 do 49-personagens-3d.js) */
+function charModeOf(){return S.char3d===true?'3d':S.sprite8===true?'25d':'2d'}
 const PICK8={a:Math.PI,fresh:false},DIR4_ANG=[Math.PI,0,-Math.PI/2,Math.PI/2];
 // v78j: piscada na rua — cada textura de personagem tem seu cronômetro; 140 ms de olhos fechados a cada 2,5–6 s, só no quadro 0.
 function charBlinkCol(tex,fr){if(fr!==0||!tex.isChar)return fr;const now=performance.now();if(!tex._bk)tex._bk=now+1000+Math.random()*4500;if(now>tex._bk+140)tex._bk=now+2500+Math.random()*3500;return now>=tex._bk?3:0}
@@ -476,7 +478,7 @@ function reliefApply(sp,mat,local){const V=sp.userData.reliefV,px=sp.userData.te
  if(!V.includes(mat.map))return;const base=V[0],t=V[reliefSide(sp,local)]||base;if(t!==base){t.offset.copy(base.offset);t.repeat.copy(base.repeat);t.center.copy(base.center);t.rotation=base.rotation}if(mat.map!==t)mat.map=t}
 function makeActorLitSprite(tex){const mat=new THREE.SpriteMaterial({map:tex,transparent:true,alphaTest:.5,fog:true});
  const local={value:ACTOR_LIGHT.value.clone(),target:new THREE.Color(),next:0,last:simT,shade:0};
- const sp=new THREE.Sprite(mat);sp.userData.actorTint=new THREE.Color(1,1,1);sp.position.set(0,-9999,0); /* v79r22: nasce longe — até o 1º placeSprite não pisca na origem (0,0) */
+ const sp=new THREE.Sprite(mat);sp.userData.actorTint=new THREE.Color(1,1,1);sp.userData.actorLocal=local; /* v3 r40: o boneco 3D usa a mesma luz do sprite */sp.position.set(0,-9999,0); /* v79r22: nasce longe — até o 1º placeSprite não pisca na origem (0,0) */
  sp.onBeforeRender=(renderer0,scene0,renderCam)=>{if(renderCam===camera){sp.userData.actorLastDraw=simT;actorLighting(sp,local);mat.color.copy(local.value).multiply(sp.userData.actorTint)}else if(!local._init){local._init=1;actorLighting(sp,local);mat.color.copy(local.value).multiply(sp.userData.actorTint)}
   /* v78m: textura 3D COMPARTILHADA por roupa — cada ped guarda seu quadro num proxy; copiado aqui, antes do draw (uvTransform é lido depois). Só se o map ainda for o compartilhado. */try{reliefApply(sp,mat,local);const bt=local.bkT||0,tn=simT,db=Math.min(.12,Math.max(0,tn-(local.bkS??tn)));local.bkS=tn;local.bk=(local.bk||0)+(bt-(local.bk||0))*(1-Math.exp(-db*7));if(local.bk>.004)mat.color.multiplyScalar(1-(1-RELIEF.dark)*local.bk)}catch(e){}const px=sp.userData.texProxy;if(px&&(mat.map===px.shared||px.sharedV&&px.sharedV.includes(mat.map))){mat.map.offset.copy(px.offset);mat.map.repeat.copy(px.repeat)}};
  sp.center.set(.5,0);sp.layers.set(1);scene.add(sp);

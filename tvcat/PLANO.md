@@ -90,6 +90,7 @@ mecânicas houver (20, 30…). Coisas pequenas podem dividir canal (ex.: eclipse
 | RÁDIO E HEADPHONE | 1 | radio_wheel |
 | NOTÍCIAS | 2 | news (jornal) · tv_chase |
 | MODO FOTO | 1 | photo |
+| PERSONAGENS 3D (v3 r40) | 1 | char3d_rua, char3d_perto |
 | CHEATS | 2 | cheat_box · its |
 
 Fora de propósito (pedido do José, para o jogador descobrir): modo história, detalhes da cidade (fantasma, pets, fogueiras, cardumes, aves, poças, outdoors), extras da Maskara.
