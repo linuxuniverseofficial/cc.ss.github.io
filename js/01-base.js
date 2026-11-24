@@ -47,7 +47,7 @@ const S={char3d:false,cloudQ:1,waterQ:1,fxWet:true,fxGlow:true,fxPaint:true,fxSu
 
 const STYLES={
  modern:{label:'MODERN',sky:[0x6fa6de,0xd4e4ef],fog:0xc9d4dc,fogNear:160,fogFar:600,bg:0x55585c,
-  hemi:[0xdde9ff,0x5f564c,0.58],sun:[0xfff0d8,0.98],sunOff:[-60,130,-45],
+  hemi:[0xdde9ff,0x5f564c,0.58],sun:[0xffe9c8,0.98],sunOff:[-60,130,-45],
   asphalt:'#46474b',side:'#9b978f',grass:'#5f8b40',mark:'#ebe8df',center:'#e2b53a',
   walls:['#a3a39e','#b8afa2','#8e6c58','#a68d75','#7e8388','#c4beb2','#6f6a66','#9b8f84','#8a7a6c'],
   roof:['#6d6760','#77716a','#5f5b57','#857d72','#6a6a6a'],detail:'#8e8a84',

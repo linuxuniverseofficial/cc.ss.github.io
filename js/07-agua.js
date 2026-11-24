@@ -103,8 +103,8 @@ function fxNeonPatch(mat){if(!mat||mat.userData.fxNeon||!mat.isMeshBasicMaterial
    Só na parede lisa (a moldura e o vidro das janelas ficam como estavam). Detalhe fino some sozinho com a distância
    (pegada do pixel por fwidth = sem chiado/moiré) e tudo corta a 170 m. Chave: Gráficos › Texturas de areia, asfalto e
    prédios (S.fxSurf → uniform sfOn, sem recompilar). Remover de vez: tirar as chamadas surfPatch(...) (ver CONTEXT §2b). */
-const SURF={U:{sfOn:{value:1},sfSeed:{value:0},sfSt:{value:null},sfStK:{value:new THREE.Vector4(76,1,8,0)},sfPaint:{value:new THREE.Vector3(.886,.71,.227)},sfPaintW:{value:new THREE.Vector3(.92,.91,.875)}}};
-const SURF_GLSL=`uniform float sfOn;uniform float sfSeed;uniform sampler2D sfSt;uniform vec4 sfStK;uniform vec3 sfPaint;uniform vec3 sfPaintW;varying vec3 sfW;varying vec3 sfN;
+const SURF={U:{sfOn:{value:1},sfSeed:{value:0},sfSt:{value:null},sfStK:{value:new THREE.Vector4(76,1,8,0)},sfPaint:{value:new THREE.Vector3(.886,.71,.227)},sfPaintW:{value:new THREE.Vector3(.92,.91,.875)},sfAge:{value:new THREE.Vector3(.86,.85,.8)}}};
+const SURF_GLSL=`uniform float sfOn;uniform float sfSeed;uniform sampler2D sfSt;uniform vec4 sfStK;uniform vec3 sfPaint;uniform vec3 sfPaintW;uniform vec3 sfAge;varying vec3 sfW;varying vec3 sfN;
 float sfH(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}
 float sfV(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(sfH(i),sfH(i+vec2(1.,0.)),f.x),mix(sfH(i+vec2(0.,1.)),sfH(i+vec2(1.,1.)),f.x),f.y);}
 float sfAA(float px,float fq){return 1.-smoothstep(.3,.9,px*fq);}
@@ -191,7 +191,7 @@ vec4 sfDirt(vec2 p,float px){float P=sfStK.x,hw=sfStK.z;float t=mix(.92,1.06,sfV
 function surfVert(sh){sh.vertexShader='varying vec3 sfW;varying vec3 sfN;\n'+sh.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\n sfW=(modelMatrix*vec4(transformed,1.)).xyz;sfN=normalize(mat3(modelMatrix)*objectNormal);')}
 // kind: 'asph' (chão de asfalto), 'sand' (areia da praia), 'wall' (paredes de prédios/casas, com janelas no map)
 function surfPatch(mat,kind){if(!mat||mat.userData.surf)return mat;mat.userData.surf=kind;const old=mat.onBeforeCompile,key=(mat.customProgramCacheKey&&mat.customProgramCacheKey())||'';
- mat.onBeforeCompile=(sh,r)=>{if(old)old.call(mat,sh,r);sh.uniforms.sfOn=SURF.U.sfOn;sh.uniforms.sfSeed=SURF.U.sfSeed;sh.uniforms.sfSt=SURF.U.sfSt;sh.uniforms.sfStK=SURF.U.sfStK;sh.uniforms.sfPaint=SURF.U.sfPaint;sh.uniforms.sfPaintW=SURF.U.sfPaintW;surfVert(sh);
+ mat.onBeforeCompile=(sh,r)=>{if(old)old.call(mat,sh,r);sh.uniforms.sfOn=SURF.U.sfOn;sh.uniforms.sfSeed=SURF.U.sfSeed;sh.uniforms.sfSt=SURF.U.sfSt;sh.uniforms.sfStK=SURF.U.sfStK;sh.uniforms.sfPaint=SURF.U.sfPaint;sh.uniforms.sfPaintW=SURF.U.sfPaintW;sh.uniforms.sfAge=SURF.U.sfAge;surfVert(sh);
   const head=`float sfD=distance(sfW,cameraPosition);float sfF=sfOn*(1.-smoothstep(120.,170.,sfD));float sfPx=length(fwidth(sfW));`;
   let fs=SURF_GLSL+'\n'+sh.fragmentShader;
   if(kind==='paint')fs=fs.replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
@@ -225,8 +225,16 @@ function surfPatch(mat,kind){if(!mat||mat.userData.surf)return mat;mat.userData.
      vec3 sfT=texture2D(map,vUv).rgb;wm=smoothstep(.88,.97,min(sfT.r,min(sfT.g,sfT.b)));
      #endif
      if(wm>.01)diffuseColor.rgb*=mix(vec3(1.),sfGain(sfWall(sfW,normalize(sfN),bc,sfPx),bc),sfF*wm);}`;
+  /* v3 r62: tinta envelhecida (cinza/amarelada) em toda faixa, sem sumir com a distância (só depende de sfOn) */
+  const tint=kind==='paint'?`{vec3 bc=vec3(1.);
+     #ifdef USE_COLOR
+     bc=vColor;
+     #endif
+     float lum=dot(bc,vec3(.3,.59,.11));if(sfOn>.5&&sfN.y>.6&&!sfIsDirt(bc)&&(lum>.72||distance(bc,sfPaint)<.12||distance(bc,sfPaintW)<.12||(bc.r>.7&&bc.g>.5&&bc.b<bc.r*.4))){
+      vec2 cw=sfW.xz;float lvl=.32+.68*(sfH(floor(cw/76.+.5)*1.37+sfSeed)*.6+sfH(floor(cw/19.)*2.11+sfSeed+5.3)*.4);
+      vec3 aged=sfAge*mix(vec3(1.),vec3(1.07,1.02,.9),sfV(cw*.21+9.));diffuseColor.rgb*=mix(vec3(1.),aged,.55+.45*lvl);}}`:'';
   fs=fs.replace('#include <color_fragment>',`#include <color_fragment>
-   {${head}if(sfF>.01){${body}}}`);
+   {${head}if(sfF>.01){${body}}}${tint}`);
   sh.fragmentShader=fs};
  mat.customProgramCacheKey=()=>key+'|surf-'+kind;mat.needsUpdate=true;return mat}
 function surfApply(){SURF.U.sfOn.value=S.fxSurf!==false?1:0}
@@ -240,7 +248,7 @@ function streetTexBuild(){const N=city.N|0,n=N+1,data=new Uint8Array(n*n*4),r=mu
   if(segExists(kx,kz,0)&&ok(x+P/2,z))data[i+1]=(g1<.35?f1:0)+(g2<.35?f2*16:0);
   if(segExists(kx,kz,1)&&ok(x,z+P/2))data[i+2]=(b1<.35?e1:0)+(b2<.35?e2*16:0)}
  const old=SURF.U.sfSt.value;const t=new THREE.DataTexture(data,n,n,THREE.RGBAFormat);t.magFilter=t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;t.needsUpdate=true;
- SURF.U.sfSt.value=t;SURF.U.sfStK.value.set(P,n,RW/2,city.haze?0:1);SURF.U.sfSeed.value=(S.seed%9973)*.731;{const st=STYLES[S.style]||STYLES.modern,c=COL(st.center),w=COL(st.mark);SURF.U.sfPaint.value.set(c.r,c.g,c.b);SURF.U.sfPaintW.value.set(w.r,w.g,w.b)} /* v3 r60: cor da faixa central e da branca do mundo atual (desgaste em todos os mundos) */if(old)old.dispose()}
+ SURF.U.sfSt.value=t;SURF.U.sfStK.value.set(P,n,RW/2,city.haze?0:1);SURF.U.sfSeed.value=(S.seed%9973)*.731;{const st=STYLES[S.style]||STYLES.modern,c=COL(st.center),w=COL(st.mark);SURF.U.sfPaint.value.set(c.r,c.g,c.b);SURF.U.sfPaintW.value.set(w.r,w.g,w.b);const ag=st.synth?[.6,.58,.64]:S.style==='inverted'?[.78,.78,.75]:[.86,.85,.8];SURF.U.sfAge.value.set(ag[0],ag[1],ag[2])} /* v3 r62: tinta envelhecida por mundo (o Synth satura com bloom, precisa de mais) */ /* v3 r60: cor da faixa central e da branca do mundo atual (desgaste em todos os mundos) */if(old)old.dispose()}
 /* fumaça leve dos bueiros do centro (mesmo emit da fuligem das chaminés, bem mais fraca) */
 function manholeSmokeTick(dt){const L=city.manholes;if(!L||!L.length||city.haze||PL.inside)return;const pp=PL.car||PL;
  for(let i=0;i<L.length;i++){const m=L[i];if(!m.smoke||Math.abs(m.x-pp.x)>80||Math.abs(m.z-pp.z)>80)continue;
