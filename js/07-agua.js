@@ -165,7 +165,10 @@ vec3 sfWall(vec3 w,vec3 n,vec3 bc,float px){vec2 tg=normalize(vec2(-n.z,n.x));fl
 /* v3 r56/r57: ESTRADA DE TERRA — grão de solo (manchas, pedrinhas, poros) + sulcos de pneu: trechos aleatórios e espaçados
    (célula de 18 m por rua, ~38% com trecho de 5–15 m, reto/inclinado ou em curva), par de rodas a 1,6 m, cada sulco
    afundado com 3 cumes no corte (o "efeito onda" da areia limitado a 3). Rua H/V pela grade (sfStK.x = P). */
-bool sfIsDirt(vec3 bc){float mx=max(bc.r,max(bc.g,bc.b));return bc.r>=bc.g&&bc.g>=bc.b&&mx<.8&&mx>.15&&(bc.r-bc.b)/max(bc.r,.001)>.25&&(bc.r-bc.b)/max(bc.r,.001)<.62;}
+bool sfIsDirt(vec3 bc){float mx=max(bc.r,max(bc.g,bc.b));if(bc.r>bc.b&&bc.b>bc.g&&mx<.36&&mx>.12){float k=(bc.r-bc.g)/max(bc.r,.001);if(k>.15&&k<.35)return true;} /* v3 r60: terra do Synthwave (#4a3a40, sulco #3a2c34: roxo-terra, verde < azul) */
+ return bc.r>=bc.g&&bc.g>=bc.b&&mx<.8&&mx>.15&&(bc.r-bc.b)/max(bc.r,.001)>.25&&(bc.r-bc.b)/max(bc.r,.001)<.62;}
+/* v3 r60: ganho da textura em base escura (Synthwave, Mundo Invertido): o SURF é multiplicativo e some em cor quase preta; abaixo de lum .3 o desvio de 1 cresce até 2,3× */
+vec3 sfGain(vec3 m,vec3 base){float l=dot(base,vec3(.3,.59,.11));return vec3(1.)+(m-vec3(1.))*(1.+1.3*(1.-smoothstep(.06,.3,l)));}
 vec3 sfRut1(float u,float v,float lane,float px){vec3 acc=vec3(0.);float L=18.;
  for(int k=-1;k<=0;k++){float id=floor(u/L)+float(k);vec2 q=vec2(id,lane+sfSeed*.013);if(sfH(q+.17)>.38)continue;
   float s0=id*L+sfH(q+3.1)*8.,len=5.+sfH(q+5.3)*10.,x=(u-s0)/len;if(x<0.||x>1.)continue;
@@ -197,7 +200,7 @@ function surfPatch(mat,kind){if(!mat||mat.userData.surf)return mat;mat.userData.
    #endif`);
   if(kind==='sand')fs=fs.replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
    {${head}if(sfF>.01&&sfN.y>.6){vec2 g=sfRip(sfW.xz,sfPx)*sfF;normal=normalize(normal+(viewMatrix*vec4(-g.x,0.,-g.y,0.)).xyz);}}`);
-  const body=kind==='asph'?`if(sfN.y>.6){diffuseColor.rgb*=mix(vec3(1.),sfAsph(sfW.xz,sfPx),sfF);diffuseColor.rgb*=mix(vec3(1.),sfStreet(sfW.xz,sfPx),smoothstep(.0,.25,sfF));}`
+  const body=kind==='asph'?`if(sfN.y>.6){diffuseColor.rgb*=mix(vec3(1.),sfGain(sfAsph(sfW.xz,sfPx),diffuseColor.rgb),sfF);diffuseColor.rgb*=mix(vec3(1.),sfStreet(sfW.xz,sfPx),smoothstep(.0,.25,sfF));}`
    :kind==='paint'?`{vec3 bc=vec3(1.);
      #ifdef USE_COLOR
      bc=vColor;
@@ -211,7 +214,7 @@ function surfPatch(mat,kind){if(!mat||mat.userData.surf)return mat;mat.userData.
      #ifdef USE_COLOR
      bc=vColor;
      #endif
-     float sat=max(bc.r,max(bc.g,bc.b))-min(bc.r,min(bc.g,bc.b));if(sat<.09)diffuseColor.rgb*=mix(vec3(1.),sfSide(sfW.xz,sfPx),sfF*(1.-smoothstep(.06,.09,sat)));}`
+     float sat=max(bc.r,max(bc.g,bc.b))-min(bc.r,min(bc.g,bc.b));if(sat<.12)diffuseColor.rgb*=mix(vec3(1.),sfGain(sfSide(sfW.xz,sfPx),diffuseColor.rgb),sfF*(1.-smoothstep(.09,.12,sat)));}` /* v3 r60: limite .09→.12 (calçada do Synthwave #2a2238 tem .086 e ficava sem) */
    :kind==='sand'?`if(sfN.y>-.2)diffuseColor.rgb*=mix(vec3(1.),sfSand(sfW.xz,sfPx),sfF);`
    :`if(abs(sfN.y)<.5){vec3 bc=vec3(.6);
      #ifdef USE_COLOR
@@ -221,7 +224,7 @@ function surfPatch(mat,kind){if(!mat||mat.userData.surf)return mat;mat.userData.
      #ifdef USE_MAP
      vec3 sfT=texture2D(map,vUv).rgb;wm=smoothstep(.88,.97,min(sfT.r,min(sfT.g,sfT.b)));
      #endif
-     if(wm>.01)diffuseColor.rgb*=mix(vec3(1.),sfWall(sfW,normalize(sfN),bc,sfPx),sfF*wm);}`;
+     if(wm>.01)diffuseColor.rgb*=mix(vec3(1.),sfGain(sfWall(sfW,normalize(sfN),bc,sfPx),bc),sfF*wm);}`;
   fs=fs.replace('#include <color_fragment>',`#include <color_fragment>
    {${head}if(sfF>.01){${body}}}`);
   sh.fragmentShader=fs};

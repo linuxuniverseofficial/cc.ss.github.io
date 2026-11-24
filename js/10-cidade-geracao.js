@@ -394,6 +394,7 @@ async function generateCity(){
  M.wall=jammerMaterial(new THREE.MeshStandardMaterial({map:wt.map,vertexColors:true,roughness:.88,metalness:0,emissive:0xffffff,emissiveMap:wt.emissive,emissiveIntensity:night?1.25:0}));city.wallMat=M.wall;city.sunOff=st.sunOff.slice();M.abWall=new THREE.MeshStandardMaterial({map:abandonedWindowTexture(),vertexColors:true,roughness:1});city.mats.push(M.abWall.map,M.abWall);
  M.solid=cityAgeMat(new THREE.MeshStandardMaterial({vertexColors:true,roughness:.92,metalness:0}));cityAgeMat(M.wall);if(M.abWall)cityAgeMat(M.abWall);CITY_AGE.k.value=night?.55:1;
  M.solid2=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.85,metalness:0,side:THREE.DoubleSide});
+ if(city.haze){M.castle=surfPatch(cityAgeMat(new THREE.MeshStandardMaterial({vertexColors:true,roughness:.92,metalness:0})),'wall');city.mats.push(M.castle)} /* v3 r60: castelo da Point Haze com o reboco/pedra do SURF (o M.solid comum não tem, para não texturizar todo objeto) */
  const surfaceTex=surfaceAtlasTexture();city.mats.push(surfaceTex);
  M.surface=new THREE.MeshStandardMaterial({map:surfaceTex,vertexColors:true,roughness:.94,metalness:0});M.surface.onBeforeCompile=surfaceAtlasShader;M.surface.userData.surfaceAtlas=true;
  M.surface2=M.surface.clone();M.surface2.side=THREE.DoubleSide;M.surface2.onBeforeCompile=surfaceAtlasShader;M.surface2.userData.surfaceAtlas=true;surfPatch(M.surface,'side'); /* v3 r35: ruído leve nas calçadas (SURF, só piso cinza) */
