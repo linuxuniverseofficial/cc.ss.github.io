@@ -485,7 +485,7 @@ function blitzWant(){if(POL.wanted){return POL.level===2&&PL.car&&!PL.inside&&!c
 // Blitz só em rua de mão única: viaturas ocupam uma faixa, cones na divisória levam o trânsito para a outra,
 // um policial fica no meio da faixa livre e põe um cone na sua frente; outro vem até a janela.
 // Todos os motoristas compartilham esta operação e sua fila única.
-function blitzCop(x,z){const q=spawnPed(null,{x,z,vx:0,vz:0,pal:COP_PAL});if(!q)return null;q.state='clerk';q.fixed=true;q.blitzCop=true;q.at={x,z};q.mx=0;q.mz=1;q.timer=0;return q}
+function blitzCop(x,z){const q=spawnPed(null,{x,z,vx:0,vz:0,pal:copPal()});if(!q)return null;q.state='clerk';q.fixed=true;q.blitzCop=true;q.at={x,z};q.mx=0;q.mz=1;q.timer=0;return q}
 function blitzBuildAt(site,z){const {kx,kz,d,s}=site,cx=kx*P+D[d][0]*s,cz=kz*P+D[d][1]*s;
   const ux=D[d][0],uz=D[d][1],a=Math.atan2(uz,ux),grp=new THREE.Group(),cars=[],P0=(li,t)=>lanePt(kx,kz,d,li,s+t);
   for(const t of [-3,6]){const p=P0(1,t),v=makeVehicle('police',p[0],p[1],a);v.blitz=true;v.hand=true;v.sleep=false;v.thr=0;v.lightsOff=false;cars.push(v)}

@@ -727,7 +727,7 @@ function scnSpawn(kind){const e={kind,peds:[],cars:[],t:0,go:false,ph:0,age:0};
   const ca=Math.cos(c.a),sa=Math.sin(c.a),fs=(ca*S0.ux+sa*S0.uz)>=0?1:-1,hq=scnAt(S0,fs*(c.t.L/2+.4),10),p=scnPed(e,hq[0],hq[1],c.rpal);if(!p){scnClear(e,true);return null}
   e.hood=[c.x+ca*(c.t.L/2-.5),c.z+sa*(c.t.L/2-.5)];p.mx=-ca;p.mz=-sa;e.c=c;e.p=p}
  else if(kind==='stop'){const S0=scnSpot(true,11);if(!S0)return null;e.S=S0;const c=scnCar(e,S0,2.6,pick2(SCN_CARS)),pc=scnCar(e,S0,-3.2,'police');pc.stationParked=true;pc.lightsOff=false;pc.sirenOn=false;
-  const dp=scnAt(S0,2.6+.6,10.0),cp=scnAt(S0,2.6-.9,10.3),drv=scnPed(e,dp[0],dp[1],c.rpal),cop=scnPed(e,cp[0],cp[1],COP_PAL);if(!drv||!cop){scnClear(e,true);return null}
+  const dp=scnAt(S0,2.6+.6,10.0),cp=scnAt(S0,2.6-.9,10.3),drv=scnPed(e,dp[0],dp[1],c.rpal),cop=scnPed(e,cp[0],cp[1],copPal());if(!drv||!cop){scnClear(e,true);return null}
   scnLook(drv,cop);scnLook(cop,drv);e.c=c;e.pc=pc;e.a=drv;e.b=cop}
  else if(kind==='argue'){const S0=scnSpot(true,11);if(!S0)return null;e.S=S0;const ca=scnCar(e,S0,2.7,pick2(SCN_CARS),{r:2},.04),cb=scnCar(e,S0,-2.6,pick2(SCN_CARS),{f:2},-.06);
   const pa=scnAt(S0,.9,10.0),pb=scnAt(S0,-.9,10.2),A=scnPed(e,pa[0],pa[1],ca.rpal),B=scnPed(e,pb[0],pb[1],cb.rpal);if(!A||!B){scnClear(e,true);return null}
@@ -737,7 +737,7 @@ function scnSpawn(kind){const e={kind,peds:[],cars:[],t:0,go:false,ph:0,age:0};
   const pq=scnAt(S0,-4.5,10.4),p=scnPed(e,pq[0],pq[1]);if(!p){dog.wait=0;return null}scnLook(p,dog);e.dog=dog;e.p=p}
  else if(kind==='purse'||kind==='chase'){const S0=scnSpot(false,16,10.2);if(!S0)return null;e.S=S0;e.dir=R2()<.5?1:-1;
   const bad={...pick2(PED_PALS),shirt:'#1d1d22',cap:'#141418',capDark:'#0c0c10',pants:'#2a2a30'},qa=scnAt(S0,e.dir*1.2,10.2),qb=scnAt(S0,-e.dir*1.2,10.2);
-  const T=scnPed(e,qa[0],qa[1],bad);const V=scnPed(e,qb[0],qb[1],kind==='chase'?COP_PAL:{...pick2(PED_PALS),bag:'#b0306a'});if(!T||!V){scnClear(e,true);return null}
+  const T=scnPed(e,qa[0],qa[1],bad);const V=scnPed(e,qb[0],qb[1],kind==='chase'?copPal():{...pick2(PED_PALS),bag:'#b0306a'});if(!T||!V){scnClear(e,true);return null}
   T.scnBad=true;T.crim=true;if(kind==='chase'){e.a=T;e.b=V;const q0=scnAt(S0,-e.dir*7,10.2);V.x=q0[0];V.z=q0[1]}else{e.a=T;e.b=V;scnLook(T,V);scnLook(V,T)}}
  else if(kind==='skate'){const S0=scnSpot(false,30,10.2);if(!S0)return null;e.S=S0;e.dir=R2()<.5?1:-1;e.u=-e.dir*15;e.lat=10.2;const q=scnAt(S0,e.u,e.lat),p=scnPed(e,q[0],q[1]);if(!p)return null;
   e.look={deck:pick2(SK_DECK),wheel:pick2(SK_WHEEL),print:SK_PRINT[Math.floor(R2()*(SK_PRINT.length-1))]};if(e.look.print==='EMOJI')e.look.emo=[SK_EMO_RND[Math.floor(R2()*SK_EMO_RND.length)]];e.board=skBoard(e.look);e.board.position.set(q[0],-9999,q[1]);scene.add(e.board);

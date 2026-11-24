@@ -130,9 +130,9 @@ function makeAtlas(p){const at=cv(128,192),ag=at.getContext('2d');
 const PLAYER_PAL={art:null,cap:'#d62828',capDark:null,skin:'#f1c27d',hair:'#4a2a12',shirt:'#2f6fd6',pants:'#2b3550',swim:null,headphone:null,bag:null,pack:false,shoes:'#1b1b1b',belt:'#3a2a1a',stripe:null,glasses:null,necklace:null};
 // futura loja de roupas: muda PLAYER_PAL (cap/shirt/pants/shoes, glasses/necklace on-off) e chama applyPlayerLook()
 function applyPlayerLook(){if(PLAYER_PAL.art===undefined)PLAYER_PAL.art=null;atlasCache.delete(PLAYER_PAL);const t=S.sprite8===true?atlas8Tex({...PLAYER_PAL},16,PL_RES3D):atlasTex(PLAYER_PAL);const o=PL.tex;PL.tex=t;PL.sp.material.map=t;PL.sp.material.needsUpdate=true;if(o)o.dispose();try{playerReliefSync()}catch(e){}}
-const PED_ATLAS_N=25,PED_PALS=[];(()=>{const skins=['#f1c27d','#e0ac69','#c68642','#8d5524','#ffdbac','#a86b3c'],hairs=['#1b1210','#4a2a12','#c9a04a','#6b3a1e','#2a2a2a','#9a9a9a','#7a1e1e'],
+const PED_ATLAS_N=25,PED_PALS=[];(()=>{const skinT=skinSpread(PED_ATLAS_N),darkHairs=['#1b1210','#1b1210','#2a2a2a','#2a2a2a','#4a2a12','#9a9a9a'],hairs=['#1b1210','#4a2a12','#c9a04a','#6b3a1e','#2a2a2a','#9a9a9a','#7a1e1e'],
  shirts=['#e04a3a','#3ab36a','#e8e3d6','#2a2a33','#e0b23a','#7a4ad6','#1e8ad6','#d65aa0','#4a6a3a','#c86a2a'],pants=['#2b3550','#3a3a3a','#5a4a3a','#1e2a5a','#6a5a4a','#222'];
- for(let i=0;i<PED_ATLAS_N;i++){const cap=Math.random()<.3;PED_PALS.push({skin:pick2(skins),hair:pick2(hairs),cap:cap?pick2(['#2a6ad6','#e0b23a','#2a2a2a','#3ab36a']):null,capDark:null,shirt:pick2(shirts),pants:pick2(pants),shoes:pick2(['#1b1b1b','#e8e8e8','#6a3a1e']),belt:'#2a1e14',stripe:Math.random()<.3?'#ffffff':null,long:!cap&&Math.random()<.4,glasses:Math.random()<.16?pick2(['#1a1a24','#3a6a8a','#5a3a20']):null,necklace:Math.random()<.12?pick2(['#e8c040','#d8d8e0']):null})}})();
+ for(let i=0;i<PED_ATLAS_N;i++){const cap=Math.random()<.3;const st=skinT[i];PED_PALS.push({skin:skinTone(st),hair:st>.55?pick2(darkHairs):pick2(hairs),cap:cap?pick2(['#2a6ad6','#e0b23a','#2a2a2a','#3ab36a']):null,capDark:null,shirt:pick2(shirts),pants:pick2(pants),shoes:pick2(['#1b1b1b','#e8e8e8','#6a3a1e']),belt:'#2a1e14',stripe:Math.random()<.3?'#ffffff':null,long:!cap&&Math.random()<.4,glasses:Math.random()<.16?pick2(['#1a1a24','#3a6a8a','#5a3a20']):null,necklace:Math.random()<.12?pick2(['#e8c040','#d8d8e0']):null})}})();
 // Avoid a session with no glasses in the shared pedestrian palette pool.
 {const candidates=PED_PALS.filter(p=>!p.glasses);let n=PED_PALS.filter(p=>p.glasses).length;while(n<3&&candidates.length){const i=Math.floor(Math.random()*candidates.length),p=candidates.splice(i,1)[0];p.glasses=pick2(['#1a1a24','#3a6a8a','#5a3a20']);n++;}}
 /* v3r3: 40% (10 de 25) das roupas da rua sai com estampa de emoji colorido (art 'e:…', emojis diferentes entre si). Fica no próprio PED_PALS,
@@ -302,7 +302,7 @@ function ped3Res(){return MOB_LITE?2:3}
 function ped3Scratch(){const R=ped3Res(),W=128*R,H=768*R;let s=PED3.scratch;if(!s||s.width!==W||s.height!==H){if(s)s.dispose();s=PED3.scratch=pedAtlasRT(W,H)}else{renderer.setRenderTarget(s);s.viewport.set(0,0,W,H);s.scissorTest=false;renderer.setClearColor(0x000000,0);renderer.clear(true,true,false)}return s}
 function ped3Copy(rt){const t=new THREE.DataTexture(null,rt.width,rt.height,THREE.RGBAFormat);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;t.flipY=false;t.needsUpdate=true;
  renderer.setRenderTarget(rt);rt.viewport.set(0,0,rt.width,rt.height);rt.scissorTest=false;renderer.setRenderTarget(rt);renderer.copyFramebufferToTexture(new THREE.Vector2(0,0),t);t.isSharedChar=true;t.isAtlas8=true;t.isChar=true;t.dirsN=16;return t}
-function pedAtlas3Build(){if(PED3.built)return PED3.ms;const t0=performance.now();const R=ped3Res(),sets=[[...PED_PALS,typeof COP_PAL!=='undefined'?COP_PAL:null].filter(Boolean),BEACH_PALS];
+function pedAtlas3Build(){if(PED3.built)return PED3.ms;const t0=performance.now();const R=ped3Res(),sets=[[...PED_PALS,...(typeof COP_PALS!=='undefined'?COP_PALS:[])],BEACH_PALS];
  char3DBakeWith(()=>{for(const pals of sets)for(const p of pals){const rt=ped3Scratch(),M=charModel3D(p);ATLAS8.scene.add(M.g);try{for(let r=0;r<16;r++)char3DBakeRow(rt,M,0,0,r,R)}finally{ATLAS8.scene.remove(M.g);M.dispose()}PED3.idx.set(p,ped3Copy(rt))}});
  PED3.built=true;PED3.ms=Math.round(performance.now()-t0);return PED3.ms}
 function pedPalDist(a,b){const C=h=>{const c=_c3.set(h||'#808080');return[c.r,c.g,c.b]},d=(x,y)=>{const p=C(x),q=C(y);return(p[0]-q[0])**2+(p[1]-q[1])**2+(p[2]-q[2])**2};
@@ -322,7 +322,7 @@ function ped3dJobTick(){if(S.sprite8!==true)return;let J=PED3JOB.cur;
  J.r++;if(J.r===16){let t=null;char3DBakeWith(()=>{t=ped3Copy(J.rt)});J.t=t;PED3JOB.done.set(J.k,t);for(const w of PED3JOB.wait.get(J.k)||[])if(w.sp&&w.sp.parent){ped3dAdopt(w.px,w.sp,t);(J.adopted=J.adopted||[]).push(w)}PED3JOB.wait.delete(J.k)}
  if(J.r<16)return;J.M.dispose();PED3JOB.cur=null}
 function charPreload3D(){if(S.sprite8!==true||typeof PED_PALS==='undefined')return 0;const t0=performance.now();
- const pals=[...PED_PALS,typeof COP_PAL!=='undefined'?COP_PAL:null].filter(Boolean),K=Math.ceil(Math.max(20,(S.peds??50)*1.6)/Math.max(1,pals.length))+1;
+ const pals=[...PED_PALS,...(typeof COP_PALS!=='undefined'?COP_PALS:[])],K=Math.ceil(Math.max(20,(S.peds??50)*1.6)/Math.max(1,pals.length))+1;
  pedAtlas3Build(); /* v78: atlas 3D único (cidade+policial / praia) */
  return Math.round(performance.now()-t0)} // three r128: Texture não tem userData
 // pickDir guarda o ângulo fino (8 setores) do último cálculo; setFrame o usa só em texturas d8.

@@ -1114,8 +1114,19 @@ function dropRoadCash(p){if(p.roadLoot)return;p.roadLoot=true;const amount=p.pro
 let roadLootId=0;
 function killPed(p){if(p.net){netHitPed(p,100,'x');return}if(p.state==='dead')return;if(p.tommy===undefined&&!p.demo&&!p.gang)dropRoadCash(p);if(p.tommy!==undefined)tommyDefeat(p);if(p.clubType){p.jy=0;p.jv=0}p.sp.material.alphaTest=.02;p.sp.material.needsUpdate=true;ouch(p.x,p.z,p.pitch);p.state='dead';p.timer=9;p.rot=(R2()<.5?1:-1)*Math.PI/2;
  if(p.cop&&p.car&&p.car.copsOut){p.car.copsOut=p.car.copsOut.filter(q=>q!==p)}}
+/* v4 r7: TOM DE PELE CONTÍNUO dos NPCs (pedestres, praia, policiais): t 0 = pele clara de antes … 1 = negra retinta.
+   skinTone(t) interpola numa rampa de tons naturais (claros, morenos, pardos, marrons, retintos). Os peds continuam
+   num pool fixo de roupas (atlas 2D / 2.5D compartilhados, sem textura por ped): cada roupa do pool ganha um t diferente,
+   espalhado na faixa toda, e o policial tem COP_PALS (5 tons) sorteados a cada spawn por copPal(). */
+const SKIN_RAMP=['#ffdbac','#f1c27d','#e0ac69','#c68642','#a86b3c','#8d5524','#6e4127','#52301d','#3b2218'];
+function skinTone(t){t=Math.max(0,Math.min(1,t))*(SKIN_RAMP.length-1);const i=Math.min(SKIN_RAMP.length-2,Math.floor(t)),f=t-i,a=parseInt(SKIN_RAMP[i].slice(1),16),b=parseInt(SKIN_RAMP[i+1].slice(1),16);
+ let o='#';for(const sh of [16,8,0]){const x=Math.round(((a>>sh)&255)*(1-f)+((b>>sh)&255)*f);o+=x.toString(16).padStart(2,'0')}return o}
+/* t espalhado: n valores, um por faixa de largura 1/n, embaralhados (Math.random: não mexe na seed da cidade) */
+function skinSpread(n){const a=[];for(let i=0;i<n;i++)a.push((i+Math.random())/n);for(let i=n-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 /* --- cops on foot --- */
-const COP_PAL={cap:'#1a2a5a',capDark:'#0e1630',skin:'#e0ac69',hair:'#2a1a10',shirt:'#2a4a8a',pants:'#1a2440',shoes:'#111',belt:'#111',stripe:'#d8d8d8'};
+const COP_PALS=skinSpread(5).map(t=>({cap:'#1a2a5a',capDark:'#0e1630',skin:skinTone(t),hair:t>.5?'#141010':'#2a1a10',shirt:'#2a4a8a',pants:'#1a2440',shoes:'#111',belt:'#111',stripe:'#d8d8d8'}));
+const COP_PAL=COP_PALS[0]; /* referência (guarda da campanha usa de base); spawn de policial usa copPal() */
+function copPal(){return COP_PALS[Math.floor(Math.random()*COP_PALS.length)]}
 function deployCops(c,bail=false){
  const out=c.copsOut||(c.copsOut=[]);
  const seats=c.copsAboard??(c.playerStolen||PL.car===c?0:2);
@@ -1123,7 +1134,7 @@ function deployCops(c,bail=false){
  c.copsAboard=seats;
  for(let k=0;k<seats;k++){
   const side=k?-1:1,d=c.t.W/2+.9;
-  const p=spawnPed(null,{x:c.x-sa*side*d,z:c.z+ca*side*d,vx:0,vz:0,pal:COP_PAL});
+  const p=spawnPed(null,{x:c.x-sa*side*d,z:c.z+ca*side*d,vx:0,vz:0,pal:copPal()});
   if(!p)continue;
   Object.assign(p,{cop:true,fixed:true,state:'cop',hp:3,car:c,bail,bailT:0,shootT:.9+R2()*.6});
   c.copsAboard--;out.push(p);
