@@ -1603,10 +1603,11 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
    pendingParkingSidewalk.push({bx0,bz0,bx1,bz1,ri,col:blockSideCol});return
   }
   if(info.kind==='park'){
-   side.box(ix0,0.2,iz0,ix1,0.28,iz1,cGrass,{});lawn(ix0+.3,iz0+.3,ix1-.3,iz1-.3,.284,.85);
-   const mx=(ix0+ix1)/2,mz=(iz0+iz1)/2;side.box(mx-1.5,0.2,iz0,mx+1.5,0.3,iz1,cSide,{});side.box(ix0,0.2,mz-1.5,ix1,0.3,mz+1.5,cSide,{});
-   if(night){neon.box(mx-3,0.3,mz-3,mx+3,0.36,mz+3,COL('#27e3ff'));glow.flat(mx-10,mz-10,mx+10,mz+10,0.4,COL('#27a3ff').multiplyScalar(.5))}
-   else if(!info.plaza)det.geo(GEO.cyl,mtx(mx,0.6,mz,3,.6,3),COL('#9a958c'));
+   /* v3 r52: gramado e caminhos rentes ao chão de colisão (0,2): grama a 0,24 como os outros gramados (antes 0,28 e caminhos 0,3 → rastros de pneu (0,252) ficavam por baixo e carro/gente afundavam); base do centro com colisor */
+   side.box(ix0,0.2,iz0,ix1,0.24,iz1,cGrass,{});lawn(ix0+.3,iz0+.3,ix1-.3,iz1-.3,.24,.85);
+   const mx=(ix0+ix1)/2,mz=(iz0+iz1)/2;side.box(mx-1.5,0.2,iz0,mx+1.5,0.248,iz1,cSide,{});side.box(ix0,0.2,mz-1.5,ix1,0.248,mz+1.5,cSide,{});
+   if(night){neon.box(mx-3,0.248,mz-3,mx+3,0.31,mz+3,COL('#27e3ff'));glow.flat(mx-10,mz-10,mx+10,mz+10,0.4,COL('#27a3ff').multiplyScalar(.5))}
+   else if(!info.plaza){det.geo(GEO.cyl,mtx(mx,0.55,mz,3,.64,3),COL('#9a958c'));addCol(mx-2.5,mz-2.5,mx+2.5,mz+2.5,'rock')}
    const PZ=info.plaza?Math.min(13,(ix1-ix0)*.28,(iz1-iz0)*.28):0;
    if(PZ){side.box(mx-PZ,0.2,mz-PZ,mx+PZ,0.31,mz+PZ,cSide.clone().multiplyScalar(1.06),{});const stc=COL(night?'#5a5070':'#cfc8b8'),stc2=stc.clone().multiplyScalar(.9);
     det.box(mx-3.4,.31,mz-3.4,mx+3.4,.8,mz+3.4,stc2);det.box(mx-2.6,.8,mz-2.6,mx+2.6,1.3,mz+2.6,stc);det.box(mx-1.5,1.3,mz-1.5,mx+1.5,2.6,mz+1.5,stc2);
@@ -1618,7 +1619,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
      else{det.box(x-1,.6,z-.3,x+1,.7,z+.3,bc);det.box(x-1,.7,z+(dz<0?-.32:.24),x+1,1.15,z+(dz<0?-.24:.32),bc);det.box(x-.9,.31,z-.25,x-.8,.6,z+.25,bz);det.box(x+.8,.31,z-.25,x+.9,.6,z+.25,bz)}}
     const brz=COL(night?'#3f8a8a':'#4f6a52');for(const[sx,sz] of [[-1,-1],[1,1]]){if(R()<.35)continue;const x=mx+sx*(PZ-3.2),z=mz+sz*(PZ-3.2);det.box(x-.8,.31,z-.8,x+.8,1.9,z+.8,stc2);
      det.box(x-.22,1.9,z-.14,x-.04,2.8,z+.14,brz);det.box(x+.04,1.9,z-.14,x+.22,2.8,z+.14,brz);det.box(x-.3,2.8,z-.2,x+.3,3.7,z+.2,brz);det.box(x-.46,2.95,z-.1,x-.3,3.6,z+.1,brz);det.box(x+.3,3.3,z-.1,x+.46,4.1,z+.1,brz);det.geo(GEO.ico,mtx(x,3.95,z,.22,.26,.22),brz);addCol(x-.8,z-.8,x+.8,z+.8,'rock')}}
-   for(let k=0;k<26*BW*BH/3600;k++){const x=rr(ix0+2,ix1-2),z=rr(iz0+2,iz1-2);if(Math.abs(x-mx)<3||Math.abs(z-mz)<3)continue;if(PZ&&Math.abs(x-mx)<PZ+1.5&&Math.abs(z-mz)<PZ+1.5)continue;tree(x,z,0.28,rr(.9,1.4))}
+   for(let k=0;k<26*BW*BH/3600;k++){const x=rr(ix0+2,ix1-2),z=rr(iz0+2,iz1-2);if(Math.abs(x-mx)<3||Math.abs(z-mz)<3)continue;if(PZ&&Math.abs(x-mx)<PZ+1.5&&Math.abs(z-mz)<PZ+1.5)continue;tree(x,z,0.24,rr(.9,1.4))}
   }else if(info.kind==='lot'&&info.casino&&city.casino&&city.casino.ri===ri){
    // v262: somente o SUNSET ROYALE ocupa este lote; toda a estrutura da
    // danceteria foi transferida para outro terreno da cidade.
