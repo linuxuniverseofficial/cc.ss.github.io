@@ -10,7 +10,7 @@
   "off": false,
   "top": 15
  },
- "when": "2026-11-24T15:04:11.301Z",
+ "when": "2026-11-24T15:24:00.538Z",
  "interiors": {
   "shop": {
    "tris": 6012,
@@ -28,8 +28,8 @@
      ],
      "area": 1.088,
      "dc": -0.002,
-     "A": "#2449",
-     "B": "#2460 rgb40(7,7,8)",
+     "A": "#2425",
+     "B": "#2436 rgb40(7,7,8)",
      "lines": [
       "31-casa-segura-assalto.js:29>06-posto-rodas.js:405>36-municao-cadeia.js:507",
       "31-casa-segura-assalto.js:29>06-posto-rodas.js:405"
@@ -46,8 +46,8 @@
      ],
      "area": 1.088,
      "dc": 0.002,
-     "A": "#2451",
-     "B": "#2460 rgb40(7,7,8)",
+     "A": "#2427",
+     "B": "#2436 rgb40(7,7,8)",
      "lines": [
       "31-casa-segura-assalto.js:29>06-posto-rodas.js:405>36-municao-cadeia.js:507",
       "31-casa-segura-assalto.js:29>06-posto-rodas.js:405"
@@ -64,8 +64,8 @@
      ],
      "area": 1.088,
      "dc": -0.002,
-     "A": "#2452",
-     "B": "#2460 rgb40(7,7,8)",
+     "A": "#2428",
+     "B": "#2436 rgb40(7,7,8)",
      "lines": [
       "31-casa-segura-assalto.js:29>06-posto-rodas.js:405>36-municao-cadeia.js:507",
       "31-casa-segura-assalto.js:29>06-posto-rodas.js:405"
@@ -82,8 +82,8 @@
      ],
      "area": 1.088,
      "dc": -0.002,
-     "A": "#2460 rgb40(7,7,8)",
-     "B": "#2448",
+     "A": "#2436 rgb40(7,7,8)",
+     "B": "#2424",
      "lines": [
       "31-casa-segura-assalto.js:29>06-posto-rodas.js:405>36-municao-cadeia.js:507",
       "31-casa-segura-assalto.js:29>06-posto-rodas.js:405"

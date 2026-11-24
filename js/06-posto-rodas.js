@@ -167,8 +167,8 @@ function gasBuild(K){const{F,W,D,f,ch,ri}=K;let st=GAS.list.get(ri);
  for(const u of isl)F.box(u-.75,u+.75,7-GAS_SHIFT,14.4-GAS_SHIFT,0,1,COL('#000'),new MB(),'rock');
  F.box(W*.2,W*.8,sv0,sv1,0,1,COL('#000'),new MB(),'bld');
  F.box(1.8,2.6,1.8,2.6,0,1,COL('#000'),new MB(),'rock');
- /* v3 r58 · LAVA-JATO de rolete: lateral direita do pátio, entre a cobertura e a loja (as vagas da porta vão até W/2+7). Só os trilhos colidem. */
- {const u0=W/2+7.35,u1=W-.25,v0=16.4,v1=Math.min(23.2,sv0-.3);st.wash=null;if(u1-u0>=4.6&&v1-v0>=6.2){st.wash={u0,u1,v0,v1,t:-1,stopT:0,msgT:0,g:null};for(const u of [u0,u1-.5])F.box(u,u+.5,v0+.15,v1-.15,0,1,COL('#000'),new MB(),'rock')}}
+ /* v3 r58 · LAVA-JATO de rolete. v3 r59 (José): encostado na lateral direita da loja (no lugar da máquina de bebidas), entrada pelo vão entre a cobertura e a loja. Só os trilhos colidem. */
+ {const u0=W*.8+.05,u1=W-.25,v0=sv0-.6,v1=Math.min(D-.8,v0+7);st.wash=null;if(u1-u0>=4.6&&v1-v0>=6.2){st.wash={u0,u1,v0,v1,t:-1,stopT:0,msgT:0,g:null};for(const u of [u0,u1-.5])F.box(u,u+.5,v0+.15,v1-.15,0,1,COL('#000'),new MB(),'rock')}}
  gasVisual(st)}
 function gasVisual(st){const{W,D,ch}=st;const F0=st.F;if(!F0)return;const F={...F0,pt:(u,v)=>F0.pt(u,v-GAS_SHIFT),p3:(u,y,v)=>F0.p3(u,y,v-GAS_SHIFT),box:(u0,u1,v0,v1,...r)=>F0.box(u0,u1,v0-GAS_SHIFT,v1-GAS_SHIFT,...r)};const burnt=st.burnt,night=!!city.st.synth,M=city.M,VC=night&&!burnt,br=night?{n:st.br.n,a:'#f3d9cc',b:'#ff4fd8',vc:1}:st.br,PK=COL('#ff3ec8'),CY=COL('#2af0ff'),MI=COL('#7affd0');
  if(st.grp){st.grp.parent&&st.grp.parent.remove(st.grp);st.grp.traverse(o=>{if(o.geometry&&!o.isSprite)o.geometry.dispose()})}
@@ -213,7 +213,7 @@ function gasVisual(st){const{W,D,ch}=st;const F0=st.F;if(!F0)return;const F={...
   F.box(W*.24,W*.76,sv0-.1,sv0,3.3,4.35,C('#1a1a20'),d);
   const sm0=gasTex('shop',br,burnt),sm=S.style==='inverted'?unlitSignMat(sm0):sm0,sg=new THREE.PlaneGeometry(Math.min(10,W*.5),.9),m=new THREE.Mesh(sg,sm),p=F.p3(W/2,3.85,sv0-.14);m.position.set(p[0],p[1],p[2]);m.rotation.y=Math.atan2(st.nrm[0],st.nrm[1]);grp.add(m);
   for(const u of [W*.32,W*.62]){F.box(u-.9,u+.9,sv1-3,sv1-1.4,4.75,5.6,C('#9a9aa2'),d)}
-  F.box(W*.8+.4,W*.8+1.6,sv0+.5,sv0+2.5,.26,1.4,C('#e8e8f0'),d);F.box(W*.8+.35,W*.8+1.65,sv0+.45,sv0+.55,.9,1.2,C('#2a8ad6'),d);
+  if(!st.wash){F.box(W*.8+.4,W*.8+1.6,sv0+.5,sv0+2.5,.26,1.4,C('#e8e8f0'),d);F.box(W*.8+.35,W*.8+1.65,sv0+.45,sv0+.55,.9,1.2,C('#2a8ad6'),d)} /* máquina de bebidas: sai quando há lava-jato (v3 r59) */
   F.box(W*.2-1.8,W*.2-.4,sv0+.6,sv0+2.2,.26,1.6,C('#6a6a72'),d);for(let k=0;k<3;k++)F.box(W*.2-1.7,W*.2-.5,sv0+.7,sv0+2.1,.4+k*.42,.42+k*.42,C('#9a9aa2'),d);
   if(!burnt)F.box(W/2-2.2,W/2+2.2,sv0-.25,sv0-.18,4.5,4.65,COL(br.b),n)}
  // totem de preços
