@@ -84,14 +84,19 @@ function c3Geo(){if(C3.geo)return C3.geo;const P=[],N=[],U=[],K=[],I=[];let vi=0
   f([x0,y1,z0],[x0,y1,z1],[x0,y0,z1],[x0,y0,z0],[-1,0,0]);f([x1,y1,z1],[x1,y1,z0],[x1,y0,z0],[x1,y0,z1],[1,0,0]);
   f([x0,y1,z0],[x1,y1,z0],[x1,y1,z1],[x0,y1,z1],[0,1,0]);f([x0,y0,z1],[x1,y0,z1],[x1,y0,z0],[x0,y0,z0],[0,-1,0])}
  /* peças: 0 quadril 1 tronco 2 cabeça 3/4 braço/antebraço esq. 5/6 dir. 7/8 coxa/canela esq. 9/10 dir. */
+ /* r46: juntas (esferas baixas no pivô de cada articulação, da cor do tecido naquela altura): giram em volta do próprio centro,
+    então fecham o vão de ombro, cotovelo, quadril e joelho em qualquer pose sem mexer no shader */
+ function ball(part,x,y,z,R,Ry,rect,v,mx){const S0=6,c=uvAt(rect,.5,v),rs=[.42,1.05,1.5708,2.09,2.72].map(a=>({y:y+Ry*Math.cos(a),rx:R*Math.sin(a),rz:R*Math.sin(a)*.96,cx:x,cz:z,v}));prism(part,S0,rs,rect,c,c,mx,0)}
  prism(2,8,[{y:1.73,rx:.09,rz:.085,cz:-.005,v:0},{y:1.70,rx:.155,rz:.15,cz:-.005,v:.12},{y:1.58,rx:.165,rz:.16,v:.45},{y:1.46,rx:.155,rz:.152,cz:.006,v:.72},{y:1.39,rx:.105,rz:.11,cz:.012,v:.92},{y:1.32,rx:.065,rz:.065,v:1}],C3RG.head,sw('hair'),null,1,0,true);
- prism(1,6,[{y:1.36,rx:.15,rz:.09,v:0},{y:1.31,rx:.225,rz:.125,v:.12},{y:1.1,rx:.21,rz:.13,cz:.008,v:.45},{y:.9,rx:.19,rz:.118,v:.85},{y:.8,rx:.195,rz:.12,v:1}],C3RG.torso,sw('shirt'),null,1,0,true);
+ prism(1,6,[{y:1.36,rx:.15,rz:.09,v:0},{y:1.31,rx:.225,rz:.125,v:.12},{y:1.1,rx:.21,rz:.13,cz:.008,v:.45},{y:.9,rx:.19,rz:.118,v:.85},{y:.8,rx:.195,rz:.12,v:1},{y:.785,rx:.176,rz:.104,v:1},{y:.71,rx:.168,rz:.098,v:1}],C3RG.torso,sw('shirt'),uvAt(C3RG.torso,.5,1),1,0,true); /* r46: saia de 9 cm dentro do quadril (giro/inclinação do tronco não abre a cintura) */
  prism(0,6,[{y:.82,rx:.197,rz:.122,v:0},{y:.7,rx:.2,rz:.125,v:.1}],C3RG.leg,null,sw('pants'));
  for(const mx of[1,-1]){const L=mx>0;
   prism(L?3:5,5,[{y:1.33,rx:.066,rz:.07,v:0},{y:1.18,rx:.062,rz:.065,v:.25},{y:1.04,rx:.056,rz:.058,v:.5}],C3RG.arm,sw('shirt'),null,mx,.265);
   prism(L?4:6,5,[{y:1.04,rx:.055,rz:.057,cx:.27,v:.5},{y:.82,rx:.047,rz:.049,cx:.274,v:.86},{y:.79,rx:.054,rz:.045,cx:.276,v:.9},{y:.68,rx:.042,rz:.036,cx:.272,v:1}],C3RG.arm,null,sw('hand'),mx);
   prism(L?7:9,6,[{y:.8,rx:.095,rz:.098,cx:.1,v:0},{y:.62,rx:.088,rz:.09,cx:.1,v:.3},{y:.44,rx:.075,rz:.078,cx:.1,v:.55}],C3RG.leg,null,null,mx);
   prism(L?8:10,5,[{y:.44,rx:.074,rz:.077,cx:.1,v:.55},{y:.28,rx:.07,rz:.074,cx:.1,cz:-.008,v:.8},{y:.11,rx:.055,rz:.057,cx:.1,v:1}],C3RG.leg,null,null,mx);
+  ball(L?3:5,.265,1.3,0,.066,.064,C3RG.arm,.04,mx);ball(L?4:6,.27,1.04,0,.052,.046,C3RG.arm,.5,mx); /* raio um pouco menor que o do membro: sem z-fight com a casca */
+  ball(L?7:9,.1,.78,0,.088,.07,C3RG.leg,.03,mx);ball(L?8:10,.1,.44,0,.071,.056,C3RG.leg,.55,mx);
   box(L?8:10,mx>0?.03:-.175,mx>0?.175:-.03,0,.115,-.08,.18,C3RG.shoe)}
  const ge=new THREE.BufferGeometry();ge.setAttribute('position',new THREE.Float32BufferAttribute(P,3));ge.setAttribute('normal',new THREE.Float32BufferAttribute(N,3));
  ge.setAttribute('uv',new THREE.Float32BufferAttribute(U,2));ge.setAttribute('part',new THREE.Float32BufferAttribute(K,1));ge.setIndex(I);ge.computeBoundingSphere();ge.boundingSphere.radius+=.5;ge.userData.cached=true;
@@ -176,7 +181,7 @@ function c3Place(o){const sp=o.sp;if(!sp||!sp.isSprite)return;
  const c3sc=camMode==='top'&&!VIEW.orbit?1.5:1,c3th=Math.max(.04,st.amt*(.42+.22*st.run)),stride=Math.PI*2*.72*c3th*c3sc;st.ph+=(st.spd*dt)/stride*Math.PI*2*(st.amt>.02?1:0);
  st.idle=(st.idle||0)+dt;
  /* mira / soco / pulo / sentado */
- const aimT=ride==='moto'?.7:o===PL&&(C3AIM.on||typeof GUN!=='undefined'&&GUN.has&&GUN.w!=='jammer'&&(GUN.firing||GUN.cd>0))?1:0,punchT=o===PL&&typeof MELEE!=='undefined'&&MELEE.t>0?1:0;
+ const calm=o===PL&&c3Calm(),aimT=ride==='moto'?.7:o===PL&&!calm&&(C3AIM.on||typeof GUN!=='undefined'&&GUN.has&&GUN.w!=='jammer'&&(GUN.firing||GUN.cd>0))?1:0,punchT=o===PL&&typeof MELEE!=='undefined'&&MELEE.t>0?1:0;
  st.aim+=(aimT-st.aim)*(1-Math.exp(-dt*(aimT?18:5)));st.punch+=(punchT-st.punch)*(1-Math.exp(-dt*(punchT?30:8)));
  const airT=(o.jy||0)>.08?1:0;st.air+=(airT-st.air)*(1-Math.exp(-dt*10));st.sit+=((sitting?1:skate?.14:0)-st.sit)*(1-Math.exp(-dt*10)); /* skate: joelho levemente dobrado */
  /* direção: para onde olha/anda; gira suave */
@@ -184,7 +189,7 @@ function c3Place(o){const sp=o.sp;if(!sp||!sp.isSprite)return;
  else if(rideV){fx=Math.cos(rideV.a);fz=Math.sin(rideV.a)}
  else if(skate&&o===PL){fx=Math.cos(SKATE.ride.a);fz=Math.sin(SKATE.ride.a)}
  else if(o===PL&&MELEE&&MELEE.t>0){fx=MELEE.d[0];fz=MELEE.d[1]}
- else if(o===PL&&C3AIM.on){fx=C3AIM.x;fz=C3AIM.z}
+ else if(o===PL&&C3AIM.on&&!calm){fx=C3AIM.x;fz=C3AIM.z}
  else if(o===PL&&PL.face){fx=PL.face[0];fz=PL.face[1]}
  else if(Math.hypot(o.mx||0,o.mz||0)>1e-3){fx=o.mx;fz=o.mz}
  else if(o.face&&o.face.length===2){fx=o.face[0];fz=o.face[1]}
@@ -200,7 +205,7 @@ function c3Place(o){const sp=o.sp;if(!sp||!sp.isSprite)return;
  if(sitting)ly=ride==='moto'?-.12:-.33;if(lying)ly=.15;
  _c3e.set(0,st.ang,0,'YXZ');if(lying){_c3e.set(o.rot<0&&!patio?Math.PI/2:-Math.PI/2,st.ang,0,'YXZ')}else if(Math.abs(o.rot||0)>.01)_c3e.set(0,st.ang,-(o.rot||0),'YXZ');
  _c3q.setFromEuler(_c3e);_c3v.set(0,-lift+ly,0);_c3s.set(sc,sc,sc);_c3a.compose(_c3v,_c3q,_c3s);
- const s=sp.scale;_c3m.makeScale(1/(s.x||1),1/(s.y||1),1/(s.z||1));st.mesh.matrix.multiplyMatrices(_c3m,_c3a);st.mesh.matrixWorldNeedsUpdate=true}
+ const s=sp.scale;_c3m.makeScale(1/(s.x||1),1/(s.y||1),1/(s.z||1));st.mesh.matrix.multiplyMatrices(_c3m,_c3a);st.mesh.matrixWorldNeedsUpdate=true;if(calm)c3HeldPlace()}
 /* sol: direção da luz principal (uma vez por quadro, usada por todos os bonecos) */
 function c3Frame(){if(!C3_ON())return;try{C3.sunDir.copy(sun.position).sub(sun.target.position).normalize();if(C3.sunDir.y<.15){C3.sunDir.y=.15;C3.sunDir.normalize()}}catch(e){}
  if(++C3.frame%120===0){for(const st of C3.list)if(!st.o||!st.o.sp||!st.o.sp.parent){if(st.o&&st.o.sp&&st.o.sp.userData.c3===st)c3Drop(st.o.sp);else{C3.list.delete(st);if(st.mesh.parent)st.mesh.parent.remove(st.mesh);st.mat.dispose()}}}}
@@ -210,14 +215,18 @@ function c3ApplyMode(){if(!C3_ON()){for(const st of [...C3.list]){if(st.o&&st.o.
 placeSprite=(f=>function(o){const r=f.apply(this,arguments);if(o&&o.sp){try{const fr=renderer.info.render.frame;if(C3.lastF!==fr){C3.lastF=fr;c3Frame()}c3Place(o)}catch(e){if(!C3.err){C3.err=1;console.error(e)}}}return r})(placeSprite);
 /* arma na mão: no 3D o jogador vira para a mira e a arma vai para a mão direita (no 2D ela fica do lado do sprite) */
 const C3AIM={on:false,x:0,z:1};
-heldGunTick=(f=>function(){const r=f.apply(this,arguments);C3AIM.on=false;
- if(C3_ON()&&typeof HELD!=='undefined'&&HELD.g&&PL.sp&&PL.sp.userData.c3){const top=camMode==='top';let ax,az;if(top){ax=PL.face[0];az=PL.face[1]}else{ax=-Math.sin(PL.yaw);az=-Math.cos(PL.yaw)}
+/* r45: em diálogo/cena (beijo no motel, conversas da campanha) a arma fica baixa na mão, sem a pose de mira.
+   Diálogo pausa o update() (heldGunTick não roda), então o próprio c3Place recoloca a arma enquanto o braço desce. */
+function c3Calm(){return (typeof DLG!=='undefined'&&DLG.on)||(typeof PROLOGUE!=='undefined'&&!!PROLOGUE.cut)||(typeof CAMP!=='undefined'&&(!!CAMP.cut||!!CAMP.intro))}
+function c3HeldPlace(){if(!(C3_ON()&&typeof HELD!=='undefined'&&HELD.g&&PL.sp&&PL.sp.userData.c3))return false;const top=camMode==='top';let ax,az;if(top){ax=PL.face[0];az=PL.face[1]}else{ax=-Math.sin(PL.yaw);az=-Math.cos(PL.yaw)}
   const l=Math.hypot(ax,az)||1,nx=ax/l,nz=az/l,k=top&&!VIEW.orbit?1.5:1,st=PL.sp.userData.c3,a=st.ang==null?Math.atan2(nx,nz):st.ang,fx=Math.sin(a),fz=Math.cos(a),u=st.aim;
-  C3AIM.on=true;C3AIM.x=nx;C3AIM.z=nz;
+  C3AIM.x=nx;C3AIM.z=nz;
   /* mão direita: ombro (−0,265; 1,30) + braço esticado para a frente conforme a pose de mira (u) */
   const fw=(.12+.5*u)*k,lat=.27*k,hy=(.86+.44*u)*k;
-  HELD.g.position.set(PL.x+fx*fw-fz*lat,PL.gy+(PL.jy||0)+hy,PL.z+fz*fw+fx*lat);HELD.g.scale.setScalar((GUN.w==='rpg'?.36:.24)*k);HELD.g.rotation.set(0,Math.atan2(-fz,fx),0)}
- return r})(heldGunTick);
+  HELD.g.position.set(PL.x+fx*fw-fz*lat,PL.gy+(PL.jy||0)+hy,PL.z+fz*fw+fx*lat);HELD.g.scale.setScalar((GUN.w==='rpg'?.36:.24)*k);HELD.g.rotation.set(0,Math.atan2(-fz,fx),0);return true}
+heldGunTick=(f=>function(){const r=f.apply(this,arguments);C3AIM.on=c3HeldPlace();return r})(heldGunTick);
+/* r45: diálogo comum pausa o jogo inteiro (update → dlgTick): o boneco do jogador continua sendo posado para abaixar a arma */
+dlgTick=(f=>function(){const r=f.apply(this,arguments);try{if(C3_ON()&&PL.sp&&PL.sp.userData.c3&&!PL.car&&PL.sp.visible)c3Place(PL)}catch(e){}return r})(dlgTick);
 /* r41: ped criado durante diálogo/cena (que pausam updatePeds) já nasce com o boneco, em vez de ficar 2D até a cena acabar */
 spawnPed=(f=>function(){const q=f.apply(this,arguments);if(q&&q.sp&&C3_ON()){try{c3Place(q)}catch(e){}}return q})(spawnPed);
 spawnLying=(f=>function(){const q=f.apply(this,arguments);if(q&&q.sp&&C3_ON()){try{c3Place(q)}catch(e){}}return q})(spawnLying);

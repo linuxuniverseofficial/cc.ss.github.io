@@ -10,8 +10,8 @@
 const C3={AW:1024,AH:512,T:64,slots:new Map(),free:[],gen:0,cv:null,tex:null,geo:null,base:null,sunDir:new THREE.Vector3(-.5,.8,.6),dirty:false,list:new Set(),frame:0};
 function C3_ON(){return S.char3d===true}
 /* ---------- regiões dentro do quadro 64×64 ---------- */
-const C3RG={head:[0,0,40,20],torso:[0,20,40,24],arm:[40,0,12,28],leg:[52,0,12,40],shoe:[40,28,12,8]};
-const C3SW={hair:[2,50],skin:[10,50],sole:[18,50],shoe:[26,50],shirt:[34,50],pants:[42,50],hand:[50,50]};
+const C3RG={hairL:[2,56,60,7],head:[0,0,40,20],torso:[0,20,40,24],arm:[40,0,12,28],leg:[52,0,12,40],shoe:[40,28,12,8]};
+const C3SW={hair:[2,50],skin:[10,50],sole:[18,50],shoe:[26,50],shirt:[34,50],pants:[42,50],hand:[50,50],hairL:[58,50]};
 function c3Shade(h,f){const c=new THREE.Color(h||'#808080');c.multiplyScalar(f);return '#'+c.getHexString()}
 function c3Key(p){if(!p)return'';let art='';try{art=shirtArtOf(p)||''}catch(e){}
  return [p.skin,p.hair,p.cap,p.capDark,p.shirt,p.stripe,p.pants,p.shoes,p.belt,p.long?1:0,p.glasses,p.necklace,p.swim,p.bikini,p.bag,p.pack?1:0,p.headphone,p.maskSuit?1:0,p.handSkin,p.demo?1:0,p.burnt?1:0,art].join('|')}
@@ -35,7 +35,6 @@ function c3Paint(g,ox,oy,p0){const p={...p0};const bare=!p.shirt;if(bare){p.shir
  if(!bare)R(tx+15,ty,10,2,c3Shade(sh,.8));
  if(p.stripe)R(tx,ty+9,tw,3,p.stripe);
  if(p0.bikini){R(tx,ty+6,tw,4,p0.bikini);R(tx+15,ty,2,6,p0.bikini);R(tx+23,ty,2,6,p0.bikini)}
- if(p.long){R(tx,ty,9,7,hair);R(tx+31,ty,9,7,hair)}
  if(p0.maskSuit){R(tx+16,ty,8,14,'#f6f5ed');R(tx+19,ty+1,2,11,'#7a4a28')}
  {let a=null;try{a=p0.demo?null:shirtArtOf(p0)}catch(e){}
   if(a){const s2=c3Shade(sh,.78),cc=new THREE.Color(sh),ink=(cc.r*.3+cc.g*.59+cc.b*.11)>.55?c3Shade(sh,.6):'#f2f2ee';
@@ -56,7 +55,7 @@ function c3Paint(g,ox,oy,p0){const p={...p0};const bare=!p.shirt;if(bare){p.shir
  const [sx,sy,sw,sh2]=C3RG.shoe;R(sx,sy,sw,sh2,p.shoes);R(sx,sy+sh2-2,sw,2,c3Shade(p.shoes,.55));
  /* amostras lisas (tampas) */
  R(0,44,T,20,'#000');const sq=(k,c)=>R(C3SW[k][0]-2,48,7,6,c);
- sq('hair',p.cap||hair);sq('skin',p.skin);sq('sole',c3Shade(p.shoes,.55));sq('shoe',p.shoes);sq('shirt',sh);sq('pants',p0.swim?p0.swim:p.pants);sq('hand',c3Shade((p0.maskSuit&&p0.handSkin)||p.skin,.92));
+ sq('hair',p.cap||hair);sq('skin',p.skin);sq('sole',c3Shade(p.shoes,.55));sq('shoe',p.shoes);sq('shirt',sh);sq('pants',p0.swim?p0.swim:p.pants);sq('hand',c3Shade((p0.maskSuit&&p0.handSkin)||p.skin,.92));sq('hairL',hair);{const [qx,qy,qw,qh]=C3RG.hairL,hL=c3Shade(hair,1.3);R(qx,qy,qw,qh,hair);for(let x=0;x<qw;x+=3)R(qx+x,qy,1,qh,hD);for(let x=1;x<qw;x+=7)R(qx+x,qy,1,qh-2,hL);R(qx,qy+qh-1,qw,1,hD)} /* r47: fios do cabelo comprido */
  if(p0.burnt){g.globalCompositeOperation='multiply';g.fillStyle='#3a3430';g.fillRect(ox,oy,T,T);g.globalCompositeOperation='source-over';R(ex-5,hy+10,3,2,'#d8d0c0');R(ex+2,hy+10,3,2,'#d8d0c0')}}
 /* ---------- atlas: um quadro por roupa; o que não é usado há tempo é reaproveitado ---------- */
 function c3Atlas(){if(!C3.cv){C3.cv=cv(C3.AW,C3.AH);C3.g=C3.cv.getContext('2d');C3.g.imageSmoothingEnabled=false;
@@ -90,6 +89,18 @@ function c3Geo(){if(C3.geo)return C3.geo;const P=[],N=[],U=[],K=[],I=[];let vi=0
  prism(2,8,[{y:1.73,rx:.09,rz:.085,cz:-.005,v:0},{y:1.70,rx:.155,rz:.15,cz:-.005,v:.12},{y:1.58,rx:.165,rz:.16,v:.45},{y:1.46,rx:.155,rz:.152,cz:.006,v:.72},{y:1.39,rx:.105,rz:.11,cz:.012,v:.92},{y:1.32,rx:.065,rz:.065,v:1}],C3RG.head,sw('hair'),null,1,0,true);
  prism(1,6,[{y:1.36,rx:.15,rz:.09,v:0},{y:1.31,rx:.225,rz:.125,v:.12},{y:1.1,rx:.21,rz:.13,cz:.008,v:.45},{y:.9,rx:.19,rz:.118,v:.85},{y:.8,rx:.195,rz:.12,v:1},{y:.785,rx:.176,rz:.104,v:1},{y:.71,rx:.168,rz:.098,v:1}],C3RG.torso,sw('shirt'),uvAt(C3RG.torso,.5,1),1,0,true); /* r46: saia de 9 cm dentro do quadril (giro/inclinação do tronco não abre a cintura) */
  prism(0,6,[{y:.82,rx:.197,rz:.122,v:0},{y:.7,rx:.2,rz:.125,v:.1}],C3RG.leg,null,sw('pants'));
+
+ /* r47: cabelo comprido = malha própria (peça 11, segue a cabeça), casca dupla em arco atrás da cabeça descendo até as costas.
+    Some (vira um ponto) quando o personagem não tem cabelo comprido (uLong=0). Antes era uma faixa pintada nas costas da blusa. */
+ {const hc=sw('hairL'),A0=-1.95,A1=1.95,S0=10,prof=[[1.70,.163,.158,-.004],[1.62,.176,.172,-.008],[1.50,.178,.172,-.012],[1.40,.164,.158,-.02],[1.32,.17,.15,-.035],[1.22,.17,.155,-.04],[1.13,.158,.148,-.04]];
+  const ring=(k,th)=>{const out=[];for(let j=0;j<=S0;j++){const t=A0+(A1-A0)*j/S0,[y,rx,rz,cz]=prof[k],sx=Math.sin(t),sz=-Math.cos(t),e=th?-.022:0;out.push([sx*(rx+e),y,cz+sz*(rz+e),sx,sz])}return out};
+  const V=(q,nx,ny,nz,uu,vv)=>{P.push(q[0],q[1],q[2]);N.push(nx,ny,nz);const w=uvAt(C3RG.hairL,uu,vv);U.push(w[0],w[1]);K.push(11);return vi++};
+  for(const inner of[0,1]){const base=vi;for(let k=0;k<prof.length;k++)ring(k,inner).forEach((q,j)=>V(q,inner?-q[3]:q[3],0,inner?-q[4]:q[4],j/S0,(k+.5)/prof.length));
+   for(let k=0;k<prof.length-1;k++)for(let j=0;j<S0;j++){const a=base+k*(S0+1)+j,b=a+S0+1;if(inner)I.push(a,a+1,b,a+1,b+1,b);else I.push(a,b,a+1,a+1,b,b+1)}}
+  const nP=prof.length*(S0+1),o0=vi-2*nP; /* bordas: pontas (fio de baixo) e laterais */
+  const quad=(a,b,c,d)=>{I.push(a,b,c,a,c,d,a,c,b,a,d,c)};
+  for(let j=0;j<S0;j++){const k=prof.length-1,a=o0+k*(S0+1)+j,b=o0+nP+k*(S0+1)+j;quad(a,a+1,b+1,b)}
+  for(const j of[0,S0])for(let k=0;k<prof.length-1;k++){const a=o0+k*(S0+1)+j,b=o0+nP+k*(S0+1)+j;quad(a,a+S0+1,b+S0+1,b)}}
  for(const mx of[1,-1]){const L=mx>0;
   prism(L?3:5,5,[{y:1.33,rx:.066,rz:.07,v:0},{y:1.18,rx:.062,rz:.065,v:.25},{y:1.04,rx:.056,rz:.058,v:.5}],C3RG.arm,sw('shirt'),null,mx,.265);
   prism(L?4:6,5,[{y:1.04,rx:.055,rz:.057,cx:.27,v:.5},{y:.82,rx:.047,rz:.049,cx:.274,v:.86},{y:.79,rx:.054,rz:.045,cx:.276,v:.9},{y:.68,rx:.042,rz:.036,cx:.272,v:1}],C3RG.arm,null,sw('hand'),mx);
@@ -104,7 +115,7 @@ function c3Geo(){if(C3.geo)return C3.geo;const P=[],N=[],U=[],K=[],I=[];let vi=0
 /* ---------- shader: pose contínua (sem quadros) ---------- */
 const C3_VS=`
 attribute float part;
-uniform float uPhase,uAmt,uRun,uAim,uPunch,uSit,uAir,uIdle;uniform vec2 uTile;uniform vec3 uLight,uSunDir;
+uniform float uPhase,uAmt,uRun,uAim,uPunch,uSit,uAir,uIdle,uLong;uniform vec2 uTile;uniform vec3 uLight,uSunDir;
 varying vec2 vUv;varying vec3 vLight;
 #include <fog_pars_vertex>
 vec3 rx(vec3 v,vec3 p,float a){v-=p;float c=cos(a),s=sin(a);return p+vec3(v.x,c*v.y-s*v.z,s*v.y+c*v.z);}
@@ -112,15 +123,16 @@ vec3 rxn(vec3 n,float a){float c=cos(a),s=sin(a);return vec3(n.x,c*n.y-s*n.z,s*n
 vec3 ry(vec3 v,float a){float c=cos(a),s=sin(a);return vec3(c*v.x+s*v.z,v.y,-s*v.x+c*v.z);}
 void main(){
  vec3 p=position,n=normal;float ph=uPhase,s=sin(ph),A=uAmt,Rn=uRun;
+ if(part>10.5&&uLong<.5)p=vec3(0.,1.5,0.);
  float bob=A*(.022+.03*Rn)*abs(cos(ph))-uSit*0.+uIdle*.006*sin(ph*.5);
  float twist=A*(.07+.05*Rn)*s;
- if(part>6.5){bool L=part<8.5;float sg=L?1.:-1.;float ss=L?s:-s;vec3 hip=vec3(.1*sg,.78,0.),knee=vec3(.1*sg,.44,0.);
+ if(part>6.5&&part<10.5){bool L=part<8.5;float sg=L?1.:-1.;float ss=L?s:-s;vec3 hip=vec3(.1*sg,.78,0.),knee=vec3(.1*sg,.44,0.);
   float th=A*(.42+.22*Rn)*ss,kn=A*((.55+.5*Rn)*max(0.,-sin(ph+(L?0.:3.14159)+1.3))+.06);
   th=mix(th,L?.25:-.1,uAir);kn=mix(kn,L?.9:.35,uAir);
   th=mix(th,1.45,uSit);kn=mix(kn,1.45,uSit);
   if(part==8.||part==10.){p=rx(p,knee,kn);n=rxn(n,kn);} p=rx(p,hip,-th);n=rxn(n,-th);}
  else{
-  if(part>2.5){bool L=part<4.5;float sg=L?1.:-1.;float ss=L?-s:s;vec3 sh=vec3(.265*sg,1.3,0.),el=vec3(.27*sg,1.04,0.);
+  if(part>2.5&&part<6.5){bool L=part<4.5;float sg=L?1.:-1.;float ss=L?-s:s;vec3 sh=vec3(.265*sg,1.3,0.),el=vec3(.27*sg,1.04,0.);
    float ar=A*(.36+.3*Rn)*ss,eb=-.12-A*(.18*max(0.,ss)+.04)-Rn*A*.9;
    ar=mix(ar,L?.35:-.25,uAir*.7);
    if(!L){ar=mix(ar,1.45,max(uAim,uPunch));eb=mix(eb,-.05,max(uAim,uPunch));}else{ar=mix(ar,1.15,uAim*.85);eb=mix(eb,-.35,uAim*.85);}
@@ -128,7 +140,7 @@ void main(){
    if(part==4.||part==6.){p=rx(p,el,eb);n=rxn(n,eb);} p=rx(p,sh,-ar);n=rxn(n,-ar);}
   if(part>.5){p=ry(p,twist*(1.-uAim));n=ry(n,twist*(1.-uAim));
    float lean=.12*Rn*A+uIdle*.012*sin(ph*.5+1.);p=rx(p,vec3(0.,.78,0.),lean);n=rxn(n,lean);}
-  if(part==2.){float nod=A*.035*sin(ph*2.);p=rx(p,vec3(0.,1.36,0.),nod);}
+  if(part==2.||part>10.5){float nod=A*.035*sin(ph*2.);p=rx(p,vec3(0.,1.36,0.),nod);}
  }
  p.y+=bob;
  vec4 wp=modelMatrix*vec4(p,1.);vec3 wn=normalize(mat3(modelMatrix)*n);
@@ -144,7 +156,7 @@ void main(){vec3 c=texture2D(map,vUv).rgb*vLight;c=floor(c*31.+.5)/31.;gl_FragCo
  #include <fog_fragment>
 }`;
 function c3Material(){if(!C3.base)C3.base=new THREE.ShaderMaterial({vertexShader:C3_VS,fragmentShader:C3_FS,fog:true,
-  uniforms:THREE.UniformsUtils.merge([THREE.UniformsLib.fog,{map:{value:null},uTile:{value:new THREE.Vector2()},uPhase:{value:0},uAmt:{value:0},uRun:{value:0},uAim:{value:0},uPunch:{value:0},uSit:{value:0},uAir:{value:0},uIdle:{value:0},uAlpha:{value:1},uLight:{value:new THREE.Color(1,1,1)},uSunDir:{value:new THREE.Vector3(0,1,0)}}])});
+  uniforms:THREE.UniformsUtils.merge([THREE.UniformsLib.fog,{map:{value:null},uTile:{value:new THREE.Vector2()},uPhase:{value:0},uAmt:{value:0},uRun:{value:0},uAim:{value:0},uPunch:{value:0},uSit:{value:0},uAir:{value:0},uIdle:{value:0},uLong:{value:0},uAlpha:{value:1},uLight:{value:new THREE.Color(1,1,1)},uSunDir:{value:new THREE.Vector3(0,1,0)}}])});
  const m=C3.base.clone();m.uniforms.map.value=c3Atlas();m.uniforms.uSunDir.value=C3.sunDir;return m}
 /* ---------- boneco preso a um sprite de personagem ---------- */
 function c3Make(o){const sp=o.sp,mat=c3Material(),mesh=new THREE.Mesh(c3Geo(),mat);mesh.matrixAutoUpdate=false;mesh.layers.set(1);mesh.castShadow=mesh.receiveShadow=false;mesh.raycast=()=>{};mesh.name='char3d';
@@ -164,7 +176,7 @@ function c3Place(o){const sp=o.sp;if(!sp||!sp.isSprite)return;
  const now=performance.now(),dt=Math.min(.1,Math.max(0,(now-st.t)/1000));st.t=now;
  /* roupa: confere a chave a cada ~0,4 s (lojas, shopping, emoji, troca de personagem) */
  /* sem lixo por quadro: a chave (string) só é refeita quando a paleta troca de objeto ou, no jogador (lojas mudam PLAYER_PAL no lugar), a cada ~0,4 s ou quando o sprite troca de textura */
- st.kT-=dt;if(!st.slot||pal!==st.pal||o===PL&&(st.kT<=0||sp.material.map!==st.map)){st.kT=.4;st.pal=pal;st.map=sp.material.map;const k=c3Key(pal);if(k!==st.key){st.key=k;st.slot=null}}
+ st.kT-=dt;if(!st.slot||pal!==st.pal||o===PL&&(st.kT<=0||sp.material.map!==st.map)){st.kT=.4;st.pal=pal;st.map=sp.material.map;st.mat.uniforms.uLong.value=pal.long?1:0;const k=c3Key(pal);if(k!==st.key){st.key=k;st.slot=null}}
  if(!st.slot||C3.slots.get(st.key)!==st.slot){st.slot=c3Slot(st.key,pal);const n=C3.AW/C3.T;st.mat.uniforms.uTile.value.set((st.slot.i%n)*C3.T/C3.AW,-Math.floor(st.slot.i/n)*C3.T/C3.AH)}else st.slot.last=now;
  /* velocidade pelo deslocamento real (suaviza troca entre parado/andar/correr) */
  let spd=0;if(st.lx!==null&&dt>0){const dx=o.x-st.lx,dz=o.z-st.lz,d=Math.hypot(dx,dz);if(d<3){spd=d/dt;st.mvx=dx;st.mvz=dz}else{st.ang=null}}st.lx=o.x;st.lz=o.z;
@@ -246,7 +258,7 @@ function c3Portrait(pal){const k=c3Key(pal);let P=C3PT.cache.get(k);if(P)return 
  if(!C3PT.mesh){const m=c3Material();m.uniforms.map.value=C3PT.tex;m.uniforms.uSunDir.value=new THREE.Vector3(-.45,.55,.9).normalize();m.uniforms.uLight.value.setRGB(1.04,1,.97);
   C3PT.mesh=new THREE.Mesh(c3Geo(),m);C3PT.mesh.frustumCulled=false;
   C3PT.cam=new THREE.OrthographicCamera(-.4,.4,.4,-.4,-5,5);C3PT.cam.position.set(0,1.42+2*Math.sin(.06),2*Math.cos(.06));C3PT.cam.lookAt(0,1.42,0)}
- const S0=192,rt=char3DStage(S0,S0),M=C3PT.mesh,U=M.material.uniforms;ATLAS8.scene.add(M);P={};
+ const S0=192,rt=char3DStage(S0,S0),M=C3PT.mesh,U=M.material.uniforms;ATLAS8.scene.add(M);P={};U.uLong.value=pal&&pal.long?1:0;
  try{char3DWith(()=>{for(let i=0;i<4;i++){U.uTile.value.set((i%n)*T/C3.AW,0);P[(i&1?'closed':'open')+'_'+(i&2?'open':'closed')]=char3DShoot(C3PT.cam,rt,S0,S0,3,false)}})}
  finally{ATLAS8.scene.remove(M)}
  if(C3PT.cache.size>40)C3PT.cache.delete(C3PT.cache.keys().next().value);C3PT.cache.set(k,P);return P}
