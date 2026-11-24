@@ -303,7 +303,7 @@ function padPoll(dt){const g=PAD.on?padGet():null;if(!g){PAD.lx=PAD.ly=PAD.rx=PA
  if(pr(3)){if(ONLINE.on&&!PL.car&&!ONLINE.ride&&netPeerCarNear(4.5))ONLINE.padHold=simT;else if(!taxiHoldStart('pad')){padTriAct();radioKick()}}if(ONLINE.padHold!=null){if(!B[3]){ONLINE.padHold=null;enterExit()}else if(simT-ONLINE.padHold>.45){ONLINE.padHold=null;netRideTry()}}
  if(pr(8)||pr(17))openMap();
  if(B[10]&&B[11]&&(pr(10)||pr(11))){specSet(!SPEC.on);PAD.r3c=true}else if(pr(11))PAD.r3c=false;if(!B[11]&&P0[11]){if(!PAD.r3c)cycleView();PAD.r3c=false} /* v3 r17: câmera ao soltar R3, para L3+R3 não trocar a câmera junto */
- const dnPump=!!(car&&CTX.car); /* v3 r17: na bomba ↓ só lava o carro */
+ const dnPump=false; /* v3 r17: na bomba ↓ só lavava o carro · v3 r58: lavar foi para o lava-jato, ↓ volta ao normal */
  if(B[13]&&!dnPump){CHAR.dpadT+=dt;if(CHAR.dpadT>.35&&!CHAR.open)charOpen('pad')}else{if(P0[13]&&!B[13]&&!dnPump&&CHAR.dpadT<=.35&&!CHAR.open)misStart();CHAR.dpadT=0}
  if(CHAR.open&&CHAR.src==='pad'){const sx=PAD.lx||PAD.rx||(B[14]?-1:B[15]?1:0);if(Math.abs(sx)>.4){CHAR.sel=sx<0?0:1;charSelPaint()}if(!B[13])charClose(true)}
  if(PL.heli){
@@ -316,7 +316,7 @@ function padPoll(dt){const g=PAD.on?padGet():null;if(!g){PAD.lx=PAD.ly=PAD.rx=PA
   return;
  }
  if(car){
-  if(CTX.car){if(pr(2))ctxAct(1);if(pr(1))ctxAct(2);if(pr(13))ctxAct(3)} /* r61: ▼ lava o carro · v3 r17: ✕ ficou só no nitro (antes abastecia e acionava o nitro juntos) */
+  if(CTX.car){if(pr(2))ctxAct(1);if(pr(1))ctxAct(2)} /* r61: ▼ lava o carro · v3 r17: ✕ ficou só no nitro (antes abastecia e acionava o nitro juntos) */
   if(pr(14))wheelOpen('radio','pad');if(pr(15))HEAD.mode=headOn()?'off':'on';
   if(pr(1)&&!CTX.car)gunCycle(1); // v275: botão B/○ alterna arma no veículo
   if(pr(12))phoneToggle();

@@ -167,6 +167,8 @@ function gasBuild(K){const{F,W,D,f,ch,ri}=K;let st=GAS.list.get(ri);
  for(const u of isl)F.box(u-.75,u+.75,7-GAS_SHIFT,14.4-GAS_SHIFT,0,1,COL('#000'),new MB(),'rock');
  F.box(W*.2,W*.8,sv0,sv1,0,1,COL('#000'),new MB(),'bld');
  F.box(1.8,2.6,1.8,2.6,0,1,COL('#000'),new MB(),'rock');
+ /* v3 r58 · LAVA-JATO de rolete: lateral direita do pátio, entre a cobertura e a loja (as vagas da porta vão até W/2+7). Só os trilhos colidem. */
+ {const u0=W/2+7.35,u1=W-.25,v0=16.4,v1=Math.min(23.2,sv0-.3);st.wash=null;if(u1-u0>=4.6&&v1-v0>=6.2){st.wash={u0,u1,v0,v1,t:-1,stopT:0,msgT:0,g:null};for(const u of [u0,u1-.5])F.box(u,u+.5,v0+.15,v1-.15,0,1,COL('#000'),new MB(),'rock')}}
  gasVisual(st)}
 function gasVisual(st){const{W,D,ch}=st;const F0=st.F;if(!F0)return;const F={...F0,pt:(u,v)=>F0.pt(u,v-GAS_SHIFT),p3:(u,y,v)=>F0.p3(u,y,v-GAS_SHIFT),box:(u0,u1,v0,v1,...r)=>F0.box(u0,u1,v0-GAS_SHIFT,v1-GAS_SHIFT,...r)};const burnt=st.burnt,night=!!city.st.synth,M=city.M,VC=night&&!burnt,br=night?{n:st.br.n,a:'#f3d9cc',b:'#ff4fd8',vc:1}:st.br,PK=COL('#ff3ec8'),CY=COL('#2af0ff'),MI=COL('#7affd0');
  if(st.grp){st.grp.parent&&st.grp.parent.remove(st.grp);st.grp.traverse(o=>{if(o.geometry&&!o.isSprite)o.geometry.dispose()})}
@@ -229,6 +231,7 @@ function gasVisual(st){const{W,D,ch}=st;const F0=st.F;if(!F0)return;const F={...
  }else{const p=F.pt(2.2,2.2);d.box(p[0]-.18,.26,p[1]-.18,p[0]+.18,5,p[1]+.18,C('#6a6a72'));F.box(1.2,3.2,2.0,2.4,5,8.6,C(br.a),d);
   const sm0=gasTex('py',br,burnt),sm=S.style==='inverted'?unlitSignMat(sm0):sm0;for(const s of [1,-1]){const sg=new THREE.PlaneGeometry(1.8,3.4),m=new THREE.Mesh(sg,sm),q=F.p3(2.2,6.8,s>0?2.0-.02:2.4+.02);m.position.set(q[0],q[1],q[2]);m.rotation.y=Math.atan2(st.nrm[0]*s,st.nrm[1]*s);grp.add(m)}
   if(!burnt&&night)n.box(p[0]-1.05,8.6,p[1]-1.05,p[0]+1.05,8.7,p[1]+1.05,COL(br.b))}
+ if(st.wash)try{washBuild(st,grp,C,d,n)}catch(e){console.error(e)}
  const add=(mb,mat,ro)=>{const m=mb.mesh(mat,true,true);if(m){grp.add(m);if(ro)m.renderOrder=ro}};add(d,M.solid);add(n,M.neon);add(h,M.hwinSoft||M.hwin);if(!city.st.noLamps)add(gl,M.glow,2);
  grp.position.y=-.24; // v77: sem o piso elevado: o pátio do posto assenta no concreto novo
  if(ch&&city.chunks.get(ch.key)===ch)ch.group.add(grp)}
@@ -259,6 +262,7 @@ function gasTick(dt){const pc=PL.car||PL;
   if(st.burnt||dd>90)continue;
   for(const c of carsNearTmp(st.x,st.z,40)){if(!c.alive||c.t.boat)continue;const sp=Math.hypot(c.vx,c.vz),pv=GAS.pv.get(c);GAS.pv.set(c,sp);if(pv===undefined)continue;
    if(pv>6.5&&pv-sp>3.2){const ca=Math.cos(c.a),sa=Math.sin(c.a);for(const p of st.pumps){const dx=p[0]-c.x,dz=p[1]-c.z,lx=Math.abs(dx*ca+dz*sa)-c.t.L/2,lz=Math.abs(-dx*sa+dz*ca)-c.t.W/2;if(Math.hypot(Math.max(lx,0),Math.max(lz,0))<1.9){gasExplode(st,c===PL.car||(c===PL.lastCar&&!c.ai));break}}if(st.burnt)break}}}
+ if(nearSt&&nearSt.wash&&nd<60)try{washTick(nearSt,dt)}catch(e){console.error(e)}
  // seta da loja
  if(!GAS.arrow)GAS.arrow=makeArrow();const ar=GAS.arrow;const show=nearSt&&!nearSt.burnt&&!PL.inside&&nd<140;ar.visible=!!show;if(show){ar.position.set(nearSt.door.x,1.5+Math.sin(simT*3)*.18,nearSt.door.z);ar.rotation.y=simT*1.8}
  // abastecer / consertar
@@ -280,15 +284,73 @@ function dirtApply(c){const sh=c.dentParts&&c.dentParts.shell;if(!sh)return;cons
  if(!c.grimeMat||c.grimeBase!==base){if(c.grimeMat)c.grimeMat.dispose();const m=base.clone();m.onBeforeCompile=base.onBeforeCompile;m.customProgramCacheKey=base.customProgramCacheKey;m.userData={...base.userData,cached:false,dirt:true};c.grimeMat=m;c.grimeBase=base}
  const f=Math.min(.78,d*.78);c.grimeMat.color.setRGB(1,1,1).lerp(DIRT_COL,f);c.grimeMat.roughness=Math.min(1,(c.grimeBase.roughness??.5)+d*.5);if(sh.material!==c.grimeMat)sh.material=c.grimeMat}
 /* toque/clique numa linha do menu da bomba = aquela opção (1 abastecer, 2 consertar, 3 lavar) */
-setTimeout(()=>{const tg=document.getElementById('pumpTag');if(!tg||tg.dataset.tap)return;tg.dataset.tap='1';const go=e=>{if(!CTX.car||!PL.car)return;e.preventDefault();e.stopPropagation();const r=tg.getBoundingClientRect(),y=(e.touches?e.touches[0].clientY:e.clientY)-r.top-5,n=Math.floor(y/((r.height-10)/(tg.querySelectorAll('br').length+1)))+1;if(n>=1&&n<=3){initAudio();ctxAct(n)}};
+setTimeout(()=>{const tg=document.getElementById('pumpTag');if(!tg||tg.dataset.tap)return;tg.dataset.tap='1';const go=e=>{if(!CTX.car||!PL.car)return;e.preventDefault();e.stopPropagation();const r=tg.getBoundingClientRect(),y=(e.touches?e.touches[0].clientY:e.clientY)-r.top-5,n=Math.floor(y/((r.height-10)/(tg.querySelectorAll('br').length+1)))+1;if(n>=1&&n<=2){initAudio();ctxAct(n)}};
  tg.addEventListener('touchstart',go,{passive:false});tg.addEventListener('mousedown',go)},0);
 function carWash(c){if(!c)return;if((c.grime||0)<.04){toast(translatePlain('O CARRO JÁ ESTÁ LIMPO'));return}if((PL.money||0)<WASH_PRICE){toast('SEM DINHEIRO · $'+WASH_PRICE);clang(.1);return}
  money(-WASH_PRICE);c.grime=0;dirtApply(c);try{for(let i=0;i<24;i++)emit(c.x+(Math.random()-.5)*c.t.W,1+Math.random()*1.2,c.z+(Math.random()-.5)*c.t.L,(Math.random()-.5)*1.5,1+Math.random(),(Math.random()-.5)*1.5,.5,.35,.9,0xd8f4ff,true,.8)}catch(e){}
  toast(translatePlain('CARRO LAVADO')+' · −$'+WASH_PRICE)}
+/* ---------- v3 r58 · LAVA-JATO de rolete (pedido do José) ----------
+   Pórtico azul que corre em 2 trilhos por cima do carro parado: 2 roletes de pé + 1 deitado, respingo de água (emit) e chiado.
+   Área em st.wash (u/v do posto, sem GAS_SHIFT), montada no gasBuild; parte fixa no lote d do gasVisual; pórtico = grupo próprio (st.wash.g).
+   Pare o carro entre os trilhos: começa sozinho, $15 no fim, sujeira zera. Sair do lugar cancela sem cobrar. Carro grande (L>6 ou H>2.6) não cabe. */
+const WASH={T:7,tex:null,mats:null,snd:null};
+function washMats(){if(WASH.mats)return WASH.mats;const c=cv(64,256),g=c.getContext('2d');for(let x=0;x<64;x+=8){g.fillStyle=(x/8)%2?'#2f86e8':'#7ac4ff';g.fillRect(x,0,8,256)}for(let i=0;i<220;i++){g.fillStyle='rgba(255,255,255,.35)';g.fillRect(Math.random()*64,Math.random()*256,1,5)}
+ const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;const r=new THREE.MeshLambertMaterial({map:t});r.userData.cached=true;
+ const c2=cv(512,96),g2=c2.getContext('2d');g2.fillStyle='#1f5fbf';g2.fillRect(0,0,512,96);g2.font='900 64px Impact,Arial Black,sans-serif';g2.textAlign='center';g2.textBaseline='middle';g2.fillStyle='#fff';g2.fillText(S.lang==='en'?'CAR WASH':'LAVA-JATO',256,52);
+ const t2=new THREE.CanvasTexture(c2);const sg=new THREE.MeshBasicMaterial({map:t2});sg.userData.cached=true;WASH.mats={r,sg};return WASH.mats}
+function washBuild(st,grp,C,d,n){const w=st.wash,F=st.F,burnt=st.burnt,{u0,u1,v0,v1}=w,uc=(u0+u1)/2,gp=F.pt(uc,(v0+v1)/2),y=w.y=groundY(gp[0],gp[1])+.24; /* grp do posto fica em y −.24; o chão do lote está em ~.2 */
+ /* base, faixas e trilhos (fixos, no lote do posto) */
+ F.box(u0,u1,v0,v1,y,y+.03,C('#8e959e'),d);for(const v of [v0,v1-.22])F.box(u0+.5,u1-.5,v,v+.22,y+.03,y+.05,C('#f2c21a'),d);
+ for(const u of [u0,u1-.5]){F.box(u,u+.5,v0+.15,v1-.15,y+.03,y+.12,C('#5a5e66'),d);F.box(u+.18,u+.32,v0+.15,v1-.15,y+.12,y+.16,C('#2a2a30'),d)}
+ F.box(u0+.5,u1-.5,v0+.3,v1-.3,y+.03,y+.045,C('#7a828c'),d);
+ /* pórtico (grupo que anda): eixo local x = u, z = v; origem no meio da largura */
+ const o=F.pt(0,0),a=F.pt(1,0),b=F.pt(0,1),du=[a[0]-o[0],a[1]-o[1]],dv=[b[0]-o[0],b[1]-o[1]],hw=(u1-u0)/2,g=new THREE.Group();
+ g.rotation.y=Math.atan2(dv[0],dv[1]);
+ const m=new MB(),BL=C('#1f5fbf'),YL=C('#ffd21a'),GR=C('#2a2a30');
+ for(const s of [-1,1]){const x=s*(hw-.25);m.box(x-.2,y+.12,-.32,x+.2,y+3.05,.32,BL);m.box(x-.24,y+.1,-.38,x+.24,y+.3,.38,GR)}
+ m.box(-hw+.05,y+2.85,-.42,hw-.05,y+3.35,.42,BL);m.box(-hw+.05,y+3.1,-.44,hw-.05,y+3.18,.44,YL);
+ m.box(-hw+.4,y+2.6,-.08,hw-.4,y+2.85,.08,GR);
+ const fm=m.mesh(city.M.solid,true,true);if(fm)g.add(fm);
+ const {r,sg}=washMats(),rv=[],geo=new THREE.CylinderGeometry(.36,.36,1,14);
+ for(const s of [-1,1]){const k=new THREE.Mesh(geo,r);k.scale.y=2.3;k.position.set(s*(hw-.85),y+.2+1.15,0);k.userData.s=s;g.add(k);rv.push(k)}
+ const piv=new THREE.Group();piv.rotation.z=Math.PI/2;piv.position.set(0,y+2.3,0);const top=new THREE.Mesh(geo,r);top.scale.y=hw*2-1.3;piv.add(top);g.add(piv);
+ const pg=new THREE.PlaneGeometry(hw*2-.4,.46);for(const s of [-1,1]){const p=new THREE.Mesh(pg,sg);p.position.set(0,y+3.1,s*.45);p.rotation.y=s>0?0:Math.PI;g.add(p)}
+ g.userData={rv,top,piv,hw,uc};w.g=g;w.side=rv;washPlace(st,w.park=v1-.6,0,null);grp.add(g);if(burnt)g.traverse(q=>{if(q.isMesh&&q.material!==city.M.solid){q.material=q.material.clone();q.material.color.setRGB(.12,.11,.1)}})}
+function washPlace(st,v,spin,c){const w=st.wash,g=w.g;if(!g)return;const ud=g.userData,p=st.F.pt(ud.uc,v);g.position.set(p[0],0,p[1]);
+ const half=c?Math.min(ud.hw-.85,c.t.W/2+.38):ud.hw-.85;for(const k of ud.rv){k.position.x=k.userData.s*half;k.rotation.y+=spin*k.userData.s}
+ ud.piv.position.y=c?Math.min(w.y+2.3,w.y+c.t.H+.4):w.y+2.3;ud.top.rotation.y+=spin;
+ /* o buildChunk congela as matrizes do chunk (matrixAutoUpdate=false): o pórtico se atualiza à mão */
+ g.traverse(o=>o.updateMatrix());g.updateMatrixWorld(true)}
+function washFits(c){return c&&c.alive&&!c.t.boat&&!c.t.hover&&c.type!=='jetski'&&c.type!=='vortex'&&c.t.L<=6&&c.t.H<=2.6}
+function washInLane(st,c){const w=st.wash,o=st.F.pt(0,0),a=st.F.pt(1,0),b=st.F.pt(0,1);const dx=c.x-o[0],dz=c.z-o[1],u=dx*(a[0]-o[0])+dz*(a[1]-o[1]),v=dx*(b[0]-o[0])+dz*(b[1]-o[1]);
+ return{u,v,ok:Math.abs(u-(w.u0+w.u1)/2)<1.1&&v>w.v0+1&&v<w.v1-1,near:u>w.u0-1&&u<w.u1+1&&v>w.v0-4&&v<w.v1+.5}}
+function washSnd(on){if(!AC)return;if(on&&!WASH.snd){const s=AC.createBufferSource();s.buffer=AC._noise;s.loop=true;const f=AC.createBiquadFilter();f.type='highpass';f.frequency.value=1800;const g=AC.createGain();g.gain.value=0;g.gain.linearRampToValueAtTime(.07,AC.currentTime+.4);s.connect(f);f.connect(g);g.connect(master);s.start();WASH.snd={s,g}}
+ else if(!on&&WASH.snd){const{s,g}=WASH.snd;WASH.snd=null;try{g.gain.linearRampToValueAtTime(0,AC.currentTime+.3);s.stop(AC.currentTime+.35)}catch(e){}}}
+function washTick(st,dt){const w=st.wash;if(!w.g||!w.g.parent||st.burnt){if(w.t>=0){w.t=-1;washSnd(false)}return}const c=PL.car;
+ if(w.t>=0){const cc=w.car;const L=cc&&cc.alive&&PL.car===cc?washInLane(st,cc):null;
+  if(!L||!L.ok||Math.hypot(cc.x-w.cx,cc.z-w.cz)>1.2){w.t=-1;washSnd(false);w.msgT=simT+3;toast(translatePlain('LAVAGEM CANCELADA'));return}
+  w.idle=false;w.t+=dt;const k=Math.min(1,w.t/WASH.T),ph=(1-Math.cos(k*Math.PI*2))/2,front=w.v0+.6,vv=w.park+(front-w.park)*ph;washPlace(st,vv,dt*9,cc);
+  /* respingo: névoa branca em volta do carro, mais forte onde o pórtico está */
+  const g=w.g,ud=g.userData,ca=Math.cos(cc.a),sa=Math.sin(cc.a);
+  for(let i=0;i<6;i++){const sd=Math.random()<.5?-1:1,ox=(sd*(cc.t.W/2+.2))*(-sa),oz=(sd*(cc.t.W/2+.2))*ca,px=g.position.x+ox+(Math.random()-.5)*.8,pz=g.position.z+oz+(Math.random()-.5)*.8;
+   emit(px,.4+Math.random()*1.6,pz,ox*1.1+(Math.random()-.5)*.8,.5+Math.random()*1.1,oz*1.1+(Math.random()-.5)*.8,.9+Math.random()*.6,.5,2.3,0xf4faff,false,.62)}
+  if(Math.random()<dt*30){const px=g.position.x+(Math.random()-.5)*cc.t.W,pz=g.position.z+(Math.random()-.5)*.8;emit(px,cc.t.H+.5,pz,(Math.random()-.5)*1.2,1+Math.random(),(Math.random()-.5)*1.2,.6,.3,1.1,0xd8f0ff,false,.5)}
+  if(Math.random()<dt*10){const px=cc.x+(Math.random()-.5)*cc.t.W,pz=cc.z+(Math.random()-.5)*cc.t.L;emit(px,.35,pz,(Math.random()-.5)*2,.6,(Math.random()-.5)*2,.5,.2,.7,0xffffff,true,.35)}
+  if(k>=1){w.t=-1;washSnd(false);washPlace(st,w.park,0,null);money(-WASH_PRICE);cc.grime=0;dirtApply(cc);toast(translatePlain('CARRO LAVADO')+' · −$'+WASH_PRICE);w.msgT=simT+4;w.done=cc}
+  return}
+ if(!w.idle){w.idle=true;washPlace(st,w.park,0,null)}
+ if(!c||PL.dead||!c.alive){w.stopT=0;return}const L=washInLane(st,c);if(!L.near){w.stopT=0;w.done=null;return}if(w.done===c)return;
+ if(!washFits(c)){if(simT>w.msgT){w.msgT=simT+6;toast(translatePlain('NÃO CABE NO LAVA-JATO'))}return}
+ if(!L.ok){w.stopT=0;return}
+ if(Math.hypot(c.vx||0,c.vz||0)>.8){w.stopT=0;return}w.stopT+=dt;if(w.stopT<.8||simT<w.msgT)return;
+ if((c.grime||0)<.04){w.msgT=simT+8;toast(translatePlain('O CARRO JÁ ESTÁ LIMPO'));return}
+ if((PL.money||0)<WASH_PRICE){w.msgT=simT+6;toast('SEM DINHEIRO · $'+WASH_PRICE);clang(.1);return}
+ w.t=0;w.car=c;w.cx=c.x;w.cz=c.z;w.stopT=0;initAudio();washSnd(true)}
+function washHint(){const c=PL.car;if(!c||PL.inside)return'';for(const st of GAS.list.values()){const w=st.wash;if(!w||st.burnt||!w.g||Math.abs(st.x-c.x)>40||Math.abs(st.z-c.z)>40)continue;if(w.t>=0)return translatePlain('LAVANDO…');const L=washInLane(st,c);if(L.near&&washFits(c))return translatePlain('LAVA-JATO · PARE ENTRE OS TRILHOS · $15')}return''}
 function gasCosts(c){return{f:Math.ceil((100-(c.fuel===undefined?100:c.fuel))*.6),r:Math.ceil((100-c.hp)*1.2)}}
 function ctxAct(n){if(n===1&&ONLINE.on&&netImpoundTry())return;if(invRoom()){if(n===1&&simT>(INVROOM.msgT||0)){INVROOM.msgT=simT+2;toast(translatePlain('NADA FUNCIONA AQUI'))}return}if(n===1&&newsNear()){newsBuy();return}if(n===1&&PL.inside==='ammo'&&ammoCounterNear()){ammoOpen();return}if(n===1&&petAdopt())return;if(n===1&&PL.inside===true&&QUEST.pier.state==='home'&&SAFE.mate&&Math.hypot(PL.x-SAFE.mate.x,PL.z-SAFE.mate.z)<3.2){storyReunionDialog();return}if(n===1&&(PL.inside==='heist'||PL.inside==='pawn')&&heistAct())return;if((PARA.active||paraNear())&&paraAct())return;initAudio();if(n===1&&paraAct())return;if(n===1&&!PL.car&&empAct())return;if(n===1&&bankCounterNear()&&!BANK.rob){bankRobStart();return}if(n===1&&casinoTableNear()){tableGameOpen(casinoTableNear().kind);return}if(n===1&&slotNear()>=0){slotOpen();return}if(CTX.club&&n===1&&!PL.car){clubDrink();return}if(n===1&&!PL.car&&dbBoothNear()){dbBoothAct(dbBoothNear());return}if(n===1&&bedNear()){bedSave();return}if(n===1&&!PL.car&&duoCtx())return;if(n===1&&wardNear()){openWard('home');return}if(n===1&&dealNear()){dealOpen();return}if(n===1&&jailBail())return;if(CTX.mall&&n===1&&!PL.car){mallAct(CTX.mall);return}
  if(CTX.car&&PL.car){const c=PL.car,k=gasCosts(c);
-  if(n===3){carWash(c);return}
+  if(n===3)return; /* v3 r58: lavar saiu da bomba, agora é o lava-jato */
   if(n===1){if(k.f<=0){toast('TANQUE CHEIO');return}if((PL.money||0)<=0){toast('SEM DINHEIRO');clang(.1);return}const pay=Math.min(k.f,PL.money),add=pay/.6;c.fuel=Math.min(100,(c.fuel||0)+add);money(-pay);toast('ABASTECIDO · −$'+pay+(c.fuel<99.5?'<br><small style="font-size:11px;color:#fff">o dinheiro só deu pra '+Math.round(c.fuel)+'%</small>':''));glug();return}
   if(n===2){if(k.r<=0){toast('O CARRO ESTÁ INTEIRO');return}if((PL.money||0)<k.r){toast('DINHEIRO INSUFICIENTE · CONSERTO $'+k.r);clang(.1);return}money(-k.r);repairCar(c);toast('CARRO CONSERTADO · −$'+k.r);clang(.3);return}}
  if(CTX.shop&&n===1)shopBuy()}
@@ -475,7 +537,7 @@ function v67Hud(dt){if(!GUN.has&&!PL.car&&played){$('#gun').hidden=false;hudTx('
    if(best){let isl=null,id=1e9;for(const st of GAS.list.values())if(st.pumps)for(const p of st.pumps){const d=Math.hypot(p[0]-best[0],p[1]-best[1]);if(d<id){id=d;isl=p}}
     const v=new THREE.Vector3(isl?isl[0]:best[0],2.9,isl?isl[1]:best[1]).project(camera);if(v.z<1&&Math.abs(v.x)<1.05&&Math.abs(v.y)<1.05){show=true;
      const g=PAD.on?padGet():null,xb=g&&/xbox|xinput|microsoft/i.test(g.id||''),a1=g?(xb?'X':'□'):'CLIQUE',a2=g?(xb?'B':'○'):'BOT. DIR.',a3=g?'▼':'X',k=gasCosts(c),stop=CTX.car,dd=Math.round((c.grime||0)*100);
-     const en=S.lang==='en',T=(x,y)=>en?y:x,h=`<kbd>${en&&!g?(a1==='CLIQUE'?'CLICK':a1):a1}</kbd>${T('ABASTECER','REFUEL')}${k.f>0?' $'+k.f:T(' (cheio)',' (full)')}<br><kbd>${en&&!g?'RIGHT CLICK':a2}</kbd>${T('CONSERTAR','REPAIR')}${k.r>0?' $'+k.r:T(' (inteiro)',' (intact)')}<br><kbd>${a3}</kbd>${T('LAVAR CARRO','CAR WASH')}${dd>=4?' $'+WASH_PRICE+' · '+dd+'%':T(' (limpo)',' (clean)')}${stop?'':'<br><small style="color:#ffb066">'+T('pare ao lado da bomba','stop next to the pump')+'</small>'}`;
+     const en=S.lang==='en',T=(x,y)=>en?y:x,h=`<kbd>${en&&!g?(a1==='CLIQUE'?'CLICK':a1):a1}</kbd>${T('ABASTECER','REFUEL')}${k.f>0?' $'+k.f:T(' (cheio)',' (full)')}<br><kbd>${en&&!g?'RIGHT CLICK':a2}</kbd>${T('CONSERTAR','REPAIR')}${k.r>0?' $'+k.r:T(' (inteiro)',' (intact)')}${stop?'':'<br><small style="color:#ffb066">'+T('pare ao lado da bomba','stop next to the pump')+'</small>'}`;
      if(tg.dataset.h!==h){tg.dataset.h=h;tg.innerHTML=h}tg.style.left=((v.x+1)/2*innerWidth)+'px';tg.style.top=((1-v.y)/2*innerHeight)+'px'}}}
   if(tg.hidden===show)tg.hidden=!show}
  {const tg=$('#mallTag');let show=false;if(false&&PL.inside==='mall'&&MALL.G&&!PL.dead&&!WARD.open){let best=null,bd=14,bk=null;for(const key of ['wear','food','tech','bag','cafe','jewel','music','pharm']){const sp=MALL[key+(MALL.lvl?'U':'G')];if(!sp)continue;const d=Math.hypot(PL.x-sp.x,PL.z-sp.z);if(d<bd){bd=d;best=sp;bk=key}}
@@ -501,6 +563,7 @@ function v67Hud(dt){if(!GUN.has&&!PL.car&&played){$('#gun').hidden=false;hudTx('
  else if(duoPedNear())h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>MANDAR '+duoName(1-CHAR.cur)+' PRA CASA';
  else if(dealNear())h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>CONCESSIONÁRIA COASTAL · VER VEÍCULOS À VENDA';
  else if(CTX.car&&PL.car){h=''}
+ else if(PL.car&&washHint())h=washHint();
  else if(PL.inside==='shop'&&SHOP.rob>0&&!SHOP.alarm){const k=Math.min(1,SHOP.rob/3.2),n=12,f=Math.round(k*n);h=`<span style="color:#ff4a4a">ASSALTO</span> ${'█'.repeat(f)}${'░'.repeat(n-f)}`}
  else if(SKATE.near){h='<kbd>F</kbd><kbd>→</kbd>SUBIR NO SKATE';CTX.skate=true}
  else if(SKATE.ride&&SKATE.ride.v<.6&&!PL.inside){h='<kbd>F</kbd><kbd>→</kbd>DESCER DO SKATE';CTX.skate=true}
