@@ -89,7 +89,7 @@ function update(dt){if(SKATE.ui)return;if(POOL.on){poolTick(dt);return}if(DICE.o
   buildLanes();populate(false);patioTick();residentialPedTick(.35);
   for(const c of vehicles.slice())if(c.sunk&&c.sinkT>7&&c!==PL.car)removeVehicle(c);
   for(const chk of city.chunks.values())if(chk.beach)for(const sp of chk.beach){const near=Math.hypot(sp.x-pp.x,sp.z-pp.z)<(MOB_LITE?120:180);if(!near){if(sp.p&&peds.includes(sp.p)&&['lie','goto'].includes(sp.p.state))removePed(sp.p);sp.p=null;sp.t=0;continue}if(DN.nightF>.5){if(sp.p&&peds.includes(sp.p))removePed(sp.p);sp.p=null;sp.t=0;continue}if(sp.p&&peds.includes(sp.p)&&sp.p.state!=='dead')continue;sp.p=null;if(rainAt(sp.x,sp.z)>.08){sp.t=0;continue}sp.t+=.35;
-   if(sp.t>8+Math.random()*25){const dI=inland();const q=spawnLying(sp.x+dI[0]*(14+Math.random()*10),sp.z+dI[1]*(14+Math.random()*10),pick2(BEACH_PALS));q.state='goto';q.rot=0;q.tx=sp.x;q.tz=sp.z;sp.p=q;chk.peds.push(q);sp.t=0}}
+   if(sp.t>8+Math.random()*25){const dI=inland();const q=spawnLying(sp.x+dI[0]*(14+Math.random()*10),sp.z+dI[1]*(14+Math.random()*10),pick2(BEACH_PALS));q.state='goto';q.rot=0;q.tx=sp.x;q.tz=sp.z;q.lieNs=sp.ns;sp.p=q;chk.peds.push(q);sp.t=0}}
   for(const p of peds.slice()){if(!p.fixed&&Math.hypot(p.x-pp.x,p.z-pp.z)>3*P+20){removePed(p)}}
   const free=peds.filter(q=>!q.fixed);if(free.length>pedTarget()){free.sort((a,b)=>Math.hypot(b.x-pp.x,b.z-pp.z)-Math.hypot(a.x-pp.x,a.z-pp.z));for(let i=0;i<free.length-pedTarget();i++)removePed(free[i])}
   for(let i=free.length;i<pedTarget();i++)spawnPed({x:pp.x,z:pp.z,min:40,max:3*P-10});

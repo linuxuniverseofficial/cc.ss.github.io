@@ -116,7 +116,7 @@ function c3Geo(){if(C3.geo)return C3.geo;const P=[],N=[],U=[],K=[],I=[];let vi=0
 const C3_VS=`
 attribute float part;
 uniform float uPhase,uAmt,uRun,uAim,uPunch,uSit,uAir,uIdle,uLong;uniform vec2 uTile;uniform vec3 uLight,uSunDir;
-varying vec2 vUv;varying vec3 vLight;
+varying vec2 vUv,vLoc;varying vec3 vLight;
 #include <fog_pars_vertex>
 vec3 rx(vec3 v,vec3 p,float a){v-=p;float c=cos(a),s=sin(a);return p+vec3(v.x,c*v.y-s*v.z,s*v.y+c*v.z);}
 vec3 rxn(vec3 n,float a){float c=cos(a),s=sin(a);return vec3(n.x,c*n.y-s*n.z,s*n.y+c*n.z);}
@@ -127,7 +127,7 @@ void main(){
  float bob=A*(.022+.03*Rn)*abs(cos(ph))-uSit*0.+uIdle*.006*sin(ph*.5);
  float twist=A*(.07+.05*Rn)*s;
  if(part>6.5&&part<10.5){bool L=part<8.5;float sg=L?1.:-1.;float ss=L?s:-s;vec3 hip=vec3(.1*sg,.78,0.),knee=vec3(.1*sg,.44,0.);
-  float th=A*(.42+.22*Rn)*ss,kn=A*((.55+.5*Rn)*max(0.,-sin(ph+(L?0.:3.14159)+1.3))+.06);
+  float th=A*(.42+.22*Rn)*ss,kn=A*((.55+.5*Rn)*max(0.,sin(ph+(L?0.:3.14159)+1.3))+.06);
   th=mix(th,L?.25:-.1,uAir);kn=mix(kn,L?.9:.35,uAir);
   th=mix(th,1.45,uSit);kn=mix(kn,1.45,uSit);
   if(part==8.||part==10.){p=rx(p,knee,kn);n=rxn(n,kn);} p=rx(p,hip,-th);n=rxn(n,-th);}
@@ -146,17 +146,20 @@ void main(){
  vec4 wp=modelMatrix*vec4(p,1.);vec3 wn=normalize(mat3(modelMatrix)*n);
  float d=max(dot(wn,uSunDir),0.);vLight=uLight*(.74+.42*d);
  vec4 mvPosition=viewMatrix*wp;gl_Position=projectionMatrix*mvPosition;
- vUv=uv+uTile;
+ vUv=uv+uTile;vLoc=uv;
  #include <fog_vertex>
 }`;
 const C3_FS=`
-uniform sampler2D map;uniform float uAlpha;varying vec2 vUv;varying vec3 vLight;
+uniform sampler2D map;uniform float uAlpha,uBlink;uniform vec2 uTile;varying vec2 vUv,vLoc;varying vec3 vLight;
 #include <fog_pars_fragment>
-void main(){vec3 c=texture2D(map,vUv).rgb*vLight;c=floor(c*31.+.5)/31.;gl_FragColor=vec4(c,uAlpha);
+void main(){vec2 uvv=vUv;float lid=1.;
+ /* r52: piscar = olhos (pixels 15–24 × 10–11 do quadro da cabeça) trocados pela pele logo abaixo; a linha de baixo um pouco mais escura (pálpebra) */
+ if(uBlink>.5){vec2 q=vec2(vLoc.x*${C3.AW}.,(1.-vLoc.y)*${C3.AH}.);if(q.x>15.&&q.x<25.&&q.y>10.&&q.y<12.){uvv=vec2(16.5/${C3.AW}.,1.-13.5/${C3.AH}.)+uTile;lid=q.y>11.?.78:1.;}}
+ vec3 c=texture2D(map,uvv).rgb*vLight*lid;c=floor(c*31.+.5)/31.;gl_FragColor=vec4(c,uAlpha);
  #include <fog_fragment>
 }`;
 function c3Material(){if(!C3.base)C3.base=new THREE.ShaderMaterial({vertexShader:C3_VS,fragmentShader:C3_FS,fog:true,
-  uniforms:THREE.UniformsUtils.merge([THREE.UniformsLib.fog,{map:{value:null},uTile:{value:new THREE.Vector2()},uPhase:{value:0},uAmt:{value:0},uRun:{value:0},uAim:{value:0},uPunch:{value:0},uSit:{value:0},uAir:{value:0},uIdle:{value:0},uLong:{value:0},uAlpha:{value:1},uLight:{value:new THREE.Color(1,1,1)},uSunDir:{value:new THREE.Vector3(0,1,0)}}])});
+  uniforms:THREE.UniformsUtils.merge([THREE.UniformsLib.fog,{map:{value:null},uTile:{value:new THREE.Vector2()},uPhase:{value:0},uAmt:{value:0},uRun:{value:0},uAim:{value:0},uPunch:{value:0},uSit:{value:0},uAir:{value:0},uIdle:{value:0},uLong:{value:0},uBlink:{value:0},uAlpha:{value:1},uLight:{value:new THREE.Color(1,1,1)},uSunDir:{value:new THREE.Vector3(0,1,0)}}])});
  const m=C3.base.clone();m.uniforms.map.value=c3Atlas();m.uniforms.uSunDir.value=C3.sunDir;return m}
 /* ---------- boneco preso a um sprite de personagem ---------- */
 function c3Make(o){const sp=o.sp,mat=c3Material(),mesh=new THREE.Mesh(c3Geo(),mat);mesh.matrixAutoUpdate=false;mesh.layers.set(1);mesh.castShadow=mesh.receiveShadow=false;mesh.raycast=()=>{};mesh.name='char3d';
@@ -198,6 +201,7 @@ function c3Place(o){const sp=o.sp;if(!sp||!sp.isSprite)return;
  const airT=(o.jy||0)>.08?1:0;st.air+=(airT-st.air)*(1-Math.exp(-dt*10));st.sit+=((sitting?1:skate?.14:0)-st.sit)*(1-Math.exp(-dt*10)); /* skate: joelho levemente dobrado */
  /* direção: para onde olha/anda; gira suave */
  let fx=0,fz=0;if(patio){fx=Math.sin(o.patioSpot.angle||0);fz=Math.cos(o.patioSpot.angle||0)}
+ else if(lying&&o.lieNs!==undefined){fx=o.lieNs?0:1;fz=o.lieNs?1:0} /* r52: na toalha, deitado no comprido dela */
  else if(rideV){fx=Math.cos(rideV.a);fz=Math.sin(rideV.a)}
  else if(skate&&o===PL){fx=Math.cos(SKATE.ride.a);fz=Math.sin(SKATE.ride.a)}
  else if(o===PL&&MELEE&&MELEE.t>0){fx=MELEE.d[0];fz=MELEE.d[1]}
@@ -209,14 +213,18 @@ function c3Place(o){const sp=o.sp;if(!sp||!sp.isSprite)return;
  if(Math.hypot(fx,fz)>1e-3){const ta=Math.atan2(fx,fz)+(skate?1.15:0); /* r41: no skate fica de lado na prancha */st.ang=st.ang===null?ta:c3AngTo(st.ang,ta,1-Math.exp(-dt*14))}
  if(st.ang===null)st.ang=0;
  const U=st.mat.uniforms;U.uPhase.value=st.amt>.02?st.ph:st.idle*1.3;U.uAmt.value=st.amt;U.uRun.value=st.run;U.uAim.value=st.aim;U.uPunch.value=st.punch;U.uSit.value=st.sit;U.uAir.value=st.air;U.uIdle.value=1-st.amt;
+ /* r52: piscar a cada 2–6 s (0,13 s fechado); deitado fica de olhos fechados; óculos e demogorgon não piscam */
+ st.bk=(st.bk===undefined?Math.random()*4:st.bk)-dt;if(st.bk<-.13)st.bk=2+Math.random()*4;U.uBlink.value=pal.glasses||pal.demo?0:lying||st.bk<0?1:0;
  /* transparência do sprite (fantasma da proteção do online, aparições, revive) vale para o boneco */
  {const op=sp.material.opacity;if(op<.995){if(!st.mat.transparent){st.mat.transparent=true;st.mat.depthWrite=false}U.uAlpha.value=op}else if(st.mat.transparent){st.mat.transparent=false;st.mat.depthWrite=true;U.uAlpha.value=1}}
  /* matriz local = escala inversa do sprite · desce o "lift" do sprite · gira · deita */
  const top=camMode==='top'&&!VIEW.orbit,sc=top?1.5:1;let lift=0,ly=0;
  if(patio)lift=lying?.86:.22;else{lift=(top?.9:0)+((o.rot&&Math.abs(o.rot)>1&&!top)?.3:0)+(o.jy||0)*0}
- if(sitting)ly=ride==='moto'?-.12:-.33;if(lying)ly=.15;
+ if(sitting)ly=ride==='moto'?-.12:-.33;if(lying)ly=patio?lift-.3+.12*sc:.15;
  _c3e.set(0,st.ang,0,'YXZ');if(lying){_c3e.set(o.rot<0&&!patio?Math.PI/2:-Math.PI/2,st.ang,0,'YXZ')}else if(Math.abs(o.rot||0)>.01)_c3e.set(0,st.ang,-(o.rot||0),'YXZ');
- _c3q.setFromEuler(_c3e);_c3v.set(0,-lift+ly,0);_c3s.set(sc,sc,sc);_c3a.compose(_c3v,_c3q,_c3s);
+ _c3q.setFromEuler(_c3e);_c3v.set(0,-lift+ly,0);
+ /* r52: deitado, a malha tem os pés na origem; centra o corpo (≈1,75 m) no colchão/toalha. Espreguiçadeira: cabeça no encosto (lado −frente), pés para +frente */
+ if(lying){const hd=_c3e.x>0?1:-1,fa=st.ang,d=(patio?.9:-.85*hd)*sc;_c3v.x+=Math.sin(fa)*d;_c3v.z+=Math.cos(fa)*d}_c3s.set(sc,sc,sc);_c3a.compose(_c3v,_c3q,_c3s);
  const s=sp.scale;_c3m.makeScale(1/(s.x||1),1/(s.y||1),1/(s.z||1));st.mesh.matrix.multiplyMatrices(_c3m,_c3a);st.mesh.matrixWorldNeedsUpdate=true;if(calm)c3HeldPlace()}
 /* sol: direção da luz principal (uma vez por quadro, usada por todos os bonecos) */
 function c3Frame(){if(!C3_ON())return;try{C3.sunDir.copy(sun.position).sub(sun.target.position).normalize();if(C3.sunDir.y<.15){C3.sunDir.y=.15;C3.sunDir.normalize()}}catch(e){}

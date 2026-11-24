@@ -2303,7 +2303,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
      ch.patio=ch.patio||[];ch.patio.push({x,z,kind:'recline',angle:ns?0:Math.PI/2,p:null,wait:w8});}
     }else{
      if(!qm){const hx=s<2?.5:1,hz=s<2?1:.5,Y=(x,z)=>groundY(x,z)+.035;towelMb.qa([q[0]-hx,Y(q[0]-hx,q[1]-hz),q[1]-hz],[q[0]+hx,Y(q[0]+hx,q[1]-hz),q[1]-hz],[q[0]+hx,Y(q[0]+hx,q[1]+hz),q[1]+hz],[q[0]-hx,Y(q[0]-hx,q[1]+hz),q[1]+hz],tc,[q[0],-20,q[1]])}
-     if(R()<.75&&!qm){ch.beach=ch.beach||[];const sp={x:q[0],z:q[1],p:null,t:0};ch.beach.push(sp);if(!CITY_CACHE.building&&DN.nightF<=.5&&rainAt(q[0],q[1])<.2){sp.p=spawnLying(q[0],q[1],pick2(BEACH_PALS));ch.peds.push(sp.p)}}
+     if(R()<.75&&!qm){ch.beach=ch.beach||[];const sp={x:q[0],z:q[1],p:null,t:0,ns:s<2};ch.beach.push(sp);if(!CITY_CACHE.building&&DN.nightF<=.5&&rainAt(q[0],q[1])<.2){sp.p=spawnLying(q[0],q[1],pick2(BEACH_PALS));sp.p.lieNs=sp.ns;ch.peds.push(sp.p)}}
     }
    }}
 
