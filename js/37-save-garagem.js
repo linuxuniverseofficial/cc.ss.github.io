@@ -158,7 +158,7 @@ function glRescueResume(){let d=null;try{d=JSON.parse(sessionStorage.getItem('gl
 window.addEventListener('load',()=>setTimeout(glRescueResume,700));
 // Versão do jogo gravada no save. Suba este número a cada atualização: saves de outra versão são recusados.
 const DOOR_NOW=()=>performance.now()/1000;
-const GAME_VER=3; /* v3 r1 (21/11/2026, pedido do José): depois da v2 r70. 3 já está em saveVersionCompatible, então saves da v1 e v2 abrem. */ /* v2 r1: depois da v1 dev r2.4. Saves da v1 continuam aceitos (2 já está em saveVersionCompatible). */ /* numeração reorganizada: depois da v79 r49 vem v1 r1 (saves 1–79 continuam aceitos em saveVersionCompatible) */
+const GAME_VER=4; /* v4 r1 (24/11/2026, pedido do José): depois da v3 r62; 4 já está em saveVersionCompatible. */ /* v3 r1 (21/11/2026, pedido do José): depois da v2 r70. 3 já está em saveVersionCompatible, então saves da v1 e v2 abrem. */ /* v2 r1: depois da v1 dev r2.4. Saves da v1 continuam aceitos (2 já está em saveVersionCompatible). */ /* numeração reorganizada: depois da v79 r49 vem v1 r1 (saves 1–79 continuam aceitos em saveVersionCompatible) */
 const SAVE_SERIES='pixelcity-restart-1';
 // v261 preserva saves v260 (AMOnições), v259 e v258. Nenhum dado de câmera é removido.
 /* saveVersionCompatible: está em js/28-save-carga.js */

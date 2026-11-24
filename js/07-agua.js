@@ -145,7 +145,14 @@ vec3 sfStreet(vec2 p,float px){vec3 m=vec3(1.);if(sfStK.w<.5)return m;float Pp=s
      float bars=sfAA(px,9.)*step(.5,fract(sl*9.));float fr=max(step(.42,ds),max(step(o-.06,av),step(av,o-.39)));
      float t=mix(.08+.2*bars,.4,fr);m=mix(m,vec3(t),cov);}}}}}}
  return m;}
-vec3 sfSide(vec2 p,float px){float t=mix(.95,1.04,sfV(p*.08)*.6+sfV(p*.31+2.)*.4);float a1=sfAA(px,14.),a2=sfAA(px,40.),a3=sfAA(px,4.);
+/* v4 r1: rachaduras finas e raras na calçada — células de 4,2 m (e outra grade de 6,7 m deslocada), ~10% com 1 trinca torta de 0,6–2 m */
+float sfCrack1(vec2 p,float C,float sd,float px){vec2 id=floor(p/C);float h=sfH(id*1.71+sfSeed+sd);if(h>.1)return 0.;
+ vec2 q=p-id*C-vec2(.35+.3*sfH(id+3.3+sd),.35+.3*sfH(id+7.1+sd))*C;float an=sfH(id+11.+sd)*3.1416;vec2 d=vec2(cos(an),sin(an));
+ float al=dot(q,d),L=(.15+.2*sfH(id+5.+sd))*C;if(abs(al)>L)return 0.;
+ float wob=(sfV(vec2(al*2.2,id.x*3.1+id.y*7.3+sd))-.5)*.22+(sfV(vec2(al*9.,id.y*5.7+sd))-.5)*.05;float ds=abs(dot(q,vec2(-d.y,d.x))-wob);
+ float w=.004+.011*(1.-smoothstep(.5,1.,abs(al)/L));float pw=max(px*.75,.002);return (1.-smoothstep(w,w+pw,ds))*min(1.,w/max(px*.5,.001));}
+float sfCrack(vec2 p,float px){float a=sfAA(px,6.);if(a<.01)return 0.;return a*max(sfCrack1(p,4.2,.4,px),sfCrack1(p+vec2(1.9,3.3),6.7,9.2,px));}
+vec3 sfSide(vec2 p,float px){float t=mix(.95,1.04,sfV(p*.08)*.6+sfV(p*.31+2.)*.4);float a1=sfAA(px,14.),a2=sfAA(px,40.),a3=sfAA(px,4.);t*=1.-.5*sfCrack(p,px);
  if(a1>0.)t*=1.-a1*sfDot(p+.5,14.,.68,.3)*.08;if(a2>0.)t*=1.+a2*(sfH(floor(p*40.))-.5)*.07;t*=1.+a3*(sfV(p*4.)-.5)*.05;return vec3(t);}
 vec2 sfRip(vec2 p,float px){float a=sfAA(px,2.2)*smoothstep(.25,.6,sfV(p*.11+2.));if(a<.01)return vec2(0.);vec2 d=normalize(vec2(.8,.6));float w=sfV(p*.35)*5.;float ph=dot(p,d)*5.2+w;float s=cos(ph)+.35*cos(ph*2.+1.);return d*s*a*.2;}
 vec3 sfWall(vec3 w,vec3 n,vec3 bc,float px){vec2 tg=normalize(vec2(-n.z,n.x));float s=dot(w.xz,tg),y=w.y;vec2 q=vec2(s,y);
@@ -209,7 +216,7 @@ function surfPatch(mat,kind){if(!mat||mat.userData.surf)return mat;mat.userData.
       vec2 cw=sfW.xz;float lvl=.32+.68*(sfH(floor(cw/76.+.5)*1.37+sfSeed)*.6+sfH(floor(cw/19.)*2.11+sfSeed+5.3)*.4);
       float a0=sfAA(sfPx,1.3),am=sfAA(sfPx,2.6),a1=sfAA(sfPx,5.),a2=sfAA(sfPx,22.),big=sfV(cw*.45+3.);
       float nn=.5+a0*(sfV(cw*1.3+7.)-.5)*.7+am*(sfV(cw*2.6+1.7)-.5)*.6+a1*(sfV(cw*5.)-.5)*.8+a2*(sfH(floor(cw*22.))-.5)*.7;
-      float th=(.12+.36*lvl+.2*lvl*smoothstep(.45,.85,big))*max(a0*.85,max(am*.95,a1))*sfF;if(nn<th)discard;diffuseColor.rgb*=1.-(.08+.1*lvl)*sfF*(1.-smoothstep(th,th+.25,nn));}}`
+      float th=.55*(.12+.36*lvl+.2*lvl*smoothstep(.45,.85,big))*max(a0*.85,max(am*.95,a1))*sfF; /* v4 r1: ×.55 = metade da área gasta (≈37%→19%) */if(nn<th)discard;diffuseColor.rgb*=1.-(.08+.1*lvl)*sfF*(1.-smoothstep(th,th+.25,nn));}}`
    :kind==='side'?`if(sfN.y>.6){vec3 bc=vec3(.6);
      #ifdef USE_COLOR
      bc=vColor;
@@ -226,7 +233,12 @@ function surfPatch(mat,kind){if(!mat||mat.userData.surf)return mat;mat.userData.
      #endif
      if(wm>.01)diffuseColor.rgb*=mix(vec3(1.),sfGain(sfWall(sfW,normalize(sfN),bc,sfPx),bc),sfF*wm);}`;
   /* v3 r62: tinta envelhecida (cinza/amarelada) em toda faixa, sem sumir com a distância (só depende de sfOn) */
-  const tint=kind==='paint'?`{vec3 bc=vec3(1.);
+  const tint=kind==='side'?`if(sfOn>.5&&sfN.y>.6){vec3 bc=vec3(.6);
+     #ifdef USE_COLOR
+     bc=vColor;
+     #endif
+     float sat=max(bc.r,max(bc.g,bc.b))-min(bc.r,min(bc.g,bc.b));diffuseColor.rgb*=mix(1.,.86,1.-smoothstep(.09,.12,sat));}` /* v4 r1: concreto da calçada 14% mais escuro (sem corte por distância) */
+   :kind==='paint'?`{vec3 bc=vec3(1.);
      #ifdef USE_COLOR
      bc=vColor;
      #endif
