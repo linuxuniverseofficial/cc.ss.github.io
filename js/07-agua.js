@@ -69,11 +69,11 @@ function causticPatch(mat,yTop){const old=mat.onBeforeCompile,key=(mat.customPro
    Cada efeito tem chave própria em Gráficos (S.fxWet/S.fxGlow/S.fxPaint) que só muda o uniform fxK (sem recompilar):
    fxK.x = reflexo falso no asfalto molhado (sol/lua/brilho da cidade, no shader do WET)
    fxK.y = brilho pintado de janelas e placas (halo pelo mipmap do emissiveMap) + núcleo quente/zumbido dos neons
-   fxK.z = livre (era a vegetação balançando da r25, removida na r26)
+   fxK.z = reflexo de dia nas janelas (v4 r6, winReflPatch; antes era a vegetação da r25, removida na r26)
    fxK.w = reflexo do céu na lataria (Fresnel com as cores do skyMat + linha do horizonte + brilho do sol; carLampInject)
    Para remover um efeito de vez: ver o registro de shaders em CONTEXT.md §2b. */
 const SHFX={U:{fxK:{value:new THREE.Vector4(1,1,1,1)},fxT:{value:0},fxN:{value:0}}};
-function shfxApply(){SHFX.U.fxK.value.set(S.fxWet!==false?1:0,S.fxGlow!==false?1:0,0,S.fxPaint!==false?1:0);if(typeof SURF!=='undefined')surfApply()}
+function shfxApply(){SHFX.U.fxK.value.set(S.fxWet!==false?1:0,S.fxGlow!==false?1:0,S.fxWin!==false?1:0,S.fxPaint!==false?1:0);if(typeof SURF!=='undefined')surfApply()}
 function shfxTick(dt){const U=SHFX.U;U.fxT.value=simT;
  const n=city&&city.st&&city.st.night?1:(typeof DN!=='undefined'?DN.nightF||0:0);if(Math.abs(n-U.fxN.value)>.004)U.fxN.value=n}
 // janelas e placas: halo "pintado" = o próprio emissiveMap lido em mipmaps borrados (2 leituras), somado à emissão.
@@ -85,6 +85,31 @@ function fxGlowPatch(mat,k){if(!mat||mat.userData.fxGlow)return mat;mat.userData
    if(fxK.y>.5){vec3 fxH=texture2D(emissiveMap,vUv,2.).rgb*.55+texture2D(emissiveMap,vUv,3.5).rgb*.45;float fxC=max(totalEmissiveRadiance.r,max(totalEmissiveRadiance.g,totalEmissiveRadiance.b));totalEmissiveRadiance+=emissive*fxH*fxGk*vec3(1.,.82,.6)*(1.-smoothstep(.15,.9,fxC));}
    #endif`)};
  mat.customProgramCacheKey=()=>key+'|fxGlow';mat.needsUpdate=true;return mat}
+/* v4 r6: REFLEXO DE DIA NAS JANELAS (SHFX fxK.z). Mesma lógica do reflexo da água/lataria: Fresnel com as cores do skyMat
+   (top/hor/sunDir/night: uniforms compartilhados, acompanha dia, pôr do sol, noite e os outros mundos sem CPU) + silhueta de
+   prédios "do outro lado da rua" (altura sorteada por azimute do raio refletido: anda com a câmera, dá a paralaxe de reflexo)
+   + brilho do sol. Só no vidro: o vidro do windowTextures é o único texel azulado (b>r) e escuro do map; janela acesa à noite
+   (emissão) fica sem. Nenhum draw call/textura novo: 1 leitura de textura a mais só nos pixels de parede.
+   Remover de vez: tirar winReflPatch(M.wall) no generateCity (ver CONTEXT §2b). */
+function winReflPatch(mat){if(!mat||mat.userData.winRefl)return mat;mat.userData.winRefl=true;const old=mat.onBeforeCompile,key=(mat.customProgramCacheKey&&mat.customProgramCacheKey())||'';
+ mat.onBeforeCompile=(sh,r)=>{if(old)old.call(mat,sh,r);const K=skyMat.uniforms;Object.assign(sh.uniforms,{fxK:SHFX.U.fxK,top:K.top,hor:K.hor,sunDir:K.sunDir,night:K.night,sunDim:K.sunDim,csSun:K.csSun,synth:K.synth,wK:WTR.U.wK});
+  sh.vertexShader='varying vec3 vWrW;\n'+sh.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\n vWrW=(modelMatrix*vec4(transformed,1.)).xyz;');
+  const dec=(sh.fragmentShader.includes('uniform vec4 fxK;')?'':'uniform vec4 fxK;')+'uniform vec3 top,hor,sunDir;uniform float night,sunDim,csSun,synth;uniform vec4 wK;varying vec3 vWrW;\n';
+  sh.fragmentShader=dec+sh.fragmentShader.replace('#include <tonemapping_fragment>',`#ifdef USE_MAP
+   if(fxK.z>.5){vec3 wrT=texture2D(map,vUv).rgb;float wrG=smoothstep(.015,.06,wrT.b-wrT.r)*(1.-smoothstep(.5,.62,wrT.b));
+    vec3 wrN=normalize(inverseTransformDirection(normal,viewMatrix));wrG*=1.-smoothstep(.3,.5,abs(wrN.y));
+    float wrL=max(totalEmissiveRadiance.r,max(totalEmissiveRadiance.g,totalEmissiveRadiance.b));wrG*=1.-smoothstep(.04,.3,wrL);
+    if(wrG>.01){vec3 wrV=normalize(vWrW-cameraPosition);if(dot(wrN,wrV)>0.)wrN=-wrN;vec3 wrR=reflect(wrV,wrN);float wrC=clamp(dot(-wrV,wrN),0.,1.);
+     float wrF=.14+.66*pow(1.-wrC,3.);float u=wrR.y;
+     vec3 wrS=u>0.?mix(hor,top,pow(u,.55)):mix(hor*.7,hor*.24+vec3(.04),smoothstep(0.,.4,-u));
+     float az=atan(wrR.z,wrR.x)*9.;float wrH=fract(sin(floor(az)*12.989+floor(vWrW.x/48.)*3.7+floor(vWrW.z/48.)*7.3)*43758.55);
+     float wrB=step(u,.04+wrH*wrH*.32)*step(-.02,u)*step(.25,wrH);wrS=mix(wrS,hor*mix(.42,.3,wrH)+top*.06,wrB*.85);
+     vec3 wrD=normalize(sunDir);float wrSn=pow(max(dot(wrR,wrD),0.),220.)*2.4*smoothstep(-.03,.08,wrD.y)*sunDim*(1.-.85*csSun)*(1.-night)*(1.-wK.y)*(1.-wrB);
+     float wrK=wrF*wrG*mix(1.,mix(.3,.6,synth),night)*(1.-smoothstep(260.,420.,length(vWrW-cameraPosition))*.5);
+     gl_FragColor.rgb=mix(gl_FragColor.rgb,wrS*mix(1.,.75,night),clamp(wrK,0.,.85))+vec3(1.,.93,.8)*wrSn*wrG;}}
+   #endif
+   #include <tonemapping_fragment>`)};
+ mat.customProgramCacheKey=()=>key+'|winRefl';mat.needsUpdate=true;return mat}
 // neon (MeshBasic): núcleo mais branco no tubo, zumbido sutil e, à noite, brilho acima de 1 (o bloom pega quando ligado).
 function fxNeonPatch(mat){if(!mat||mat.userData.fxNeon||!mat.isMeshBasicMaterial)return mat;mat.userData.fxNeon=true;const old=mat.onBeforeCompile,key=(mat.customProgramCacheKey&&mat.customProgramCacheKey())||'';
  mat.onBeforeCompile=sh=>{if(old)old.call(mat,sh);sh.uniforms.fxK=SHFX.U.fxK;sh.uniforms.fxT=SHFX.U.fxT;sh.uniforms.fxNk=SHFX.U.fxN;

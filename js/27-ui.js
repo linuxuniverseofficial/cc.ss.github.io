@@ -61,8 +61,8 @@ $('#optHud').addEventListener('change',e=>{S.showHud=e.target.checked;applyInter
 $('#optBloom').addEventListener('change',e=>{S.bloom=e.target.checked;saveCfg()});
 $('#optRefl').addEventListener('change',e=>{S.refl=e.target.checked;saveCfg()});
 /* v3 r25: chaves dos efeitos leves de shader (SHFX): só mudam o uniform fxK, sem recompilar */
-function fxUI(){for(const k of ['fxWet','fxGlow','fxPaint','fxSurf']){const e=$('#'+k);if(e)e.checked=S[k]!==false}}
-for(const k of ['fxWet','fxGlow','fxPaint','fxSurf'])$('#'+k).addEventListener('change',e=>{S[k]=e.target.checked;shfxApply();try{graphicsPresetUI()}catch(_){}saveCfg()});
+function fxUI(){for(const k of ['fxWet','fxGlow','fxPaint','fxWin','fxSurf']){const e=$('#'+k);if(e)e.checked=S[k]!==false}}
+for(const k of ['fxWet','fxGlow','fxPaint','fxWin','fxSurf'])$('#'+k).addEventListener('change',e=>{S[k]=e.target.checked;shfxApply();try{graphicsPresetUI()}catch(_){}saveCfg()});
 $('#fpsLimit').addEventListener('change',e=>{S.fpsLimit=Number(e.target.value);fpsAccumulator=0;saveCfg()});
 $('#renderScale').addEventListener('input',e=>{S.renderScale=Number(e.target.value);applyRenderScale();saveCfg()});
 $('#drawDistance').addEventListener('input',e=>{S.drawDistance=clamp(+e.target.value,0,200);drawDistanceUI();syncFogDrawDistance();saveCfg()});
@@ -81,11 +81,11 @@ $('#optPoleShadows').addEventListener('change',e=>{S.poleShadows=e.target.checke
 const IS_MOBILE=pixelIsMobile();
 const GRAPHICS_PRESETS={
  LOW:{traffic:25,peds:25,drawDistance:0,objectDistance:0,shadowDistance:0,renderScale:40,
-      shadows:false,shadowQuality:1,detailedShadows:false,poleShadows:false,bloom:false,refl:false,lampLighting:false,lampCount:1,sprite8:false,char3d:false,cloudQ:1,waterQ:0,fxWet:false,fxGlow:true,fxPaint:false,fxSurf:false},
+      shadows:false,shadowQuality:1,detailedShadows:false,poleShadows:false,bloom:false,refl:false,lampLighting:false,lampCount:1,sprite8:false,char3d:false,cloudQ:1,waterQ:0,fxWet:false,fxGlow:true,fxPaint:false,fxWin:false,fxSurf:false},
  MEDIUM:{traffic:50,peds:50,drawDistance:150,objectDistance:25,shadowDistance:0,renderScale:90,
-       shadows:true,shadowQuality:1,detailedShadows:true,poleShadows:false,bloom:true,refl:true,lampLighting:!MOB_LITE,lampCount:4,sprite8:true,char3d:false,cloudQ:1,waterQ:1,fxWet:true,fxGlow:true,fxPaint:true,fxSurf:true},
+       shadows:true,shadowQuality:1,detailedShadows:true,poleShadows:false,bloom:true,refl:true,lampLighting:!MOB_LITE,lampCount:4,sprite8:true,char3d:false,cloudQ:1,waterQ:1,fxWet:true,fxGlow:true,fxPaint:true,fxWin:true,fxSurf:true},
  HIGH:{traffic:50,peds:50,drawDistance:200,objectDistance:100,shadowDistance:100,renderScale:100,
-      shadows:true,shadowQuality:4,detailedShadows:true,poleShadows:true,bloom:true,refl:true,lampLighting:true,lampCount:4,sprite8:false,char3d:true,cloudQ:2,waterQ:2,fxWet:true,fxGlow:true,fxPaint:true,fxSurf:true}
+      shadows:true,shadowQuality:4,detailedShadows:true,poleShadows:true,bloom:true,refl:true,lampLighting:true,lampCount:4,sprite8:false,char3d:true,cloudQ:2,waterQ:2,fxWet:true,fxGlow:true,fxPaint:true,fxWin:true,fxSurf:true}
 };
 function graphicsPresetSelected(){
  for(const [name,values] of Object.entries(GRAPHICS_PRESETS))
@@ -223,7 +223,7 @@ $('#padAdaptiveTest').addEventListener('click',async()=>{
  PAD.adaptive=true;$('#pad_adaptive').checked=true;saveCfg();DUAL.testUntil=performance.now()+1800;DUAL.lastTick=0;dualTick();dualStatus();
 });
 
-const CFG_DEF={cloudQ:1,waterQ:1,fxWet:true,fxGlow:true,fxPaint:true,fxSurf:true,mobLite:false,motion:{mode:'off',sens:1,dz:2,invert:false},vol:{master:.85,music:.25,sfx:.85,interior:.2},shadows:true,shadowQuality:1,bloom:true,refl:!MOB_LITE,sound:true,traffic:50,peds:50,showMinimap:true,miniAuto:true,touchHide:'auto',showHud:true,fpsLimit:0,renderScale:100,drawDistance:50,objectDistance:50,shadowDistance:50,detailedShadows:false,lang:((navigator.language||"pt-BR").toLowerCase().startsWith("pt")?"br":"en"),lampLighting:!MOB_LITE,lampCount:4,pad:{vib:1,sens:1,dz:.15,inv:false,adaptive:false,triggerForce:.65,speakerVolume:1,speakerEnabled:true,lightbar:true}};
+const CFG_DEF={cloudQ:1,waterQ:1,fxWet:true,fxGlow:true,fxPaint:true,fxWin:true,fxSurf:true,mobLite:false,motion:{mode:'off',sens:1,dz:2,invert:false},vol:{master:.85,music:.25,sfx:.85,interior:.2},shadows:true,shadowQuality:1,bloom:true,refl:!MOB_LITE,sound:true,traffic:50,peds:50,showMinimap:true,miniAuto:true,touchHide:'auto',showHud:true,fpsLimit:0,renderScale:100,drawDistance:50,objectDistance:50,shadowDistance:50,detailedShadows:false,lang:((navigator.language||"pt-BR").toLowerCase().startsWith("pt")?"br":"en"),lampLighting:!MOB_LITE,lampCount:4,pad:{vib:1,sens:1,dz:.15,inv:false,adaptive:false,triggerForce:.65,speakerVolume:1,speakerEnabled:true,lightbar:true}};
 {let armT=0;$('#cfgReset').addEventListener('click',()=>{const b=$('#cfgReset');if(performance.now()-armT>3000){armT=performance.now();b.textContent='CLIQUE DE NOVO PARA CONFIRMAR';$('#cfgResetMsg').textContent='Volta áudio e controle ao padrão e os gráficos ao MÉDIO.';setTimeout(()=>{if(performance.now()-armT>=2900){b.textContent='RESTAURAR PADRÕES';$('#cfgResetMsg').textContent=''}},3100);return}
   armT=0;applyCfgObj(JSON.parse(JSON.stringify(CFG_DEF)));try{graphicsPresetApply('MEDIUM')}catch(e){console.error(e)}/* v78: gráficos padrão = preset MÉDIO */refreshLampLighting();saveCfg();applyVolumes();try{applyShadows()}catch(e){}cfgUI();b.textContent='RESTAURAR PADRÕES';$('#cfgResetMsg').textContent='Configurações restauradas.';setTimeout(()=>$('#cfgResetMsg').textContent='',2500)})}
 $('#padTest').addEventListener('click',()=>{if(!PAD.on){toast('NENHUM CONTROLE<br><small style="font-size:11px;color:#fff">conecte e aperte um botão</small>');return}PAD.until=0;rumble(1,.2,350);setTimeout(()=>{PAD.until=0;rumble(.1,1,350)},450)});

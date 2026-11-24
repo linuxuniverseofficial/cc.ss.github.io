@@ -399,7 +399,7 @@ async function generateCity(){
  M.surface=new THREE.MeshStandardMaterial({map:surfaceTex,vertexColors:true,roughness:.94,metalness:0});M.surface.onBeforeCompile=surfaceAtlasShader;M.surface.userData.surfaceAtlas=true;
  M.surface2=M.surface.clone();M.surface2.side=THREE.DoubleSide;M.surface2.onBeforeCompile=surfaceAtlasShader;M.surface2.userData.surfaceAtlas=true;surfPatch(M.surface,'side'); /* v3 r35: ruído leve nas calçadas (SURF, só piso cinza) */
  if(S.style==='inverted')for(const m of [M.wall,M.abWall,M.solid,M.solid2,M.surface,M.surface2])rotMat(m); /* dev r2.4: podridão do Upside Down (ROT_GLSL) */ /* dev r2.4: podridão do Upside Down (ROT_GLSL) */
- fxGlowPatch(M.wall,.75); /* v3 r25: brilho pintado das janelas (SHFX) */surfPatch(M.wall,'wall'); /* v3 r33: tijolo/reboco/concreto (SURF) */
+ fxGlowPatch(M.wall,.75); /* v3 r25: brilho pintado das janelas (SHFX) */winReflPatch(M.wall); /* v4 r6: reflexo do céu no vidro das janelas (SHFX fxK.z) */surfPatch(M.wall,'wall'); /* v3 r33: tijolo/reboco/concreto (SURF) */
 
  M.plant=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.95});
  M.plant.onBeforeCompile=sh=>{windUniforms(sh);M.plant.userData.sh=sh;
