@@ -703,7 +703,7 @@ function worldPolice(K){const{det,neon,hwin,walls,signs,night,F,W,D,f,doorAt,tre
  // teto: antena, parabólica, sirenes e bandeira
  {const p=F.pt(m0+3,v1-4);det.box(p[0]-.1,H+.7,p[1]-.1,p[0]+.1,H+9,p[1]+.1,COL('#6a6a72'));for(let y=H+3;y<H+8;y+=1.6){const q=F.pt(m0+3,v1-4);det.box(q[0]-.7,y,q[1]-.04,q[0]+.7,y+.07,q[1]+.04,COL('#6a6a72'))}
   neon.box(p[0]-.15,H+9,p[1]-.15,p[0]+.15,H+9.4,p[1]+.15,COL('#ff2a1a'));
-  const d=F.pt(m1-4,v1-6);det.geo(GEO.hemi,mtx(d[0],H+1.6,d[1],1.5,.8,1.5,2.4,0,0),COL('#e8e8ee'));det.box(d[0]-.08,H+.7,d[1]-.08,d[0]+.08,H+1.6,d[1]+.08,COL('#6a6a72'));
+  const d=F.pt(m1-4,v1-6);det.geo(GEO.hemiHi,mtx(d[0],H+1.6,d[1],1.5,.8,1.5,2.4,0,0),COL('#e8e8ee'));det.box(d[0]-.08,H+.7,d[1]-.08,d[0]+.08,H+1.6,d[1]+.08,COL('#6a6a72'));
   for(const[u,col] of [[m0+1,'#ff2a3a'],[m1-1,'#2a6aff']]){const q=F.pt(u,v0+2);neon.box(q[0]-.4,H+.7,q[1]-.4,q[0]+.4,H+1.2,q[1]+.4,COL(col))}
   const fp=F.pt(W*.18,3.2);det.box(fp[0]-.08,.26,fp[1]-.08,fp[0]+.08,9,fp[1]+.08,COL('#cfd0d6'));F.box(W*.18+.08,W*.18+1.9,3.2-.02,3.2+.02,6.9,8.4,COL('#2a4ab0'),det)}
  // faixas azuis e grades nas laterais, árvores na frente
@@ -825,7 +825,7 @@ function worldLighthouse(K){const L=city.lh,{det,neon,hwin,sandMb,signs,night}=K
  det.geo(GEO.cyl16,mtx(cx,H+.45,cz,1.7,.9,1.7),red);wfrust(hwin,cx,H+.9,cz,H+3.1,1.55,1.5,COL('#b8dcf0'),20);
  for(let k=0;k<8;k++){const a=k/8*6.2832;wseg(det,cx+Math.cos(a)*1.56,H+.9,cz+Math.sin(a)*1.56,cx+Math.cos(a)*1.52,H+3.1,cz+Math.sin(a)*1.52,.06,iron,GEO.cyl16)}
  hwin.geo(GEO.sph,mtx(cx,H+2.0,cz,.62,.62,.62),COL('#fff4c8'));
- det.geo(GEO.cyl16,mtx(cx,H+3.2,cz,1.9,.2,1.9),iron);det.geo(GEO.hemi,mtx(cx,H+3.3,cz,1.95,1.5,1.95),red);det.geo(GEO.cyl16,mtx(cx,H+5.0,cz,.12,.8,.12),iron);det.geo(GEO.sph,mtx(cx,H+5.5,cz,.28,.28,.28),iron);
+ det.geo(GEO.cyl16,mtx(cx,H+3.2,cz,1.9,.2,1.9),iron);det.geo(GEO.hemiHi,mtx(cx,H+3.3,cz,1.95,1.5,1.95),red);det.geo(GEO.cyl16,mtx(cx,H+5.0,cz,.12,.8,.12),iron);det.geo(GEO.sph,mtx(cx,H+5.5,cz,.28,.28,.28),iron);
  // porta de baixo (lado da terra): alpendre baixo + porta + letreiro
  const ax=(dir,r0,r1,hw,y0,y1,col,mb)=>{const d=dir;let x0,x1,z0,z1;if(d[0]){x0=cx+Math.min(d[0]*r0,d[0]*r1);x1=cx+Math.max(d[0]*r0,d[0]*r1);z0=cz-hw;z1=cz+hw}else{z0=cz+Math.min(d[1]*r0,d[1]*r1);z1=cz+Math.max(d[1]*r0,d[1]*r1);x0=cx-hw;x1=cx+hw}(mb||det).box(x0,y0,z0,x1,y1,z1,col)};
  {const d=L.inl,r0=L.R0-.4,r1=L.R0+L.porch;ax(d,r0,r1,1.5,.18,3.1,wht);ax(d,r0,r1+.35,1.75,3.1,3.4,red);ax(d,r1-.02,r1+.1,.95,.18,2.75,stone);ax(d,r1+.08,r1+.14,.72,.18,2.6,COL('#3a2418'));ax(d,r1+.1,r1+.2,.06,.18,2.6,iron);ax(d,r1+.12,r1+.3,.06,1.1,1.2,COL('#d8b040'));

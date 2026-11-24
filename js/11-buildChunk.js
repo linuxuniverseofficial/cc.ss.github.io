@@ -767,7 +767,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
   /* v78 · caixa d'água azul de fibra (no telhado, sem sombra) e varal com roupas no quintal dos fundos; sorteio próprio */
   {const xr=mulberry32(((Math.round(x0*19)*2654435761)^(Math.round(z0*19)*40503)^(S.seed*29+5))>>>0),cx=(hx0+hx1)/2,cz=(hz0+hz1)/2,alongX=(hx1-hx0)>=(hz1-hz0);
    if(!safe&&xr()<.45&&(!Number.isFinite(houseCap)||h+rh+.6<=houseCap)){const s2=xr()<.5?-1:1,ax=alongX?cx+s2*(hx1-hx0)*.36:cx,az=alongX?cz:cz+s2*(hz1-hz0)*.36,y0=h+rh-.25;
-    roofD.box(ax-.65,y0,az-.65,ax+.65,y0+.12,az+.65,COL('#8a8478'));roofD.geo(GEO.cyl16,mtx(ax,y0+.5,az,.55,.76,.55),COL('#2a6ab0'));roofD.geo(GEO.cyl16,mtx(ax,y0+.92,az,.6,.08,.6),COL('#3a7ac0'))}
+    roofD.box(ax-.65,y0,az-.65,ax+.65,y0+.12,az+.65,COL('#8a8478'));roofD.geo(GEO.cyl,mtx(ax,y0+.5,az,.55,.76,.55),COL('#2a6ab0'));roofD.geo(GEO.cyl,mtx(ax,y0+.92,az,.6,.08,.6),COL('#3a7ac0'))}
    const back=face==='s'?[z0,hz0,'z']:face==='n'?[hz1,z1,'z']:face==='e'?[x0,hx0,'x']:[hx1,x1,'x'];
    if(!plan&&xr()<.5&&back[1]-back[0]>=1.6){const m=(back[0]+back[1])/2,pole=COL('#7a7a7e'),cols=['#f4f4f0','#d8202a','#2a6ab0','#f2c21a','#ff8fd0','#3ab36a','#6a4a8a'];
     const a0=(back[2]==='z'?hx0:hz0)+1,a1=(back[2]==='z'?hx1:hz1)-1;if(a1-a0>2.5){const P=(t,y)=>back[2]==='z'?[t,y,m]:[m,y,t];
@@ -1283,7 +1283,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
    F.box(po0,po1,7.6,v0,1.4,1.5,st3);const nC=8;for(let k=0;k<nC;k++){const u=po0+.9+k*((po1-po0-1.8)/(nC-1)),p=F.pt(u,8.6);cyl(p[0],1.4,12,p[1],.62,st2);cyl(p[0],11.6,12.3,p[1],.85,st3);cyl(p[0],1.4,1.9,p[1],.85,st3)}
    F.box(po0-.4,po1+.4,7.8,v0,12.3,13.6,st3);const A=F.p3(po0-.4,13.6,7.8),B=F.p3(po1+.4,13.6,7.8),T=F.p3(W/2,17.4,7.8),A2=F.p3(po0-.4,13.6,v0),B2=F.p3(po1+.4,13.6,v0),T2=F.p3(W/2,17.4,v0),ref=F.p3(W/2,14,v0+2);
    det.qa(A,B,T,T,st2,ref);det.qa(A,T,T2,A2,st3,F.p3(po0-6,10,(7.8+v0)/2));det.qa(B,T,T2,B2,st3,F.p3(po1+6,10,(7.8+v0)/2));det.qb(A,B,T,T,st2,ref);det.qb(A,T,T2,A2,st3,F.p3(po0-6,10,(7.8+v0)/2));det.qb(B,T,T2,B2,st3,F.p3(po1+6,10,(7.8+v0)/2));det.qa(A2,B2,T2,T2,st2,F.p3(W/2,14,v0-6));
-   const dc=F.pt(W/2,(v0+v1)/2);cyl(dc[0],H+.8,H+4.5,dc[1],5.2,st2);det.geo(GEO.hemi,mtx(dc[0],H+4.5,dc[1],5.4,5.4,5.4),COL(night?'#4a8a9a':'#6a9a8a'));cyl(dc[0],H+9.9,H+12,dc[1],.8,st2);
+   const dc=F.pt(W/2,(v0+v1)/2);cyl(dc[0],H+.8,H+4.5,dc[1],5.2,st2);det.geo(GEO.hemiHi,mtx(dc[0],H+4.5,dc[1],5.4,5.4,5.4),COL(night?'#4a8a9a':'#6a9a8a'));cyl(dc[0],H+9.9,H+12,dc[1],.8,st2);
    det.box(dc[0]-.06,H+12,dc[1]-.06,dc[0]+.06,H+16,dc[1]+.06,cDet);det.box(dc[0]+.06,H+14.6,dc[1]-.02,dc[0]+1.9,H+15.8,dc[1]+.02,COL('#2a8a3a'));
    for(const u of [W*.18,W*.82]){const p=F.pt(u,3);det.box(p[0]-.08,.26,p[1]-.08,p[0]+.08,10,p[1]+.08,cDet);det.box(p[0]+.08,8.4,p[1]-.02,p[0]+2.2,9.8,p[1]+.02,COL(u<W/2?'#2a5ab0':'#f0c020'))}
    bldKit(F,w0,w1,v0,v1,H+.8,{col:st2,parapet:false,avoid:[[W/2,(v0+v1)/2,6.5]]});

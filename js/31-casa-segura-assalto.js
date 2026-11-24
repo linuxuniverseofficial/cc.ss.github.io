@@ -254,7 +254,7 @@ function buildPawn(){const X=SAFE.IN.x-60,Z=SAFE.IN.z-60,W=6,D=4.5,H=3.2,C=h=>CO
  ibox(mb,X+1.2,0,Z+.9,X+5.8,1.0,Z+1.6,C('#3a2a1e'));ibox(mb,X+1.15,1.0,Z+.85,X+5.85,1.06,Z+1.65,C('#8a9a9a'));ibox(mb,X+3.6,1.06,Z+1.0,X+4.3,1.36,Z+1.45,C('#2a2a2a'));ibox(mb,X+3.7,1.36,Z+1.05,X+4.2,1.5,Z+1.15,C('#c8a020'));
  ibox(mb,X-W,0,Z-D,X+W,.12,Z-D+.04,C('#2a2018'));ibox(mb,X-.6,0,Z+D-.06,X+.6,2.2,Z+D,C('#3a2a1e'));
  g.add(mb.mesh(roomLitMat({x0:X-W,z0:Z-D,x1:X+W,z1:Z+D,H,lights:[[X,H-.4,Z],[X-4,H-.4,Z-2],[X+4,H-.4,Z-2],[X+3.5,H-.4,Z+2]],warm:'#ffc070',amb:.42,pow:.9,rad:5,grime:.7}))); // v77: penhores empoeirado e na penumbra
- const lamp=new THREE.Mesh(new THREE.SphereGeometry(.22,8,6),new THREE.MeshBasicMaterial({color:0xd8c890}));lamp.position.set(X,H-.4,Z);g.add(lamp);
+ const lamp=new THREE.Mesh(new THREE.SphereGeometry(.09,8,6),new THREE.MeshBasicMaterial({color:0xd8c890}));lamp.position.set(X,H-.4,Z);g.add(lamp);
  {const c=cv(256,48),q=c.getContext('2d');q.fillStyle='#1a140e';q.fillRect(0,0,256,48);q.fillStyle='#d8b040';q.font='700 20px Silkscreen,monospace';q.textAlign='center';q.textBaseline='middle';q.fillText(translatePlain('PENHORES · COMPRO TUDO'),128,25);const t=new THREE.CanvasTexture(c);const m=new THREE.Mesh(new THREE.PlaneGeometry(3.6,.66),new THREE.MeshBasicMaterial({map:t}));m.position.set(X+3.5,2.4,Z+2.9);m.rotation.y=Math.PI;g.add(m)}
  for(const[x0,z0,x1,z1] of [[X-W-.5,Z-D-.5,X+W+.5,Z-D],[X-W-.5,Z+D,X+W+.5,Z+D+.5],[X-W-.5,Z-D,X-W,Z+D],[X+W,Z-D,X+W+.5,Z+D],[X-5.9,Z-4.4,X-1.4,Z-3.6],[X+1.4,Z-4.4,X+5.9,Z-3.6],[X-4.6,Z-1.6,X-2.2,Z-.15],[X+2.2,Z-1.6,X+4.6,Z-.15],[X+1.15,Z+.85,X+5.85,Z+1.65]])addCol(x0,z0,x1,z1,'rock');
  HEIST.pawnCounter={x:X+3.9,z:Z+2.1};HEIST.pawnClerkAt={x:X+3.9,z:Z+.3}}

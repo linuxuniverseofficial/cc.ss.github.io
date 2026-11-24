@@ -254,7 +254,7 @@ function skyHeli(paint){const g=new THREE.Group(),mb=new MB(),li=new MB(),st=STY
  for(const zs of [-1,1]){mbTube(mb,[-1.6,-1.55,zs*1.05],[1.55,-1.55,zs*1.05],.07,dk,GEO.cyl16);mbTube(mb,[1.55,-1.55,zs*1.05],[1.95,-1.32,zs*1.05],.07,dk,GEO.cyl16);
   for(const xs of [-.8,.7])mbTube(mb,[xs,-1.55,zs*1.05],[xs+.05,-.95,zs*.72],.055,dk,GEO.cyl16);mb.cbox(.5,-.82,zs*1.08-.04,1.0,-.76,zs*1.08+.04,dk,.02)}
  if(pol){mb.geo(GEO.cyl16,mtx(1.9,-.98,.35,.14,.2,.14,0,0,Math.PI/2),dk);li.geo(GEO.sph,mtx(2.0,-.98,.35,.03,.11,.11),COL('#fff6d8'))}
- li.geo(GEO.sph,mtx(2.15,-.85,0,.04,.08,.12),COL('#fff6d8'));li.geo(GEO.sph,mtx(-4.6,.52,-1.06,.06,.06,.06),COL('#ff2a2a'));li.geo(GEO.sph,mtx(-4.6,.52,1.06,.06,.06,.06),COL('#2aff5a'));
+ li.geo(GEO.sph,mtx(2.15,-.85,0,.04,.08,.12),COL('#fff6d8'));li.geo(GEO.bulb,mtx(-4.6,.52,-1.06,.06,.06,.06),COL('#ff2a2a'));li.geo(GEO.bulb,mtx(-4.6,.52,1.06,.06,.06,.06),COL('#2aff5a'));
  g.add(mb.mesh(carBodyMat,true,false));g.add(li.mesh(S.style==='inverted'?carBodyMat:carLightMat,false,false));
  // rotor: cubo + 4 pás com perfil e ponta pintada
  const rm=new MB();rm.geo(GEO.sph,mtx(0,0,0,.32,.16,.32),dk);{const bl=new MB();mbFoil(bl,{le:.24,te:-.24,s:.3,v:0,t:.07},{le:.2,te:-.2,s:5.4,v:-.04,t:.045},dk,false);mbFoil(bl,{le:.2,te:-.2,s:5.4,v:-.04,t:.045},{le:.19,te:-.19,s:6,v:-.05,t:.04},COL('#f2c21a'),false);
@@ -272,7 +272,7 @@ function jetBodyMB(mb,ac){const wh=COL('#e8eaee'),dk=COL('#22252c'),gry=COL('#b9
  mbLoftSt(mb,F.map(([x,r,cy])=>({x,rz:r,ry:r*1.03,cy,e:2})),24,(x,y,z,cap)=>{if(cap)return wh;if(x>12.5&&x<13.7&&y>.32)return win;if(y<-.42&&y>-.66&&x<12.3&&x>-12)return ac;if(y<-1.1)return gry;return wh});
  for(let x=-9.6;x<10.6;x+=.86)for(const zs of [-1,1]){if(Math.abs(x-.6)<.5)continue;mb.box(x-.15,.3,zs>0?1.44:-1.47,x+.15,.58,zs>0?1.47:-1.44,win)}
  for(const dx of [11.2,-8.6])for(const zs of [-1,1])mb.box(dx-.42,-.7,zs>0?1.48:-1.495,dx+.42,.95,zs>0?1.495:-1.48,COL('#cfd3da'));
- mb.geo(GEO.sph,mtx(.4,-1.02,0,6.8,.72,1.48),wh);
+ mb.geo(GEO.sphHi,mtx(.4,-1.02,0,6.8,.72,1.48),wh);
  for(const zs of [-1,1]){
   mbFoil(mb,{le:4.4,te:-2.8,s:zs*1.2,v:-.78,t:.55},{le:-1.75,te:-3.8,s:zs*14,v:.36,t:.14},wh,false);                // asa
   mbFoil(mb,{le:-1.8,te:-3.82,s:.38,v:zs*14.02,t:.12},{le:-3.25,te:-3.95,s:2.0,v:zs*14.25,t:.08},ac,true);          // winglet

@@ -10,13 +10,13 @@
 <meta name="apple-mobile-web-app-title" content="Coastal Chaos">
 <link rel="icon" type="image/png" sizes="180x180" href="./appicons/icon-180.png">
 <link rel="apple-touch-icon" href="./appicons/icon-180.png">
-<script src="js/inicio-pwa.js?v=r46"></script>
-<script src="js/inicio-versao.js?v=r46"></script>
+<script src="js/inicio-pwa.js?v=r49"></script>
+<script src="js/inicio-versao.js?v=r49"></script>
 <link rel="stylesheet" href="lib/fonts.css">
-<link rel="stylesheet" href="css/01-base.css?v=r46">
-<link rel="stylesheet" href="css/02-menus.css?v=r46">
-<link rel="stylesheet" href="css/03-hud-toque.css?v=r46">
-<link rel="stylesheet" href="css/04-menus-ux.css?v=r46">
+<link rel="stylesheet" href="css/01-base.css?v=r49">
+<link rel="stylesheet" href="css/02-menus.css?v=r49">
+<link rel="stylesheet" href="css/03-hud-toque.css?v=r49">
+<link rel="stylesheet" href="css/04-menus-ux.css?v=r49">
 
 <canvas id="gl"></canvas>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="vhsF" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feGaussianBlur in="SourceGraphic" stdDeviation="1 0" result="soft"/><feColorMatrix in="soft" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="r"/><feOffset in="r" dx="-2" result="r2"/><feColorMatrix in="soft" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="g"/><feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="b"/><feGaussianBlur in="b" stdDeviation="3.5 0" result="b1"/><feOffset in="b1" dx="3" result="b2"/><feBlend in="r2" in2="g" mode="screen" result="rg"/><feBlend in="rg" in2="b2" mode="screen"/></filter></svg>
@@ -489,10 +489,10 @@
  <div id="mapLegendList" tabindex="0" aria-label="Lista dos símbolos do mapa"></div>
  <div id="mapLegendFoot">Role para ver os demais pontos · L: ocultar</div>
 </aside>
-<link rel="stylesheet" href="css/05-fenda.css?v=r46">
+<link rel="stylesheet" href="css/05-fenda.css?v=r49">
 <div id="timeFade" hidden></div>
 <div id="rotatePhone" role="dialog" aria-modal="true" hidden><strong class="rpV">Gire o celular para jogar</strong><span class="rpV">Coastal Chaos usa a tela em modo paisagem.</span><strong class="rpH">Este jogo requer tela cheia para ser jogado.</strong><button type="button" class="btn" id="landscapeBtn"><span class="rpV">GIRAR E JOGAR</span><span class="rpH">ABRIR EM TELA CHEIA</span></button></div>
-<script src="js/inicio-orientacao.js?v=r46"></script>
+<script src="js/inicio-orientacao.js?v=r49"></script>
 <div id="psaveErrorDialog" role="alertdialog" aria-modal="true" aria-labelledby="psaveErrorTitle" aria-describedby="psaveErrorMessage" hidden><div id="psaveErrorBox"><h2 id="psaveErrorTitle">Erro no carregamento do arquivo:</h2><p id="psaveErrorMessage">Save inválido, corrompido ou adulterado detectado.</p><button type="button" class="btn" id="psaveErrorOk">OK</button></div></div>
 <div id="paraPrompt" hidden style="position:fixed;bottom:24%;left:50%;transform:translateX(-50%);padding:10px;background:#080810dd;color:#fff;z-index:12;font:700 16px system-ui;pointer-events:none"></div>
 <div id="loading" hidden><canvas id="loadMap" width="1" height="1" hidden aria-hidden="true"></canvas><div id="loadText">GERANDO CIDADE…</div><div id="loadTrack" role="progressbar" aria-label="Progresso do carregamento" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="loadFill"></div></div><div id="loadPercent">0%</div></div>
@@ -505,54 +505,54 @@
 <script src="lib/three/postprocessing/ShaderPass.js"></script>
 <script src="lib/three/postprocessing/UnrealBloomPass.js"></script>
 <!-- Jogo: scripts clássicos em ordem (mesmo escopo global). Mapa dos arquivos em CONTEXT.md §0. -->
-<script src="js/00-carga.js?v=r46"></script>
-<script src="js/01-base.js?v=r46"></script>
-<script src="js/02-render.js?v=r46"></script>
-<script src="js/03-texturas-malhas.js?v=r46"></script>
-<script src="js/04-cidade-costa.js?v=r46"></script>
-<script src="js/05-mundo-placas.js?v=r46"></script>
-<script src="js/06-posto-rodas.js?v=r46"></script>
-<script src="js/07-agua.js?v=r46"></script>
-<script src="js/08-shopping.js?v=r46"></script>
-<script src="js/09-cemiterio-pointhaze.js?v=r46"></script>
-<script src="js/10-cidade-geracao.js?v=r46"></script>
-<script src="js/11-buildChunk.js?v=r46"></script>
-<script src="js/12-chunks-lod.js?v=r46"></script>
-<script src="js/13-postes-armas.js?v=r46"></script>
-<script src="js/14-clima-policia.js?v=r46"></script>
-<script src="js/15-mapa.js?v=r46"></script>
-<script src="js/16-sprites-peds.js?v=r46"></script>
-<script src="js/17-veiculos.js?v=r46"></script>
-<script src="js/18-barcos-ceu-personagens.js?v=r46"></script>
-<script src="js/19-celular-eventos.js?v=r46"></script>
-<script src="js/20-tv-fisica-carros.js?v=r46"></script>
-<script src="js/21-transito-peds.js?v=r46"></script>
-<script src="js/22-jogador.js?v=r46"></script>
-<script src="js/23-audio.js?v=r46"></script>
-<script src="js/24-camera-input.js?v=r46"></script>
-<script src="js/25-controle.js?v=r46"></script>
-<script src="js/26-pocas-monitor-bench.js?v=r46"></script>
-<script src="js/27-ui.js?v=r46"></script>
-<script src="js/28-save-carga.js?v=r46"></script>
-<script src="js/29-campanha-abertura.js?v=r46"></script>
-<script src="js/30-toque-missoes.js?v=r46"></script>
-<script src="js/31-casa-segura-assalto.js?v=r46"></script>
-<script src="js/32-imperio-banco-cassino.js?v=r46"></script>
-<script src="js/33-sinuca-skate-dados.js?v=r46"></script>
-<script src="js/34-aeroporto-pontes.js?v=r46"></script>
-<script src="js/35-historia-missoes.js?v=r46"></script>
-<script src="js/36-municao-cadeia.js?v=r46"></script>
-<script src="js/37-save-garagem.js?v=r46"></script>
-<script src="js/38-cheats.js?v=r46"></script>
-<script src="js/39-online.js?v=r46"></script>
-<script src="js/40-console-cheats.js?v=r46"></script>
-<script src="js/41-lang-en.js?v=r46"></script>
-<script src="js/42-idioma-config.js?v=r46"></script>
-<script src="js/43-interiores-lab.js?v=r46"></script>
-<script src="js/44-backrooms.js?v=r46"></script>
-<script src="js/45-atualizacao-hud.js?v=r46"></script>
-<script src="js/46-campanha-missoes.js?v=r46"></script>
-<script src="js/47-laco-principal.js?v=r46"></script>
-<script src="js/48-tvcat.js?v=r46"></script>
-<script src="js/49-personagens-3d.js?v=r46"></script>
-<script src="js/99-pos-carga.js?v=r46"></script>
+<script src="js/00-carga.js?v=r49"></script>
+<script src="js/01-base.js?v=r49"></script>
+<script src="js/02-render.js?v=r49"></script>
+<script src="js/03-texturas-malhas.js?v=r49"></script>
+<script src="js/04-cidade-costa.js?v=r49"></script>
+<script src="js/05-mundo-placas.js?v=r49"></script>
+<script src="js/06-posto-rodas.js?v=r49"></script>
+<script src="js/07-agua.js?v=r49"></script>
+<script src="js/08-shopping.js?v=r49"></script>
+<script src="js/09-cemiterio-pointhaze.js?v=r49"></script>
+<script src="js/10-cidade-geracao.js?v=r49"></script>
+<script src="js/11-buildChunk.js?v=r49"></script>
+<script src="js/12-chunks-lod.js?v=r49"></script>
+<script src="js/13-postes-armas.js?v=r49"></script>
+<script src="js/14-clima-policia.js?v=r49"></script>
+<script src="js/15-mapa.js?v=r49"></script>
+<script src="js/16-sprites-peds.js?v=r49"></script>
+<script src="js/17-veiculos.js?v=r49"></script>
+<script src="js/18-barcos-ceu-personagens.js?v=r49"></script>
+<script src="js/19-celular-eventos.js?v=r49"></script>
+<script src="js/20-tv-fisica-carros.js?v=r49"></script>
+<script src="js/21-transito-peds.js?v=r49"></script>
+<script src="js/22-jogador.js?v=r49"></script>
+<script src="js/23-audio.js?v=r49"></script>
+<script src="js/24-camera-input.js?v=r49"></script>
+<script src="js/25-controle.js?v=r49"></script>
+<script src="js/26-pocas-monitor-bench.js?v=r49"></script>
+<script src="js/27-ui.js?v=r49"></script>
+<script src="js/28-save-carga.js?v=r49"></script>
+<script src="js/29-campanha-abertura.js?v=r49"></script>
+<script src="js/30-toque-missoes.js?v=r49"></script>
+<script src="js/31-casa-segura-assalto.js?v=r49"></script>
+<script src="js/32-imperio-banco-cassino.js?v=r49"></script>
+<script src="js/33-sinuca-skate-dados.js?v=r49"></script>
+<script src="js/34-aeroporto-pontes.js?v=r49"></script>
+<script src="js/35-historia-missoes.js?v=r49"></script>
+<script src="js/36-municao-cadeia.js?v=r49"></script>
+<script src="js/37-save-garagem.js?v=r49"></script>
+<script src="js/38-cheats.js?v=r49"></script>
+<script src="js/39-online.js?v=r49"></script>
+<script src="js/40-console-cheats.js?v=r49"></script>
+<script src="js/41-lang-en.js?v=r49"></script>
+<script src="js/42-idioma-config.js?v=r49"></script>
+<script src="js/43-interiores-lab.js?v=r49"></script>
+<script src="js/44-backrooms.js?v=r49"></script>
+<script src="js/45-atualizacao-hud.js?v=r49"></script>
+<script src="js/46-campanha-missoes.js?v=r49"></script>
+<script src="js/47-laco-principal.js?v=r49"></script>
+<script src="js/48-tvcat.js?v=r49"></script>
+<script src="js/49-personagens-3d.js?v=r49"></script>
+<script src="js/99-pos-carga.js?v=r49"></script>

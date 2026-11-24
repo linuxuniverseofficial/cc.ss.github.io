@@ -246,8 +246,20 @@ function updateVehicleWrecks(dt){const pc=PL.car||PL,wrecks=vehicles.filter(c=>!
 function clearVehicles(){while(vehicles.length)removeVehicle(vehicles[0])}
 
 /* --- GPU instancing for every car without a detailed mesh --- */
-const INST={types:{},ug:null,beam:null,turnL:null,turnR:null,group:null,CAP:2600};const INST_LOW={sph:new THREE.SphereGeometry(1,8,6).toNonIndexed(),lamp:new THREE.SphereGeometry(1,6,4).toNonIndexed(),tiny:new THREE.SphereGeometry(1,4,3).toNonIndexed(),cyl:new THREE.CylinderGeometry(1,1,1,6).toNonIndexed(),hemi:new THREE.SphereGeometry(1,10,4,0,Math.PI*2,0,Math.PI/2).toNonIndexed()},INST_PM=new THREE.Matrix4(),INST_FR=new THREE.Frustum(),INST_SP=new THREE.Sphere();
+const INST={types:{},ug:null,beam:null,turnL:null,turnR:null,group:null,CAP:2600,VR:230,XR:150};const INST_LOW={sph:new THREE.SphereGeometry(1,8,6).toNonIndexed(),lamp:new THREE.SphereGeometry(1,6,4).toNonIndexed(),tiny:new THREE.SphereGeometry(1,4,3).toNonIndexed(),cyl:new THREE.CylinderGeometry(1,1,1,6).toNonIndexed(),hemi:new THREE.SphereGeometry(1,10,4,0,Math.PI*2,0,Math.PI/2).toNonIndexed()},INST_PM=new THREE.Matrix4(),INST_FR=new THREE.Frustum(),INST_SP=new THREE.Sphere();
 const EU2=new THREE.Euler(0,0,0,'YXZ');
+/* v3 r50 · carro "caixote" dos carros bem distantes: caixa de baixo (cor do carro), cabine com laterais de vidro escuro e teto na cor, 4 rodas de 6 lados.
+   Frente = +x (como o carParts). Proporções por família; null = usa a geometria normal. */
+const INST_BOX={sedan:[.55,-.3,.2],taxi:[.55,-.3,.2],police:[.55,-.3,.2],wagon:[.55,-.42,.2],hatch:[.55,-.38,.18],crossover:[.55,-.34,.2],suv:[.55,-.4,.2],mini:[.55,-.4,.2],
+ sports:[.58,-.26,.1],super:[.6,-.22,.1],roadster:[.62,-.2,.04],conv:[.62,-.2,.04],pickup:[.55,-.05,.3],van:[.5,-.47,.36],bus:[.42,-.48,.46],truck:'truck'};
+function instBoxGeo(k){const f=INST_BOX[k],t=VT[k];if(!f)return null;const m=new MB(),L=t.L/2,W=t.W/2,H=t.H,y0=t.wr*.95,wh=COL('#ffffff'),gl=COL('#1c2530');
+ if(f==='truck'){const cx=L-1.9;m.box(cx,y0,-W,L,H*.42,W,wh);m.box(cx+.2,H*.42,-W+.06,L-.15,H*.8,W-.06,gl,{topCol:wh});m.box(-L,y0,-W,cx-.1,H,W,wh)}
+ else{const [lo,c0,c1]=f;m.box(-L,y0,-W,L,H*lo,W,wh);
+  if(k==='roadster'||k==='conv')m.box(-L*.1,H*lo,-W+.12,L*c1+.15,H*.88,W-.12,gl);
+  else m.box(L*c0*2,H*lo,-W+.08,L*c1*2,H,W-.08,gl,{topCol:wh})}
+ const g6=new THREE.CylinderGeometry(1,1,1,6).toNonIndexed();g6.rotateX(Math.PI/2);
+ for(let w=0;w<4;w++){const x=w<2?t.wb:-t.wb,z=(w%2?1:-1)*(t.vtw!==undefined?t.vtw:t.tw);m.geo(g6,mtx(x,t.wr,z,t.wr,t.wr,.3),COL('#141414'))}
+ g6.dispose();return m.mesh(null).geometry}
 function buildInstancing(st){
  if(INST.group){scene.remove(INST.group);INST.group.traverse(o=>{if(o.geometry&&!o.isSprite)o.geometry.dispose();if(o.material&&o.material!==carBodyMat&&o.material!==carLightMat)o.material.dispose()})}
  const grp=new THREE.Group();scene.add(grp);INST.group=grp;INST.types={};const CAP=INST.CAP;
@@ -263,7 +275,9 @@ function buildInstancing(st){
   lim.instanceMatrix.setUsage(THREE.DynamicDrawUsage);bim.instanceColor.setUsage(THREE.DynamicDrawUsage);
   // v77: carros distantes (além do alcance da sombra) num 2º lote SEM castShadow — mesma geometria e material
   const fim=new THREE.InstancedMesh(bim.geometry,carBodyMat,CAP);fim.instanceColor=new THREE.InstancedBufferAttribute(new Float32Array(CAP*3),3);fim.instanceMatrix.setUsage(THREE.DynamicDrawUsage);fim.instanceColor.setUsage(THREE.DynamicDrawUsage);fim.castShadow=false;fim.receiveShadow=true;fim.frustumCulled=false;fim.count=0;
-  grp.add(bim,lim,fim);INST.types[k]={bim,lim,fim,n:0,ln:0,fn:0}}
+  /* v3 r50: 3º lote = carro "caixote" (~100–150 tri) para os que estão além de INST.XR (2 quarteirões). Sem sombra. Moto/barcos/vortex reaproveitam a geometria do lote normal. */
+  const xg=instBoxGeo(k)||bim.geometry,xim=new THREE.InstancedMesh(xg,carBodyMat,CAP);xim.instanceColor=new THREE.InstancedBufferAttribute(new Float32Array(CAP*3),3);xim.instanceMatrix.setUsage(THREE.DynamicDrawUsage);xim.instanceColor.setUsage(THREE.DynamicDrawUsage);xim.castShadow=false;xim.receiveShadow=true;xim.frustumCulled=false;xim.count=0;
+  grp.add(bim,lim,fim,xim);INST.types[k]={bim,lim,fim,xim,n:0,ln:0,fn:0,xn:0}}
  }finally{Object.assign(CARG,G0)}
  INST.ug=INST.beam=INST.turnL=INST.turnR=null;
  const ledGeo=new THREE.BoxGeometry(.055,.075,.115),ledMat=new THREE.MeshBasicMaterial({color:0xffb900, toneMapped:false});
@@ -296,8 +310,8 @@ function uploadInstances(mesh,n){
  if(mesh.instanceColor&&n>0){mesh.instanceColor.updateRange.offset=0;mesh.instanceColor.updateRange.count=n*3;mesh.instanceColor.needsUpdate=true}
 }
 function writeInstances(){
- for(const k in INST.types){const T=INST.types[k];T.n=0;T.ln=0;T.fn=0}let gn=0,bn=0;
- const cx=camera.position.x,cz=camera.position.z,vr=camMode==='top'?camH*1.35+30:360,vr2=vr*vr;
+ for(const k in INST.types){const T=INST.types[k];T.n=0;T.ln=0;T.fn=0;T.xn=0}let gn=0,bn=0;
+ const cx=camera.position.x,cz=camera.position.z,vr=camMode==='top'?camH*1.35+30:INST.VR,vr2=vr*vr,xr2=camMode==='top'?1e12:INST.XR*INST.XR;/* v3 r50: era 360 m; agora 3 quarteirões (INST.VR) e caixote além de INST.XR */
  // v77: recorte por frustum (antes TODOS os carros num raio de 360 m iam para a GPU, inclusive atrás da câmera),
  // faróis só nos carros com farol aceso (antes os apagados ainda mandavam ~1600 triângulos zerados cada)
  // e sombra só para os carros dentro do alcance da sombra.
@@ -306,7 +320,7 @@ function writeInstances(){
  for(const c of vehicles){if(c.g)continue;const dx=c.x-cx,dz=c.z-cz,d2=dx*dx+dz*dz;if(d2>vr2)continue;const T=INST.types[c.type];if(T.n>=INST.CAP)continue;
   if(d2>900){INST_SP.center.set(c.x,c.gy+1,c.z);INST_SP.radius=(c.t.L||4)*.6+2.5;if(!INST_FR.intersectsSphere(INST_SP))continue}
   EU2.set(c.roll||0,-c.a,c.pitch||0);Q.setFromEuler(EU2);M4.compose(V3.set(c.x,c.gy,c.z),Q,SC.set(1,1,1));
-  const lampsOn=carLampOn(c);T.n++;if(d2<sr2){T.bim.setMatrixAt(T.n-1-T.fn,M4);T.bim.instanceColor.setXYZ(T.n-1-T.fn,c.icol.r,c.icol.g,c.icol.b)}else{T.fim.setMatrixAt(T.fn,M4);T.fim.instanceColor.setXYZ(T.fn,c.icol.r,c.icol.g,c.icol.b);T.fn++}
+  const lampsOn=carLampOn(c);T.n++;if(d2>xr2){T.xim.setMatrixAt(T.xn,M4);T.xim.instanceColor.setXYZ(T.xn,c.icol.r,c.icol.g,c.icol.b);T.xn++}else if(d2<sr2){T.bim.setMatrixAt(T.n-1-T.fn-T.xn,M4);T.bim.instanceColor.setXYZ(T.n-1-T.fn-T.xn,c.icol.r,c.icol.g,c.icol.b)}else{T.fim.setMatrixAt(T.fn,M4);T.fim.instanceColor.setXYZ(T.fn,c.icol.r,c.icol.g,c.icol.b);T.fn++}
   if(lampsOn)T.lim.setMatrixAt(T.ln++,M4);
   if(INST.beam&&bn<INST.CAP*2&&INST.beam.material.opacity>.01){const ca=Math.cos(c.a),sa=Math.sin(c.a);EU2.set(0,-c.a,0);Q.setFromEuler(EU2);
    if(c.hasGlow&&INST.ug){M4.compose(V3.set(c.x,.06,c.z),Q,SC.set(c.t.L+2.4,1,c.t.W+2.4));INST.ug.setMatrixAt(gn,M4);INST.ug.instanceColor.setXYZ(gn,c.glow.r,c.glow.g,c.glow.b);gn++}
@@ -321,7 +335,7 @@ function writeInstances(){
   else if(c.turnSig>0&&tcR<INST.CAP)INST.turnR.setMatrixAt(tcR++,M4)}
  }
  uploadInstances(INST.turnL,tcL);uploadInstances(INST.turnR,tcR);
- for(const k in INST.types){const T=INST.types[k];uploadInstances(T.bim,T.n-T.fn);uploadInstances(T.fim,T.fn);uploadInstances(T.lim,T.ln)}
+ for(const k in INST.types){const T=INST.types[k];uploadInstances(T.bim,T.n-T.fn-T.xn);uploadInstances(T.fim,T.fn);uploadInstances(T.xim,T.xn);uploadInstances(T.lim,T.ln)}
  if(INST.ug)uploadInstances(INST.ug,gn);
  if(INST.beam)uploadInstances(INST.beam,bn)}
 

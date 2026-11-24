@@ -408,7 +408,7 @@ function mallStoreDecor(g,mb,tm,nb,X,Z,x0,s,idx,up,cols){const k=MALL_SHOPS[idx]
  }else if(k==='cafe'){
   // cafeteria mais intimista: forro escuro, pendentes acesos e lousa
   B(.05,4.0,6.1,9.35,4.18,11.55,'#2a1d16');
-  for(const [a,c] of [[5.5,9.3],[7.9,10.5],[1.8,7.2]])nb.geo(GEO.sph,mtx(X+x0+a,2.64,Z+s*c,.09,.07,.09),COL('#ffcf7a'));
+  for(const [a,c] of [[5.5,9.3],[7.9,10.5],[1.8,7.2]])nb.geo(GEO.sph,mtx(X+x0+a,2.64,Z+s*c,.06,.05,.06),COL('#ffcf7a'));
   // v77: a lâmpada da frente do balcão flutuava — ganhou fio e cúpula como as das mesas
   B(1.775,2.9,7.175,1.825,4.12,7.225,'#42382e');B(1.48,2.72,6.95,2.12,2.9,7.45,'#e5bc73');
   B(7.6,1.5,11.5,8.8,2.5,11.56,'#1f2d24');B(7.55,1.45,11.52,8.85,2.55,11.57,'#6a4a32');
@@ -544,7 +544,7 @@ function mallFacade(g,mb,nb,X,Z,x0,s,idx,up,cols){const col=(a,c,d,f)=>cols&&col
  const B=(a,y0,c,d,y1,f,h)=>mallBox(mb,X+x0+a,y0,Z+s*c,X+x0+d,y1,Z+s*f,typeof h==='string'?COL(h):h);
  const NB=(a,y0,c,d,y1,f,h)=>mallBox(nb,X+x0+a,y0,Z+s*c,X+x0+d,y1,Z+s*f,typeof h==='string'?COL(h):h);
  const awning=(c1,c2,y=3.35,depth=.9,n=10)=>{for(let j=0;j<n;j++){const a=.1+j*9.2/n,b=a+9.2/n;for(let st=0;st<3;st++){const yy=y-st*.14,dd=5.8-st*depth/3;B(a,yy-.12,dd-depth/3,b,yy,dd,j%2?c1:c2)}B(a,y-.62,5.8-depth-.02,b,y-.42,5.8-depth+.02,j%2?c1:c2)}};
- const bulbs=(y,col,step=.42)=>{for(let a=.25;a<9.2;a+=step)nb.geo(GEO.sph,mtx(X+x0+a,y,Z+s*5.74,.055,.055,.055),COL(col))};
+ const bulbs=(y,col,step=.42)=>{for(let a=.25;a<9.2;a+=step)nb.geo(GEO.bulb,mtx(X+x0+a,y,Z+s*5.74,.045,.045,.045),COL(col))};
  const sideCol=(h,w=.32)=>{for(const a of [-.35,9.4-w+.35])B(a,0,5.62,a+w,h,5.82,h>4?'#2a2430':acc)};
  switch(k){
   case 'wear':B(-.35,0,5.7,.15,4.6,5.8,'#121216');B(9.25,0,5.7,9.75,4.6,5.8,'#121216');B(.15,3.36,5.7,9.25,3.42,5.78,'#e8c060');B(.15,4.55,5.7,9.25,4.62,5.78,'#e8c060');NB(1.2,4.72,5.8,8.2,4.76,5.84,acc);
@@ -553,21 +553,21 @@ function mallFacade(g,mb,nb,X,Z,x0,s,idx,up,cols){const col=(a,c,d,f)=>cols&&col
   case 'games':for(let a=-.3;a<9.7;a+=.32){const j=Math.round((a+.3)/.32);NB(a,4.62,5.75,a+.26,4.88,5.81,['#ff3b3b','#2af0ff','#ffd21a','#3ab36a','#ff4fd8'][j%5])}for(let y=.2;y<4.6;y+=.32){const j=Math.round(y/.32);for(const a of [-.32,9.46])NB(a,y,5.75,a+.26,y+.26,5.81,['#2af0ff','#ff4fd8','#ffd21a'][j%3])}break;
   case 'shoes':B(-.35,0,5.7,.15,4.6,5.8,'#6a3a22');B(9.25,0,5.7,9.75,4.6,5.8,'#6a3a22');for(let j=0;j<12;j++){const t=Math.PI*j/11,a=4.7+Math.cos(t)*4.3,y=3.42+Math.sin(t)*.9;B(a-.22,y-.1,5.72,a+.22,y+.1,5.8,'#8a5a32')}break;
   case 'toys':for(const a of [-.35,9.25])for(let j=0;j<7;j++)B(a,j*.66,5.68,a+.5,j*.66+.62,5.82,['#ff3b3b','#ffd21a','#2a8ad6','#3ab36a','#ff8a1a','#ff6fae','#7a4ad6'][j]);awning('#ff3b3b','#ffd21a',3.35,.7,12);break;
-  case 'cafe':awning('#5a3422','#efe0c4',3.35,1.0,8);for(const a of [-.1,9.5]){B(a-.04,2.55,5.62,a+.04,2.62,5.4,'#2a2a30');nb.geo(GEO.sph,mtx(X+x0+a,2.5,Z+s*5.35,.11,.11,.11),COL('#ffcf7a'))}
+  case 'cafe':awning('#5a3422','#efe0c4',3.35,1.0,8);for(const a of [-.1,9.5]){B(a-.04,2.55,5.62,a+.04,2.62,5.4,'#2a2a30');nb.geo(GEO.sph,mtx(X+x0+a,2.5,Z+s*5.35,.07,.07,.07),COL('#ffcf7a'))}
    B(7.6,0,4.7,8.4,.06,5.1,'#3a2a20');col(7.6,4.7,8.4,5.1);B(7.7,.06,4.85,8.3,1.05,4.9,'#1f2d24');B(7.68,1.05,4.83,8.32,1.1,4.92,'#6a4a32');break;
   case 'optic':for(const d of [-1.05,1.05]){for(let j=0;j<16;j++){const t=j/16*Math.PI*2,t2=(j+1)/16*Math.PI*2;const ax=4.7+d+Math.cos(t)*.75,ay=5.05+Math.sin(t)*.42;NB(ax-.045,ay-.045,5.76,ax+.045,ay+.045,5.82,P.a)}}NB(4.45,5.12,5.76,4.95,5.18,5.82,P.a);break;
   case 'jewel':B(-.35,0,5.7,.15,4.6,5.8,'#16161c');B(9.25,0,5.7,9.75,4.6,5.8,'#16161c');for(const a of [-.1,9.5])NB(a-.02,.3,5.81,a+.02,4.3,5.83,'#ffe7a0');
    {const cx=4.7,cy=5.1,r=.35;for(const [a,b,c,d] of [[-r,0,0,-r*1.2],[0,-r*1.2,r,0],[r,0,r*.55,r*.45],[r*.55,r*.45,-r*.55,r*.45],[-r*.55,r*.45,-r,0]]){const L=Math.hypot(c-a,d-b),ang=Math.atan2(d-b,c-a);nb.geo(GEO.cyl,mtx(X+x0+cx+(a+c)/2,cy+(b+d)/2,Z+s*5.79,.03,L,.03,0,0,ang-Math.PI/2),COL('#ffe7a0'))}}break;
   case 'tech':for(let a=.3;a<9.2;a+=.5)NB(a,4.64,5.76,a+.36,4.7,5.82,P.a);for(const a of [-.3,9.3]){B(a,2.2,5.55,a+.4,3.2,5.62,'#0a0a10');NB(a+.04,2.26,5.54,a+.36,3.14,5.55,['#2a8ad6','#ff4fd8'][a<0?0:1])}break;
   case 'bag':B(-.35,0,5.7,.15,4.6,5.8,'#6a4026');B(9.25,0,5.7,9.75,4.6,5.8,'#6a4026');for(let y=.3;y<4.4;y+=.3)for(const a of [-.12,9.5])B(a,y,5.81,a+.06,y+.14,5.82,'#e8c890');break;
-  case 'music':{const cx=X+x0+8.6,cy=4.0;nb.geo(GEO.cyl16,mtx(cx,cy,Z+s*5.7,.95,.06,.95,Math.PI/2,0,0),COL('#0d0b10'));nb.geo(GEO.cyl16,mtx(cx,cy,Z+s*5.66,.34,.07,.34,Math.PI/2,0,0),COL(acc));for(const r of [.55,.75])for(let j=0;j<20;j++){const t=j/20*Math.PI*2;nb.geo(GEO.sph,mtx(cx+Math.cos(t)*r,cy+Math.sin(t)*r,Z+s*5.65,.02,.02,.02),COL('#3a3046'))}
+  case 'music':{const cx=X+x0+8.6,cy=4.0;nb.geo(GEO.cyl16,mtx(cx,cy,Z+s*5.7,.95,.06,.95,Math.PI/2,0,0),COL('#0d0b10'));nb.geo(GEO.cyl16,mtx(cx,cy,Z+s*5.66,.34,.07,.34,Math.PI/2,0,0),COL(acc));for(const r of [.55,.75])for(let j=0;j<20;j++){const t=j/20*Math.PI*2;nb.geo(GEO.bulb,mtx(cx+Math.cos(t)*r,cy+Math.sin(t)*r,Z+s*5.65,.02,.02,.02),COL('#3a3046'))}
    for(const [a,y] of [[.5,3.9],[1.1,4.35]]){NB(a,y,5.78,a+.06,y+.42,5.82,P.b);NB(a-.14,y-.04,5.78,a+.06,y+.08,5.82,P.b)}}break;
   case 'beach':for(let j=0;j<6;j++)B(-.35+j*.17,0,5.68,-.35+j*.17+.17,4.6,5.82,j%2?'#f2f2ee':'#1e9ab0');for(let j=0;j<6;j++)B(9.75-(j+1)*.17,0,5.68,9.75-j*.17,4.6,5.82,j%2?'#f2f2ee':'#1e9ab0');awning('#f2f2ee','#1e9ab0');break;
   case 'perfume':B(-.35,0,5.7,.15,4.6,5.8,'#e8d0dc');B(9.25,0,5.7,9.75,4.6,5.8,'#e8d0dc');for(let j=0;j<14;j++){const t=Math.PI*j/13,a=4.7+Math.cos(t)*4.4,y=4.6+Math.sin(t)*.55;B(a-.2,y-.08,5.7,a+.2,y+.08,5.8,'#e8c060')}NB(.2,4.66,5.79,9.2,4.7,5.83,P.c);break;
   case 'pizza':for(let j=0;j<10;j++)for(let r=0;r<2;r++){const a=.1+j*.92;B(a,3.08+r*.14,5.0+r*.3,a+.92,3.22+r*.14,5.3+r*.3,(j+r)%2?'#e8282a':'#f4f0e8')}{const cx=8.7,cy=5.05;for(const [a,b,c,d] of [[0,.4,.32,-.3],[.32,-.3,-.32,-.3],[-.32,-.3,0,.4]]){const L=Math.hypot(c-a,d-b),ang=Math.atan2(d-b,c-a);nb.geo(GEO.cyl,mtx(X+x0+cx+(a+c)/2,cy+(b+d)/2,Z+s*5.79,.035,L,.035,0,0,ang-Math.PI/2),COL('#ffb03a'))}}break;
   case 'pharm':B(-.35,0,5.7,.15,4.6,5.8,'#f2f6f4');B(9.25,0,5.7,9.75,4.6,5.8,'#f2f6f4');NB(.15,3.32,5.76,9.25,3.36,5.82,'#3ae08a');break;
-  case 'cinema':B(.0,4.62,5.2,9.4,5.5,5.8,'#7a0a14');B(-.1,4.55,5.15,9.5,4.62,5.85,'#d8b060');bulbs(4.58,'#fff1a8',.36);for(let a=.25;a<9.2;a+=.36)nb.geo(GEO.sph,mtx(X+x0+a,5.5,Z+s*5.2,.05,.05,.05),COL('#fff1a8'));
-   for(const a of [-.1,9.5])for(let y=.4;y<4.5;y+=.36)nb.geo(GEO.sph,mtx(X+x0+a,y,Z+s*5.78,.045,.045,.045),COL('#fff1a8'));break;
+  case 'cinema':B(.0,4.62,5.2,9.4,5.5,5.8,'#7a0a14');B(-.1,4.55,5.15,9.5,4.62,5.85,'#d8b060');bulbs(4.58,'#fff1a8',.36);for(let a=.25;a<9.2;a+=.36)nb.geo(GEO.bulb,mtx(X+x0+a,5.5,Z+s*5.2,.04,.04,.04),COL('#fff1a8'));
+   for(const a of [-.1,9.5])for(let y=.4;y<4.5;y+=.36)nb.geo(GEO.bulb,mtx(X+x0+a,y,Z+s*5.78,.04,.04,.04),COL('#fff1a8'));break;
  }}
 
 const MALL_THEMED=new Set(['music','games','shoes','toys','optic','beach','perfume','cinema','pizza','skate']);
@@ -604,7 +604,7 @@ function mallStoreShell(g,mb,nb,hb,X,ZS,x0,s,idx,up,cols,C,Hc){
  for(let x=x0;x<x1;x+=1.9)mb.quad([X+x,.01,ZS+z1],[X+Math.min(x1,x+1.9),.01,ZS+z1],[X+Math.min(x1,x+1.9),.01,ZS+z0],[X+x,.01,ZS+z0],0,1,0,[0,0,1,1],func?C(info[2]==='wear'?'#e8d8e4':'#e8f0e8'):C('#a5a5bd'));
  mallBox(mb,X+x0-.3,0,ZS+z0,X+x0,4.2,ZS+z1,C('#b5a4c2'));mallBox(mb,X+x1,0,ZS+z0,X+x1+.3,4.2,ZS+z1,C('#b5a4c2'));mallBox(mb,X+x0,0,ZS+(s>0?z1-.15:z0),X+x1,4.2,ZS+(s>0?z1:z0+.15),acc.clone().lerp(C('#ffffff'),.55));
  mallBox(mb,X+x0,4.2,ZS+z0,X+x1,4.35,ZS+z1,C('#4a3f4c'));
- if(!['cafe','music','cinema','games'].includes(info[2]||MALL_DECO[idx])){const lamp=COL(mallStoreLight(idx).col.getHexString?'#'+mallStoreLight(idx).col.getHexString():'#ffcf7a');for(const a of [2.6,6.8]){const c=8.8;mallBox(mb,X+x0+a-.012,2.75,ZS+s*c-.012,X+x0+a+.012,4.2,ZS+s*c+.012,C('#2a2a30'));mb.geo(GEO.hemi,mtx(X+x0+a,2.78,ZS+s*c,.3,.2,.3,Math.PI,0,0),C('#2a2228'));nb.geo(GEO.sph,mtx(X+x0+a,2.7,ZS+s*c,.12,.09,.12),lamp);const k=lamp.clone().multiplyScalar(.13);hb.quad([X+x0+a-1.2,.056,ZS+s*c+1.2],[X+x0+a+1.2,.056,ZS+s*c+1.2],[X+x0+a+1.2,.056,ZS+s*c-1.2],[X+x0+a-1.2,.056,ZS+s*c-1.2],0,1,0,[0,0,1,1],k)}}
+ if(!['cafe','music','cinema','games'].includes(info[2]||MALL_DECO[idx])){const lamp=COL(mallStoreLight(idx).col.getHexString?'#'+mallStoreLight(idx).col.getHexString():'#ffcf7a');for(const a of [2.6,6.8]){const c=8.8;mallBox(mb,X+x0+a-.012,2.75,ZS+s*c-.012,X+x0+a+.012,4.2,ZS+s*c+.012,C('#2a2a30'));mb.geo(GEO.hemi,mtx(X+x0+a,2.78,ZS+s*c,.2,.13,.2,Math.PI,0,0),C('#2a2228'));nb.geo(GEO.sph,mtx(X+x0+a,2.7,ZS+s*c,.07,.05,.07),lamp);const k=lamp.clone().multiplyScalar(.13);hb.quad([X+x0+a-1.2,.056,ZS+s*c+1.2],[X+x0+a+1.2,.056,ZS+s*c+1.2],[X+x0+a+1.2,.056,ZS+s*c-1.2],[X+x0+a-1.2,.056,ZS+s*c-1.2],0,1,0,[0,0,1,1],k)}}
  mallBox(mb,X+x0-.35,0,ZS+zf-.2,X+x0+.15,4.6,ZS+zf+.2,C('#b8b0a4'));mallBox(mb,X+x1-.15,0,ZS+zf-.2,X+x1+.35,4.6,ZS+zf+.2,C('#b8b0a4'));mallBox(mb,X+x0,3.4,ZS+zf-.18,X+x1,4.6,ZS+zf+.18,acc);
  if(Hc>4.6)mallBox(mb,X+x0-.35,4.6,ZS+zf-.2,X+x1+.35,Hc,ZS+zf+.2,C('#d8cbbf'));
  signPlane(g,mallSignMat(info[0],'#111118',info[1]==='#1a1a2a'?'#ffd23a':info[1]),X+(x0+x1)/2,4.0,ZS+zf-s*.212,6.4,.8,s>0?Math.PI:0);
