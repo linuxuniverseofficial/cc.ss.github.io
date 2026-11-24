@@ -267,19 +267,11 @@ function streetTexBuild(){const N=city.N|0,n=N+1,data=new Uint8Array(n*n*4),r=mu
  for(let kz=0;kz<=N;kz++)for(let kx=0;kx<=N;kx++){const i=(kz*n+kx)*4,x=kx*P,z=kz*P,a=r(),q=Math.floor(r()*16),sm=r(),g1=r(),g2=r(),f1=1+Math.floor(r()*14),f2=1+Math.floor(r()*14),b1=r(),b2=r(),e1=1+Math.floor(r()*14),e2=1+Math.floor(r()*14);
   if(nodeDeg(kx,kz)>=3&&a<.45&&ok(x,z)){data[i]=1+q;const mx=x+(q%4-1.5)*1.7,mz=z+(Math.floor(q/4)-1.5)*1.7;list.push({x:mx,z:mz,smoke:!!core&&Math.hypot(mx-core.x,mz-core.z)<170&&sm<.7})}
   /* v4 r3: lado que dá para água (rio/canal/mar) não tem calçada → sem boca-de-lobo; A = rua estreita (bit 1 = H, bit 2 = V) */
-  if(segExists(kx,kz,0)&&ok(x+P/2,z))data[i+1]=(g1<.35&&dry(x+P/2,z-P/2)?f1:0)+(g2<.35&&dry(x+P/2,z+P/2)?f2*16:0);
-  if(segExists(kx,kz,1)&&ok(x,z+P/2))data[i+2]=(b1<.35&&dry(x-P/2,z+P/2)?e1:0)+(b2<.35&&dry(x+P/2,z+P/2)?e2*16:0);
+  /* v4 r4: posição fixa — 1 por lado de cada trecho (quarteirão simples = 1 por lado; quarteirão duplo = 2 por lado), perto do meio:
+     lado norte/oeste no passo 7, sul/leste no 9 (3,7 m antes/depois do centro), então as dos dois lados da rua nunca ficam de frente */
+  if(segExists(kx,kz,0)&&ok(x+P/2,z))data[i+1]=(dry(x+P/2,z-P/2)?7:0)+(dry(x+P/2,z+P/2)?9*16:0);
+  if(segExists(kx,kz,1)&&ok(x,z+P/2))data[i+2]=(dry(x-P/2,z+P/2)?7:0)+(dry(x+P/2,z+P/2)?9*16:0);
   try{data[i+3]=(segExists(kx,kz,0)&&lineType(kx,kz,0).t!=='ave'?1:0)+(segExists(kx,kz,1)&&lineType(kx,kz,1).t!=='ave'?2:0)}catch(e){}}
- /* v4 r3: no mínimo 1 boca-de-lobo por quarteirão — cada quarteirão olha os 4 lados (só trechos de asfalto que passam no ok());
-    se nenhum sorteou, um deles ganha. Nibble baixo = lado norte/oeste da rua, alto = sul/leste. Gerador próprio (não mexe no R()). */
- {const r2=mulberry32((S.seed^0x51d0b0c)>>>0);city.drainForced=0;
-  for(let bz=0;bz<N;bz++)for(let bx=0;bx<N;bx++){const sides=[];if(!dry(bx*P+P/2,bz*P+P/2))continue;
-   if(segExists(bx,bz,0)&&ok(bx*P+P/2,bz*P))sides.push([((bz*n+bx)*4)+1,16]);
-   if(segExists(bx,bz+1,0)&&ok(bx*P+P/2,(bz+1)*P))sides.push([(((bz+1)*n+bx)*4)+1,1]);
-   if(segExists(bx,bz,1)&&ok(bx*P,bz*P+P/2))sides.push([((bz*n+bx)*4)+2,16]);
-   if(segExists(bx+1,bz,1)&&ok((bx+1)*P,bz*P+P/2))sides.push([((bz*n+bx+1)*4)+2,1]);
-   const has=sides.some(([j,m])=>m===1?(data[j]&15)>0:(data[j]>>4)>0),k=Math.floor(r2()*4),f=1+Math.floor(r2()*14);
-   if(!has&&sides.length){const[j,m]=sides[k%sides.length];data[j]+=f*m;city.drainForced++}}}
  const old=SURF.U.sfSt.value;const t=new THREE.DataTexture(data,n,n,THREE.RGBAFormat);t.magFilter=t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;t.needsUpdate=true;
  SURF.U.sfSt.value=t;SURF.U.sfStK.value.set(P,n,RW/2,city.haze?0:1);SURF.U.sfSeed.value=(S.seed%9973)*.731;{const st=STYLES[S.style]||STYLES.modern,c=COL(st.center),w=COL(st.mark);SURF.U.sfPaint.value.set(c.r,c.g,c.b);SURF.U.sfPaintW.value.set(w.r,w.g,w.b);const ag=st.synth?[.6,.58,.64]:S.style==='inverted'?[.78,.78,.75]:[.86,.85,.8];SURF.U.sfAge.value.set(ag[0],ag[1],ag[2])} /* v3 r62: tinta envelhecida por mundo (o Synth satura com bloom, precisa de mais) */ /* v3 r60: cor da faixa central e da branca do mundo atual (desgaste em todos os mundos) */if(old)old.dispose()}
 /* fumaça leve dos bueiros do centro (mesmo emit da fuligem das chaminés, bem mais fraca) */
