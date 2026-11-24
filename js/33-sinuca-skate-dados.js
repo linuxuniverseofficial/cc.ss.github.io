@@ -337,7 +337,7 @@ function mgGo(k){if(storyOn())return;const min=(MG_LIST.find(q=>q[0]===k)||[])[2
  MG.active=!!MG.back;MG.opened=false;MG.t=0;
  setTimeout(()=>{try{if(k==='slot')slotOpen();else tableGameOpen(k)}catch(e){console.error(e)}},60)}
 /* fechou o jogo aberto pelo menu → sai do cassino e volta pro lugar de antes */
-function mgTick(dt){if(!MG.active)return;if(PL.inside!=='casino'){MG.active=false;MG.back=null;return}const on=POOL.on||DICE.on||SLOT.open||TABLE_GAME.open;if(on){MG.opened=true;MG.t=0;return}
+function mgTick(dt){if(!MG.active)return;if(PL.inside!=='casino'){MG.active=false;MG.back=null;return}const on=POOL.on||DICE.on||SLOT.open||TABLE_GAME.open||BETDLG.open;if(on){MG.opened=true;MG.t=0;return}
  MG.t+=dt;if((MG.opened&&MG.t>.25)||(!MG.opened&&MG.t>1.5)){MG.active=false;MG.back=null;casinoExit('casino')}}
 setInterval(()=>{try{if(!menuOpen)mgTick(.1)}catch(e){}},100);
 $('#mgBtn').addEventListener('click',e=>{e.stopPropagation();mgOpenPanel()});
