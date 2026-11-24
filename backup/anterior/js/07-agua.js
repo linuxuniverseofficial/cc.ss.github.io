@@ -175,7 +175,7 @@ function surfPatch(mat,kind){if(!mat||mat.userData.surf)return mat;mat.userData.
      #ifdef USE_COLOR
      bc=vColor;
      #endif
-     float lum=dot(bc,vec3(.3,.59,.11));if(sfN.y>.6&&(lum>.72||(bc.r>.6&&bc.g>.42&&bc.b<.4))&&sfH(floor(sfW.xz/76.+.5)*1.37+sfSeed)<.4){
+     float lum=dot(bc,vec3(.3,.59,.11));if(sfN.y>.6&&(lum>.72||(bc.r>.7&&bc.g>.5&&bc.b<bc.r*.4))&&sfH(floor(sfW.xz/76.+.5)*1.37+sfSeed)<.4){
       float a1=sfAA(sfPx,5.),a2=sfAA(sfPx,22.),big=sfV(sfW.xz*.45+3.);float nn=.5+a1*(sfV(sfW.xz*5.)-.5)*.9+a2*(sfH(floor(sfW.xz*22.))-.5)*.7;
       float th=(.22+.22*smoothstep(.5,.85,big))*a1*sfF;if(nn<th)discard;diffuseColor.rgb*=1.-.12*sfF*(1.-smoothstep(th,th+.25,nn));}}`
    :kind==='side'?`if(sfN.y>.6){vec3 bc=vec3(.6);

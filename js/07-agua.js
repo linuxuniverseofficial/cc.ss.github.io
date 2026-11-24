@@ -161,13 +161,40 @@ vec3 sfWall(vec3 w,vec3 n,vec3 bc,float px){vec2 tg=normalize(vec2(-n.z,n.x));fl
   vec2 th=fract(vec2(s/.6,y/.6)+.5)-.5;float hole=(1.-smoothstep(.04,.07,length(th)))*sfAA(px,6.)*step(.5,sfH(floor(pn)+2.));
   float pore=sfAA(px,30.)*(sfH(floor(q*30.))-.5)*.1;float pan=(sfH(floor(pn))-.5)*.08;
   col*=1.+kc*(pan+pore-jt*.18*a-hole*.25);}
- return col;}`;
+ return col;}
+/* v3 r56/r57: ESTRADA DE TERRA — grão de solo (manchas, pedrinhas, poros) + sulcos de pneu: trechos aleatórios e espaçados
+   (célula de 18 m por rua, ~38% com trecho de 5–15 m, reto/inclinado ou em curva), par de rodas a 1,6 m, cada sulco
+   afundado com 3 cumes no corte (o "efeito onda" da areia limitado a 3). Rua H/V pela grade (sfStK.x = P). */
+bool sfIsDirt(vec3 bc){float mx=max(bc.r,max(bc.g,bc.b));return bc.r>=bc.g&&bc.g>=bc.b&&mx<.8&&mx>.15&&(bc.r-bc.b)/max(bc.r,.001)>.25&&(bc.r-bc.b)/max(bc.r,.001)<.62;}
+vec3 sfRut1(float u,float v,float lane,float px){vec3 acc=vec3(0.);float L=18.;
+ for(int k=-1;k<=0;k++){float id=floor(u/L)+float(k);vec2 q=vec2(id,lane+sfSeed*.013);if(sfH(q+.17)>.38)continue;
+  float s0=id*L+sfH(q+3.1)*8.,len=5.+sfH(q+5.3)*10.,x=(u-s0)/len;if(x<0.||x>1.)continue;
+  float env=smoothstep(0.,.18,x)*(1.-smoothstep(.78,1.,x))*(.55+.45*sfH(q+8.8));float cv=sfH(q+2.9);
+  float lat=(sfH(q+9.7)-.5)*7.+(cv<.5?(cv-.25)*6.*sin(x*3.1416):(cv-.75)*5.*(x-.5));
+  for(int w=0;w<2;w++){float d=v-lat-(w==0?-.8:.8);float hw=.24;if(abs(d)<hw){float t=(d/hw+1.)*.5;float edge=1.-smoothstep(.7,1.,abs(d)/hw);
+   float rg=sin(t*9.4248);acc.x=max(acc.x,env*edge);acc.y+=env*edge*rg;acc.z+=env*edge*cos(t*9.4248)*(9.4248/(2.*hw))*.035;}}}
+ return acc;}
+vec4 sfDirt(vec2 p,float px){float P=sfStK.x,hw=sfStK.z;float t=mix(.92,1.06,sfV(p*.07)*.6+sfV(p*.21+4.)*.4);
+ float a1=sfAA(px,6.),a2=sfAA(px,14.),a3=sfAA(px,28.);
+ if(a1>0.)t*=1.-a1*(sfDot(p,6.,.62,.26)*.14-sfDot(p+.31,5.,.8,.2)*.08);
+ if(a2>0.)t*=1.-a2*sfDot(p+.13,14.,.5,.25)*.08;
+ if(a3>0.)t*=1.+a3*(sfH(floor(p*28.))-.5)*.1;
+ vec2 g=vec2(0.);float rA=sfAA(px,1.2),rB=sfAA(px,6.);
+ if(rA>0.){float cz=floor(p.y/P+.5)*P,cx=floor(p.x/P+.5)*P;
+  if(abs(p.y-cz)<hw){vec3 r=sfRut1(p.x,p.y-cz,cz/P,px);t*=1.-rA*r.x*.22+rB*r.y*.08;g.y+=r.z*rB;}
+  if(abs(p.x-cx)<hw){vec3 r=sfRut1(p.y,p.x-cx,cx/P+97.,px);t*=1.-rA*r.x*.22+rB*r.y*.08;g.x+=r.z*rB;}}
+ return vec4(t,g,0.);}
+`;
 function surfVert(sh){sh.vertexShader='varying vec3 sfW;varying vec3 sfN;\n'+sh.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\n sfW=(modelMatrix*vec4(transformed,1.)).xyz;sfN=normalize(mat3(modelMatrix)*objectNormal);')}
 // kind: 'asph' (chão de asfalto), 'sand' (areia da praia), 'wall' (paredes de prédios/casas, com janelas no map)
 function surfPatch(mat,kind){if(!mat||mat.userData.surf)return mat;mat.userData.surf=kind;const old=mat.onBeforeCompile,key=(mat.customProgramCacheKey&&mat.customProgramCacheKey())||'';
  mat.onBeforeCompile=(sh,r)=>{if(old)old.call(mat,sh,r);sh.uniforms.sfOn=SURF.U.sfOn;sh.uniforms.sfSeed=SURF.U.sfSeed;sh.uniforms.sfSt=SURF.U.sfSt;sh.uniforms.sfStK=SURF.U.sfStK;surfVert(sh);
   const head=`float sfD=distance(sfW,cameraPosition);float sfF=sfOn*(1.-smoothstep(120.,170.,sfD));float sfPx=length(fwidth(sfW));`;
   let fs=SURF_GLSL+'\n'+sh.fragmentShader;
+  if(kind==='paint')fs=fs.replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
+   #ifdef USE_COLOR
+   {${head}if(sfF>.01&&sfN.y>.6&&sfIsDirt(vColor)){vec2 g=sfDirt(sfW.xz,sfPx).yz*sfF;normal=normalize(normal+(viewMatrix*vec4(-g.x,0.,-g.y,0.)).xyz);}}
+   #endif`);
   if(kind==='sand')fs=fs.replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
    {${head}if(sfF>.01&&sfN.y>.6){vec2 g=sfRip(sfW.xz,sfPx)*sfF;normal=normalize(normal+(viewMatrix*vec4(-g.x,0.,-g.y,0.)).xyz);}}`);
   const body=kind==='asph'?`if(sfN.y>.6){diffuseColor.rgb*=mix(vec3(1.),sfAsph(sfW.xz,sfPx),sfF);diffuseColor.rgb*=mix(vec3(1.),sfStreet(sfW.xz,sfPx),smoothstep(.0,.25,sfF));}`
@@ -175,7 +202,7 @@ function surfPatch(mat,kind){if(!mat||mat.userData.surf)return mat;mat.userData.
      #ifdef USE_COLOR
      bc=vColor;
      #endif
-     float lum=dot(bc,vec3(.3,.59,.11));if(sfN.y>.6&&(lum>.72||(bc.r>.7&&bc.g>.5&&bc.b<bc.r*.4))&&sfH(floor(sfW.xz/76.+.5)*1.37+sfSeed)<.4){
+     float lum=dot(bc,vec3(.3,.59,.11));if(sfN.y>.6&&sfIsDirt(bc)){diffuseColor.rgb*=mix(vec3(1.),vec3(sfDirt(sfW.xz,sfPx).x),sfF);}else if(sfN.y>.6&&(lum>.72||(bc.r>.7&&bc.g>.5&&bc.b<bc.r*.4))&&sfH(floor(sfW.xz/76.+.5)*1.37+sfSeed)<.4){
       float a1=sfAA(sfPx,5.),a2=sfAA(sfPx,22.),big=sfV(sfW.xz*.45+3.);float nn=.5+a1*(sfV(sfW.xz*5.)-.5)*.9+a2*(sfH(floor(sfW.xz*22.))-.5)*.7;
       float th=(.22+.22*smoothstep(.5,.85,big))*a1*sfF;if(nn<th)discard;diffuseColor.rgb*=1.-.12*sfF*(1.-smoothstep(th,th+.25,nn));}}`
    :kind==='side'?`if(sfN.y>.6){vec3 bc=vec3(.6);
