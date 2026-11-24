@@ -1090,13 +1090,16 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
  const subF=(F,off,W,D)=>({...F,W,D,pt:(u,v)=>F.pt(u+off,v),p3:(u,y,v)=>F.p3(u+off,y,v),box:(u0,u1,...r)=>F.box(u0+off,u1+off,...r)});
  // Posto compacto: no máx. 30 m de frente e 36 m de fundo; o resto vira borracharia.
  const jrGas=(ri,k,sd)=>((Math.imul(ri*73856093^(k+3)*19349663^(sd+5)*83492791^S.seed,2654435761)>>>0)%1000)/1000;
- const gasCompact=(F,ri)=>{const W=F.W,D=F.D,Wg=W>=44?Math.max(26,Math.min(30,W*.52)):Math.min(W,30),off=W>=44?0:(W-Wg)/2,Dg=Math.min(D,36),G=subF(F,off,Wg,Dg);
-  gasBuild({F:G,W:Wg,D:Dg,f:F.f,ch,ri,doorAt});
+ /* v4 r5 (José): borracharia só no posto da periferia (city.tireRi); o do centro (dealgas) fica com o lote todo e o lava-jato.
+    Lote raso e largo no centro (fundo < 31 m, frente ≥ 44 m) = loja ao lado da cobertura (side), senão a loja ficava com 1–3 m de fundo. */
+ const gasCompact=(F,ri)=>{const W=F.W,D=F.D,center=!!city.info[ri]?.dealgas,yard=!(center&&ri!==city.tireRi),side=!yard&&D<31&&W>=44,Wg=side?Math.min(W,56):W>=44?Math.max(26,Math.min(30,W*.52)):Math.min(W,30),off=side?0:W>=44?0:(W-Wg)/2,Dg=Math.min(D,36),G=subF(F,off,Wg,Dg);
+  gasBuild({F:G,W:Wg,D:Dg,f:F.f,ch,ri,doorAt,side,wash:center});
+  {const st=GAS.list.get(ri);if(st){st.FW=W;st.FD=D;st.off=off}}
   // 4 vagas na porta da conveniência (2 de cada lado da entrada), carros de frente para a loja.
-  {const st=GAS.list.get(ri),sv0=st.sv[0],v0=sv0-5.4,v1=sv0-.5,cP=COL(night?'#b89a2a':'#e2b81e'),stop=COL(night?'#6a6570':'#b9b4aa'),a=Math.atan2(-F.nrm[1],-F.nrm[0]),rect=(u0,u1,va,vb)=>{const p=G.pt(u0,va),q=G.pt(u1,vb);return[Math.min(p[0],q[0]),Math.min(p[1],q[1]),Math.max(p[0],q[0]),Math.max(p[1],q[1])]};
-   for(const sd of[-1,1]){const us=[Wg/2+sd*1.4,Wg/2+sd*4.2,Wg/2+sd*7.0];for(const u of us){const r=rect(u-.06,u+.06,v0,v1);marks.flat(r[0],r[1],r[2],r[3],.042,cP)}
+  {const st=GAS.list.get(ri),sv0=st.sv[0],sc=st.sc??Wg/2,v0=sv0-5.4,v1=sv0-.5,cP=COL(night?'#b89a2a':'#e2b81e'),stop=COL(night?'#6a6570':'#b9b4aa'),a=Math.atan2(-F.nrm[1],-F.nrm[0]),rect=(u0,u1,va,vb)=>{const p=G.pt(u0,va),q=G.pt(u1,vb);return[Math.min(p[0],q[0]),Math.min(p[1],q[1]),Math.max(p[0],q[0]),Math.max(p[1],q[1])]};
+   for(const sd of[-1,1]){const us=[sc+sd*1.4,sc+sd*4.2,sc+sd*7.0];for(const u of us){const r=rect(u-.06,u+.06,v0,v1);marks.flat(r[0],r[1],r[2],r[3],.042,cP)}
     for(let k=0;k<2;k++){const u=(us[k]+us[k+1])/2,r=rect(u-.8,u+.8,v1-.45,v1-.2);det.box(r[0],.03,r[1],r[2],.14,r[3],stop);const c=G.pt(u,v1-2.6);if(jrGas(ri,k,sd)<.4)parkCar(c[0],c[1],a,'gasd'+ri+':'+sd+k)}}}const lm=(city.lms||[]).find(v=>v.name==='gas'&&v.ri===ri);if(lm){const c=G.pt(Wg/2,Dg*.45);lm.x=c[0];lm.z=c[1]}
-  if(W-Wg>=14)gasYard(F,Wg+1.5,W-1.2,2.2,D-1.5,ri);else if(D-Dg>=14)gasYard(F,1.5,W-1.5,Dg+1,D-1.5,ri);else if(ri===city.tireRi)ammoTireFallback()};
+  if(!yard){}else if(W-Wg>=14)gasYard(F,Wg+1.5,W-1.2,2.2,D-1.5,ri);else if(D-Dg>=14)gasYard(F,1.5,W-1.5,Dg+1,D-1.5,ri);else if(ri===city.tireRi)ammoTireFallback()};
  const faceOf=(X0,Z0,X1,Z1)=>{const c=[['s',(X0+X1)/2,Z1+SW+7.4,'H'+Math.round((Z1+SW+8)/P)],['n',(X0+X1)/2,Z0-SW-7.4,'H'+Math.round((Z0-SW-8)/P)],['e',X1+SW+7.4,(Z0+Z1)/2,'V'+Math.round((X1+SW+8)/P)],['w',X0-SW-7.4,(Z0+Z1)/2,'V'+Math.round((X0-SW-8)/P)]].filter(q=>roadAt(q[1],q[2]));
   if(!c.length)return's';const av=c.filter(q=>{const L=city.lines[q[3]];return!L||L.t==='ave'});return(av.length?av:c)[0][0]};
  const cyl=(x,y0,y1,z,r,col,mb)=>(mb||det).geo(GEO.cyl,mtx(x,(y0+y1)/2,z,r,y1-y0,r),col);
