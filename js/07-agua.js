@@ -109,13 +109,16 @@ float sfH(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return f
 float sfV(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(sfH(i),sfH(i+vec2(1.,0.)),f.x),mix(sfH(i+vec2(0.,1.)),sfH(i+vec2(1.,1.)),f.x),f.y);}
 float sfAA(float px,float fq){return 1.-smoothstep(.3,.9,px*fq);}
 float sfDot(vec2 p,float fq,float th,float r){vec2 c=floor(p*fq),f=fract(p*fq)-.5;float h=sfH(c+11.3);if(h<th)return 0.;vec2 o=(vec2(sfH(c+3.7),sfH(c+8.1))-.5)*.5;return 1.-smoothstep(r*.55,r,length(f-o));}
-vec3 sfAsph(vec2 p,float px){float big=sfV(p*.045)*.6+sfV(p*.13+3.1)*.4;float t=mix(.9,1.07,big);
- vec2 c=floor(p/6.5),f=fract(p/6.5);if(sfH(c+17.)>.84){vec2 lo=vec2(sfH(c+3.),sfH(c+5.))*.4,hi=lo+.3+vec2(sfH(c+7.),sfH(c+9.))*.28;
-  float e=.02*(sfV(p*2.3)-.5);float inR=step(lo.x+e,f.x)*step(f.x,hi.x-e)*step(lo.y-e,f.y)*step(f.y,hi.y+e);t*=mix(1.,.8+.06*sfV(p*.7),inR);}
- float cz=smoothstep(.55,.75,sfV(p*.07+9.));if(cz>0.){float n=sfV(p*.42)*.7+sfV(p*1.3)*.3;float w=.012+px*.6;t*=1.-cz*.32*(1.-smoothstep(0.,w,abs(n-.5)))*sfAA(px,.8);}
+vec3 sfAsph(vec2 p,float px){float big=sfV(p*.045)*.6+sfV(p*.13+3.1)*.4;float t=mix(.966,1.034,big); /* v3 r51: manchas a 40% (era mix(.9,1.07)) */
+ /* v3 r51: remendos cinzentos — retângulo por célula de 9 m sorteada (24%), lado 45–85% da célula ≈ 10% da área; cinza mais claro com ruído próprio e junta escura */
+ vec2 c=floor(p/9.),f=fract(p/9.);if(sfH(c+17.)>.76){vec2 lo=vec2(sfH(c+3.),sfH(c+5.))*(1.-(.45+vec2(sfH(c+7.),sfH(c+9.))*.4)),hi=lo+.45+vec2(sfH(c+7.),sfH(c+9.))*.4;
+  float e=.004*(sfV(p*2.3)-.5);vec2 dl=f-lo-e,dh=hi-f+e;float dd=min(min(dl.x,dl.y),min(dh.x,dh.y))*9.;
+  if(dd>0.){float g=1.16+(sfV(p*1.1+c)-.5)*.14+(sfV(p*4.+7.)-.5)*.08*sfAA(px,4.)+(sfH(floor(p*20.))-.5)*.08*sfAA(px,20.);
+   float seam=1.-smoothstep(.03,.09+px,dd);t*=mix(g,.72,seam*sfAA(px,2.));}}
+ float cz=smoothstep(.55,.75,sfV(p*.07+9.));if(cz>0.){float n=sfV(p*.42)*.7+sfV(p*1.3)*.3;float w=.012+px*.6;t*=1.-cz*.13*(1.-smoothstep(0.,w,abs(n-.5)))*sfAA(px,.8);}
  float a1=sfAA(px,9.),a2=sfAA(px,3.),a3=sfAA(px,26.);
  if(a1>0.){float lt=sfDot(p,9.,.55,.32),dk=sfDot(p+.37,11.,.6,.3);t*=1.+a1*(lt*.15-dk*.13);}
- t*=1.+a2*(sfV(p*3.)-.5)*.1;if(a3>0.)t*=1.+a3*(sfH(floor(p*26.))-.5)*.09;
+ t*=1.+a2*(sfV(p*3.)-.5)*.04;if(a3>0.)t*=1.+a3*(sfH(floor(p*26.))-.5)*.09;
  return vec3(t);}
 vec3 sfSand(vec2 p,float px){float t=mix(.9,1.07,sfV(p*.06)*.6+sfV(p*.19+5.)*.4);
  float a1=sfAA(px,7.),a4=sfAA(px,16.),a2=sfAA(px,30.),a3=sfAA(px,2.5);float dens=smoothstep(.25,.8,sfV(p*.45+8.));
