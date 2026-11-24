@@ -6,6 +6,10 @@ const LOOK={yaw:0,pitch:0,t:9};function lookHold(){return GUN.has&&GUN.ammo>0?7:
 function setLens(fov,near){if(camera.fov!==fov||Math.abs(camera.near-near)>.5||(near<1&&camera.near!==near)){camera.fov=fov;camera.near=near;camera.updateProjectionMatrix()}}
 // Ignore complete revolutions when returning the vehicle view to its default angle.
 function cameraAngle(a){return Math.atan2(Math.sin(a),Math.cos(a))}
+/* r45: distância livre da câmera testando o trajeto inteiro contra os colisores (paredes finas, ex.: laboratório) */
+function colCamDist(x,z,dx,dz,max){for(let s=.2;s<=max;s+=.2){const px=x+dx*s,pz=z+dz*s;if(query(px,pz,.5).some(b=>!b.dead&&!b.low&&b.kind!=='pole'&&px>b.x0-.22&&px<b.x1+.22&&pz>b.z0-.22&&pz<b.z1+.22))return Math.max(.3,s-.3)}return max}
+/* r45: laboratório — câmera em outro cômodo/corredor que o jogador (atrás de uma porta) desce para baixo da verga (2,3 m), senão a parede acima da porta tampa o jogador */
+function labCamClamp(p){const F=(LAB.F||[]).find(F=>F.rooms&&Math.abs(PL.z-(F.z||0))<40);if(!F)return;const reg=(x,z)=>{for(const k in F.rooms){const r=F.rooms[k];if(x>r.x0&&x<r.x1&&z>r.z0&&z<r.z1)return k}return '#'};if(reg(PL.x,PL.z)!==reg(p.x,p.z))p.y=Math.min(p.y,2.1)}
 function ammoCameraBounds(p){
  // v78: danceteria — a parede tem colisor fino e a câmera pulava para fora do salão (W=10, D=7, teto 4,2).
  if(PL.inside==='club'&&CAS.clubBase){const B=CAS.clubBase;p.x=clamp(p.x,B.x-9.6,B.x+9.6);p.z=clamp(p.z,B.z-6.6,B.z+6.6);p.y=clamp(p.y,.35,3.7);return}
@@ -18,7 +22,7 @@ function updateCamera(dt,snapCamera=false){
  try{return gameplayCamera(dt,snapCamera)}finally{camMode=mode;VIEW.tp=tp;VIEW.tpz=z;VIEW.orbit=orbit}
 }
 // Shared bank-style vertical limit for all indoor third-person cameras.
-function interiorCameraHeight(p,aiming){if(PL.inside)p.y=Math.min(p.y,aiming?2.7:2.75);if(PL.inside==='motel'&&MOTEL.rooms)houseCamClamp(p);return p}
+function interiorCameraHeight(p,aiming){if(PL.inside)p.y=Math.min(p.y,aiming?2.7:2.75);if(PL.inside==='lab')labCamClamp(p);if(PL.inside==='motel'&&MOTEL.rooms)houseCamClamp(p);return p}
 function gameplayCamera(dt,snapCamera=false){const cameraStep=snapCamera?1e6:dt;LOOK.yaw=cameraAngle(LOOK.yaw);
 if(DEAL.open&&city.deal){dealCam(dt);return}if(TVM.on){tvCam(dt);return}switchCapSync();if(SWITCH.on){switchCam(dt);return}if(CAMHOP.on){camHopTick(dt);return}if(BR.fall){brFallCam(dt);return}
  let fx,fz;
@@ -45,7 +49,7 @@ if(DEAL.open&&city.deal){dealCam(dt);return}if(TVM.on){tvCam(dt);return}switchCa
  }else if(VIEW.tp&&GUN.has&&!PL.dead&&!PL.down){// sobre o ombro (TPS): mira no centro da tela
   setLens(62,.15);const cp=Math.cos(PL.pitch),ax=-Math.sin(PL.yaw)*cp,ay=Math.sin(PL.pitch),az=-Math.cos(PL.yaw)*cp,rx=Math.cos(PL.yaw),rz=-Math.sin(PL.yaw);
   const inB=(x,z)=>query(x,z,.6).some(b=>!b.dead&&b.kind!=='pole'&&b.kind!=='tree'&&x>b.x0-.25&&x<b.x1+.25&&z>b.z0-.25&&z<b.z1+.25);
-  const hx=PL.x+rx*1.05,hz=PL.z+rz*1.05,hy=PL.gy+(PL.jy||0)+2.05;let dd=3.6;for(;dd>.6;dd-=.25){if(!inB(hx-ax*dd,hz-az*dd))break}if(PL.inside==='backrooms'&&BR.m){const hl=Math.max(.05,Math.hypot(ax,az));dd=Math.min(dd,brCamDist(hx,hz,-ax/hl,-az/hl,3.6*hl)/hl)}
+  const hx=PL.x+rx*1.05,hz=PL.z+rz*1.05,hy=PL.gy+(PL.jy||0)+2.05;let dd=3.6;for(;dd>.6;dd-=.25){if(!inB(hx-ax*dd,hz-az*dd))break}if(PL.inside==='backrooms'&&BR.m){const hl=Math.max(.05,Math.hypot(ax,az));dd=Math.min(dd,brCamDist(hx,hz,-ax/hl,-az/hl,3.6*hl)/hl)}else if(PL.inside==='lab'){const hl=Math.max(.05,Math.hypot(ax,az));dd=Math.min(dd,colCamDist(hx,hz,-ax/hl,-az/hl,3.6*hl)/hl)}
   const want=new THREE.Vector3(hx-ax*dd,Math.max(PL.gy+.5,hy-ay*dd),hz-az*dd);
   if(PL.inside==='mall'&&MALL.G){want.y=Math.min(want.y,MALL.lvl?5.7:9.6)}
   else if((PL.inside===true||PL.inside==='heist')&&houseRooms())houseCamClamp(want)
@@ -56,7 +60,7 @@ if(DEAL.open&&city.deal){dealCam(dt);return}if(TVM.on){tvCam(dt);return}switchCa
  }else if(VIEW.tp){setLens(70,.2);const fwx=-Math.sin(PL.yaw),fwz=-Math.cos(PL.yaw),el=clamp(.32-PL.pitch*.7,-.15,1.2),dist=[4.6,3.3,2.3][VIEW.tpz||0],hb=[1.5,1.75,1.9][VIEW.tpz||0];
   const inB=(x,z)=>query(x,z,.6).some(b=>!b.dead&&b.kind!=='pole'&&b.kind!=='tree'&&x>b.x0-.3&&x<b.x1+.3&&z>b.z0-.3&&z<b.z1+.3);
   let dd=dist;for(;dd>1.4;dd-=.4){if(!inB(PL.x-fwx*dd*Math.cos(el),PL.z-fwz*dd*Math.cos(el)))break}
-  if(PL.inside==='backrooms'&&BR.m){const ce=Math.max(.05,Math.cos(el));dd=brCamDist(PL.x,PL.z,-fwx,-fwz,dist*ce)/ce} /* v3 r10: paredes finas das Backrooms — testa o trajeto inteiro, não só o ponto da câmera */
+  if(PL.inside==='backrooms'&&BR.m){const ce=Math.max(.05,Math.cos(el));dd=brCamDist(PL.x,PL.z,-fwx,-fwz,dist*ce)/ce}else if(PL.inside==='lab'){const ce=Math.max(.05,Math.cos(el));dd=Math.min(dd,colCamDist(PL.x,PL.z,-fwx,-fwz,dist*ce)/ce)} /* r45: paredes finas do laboratório (Point Haze) — a câmera ficava atrás da parede */ /* v3 r10: paredes finas das Backrooms — testa o trajeto inteiro, não só o ponto da câmera */
   const want=new THREE.Vector3(PL.x-fwx*dd*Math.cos(el),PL.gy+(PL.jy||0)+hb+Math.sin(el)*dist+(dist-dd)*.35,PL.z-fwz*dd*Math.cos(el));
   if(PL.inside==='mall'&&MALL.G){const R=MALL.lvl?MALL.U:MALL.G;want.y=Math.min(want.y,MALL.lvl?5.7:9.6);want.x=clamp(want.x,R.x-50,R.x+50);want.z=clamp(want.z,R.z-50,R.z+50)}
   else if(PL.inside==='jail'&&JAIL.IN){want.y=Math.min(want.y,2.9);want.x=clamp(want.x,JAIL.IN.x-5.5,JAIL.IN.x+5.5);want.z=clamp(want.z,JAIL.IN.z-4.55,JAIL.IN.z+6.65)}
