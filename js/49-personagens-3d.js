@@ -67,12 +67,14 @@ function c3Slot(key,pal){c3Atlas();let s=C3.slots.get(key);const now=performance
  try{c3Paint(C3.g,ox,oy,pal)}catch(e){console.error(e)}C3.tex.needsUpdate=true;return s}
 /* ---------- geometria (formato compacto, ~380 triângulos, peças rígidas) ---------- */
 function c3Geo(){if(C3.geo)return C3.geo;const P=[],N=[],U=[],K=[],I=[];let vi=0;const TW=C3.AW,TH=C3.AH;
- const uvAt=(r,u,v)=>[(r[0]+u*r[2])/TW,1-(r[1]+v*r[3])/TH],sw=k=>[(C3SW[k][0]+1.5)/TW,1-(C3SW[k][1]+2.5)/TH];
+ const cl=(a,lo,hi)=>a<lo?lo:a>hi?hi:a,uvAt=(r,u,v)=>[cl(r[0]+u*r[2],r[0]+.5,r[0]+r[2]-.5)/TW,1-cl(r[1]+v*r[3],r[1]+.5,r[1]+r[3]-.5)/TH] /* v4 r1: meio texel para dentro nas bordas (a emenda de trás pegava a coluna do quadro vizinho = risco fino) */,sw=k=>[(C3SW[k][0]+1.5)/TW,1-(C3SW[k][1]+2.5)/TH];
  /* u por ângulo: a frente (90°..270°) ganha 70% da largura da tira (mais pixels para rosto e estampa) */
  const uw=j=>{const t=j*360;return t<90?.15*t/90:t<270?.15+.7*(t-90)/180:.85+.15*(t-270)/90};
  function prism(part,S0,rings,rect,capT,capB,mx=1,ox=0,warp=false){const base=vi;
-  for(const r of rings)for(let j=0;j<=S0;j++){const t=j/S0*Math.PI*2,sx=-Math.sin(t),sz=-Math.cos(t);P.push(ox*mx+(r.cx||0)*mx+sx*r.rx,r.y,(r.cz||0)+sz*r.rz);
-   const n=new THREE.Vector3(sx/r.rx,0,sz/r.rz).normalize();N.push(n.x,n.y,n.z);const uv=uvAt(rect,warp?uw(j/S0):j/S0,r.v);U.push(uv[0],uv[1]);K.push(part);vi++}
+  /* v4 r1: normal com inclinação vertical (perfil do anel anterior/seguinte), luz contínua de cima a baixo em vez de faixas por anel */
+  const Rm=r=>(r.rx+r.rz)/2,slope=rings.map((r,k)=>{const a=rings[Math.max(0,k-1)],b=rings[Math.min(rings.length-1,k+1)],dy=a.y-b.y;return r.ny!==undefined?r.ny:Math.abs(dy)<1e-4?0:Math.max(-1,Math.min(1,(Rm(a)-Rm(b))/dy))});
+  rings.forEach((r,k)=>{for(let j=0;j<=S0;j++){const t=j/S0*Math.PI*2,sx=-Math.sin(t),sz=-Math.cos(t);P.push(ox*mx+(r.cx||0)*mx+sx*r.rx,r.y,(r.cz||0)+sz*r.rz);
+   const n=new THREE.Vector3(sx/r.rx,0,sz/r.rz).normalize();n.y=slope[k];n.normalize();N.push(n.x,n.y,n.z);const uv=uvAt(rect,warp?uw(j/S0):j/S0,r.v);U.push(uv[0],uv[1]);K.push(part);vi++}});
   for(let a=0;a<rings.length-1;a++)for(let j=0;j<S0;j++){const p=base+a*(S0+1)+j,q=p+S0+1;I.push(p,q,p+1,p+1,q,q+1)}
   const cap=(r,up,uv)=>{if(!uv)return;const c0=vi;for(let j=0;j<S0;j++){const t=j/S0*Math.PI*2;P.push(ox*mx+(r.cx||0)*mx-Math.sin(t)*r.rx,r.y,(r.cz||0)-Math.cos(t)*r.rz);N.push(0,up?1:-1,0);U.push(uv[0],uv[1]);K.push(part);vi++}
    for(let j=1;j<S0-1;j++){if(up)I.push(c0,c0+j,c0+j+1);else I.push(c0,c0+j+1,c0+j)}};
@@ -86,9 +88,9 @@ function c3Geo(){if(C3.geo)return C3.geo;const P=[],N=[],U=[],K=[],I=[];let vi=0
  /* r46: juntas (esferas baixas no pivô de cada articulação, da cor do tecido naquela altura): giram em volta do próprio centro,
     então fecham o vão de ombro, cotovelo, quadril e joelho em qualquer pose sem mexer no shader */
  function ball(part,x,y,z,R,Ry,rect,v,mx){const S0=6,c=uvAt(rect,.5,v),rs=[.42,1.05,1.5708,2.09,2.72].map(a=>({y:y+Ry*Math.cos(a),rx:R*Math.sin(a),rz:R*Math.sin(a)*.96,cx:x,cz:z,v}));prism(part,S0,rs,rect,c,c,mx,0)}
- prism(2,8,[{y:1.73,rx:.09,rz:.085,cz:-.005,v:0},{y:1.70,rx:.155,rz:.15,cz:-.005,v:.12},{y:1.58,rx:.165,rz:.16,v:.45},{y:1.46,rx:.155,rz:.152,cz:.006,v:.72},{y:1.39,rx:.105,rz:.11,cz:.012,v:.92},{y:1.32,rx:.065,rz:.065,v:1}],C3RG.head,sw('hair'),null,1,0,true);
- prism(1,6,[{y:1.36,rx:.15,rz:.09,v:0},{y:1.31,rx:.225,rz:.125,v:.12},{y:1.1,rx:.21,rz:.13,cz:.008,v:.45},{y:.9,rx:.19,rz:.118,v:.85},{y:.8,rx:.195,rz:.12,v:1},{y:.785,rx:.176,rz:.104,v:1},{y:.71,rx:.168,rz:.098,v:1}],C3RG.torso,sw('shirt'),uvAt(C3RG.torso,.5,1),1,0,true); /* r46: saia de 9 cm dentro do quadril (giro/inclinação do tronco não abre a cintura) */
- prism(0,6,[{y:.82,rx:.197,rz:.122,v:0},{y:.7,rx:.2,rz:.125,v:.1}],C3RG.leg,null,sw('pants'));
+ prism(2,10,[{y:1.73,rx:.09,rz:.085,cz:-.005,v:0},{y:1.70,rx:.155,rz:.15,cz:-.005,v:.12},{y:1.58,rx:.165,rz:.16,v:.45},{y:1.46,rx:.155,rz:.152,cz:.006,v:.72},{y:1.39,rx:.105,rz:.11,cz:.012,v:.92},{y:1.32,rx:.065,rz:.065,v:1}],C3RG.head,sw('hair'),null,1,0,true);
+ prism(1,8,[{y:1.36,rx:.15,rz:.09,v:0},{y:1.31,rx:.225,rz:.125,v:.12},{y:1.1,rx:.21,rz:.13,cz:.008,v:.45},{y:.9,rx:.19,rz:.118,v:.85},{y:.8,rx:.195,rz:.12,v:1},{y:.785,rx:.176,rz:.104,v:1},{y:.71,rx:.168,rz:.098,v:1}],C3RG.torso,sw('shirt'),uvAt(C3RG.torso,.5,1),1,0,true); /* r46: saia de 9 cm dentro do quadril (giro/inclinação do tronco não abre a cintura) */
+ prism(0,8,[{y:.82,rx:.197,rz:.122,v:0},{y:.7,rx:.2,rz:.125,v:.1}],C3RG.leg,null,sw('pants'));
 
  /* r47: cabelo comprido = malha própria (peça 11, segue a cabeça), casca dupla em arco atrás da cabeça descendo até as costas.
     Some (vira um ponto) quando o personagem não tem cabelo comprido (uLong=0). Antes era uma faixa pintada nas costas da blusa. */
@@ -102,13 +104,14 @@ function c3Geo(){if(C3.geo)return C3.geo;const P=[],N=[],U=[],K=[],I=[];let vi=0
   for(let j=0;j<S0;j++){const k=prof.length-1,a=o0+k*(S0+1)+j,b=o0+nP+k*(S0+1)+j;quad(a,a+1,b+1,b)}
   for(const j of[0,S0])for(let k=0;k<prof.length-1;k++){const a=o0+k*(S0+1)+j,b=o0+nP+k*(S0+1)+j;quad(a,a+S0+1,b+S0+1,b)}}
  for(const mx of[1,-1]){const L=mx>0;
-  prism(L?3:5,5,[{y:1.33,rx:.066,rz:.07,v:0},{y:1.18,rx:.062,rz:.065,v:.25},{y:1.04,rx:.056,rz:.058,v:.5}],C3RG.arm,sw('shirt'),null,mx,.265);
-  prism(L?4:6,5,[{y:1.04,rx:.055,rz:.057,cx:.27,v:.5},{y:.82,rx:.047,rz:.049,cx:.274,v:.86},{y:.79,rx:.054,rz:.045,cx:.276,v:.9},{y:.68,rx:.042,rz:.036,cx:.272,v:1}],C3RG.arm,null,sw('hand'),mx);
-  prism(L?7:9,6,[{y:.8,rx:.095,rz:.098,cx:.1,v:0},{y:.62,rx:.088,rz:.09,cx:.1,v:.3},{y:.44,rx:.075,rz:.078,cx:.1,v:.55}],C3RG.leg,null,null,mx);
-  prism(L?8:10,5,[{y:.44,rx:.074,rz:.077,cx:.1,v:.55},{y:.28,rx:.07,rz:.074,cx:.1,cz:-.008,v:.8},{y:.11,rx:.055,rz:.057,cx:.1,v:1}],C3RG.leg,null,null,mx);
+  prism(L?3:5,7,[{y:1.33,rx:.066,rz:.07,v:0},{y:1.18,rx:.062,rz:.065,v:.25},{y:1.04,rx:.056,rz:.058,v:.5}],C3RG.arm,sw('shirt'),null,mx,.265);
+  prism(L?4:6,7,[{y:1.04,rx:.055,rz:.057,cx:.27,v:.5},{y:.82,rx:.047,rz:.049,cx:.274,v:.86},{y:.79,rx:.054,rz:.045,cx:.276,v:.9},{y:.68,rx:.042,rz:.036,cx:.272,v:1}],C3RG.arm,null,sw('hand'),mx);
+  prism(L?7:9,8,[{y:.8,rx:.095,rz:.098,cx:.1,v:0},{y:.62,rx:.088,rz:.09,cx:.1,v:.3},{y:.44,rx:.075,rz:.078,cx:.1,v:.55}],C3RG.leg,null,null,mx);
+  prism(L?8:10,7,[{y:.44,rx:.074,rz:.077,cx:.1,v:.55},{y:.28,rx:.07,rz:.074,cx:.1,cz:-.008,v:.8},{y:.11,rx:.055,rz:.057,cx:.1,v:1}],C3RG.leg,null,null,mx);
   ball(L?3:5,.265,1.3,0,.066,.064,C3RG.arm,.04,mx);ball(L?4:6,.27,1.04,0,.052,.046,C3RG.arm,.5,mx); /* raio um pouco menor que o do membro: sem z-fight com a casca */
   ball(L?7:9,.1,.78,0,.088,.07,C3RG.leg,.03,mx);ball(L?8:10,.1,.44,0,.071,.056,C3RG.leg,.55,mx);
-  box(L?8:10,mx>0?.03:-.175,mx>0?.175:-.03,0,.115,-.08,.18,C3RG.shoe)}
+  /* v4 r1: pé oval (antes caixa): anel de 8 lados, peito do pé mais baixo e recuado, sola reta */
+  prism(L?8:10,8,[{y:.118,rx:.05,rz:.085,cx:.1025,cz:.02,v:0,ny:1.4},{y:.1,rx:.066,rz:.118,cx:.1025,cz:.045,v:.3},{y:.05,rx:.073,rz:.13,cx:.1025,cz:.05,v:.7},{y:.018,rx:.072,rz:.128,cx:.1025,cz:.05,v:.85,ny:-.3},{y:0,rx:.066,rz:.12,cx:.1025,cz:.05,v:1,ny:-1}],C3RG.shoe,sw('shoe'),sw('sole'),mx)}
  const ge=new THREE.BufferGeometry();ge.setAttribute('position',new THREE.Float32BufferAttribute(P,3));ge.setAttribute('normal',new THREE.Float32BufferAttribute(N,3));
  ge.setAttribute('uv',new THREE.Float32BufferAttribute(U,2));ge.setAttribute('part',new THREE.Float32BufferAttribute(K,1));ge.setIndex(I);ge.computeBoundingSphere();ge.boundingSphere.radius+=.5;ge.userData.cached=true;
  C3.geo=ge;return ge}
@@ -155,7 +158,7 @@ uniform sampler2D map;uniform float uAlpha,uBlink;uniform vec2 uTile;varying vec
 void main(){vec2 uvv=vUv;float lid=1.;
  /* r52: piscar = olhos (pixels 15–24 × 10–11 do quadro da cabeça) trocados pela pele logo abaixo; a linha de baixo um pouco mais escura (pálpebra) */
  if(uBlink>.5){vec2 q=vec2(vLoc.x*${C3.AW}.,(1.-vLoc.y)*${C3.AH}.);if(q.x>15.&&q.x<25.&&q.y>10.&&q.y<12.){uvv=vec2(16.5/${C3.AW}.,1.-13.5/${C3.AH}.)+uTile;lid=q.y>11.?.78:1.;}}
- vec3 c=texture2D(map,uvv).rgb*vLight*lid;c=floor(c*31.+.5)/31.;gl_FragColor=vec4(c,uAlpha);
+ vec3 c=texture2D(map,uvv).rgb*vLight*lid;c=floor(c*63.+.5)/63.; /* v4 r1: 64 níveis (31 desenhava curvas de nível no tronco) */gl_FragColor=vec4(c,uAlpha);
  #include <fog_fragment>
 }`;
 function c3Material(){if(!C3.base)C3.base=new THREE.ShaderMaterial({vertexShader:C3_VS,fragmentShader:C3_FS,fog:true,
