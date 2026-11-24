@@ -139,10 +139,11 @@ vec3 sfStreet(vec2 p,float px){vec3 m=vec3(1.);if(sfStK.w<.5)return m;float Pp=s
     float grid=sfAA(px,7.)*max(step(.8,fract(l.x*7.)),step(.8,fract(l.y*7.)))*step(rr,.47);
     float t=g*(1.-groove*.5)+rim*.08+grid*.1;m=mix(m,vec3(t*.96,t*.96,t),cov);}}}
  for(int ax=0;ax<2;ax++){float cu=ax==0?p.y:p.x,al=ax==0?p.x:p.y,k=floor(cu/Pp+.5),v=cu-k*Pp,av=abs(v);
-  if(av>o-.56&&av<o+.05){float j=floor(al/Pp),sl=al-j*Pp;if(sl>o&&sl<Pp-o){vec2 ni=ax==0?vec2(j,k):vec2(k,j);
+  if(av>3.34&&av<o+.05){float j=floor(al/Pp),sl=al-j*Pp;if(sl>o&&sl<Pp-o){vec2 ni=ax==0?vec2(j,k):vec2(k,j);
    if(ni.x>=0.&&ni.y>=0.&&ni.x<n&&ni.y<n){vec4 d=texture2D(sfSt,(ni+.5)/n);float c=floor((ax==0?d.g:d.b)*255.+.5);float f=v<0.?mod(c,16.):floor(c/16.);
-    if(f>0.){float s0=o+4.+(f-1.)/14.*(Pp-2.*o-8.),ds=abs(sl-s0);if(ds<.6){float cov=(1.-smoothstep(.5-aa,.5+aa,ds))*(1.-smoothstep(.46-aa,.46+aa,o-av));
-     float bars=sfAA(px,9.)*step(.5,fract(sl*9.));float fr=max(step(.42,ds),max(step(o-.06,av),step(av,o-.39)));
+    float na=floor(d.a*255.+.5),oc=(ax==0?mod(na,2.):mod(floor(na/2.),2.))>.5?3.9:o; /* v4 r3: rua estreita (não-avenida) tem o meio-fio a 3,9 m */
+    if(f>0.&&av>oc-.56&&av<oc+.05){float s0=o+4.+(f-1.)/14.*(Pp-2.*o-8.),ds=abs(sl-s0);if(ds<.6){float cov=(1.-smoothstep(.5-aa,.5+aa,ds))*(1.-smoothstep(.46-aa,.46+aa,oc-av));
+     float bars=sfAA(px,9.)*step(.5,fract(sl*9.));float fr=max(step(.42,ds),max(step(oc-.06,av),step(av,oc-.39)));
      float t=mix(.08+.2*bars,.4,fr);m=mix(m,vec3(t),cov);}}}}}}
  return m;}
 /* v4 r1: rachaduras finas e raras na calçada — células de 4,2 m (e outra grade de 6,7 m deslocada), ~10% com 1 trinca torta de 0,6–2 m */
@@ -152,6 +153,14 @@ float sfCrack1(vec2 p,float C,float sd,float px){vec2 id=floor(p/C);float h=sfH(
  float wob=(sfV(vec2(al*2.2,id.x*3.1+id.y*7.3+sd))-.5)*.22+(sfV(vec2(al*9.,id.y*5.7+sd))-.5)*.05;float ds=abs(dot(q,vec2(-d.y,d.x))-wob);
  float w=.004+.011*(1.-smoothstep(.5,1.,abs(al)/L));float pw=max(px*.75,.002);return (1.-smoothstep(w,w+pw,ds))*min(1.,w/max(px*.5,.001));}
 float sfCrack(vec2 p,float px){float a=sfAA(px,6.);if(a<.01)return 0.;return a*max(sfCrack1(p,4.2,.4,px),sfCrack1(p+vec2(1.9,3.3),6.7,9.2,px));}
+/* v4 r3: onde há boca-de-lobo a tinta da faixa de borda some (a linha de borda da rua estreita fica a 3,6–3,75 m, por cima da grade) */
+float sfDrainAt(vec2 p){if(sfStK.w<.5)return 0.;float Pp=sfStK.x,n=sfStK.y,o=sfStK.z;
+ for(int ax=0;ax<2;ax++){float cu=ax==0?p.y:p.x,al=ax==0?p.x:p.y,k=floor(cu/Pp+.5),v=cu-k*Pp,av=abs(v);
+  if(av>3.3&&av<o+.05){float j=floor(al/Pp),sl=al-j*Pp;if(sl>o&&sl<Pp-o){vec2 ni=ax==0?vec2(j,k):vec2(k,j);
+   if(ni.x>=0.&&ni.y>=0.&&ni.x<n&&ni.y<n){vec4 d=texture2D(sfSt,(ni+.5)/n);float c=floor((ax==0?d.g:d.b)*255.+.5);float f=v<0.?mod(c,16.):floor(c/16.);
+    float na=floor(d.a*255.+.5),oc=(ax==0?mod(na,2.):mod(floor(na/2.),2.))>.5?3.9:o;
+    if(f>0.&&av>oc-.5&&av<oc){float s0=o+4.+(f-1.)/14.*(Pp-2.*o-8.);if(abs(sl-s0)<.52)return 1.;}}}}}
+ return 0.;}
 vec3 sfSide(vec2 p,float px){float t=mix(.95,1.04,sfV(p*.08)*.6+sfV(p*.31+2.)*.4);float a1=sfAA(px,14.),a2=sfAA(px,40.),a3=sfAA(px,4.);t*=1.-.5*sfCrack(p,px);
  if(a1>0.)t*=1.-a1*sfDot(p+.5,14.,.68,.3)*.08;if(a2>0.)t*=1.+a2*(sfH(floor(p*40.))-.5)*.07;t*=1.+a3*(sfV(p*4.)-.5)*.05;return vec3(t);}
 vec2 sfRip(vec2 p,float px){float a=sfAA(px,2.2)*smoothstep(.25,.6,sfV(p*.11+2.));if(a<.01)return vec2(0.);vec2 d=normalize(vec2(.8,.6));float w=sfV(p*.35)*5.;float ph=dot(p,d)*5.2+w;float s=cos(ph)+.35*cos(ph*2.+1.);return d*s*a*.2;}
@@ -213,7 +222,7 @@ function surfPatch(mat,kind){if(!mat||mat.userData.surf)return mat;mat.userData.
      bc=vColor;
      #endif
      float lum=dot(bc,vec3(.3,.59,.11));if(sfN.y>.6&&sfIsDirt(bc)){diffuseColor.rgb*=mix(vec3(1.),vec3(sfDirt(sfW.xz,sfPx).x),sfF);}else if(sfN.y>.6&&(lum>.72||distance(bc,sfPaint)<.12||distance(bc,sfPaintW)<.12||(bc.r>.7&&bc.g>.5&&bc.b<bc.r*.4))){
-      vec2 cw=sfW.xz;float lvl=.32+.68*(sfH(floor(cw/76.+.5)*1.37+sfSeed)*.6+sfH(floor(cw/19.)*2.11+sfSeed+5.3)*.4);
+      vec2 cw=sfW.xz;if(sfDrainAt(cw)>.5)discard;float lvl=.32+.68*(sfH(floor(cw/76.+.5)*1.37+sfSeed)*.6+sfH(floor(cw/19.)*2.11+sfSeed+5.3)*.4);
       float a0=sfAA(sfPx,1.3),am=sfAA(sfPx,2.6),a1=sfAA(sfPx,5.),a2=sfAA(sfPx,22.),big=sfV(cw*.45+3.);
       float nn=.5+a0*(sfV(cw*1.3+7.)-.5)*.7+am*(sfV(cw*2.6+1.7)-.5)*.6+a1*(sfV(cw*5.)-.5)*.8+a2*(sfH(floor(cw*22.))-.5)*.7;
       float th=.55*(.12+.36*lvl+.2*lvl*smoothstep(.45,.85,big))*max(a0*.85,max(am*.95,a1))*sfF; /* v4 r1: ×.55 = metade da área gasta (≈37%→19%) */if(nn<th)discard;diffuseColor.rgb*=1.-(.08+.1*lvl)*sfF*(1.-smoothstep(th,th+.25,nn));}}`
@@ -254,11 +263,23 @@ function surfApply(){SURF.U.sfOn.value=S.fxSurf!==false?1:0}
    cada trecho de rua com 35% (≈1–2 por quarteirão). Fora: zona rural/terra, pontes, água, Point Haze. city.manholes = lista para a fumaça. */
 function streetTexBuild(){const N=city.N|0,n=N+1,data=new Uint8Array(n*n*4),r=mulberry32((S.seed^0x6b0e1d3)>>>0),list=[];city.manholes=list;
  const ok=(x,z)=>{if(city.haze||isRural(x,z))return false;for(const d of city.decks||[])if(x>d[0]-2&&x<d[2]+2&&z>d[1]-2&&z<d[3]+2)return false;try{if(waterAt(x,z))return false}catch(e){}return true};
- const core=city.core;
+ const core=city.core,dry=(x,z)=>{try{return !waterAt(x,z)}catch(e){return true}};
  for(let kz=0;kz<=N;kz++)for(let kx=0;kx<=N;kx++){const i=(kz*n+kx)*4,x=kx*P,z=kz*P,a=r(),q=Math.floor(r()*16),sm=r(),g1=r(),g2=r(),f1=1+Math.floor(r()*14),f2=1+Math.floor(r()*14),b1=r(),b2=r(),e1=1+Math.floor(r()*14),e2=1+Math.floor(r()*14);
   if(nodeDeg(kx,kz)>=3&&a<.45&&ok(x,z)){data[i]=1+q;const mx=x+(q%4-1.5)*1.7,mz=z+(Math.floor(q/4)-1.5)*1.7;list.push({x:mx,z:mz,smoke:!!core&&Math.hypot(mx-core.x,mz-core.z)<170&&sm<.7})}
-  if(segExists(kx,kz,0)&&ok(x+P/2,z))data[i+1]=(g1<.35?f1:0)+(g2<.35?f2*16:0);
-  if(segExists(kx,kz,1)&&ok(x,z+P/2))data[i+2]=(b1<.35?e1:0)+(b2<.35?e2*16:0)}
+  /* v4 r3: lado que dá para água (rio/canal/mar) não tem calçada → sem boca-de-lobo; A = rua estreita (bit 1 = H, bit 2 = V) */
+  if(segExists(kx,kz,0)&&ok(x+P/2,z))data[i+1]=(g1<.35&&dry(x+P/2,z-P/2)?f1:0)+(g2<.35&&dry(x+P/2,z+P/2)?f2*16:0);
+  if(segExists(kx,kz,1)&&ok(x,z+P/2))data[i+2]=(b1<.35&&dry(x-P/2,z+P/2)?e1:0)+(b2<.35&&dry(x+P/2,z+P/2)?e2*16:0);
+  try{data[i+3]=(segExists(kx,kz,0)&&lineType(kx,kz,0).t!=='ave'?1:0)+(segExists(kx,kz,1)&&lineType(kx,kz,1).t!=='ave'?2:0)}catch(e){}}
+ /* v4 r3: no mínimo 1 boca-de-lobo por quarteirão — cada quarteirão olha os 4 lados (só trechos de asfalto que passam no ok());
+    se nenhum sorteou, um deles ganha. Nibble baixo = lado norte/oeste da rua, alto = sul/leste. Gerador próprio (não mexe no R()). */
+ {const r2=mulberry32((S.seed^0x51d0b0c)>>>0);city.drainForced=0;
+  for(let bz=0;bz<N;bz++)for(let bx=0;bx<N;bx++){const sides=[];if(!dry(bx*P+P/2,bz*P+P/2))continue;
+   if(segExists(bx,bz,0)&&ok(bx*P+P/2,bz*P))sides.push([((bz*n+bx)*4)+1,16]);
+   if(segExists(bx,bz+1,0)&&ok(bx*P+P/2,(bz+1)*P))sides.push([(((bz+1)*n+bx)*4)+1,1]);
+   if(segExists(bx,bz,1)&&ok(bx*P,bz*P+P/2))sides.push([((bz*n+bx)*4)+2,16]);
+   if(segExists(bx+1,bz,1)&&ok((bx+1)*P,bz*P+P/2))sides.push([((bz*n+bx+1)*4)+2,1]);
+   const has=sides.some(([j,m])=>m===1?(data[j]&15)>0:(data[j]>>4)>0),k=Math.floor(r2()*4),f=1+Math.floor(r2()*14);
+   if(!has&&sides.length){const[j,m]=sides[k%sides.length];data[j]+=f*m;city.drainForced++}}}
  const old=SURF.U.sfSt.value;const t=new THREE.DataTexture(data,n,n,THREE.RGBAFormat);t.magFilter=t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;t.needsUpdate=true;
  SURF.U.sfSt.value=t;SURF.U.sfStK.value.set(P,n,RW/2,city.haze?0:1);SURF.U.sfSeed.value=(S.seed%9973)*.731;{const st=STYLES[S.style]||STYLES.modern,c=COL(st.center),w=COL(st.mark);SURF.U.sfPaint.value.set(c.r,c.g,c.b);SURF.U.sfPaintW.value.set(w.r,w.g,w.b);const ag=st.synth?[.6,.58,.64]:S.style==='inverted'?[.78,.78,.75]:[.86,.85,.8];SURF.U.sfAge.value.set(ag[0],ag[1],ag[2])} /* v3 r62: tinta envelhecida por mundo (o Synth satura com bloom, precisa de mais) */ /* v3 r60: cor da faixa central e da branca do mundo atual (desgaste em todos os mundos) */if(old)old.dispose()}
 /* fumaça leve dos bueiros do centro (mesmo emit da fuligem das chaminés, bem mais fraca) */
