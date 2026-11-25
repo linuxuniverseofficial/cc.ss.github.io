@@ -695,4 +695,6 @@ function makeVehicle(type,x,z,a,color){const t=VT[type];const st=STYLES[S.style]
  if(type==='taxi')c.taxiFreeLit=R2()<.60; // letreiros acesos/apagados sorteados no trânsito
  if(type==='truck')c.icol=COL(color).lerp(COL(c.cargo),.5);
  if(type==='police'){c.police=true;c.icol=COL('#ffffff');c.hasGlow=false;c.boom=false;c.vmax=11+R2()*3}
+ /* v4 r35: carro que nasce na roça já vem com barro (20–100%); Math.random = seed intacta; garagem/save/conversível sobrescrevem c.grime depois */
+ if(!t.boat&&!t.hover&&type!=='jetski'&&type!=='heli'&&isRural(x,z)){c.grime=.2+.8*Math.random();try{dirtApply(c)}catch(e){}}
  c.gy=groundY(x,z);vehicles.push(c);return c}
