@@ -746,7 +746,7 @@ function scnSpawn(kind){const e={kind,peds:[],cars:[],t:0,go:false,ph:0,age:0};
  return e}
 function scnClear(e,hard){if(!e)return;if(e.board){skDisposeG(e.board);e.board=null}
  for(const p of e.peds){if(!peds.includes(p))continue;if(hard&&p.state!=='dead')removePed(p);else if(p.scn)scnWalk(p)}
- if(e.dog&&!e.dog.dead){e.dog.wait=hard?999:1;e.dog.scn=false;if(hard){const i=ANIM.list.indexOf(e.dog);if(i>=0){scene.remove(e.dog.sp);e.dog.tex.dispose();e.dog.sp.material.dispose();ANIM.list.splice(i,1)}}}
+ if(e.dog&&!e.dog.dead){e.dog.wait=hard?999:1;e.dog.scn=false;if(hard){const i=ANIM.list.indexOf(e.dog);if(i>=0){try{pet3Drop(e.dog.sp)}catch(e2){}scene.remove(e.dog.sp);e.dog.tex.dispose();e.dog.sp.material.dispose();ANIM.list.splice(i,1)}}}
  for(const c of e.cars){if(!vehicles.includes(c))continue;if(hard&&c!==PL.car&&c!==PL.lastCar)removeVehicle(c);else if(!SCN.left.includes(c))SCN.left.push(c)}}
 function scnEnd(hard){const e=SCN.cur;SCN.cur=null;scnClear(e,hard)}
 function scnPick(){let r=R2(),tot=0;for(const k in SCN.W)tot+=SCN.W[k];r*=tot;for(const k in SCN.W){r-=SCN.W[k];if(r<=0)return k}return 'crash'}
