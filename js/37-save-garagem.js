@@ -1,7 +1,7 @@
 'use strict';
 /* Coastal Chaos · js/37-save-garagem.js — Garagem, casa segura, save (.psave), versão do save, menu inicial.
    Script clássico (não é módulo): todos os js/NN-*.js dividem o mesmo escopo global e entram na ordem do index.html. */
-function carRec(c){return{type:c.type,color:c.color,nitro:!!c.hasNitro,special:!!c.special,legal:!!c.legal,turbo:!!c.turbo,neon:c.neon?c.neonCol:null,plate:normPlate(c.plate)||randomPlate()}}
+function carRec(c){return{type:c.type,color:c.color,nitro:!!c.hasNitro,special:!!c.special,legal:!!c.legal,turbo:!!c.turbo,neon:c.neon?c.neonCol:null,plate:normPlate(c.plate)||randomPlate(),grime:+(c.grime||0).toFixed(2)}} /* v4 r28: sujeira vai junto (garagem/conversível) */
 /* v79r24: CONVERSÍVEL DA HISTÓRIA = permanente. Mora na vaga 1 da garagem (sem a marcação amarela/P); a vaga 2 é a única livre pra guardar carro.
    Salvo com placa (d.conv). Se sumir do mundo ou for destruído longe de você, volta inteiro pra vaga. Saves antigos: o conv da vaga 1 vira o permanente. */
 function convPerm(){return !!SAFE.conv}
@@ -9,7 +9,7 @@ function convTick(s,p){const sl=s.slots[0];if(SAFE.pads&&SAFE.pads[0])SAFE.pads[
  if(cc&&!vehicles.includes(cc))cc=SAFE.convCar=null;
  if(cc&&(!cc.alive||cc.exploded)&&PL.car!==cc&&Math.hypot((PL.car||PL).x-cc.x,(PL.car||PL).z-cc.z)>70){removeVehicle(cc);cc=SAFE.convCar=null}
  if(!cc&&Math.hypot(p.x-sl.x,p.z-sl.z)<220&&VT[SAFE.conv.type]){const R=SAFE.conv;let c=vehicles.find(v=>v.alive&&!v.exploded&&v.type===R.type&&v!==PL.car&&!SAFE.cars.includes(v)&&Math.hypot(v.x-sl.x,v.z-sl.z)<2.5);
-  if(!c){c=makeVehicle(R.type,sl.x,sl.z,sl.a,R.color);c.hasNitro=!!R.nitro;c.turbo=!!R.turbo;if(R.neon){c.neon=true;c.neonCol=R.neon}c.special=!!R.special;c.sleep=true}
+  if(!c){c=makeVehicle(R.type,sl.x,sl.z,sl.a,R.color);c.hasNitro=!!R.nitro;c.turbo=!!R.turbo;if(R.neon){c.neon=true;c.neonCol=R.neon}c.special=!!R.special;c.sleep=true;c.grime=+R.grime||0;dirtApply(c)}
   if(R.plate)c.plate=normPlate(R.plate)||c.plate;c.legal=!!R.legal;c.owned=true;c.keep=true;c.hand=true;c.homeConv=true;SAFE.convCar=cc=c}
  if(cc&&PL.car===cc)SAFE.conv={...carRec(cc),legal:!!(SAFE.conv.legal||cc.legal)}}
 function convMigrate(){if(SAFE.conv||!Array.isArray(SAFE.stored))return;const r=SAFE.stored[0];if(r&&r.type==='conv'&&(STORY.cleared||STORY.done.has('pier')||(typeof PROLOGUE!=='undefined'&&PROLOGUE.stage==='done'))){SAFE.conv={...r,legal:true};SAFE.stored[0]=null;const c=SAFE.cars[0];if(c){SAFE.convCar=c;c.homeConv=true;c.keep=true;SAFE.cars[0]=null}}}
@@ -21,7 +21,7 @@ function safeGarage(){const s=city.safe;if(!s||!s.slots||PL.inside)return;const 
   else if(car&&!vehicles.includes(car))SAFE.cars[i]=car=null;
   const st=SAFE.stored[i];if(st&&!car&&Math.hypot(p.x-sl.x,p.z-sl.z)<220&&VT[st.type]){ /* v79r23: se o carro dessa vaga já está parado nela (ex.: conversível da missão 1, ou após carregar o jogo sem recriar a cidade), adota em vez de criar outro igual */
    const here=vehicles.find(v=>v.alive&&!v.exploded&&v.type===st.type&&v!==PL.car&&!SAFE.cars.includes(v)&&Math.hypot(v.x-sl.x,v.z-sl.z)<2.5);if(here){here.owned=true;here.hand=true;SAFE.cars[i]=here;car=here}}
-  if(st&&!car&&Math.hypot(p.x-sl.x,p.z-sl.z)<220&&VT[st.type]){const c=makeVehicle(st.type,sl.x,sl.z,sl.a,st.color);c.hasNitro=st.nitro;c.turbo=!!st.turbo;if(st.neon){c.neon=true;c.neonCol=st.neon}if(st.plate)c.plate=normPlate(st.plate)||c.plate;c.special=st.special;c.legal=!!st.legal;c.owned=true;c.hand=true;c.sleep=true;SAFE.cars[i]=c}
+  if(st&&!car&&Math.hypot(p.x-sl.x,p.z-sl.z)<220&&VT[st.type]){const c=makeVehicle(st.type,sl.x,sl.z,sl.a,st.color);c.hasNitro=st.nitro;c.turbo=!!st.turbo;if(st.neon){c.neon=true;c.neonCol=st.neon}if(st.plate)c.plate=normPlate(st.plate)||c.plate;c.special=st.special;c.legal=!!st.legal;c.owned=true;c.hand=true;c.sleep=true;c.grime=+st.grime||0;dirtApply(c);SAFE.cars[i]=c}
   car=SAFE.cars[i];if(car&&PL.car===car&&st)SAFE.stored[i]={...carRec(car),legal:!!(st.legal||car.legal),t:st.t||Date.now()}}
  const lc=PL.lastCar;if(PL.car||!lc||!lc.alive||lc.t.boat||Math.hypot(lc.vx,lc.vz)>1||SAFE.msgFor===lc&&lc.hp>=100)return;
  for(let i=0;i<2;i++){const sl=s.slots[i];if(!sl||Math.hypot(lc.x-sl.x,lc.z-sl.z)>3.4)continue;

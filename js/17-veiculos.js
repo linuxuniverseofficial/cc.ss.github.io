@@ -614,7 +614,7 @@ function buildCarMesh(c){
   c.lb=[mk(-.72,-.04,0x5a1010),mk(.04,.72,0x10205a)];const gl=new THREE.Mesh(new THREE.PlaneGeometry(14,14),new THREE.MeshBasicMaterial({map:glowTex,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,opacity:.45}));
   gl.rotation.x=-Math.PI/2;gl.position.y=.08;gl.renderOrder=3;gl.visible=false;g.add(gl);c.lbGlow=gl}
  if(c.exploded)g.traverse(o=>{if(!o.isMesh)return;if(o.material===carBodyMat)o.material=burntMat;else if(o.material&&o.material.userData.carBody)return;else if(o.material===carLightMat||(o.material&&o.material.blending===THREE.AdditiveBlending))o.visible=false});
- c.g=g;c.ch=ch;scene.add(g);syncCar(c,0)}
+ c.g=g;c.ch=ch;scene.add(g);syncCar(c,0);if(!c.exploded&&(c.grime||0)>=.04&&typeof dirtApply==='function')dirtApply(c)} /* v4 r28: malha remontada (LOD/tuning) volta suja */
 function dropCarMesh(c){if(!c.g)return;c.timeGlow=null;c.timeBall=null;c.lb=null;c.lbGlow=null;c.hasWheelMeshes=false;scene.remove(c.g);c.g.traverse(o=>{if(o.userData.taxiSign)return;if(o.geometry&&!o.isSprite&&o.geometry!==wheelGeo&&o.geometry!==hubGeo&&!o.geometry.userData.cached)o.geometry.dispose();if(o.material&&o.material!==carBodyMat&&o.material!==carLightMat&&o.material!==wheelMat&&o.material!==hubMat&&o.material!==burntMat&&!o.material.userData.carBody)o.material.dispose()});c.g=null;c.ch=null;c.taxiSign=null;c.wheels=null;c.lampMesh=null;c.headBeam=null;c.wreckFade=null}
 const CLOSE_CAR_DETAILS=new Set();let closeCarDetailT=0;
 function updateCloseCarDetails(dt){
