@@ -64,7 +64,14 @@ function c3Atlas(){if(!C3.cv){C3.cv=cv(C3.AW,C3.AH);C3.g=C3.cv.getContext('2d');
 function c3Slot(key,pal){c3Atlas();let s=C3.slots.get(key);const now=performance.now();if(s){s.last=now;return s}
  let i=C3.free.pop();if(i===undefined){let old=null;for(const v of C3.slots.values())if(!old||v.last<old.last)old=v;C3.slots.delete(old.key);i=old.i}
  s={key,i,last:now,gen:++C3.gen};C3.slots.set(key,s);const ox=(i%(C3.AW/C3.T))*C3.T,oy=Math.floor(i/(C3.AW/C3.T))*C3.T;
- try{c3Paint(C3.g,ox,oy,pal)}catch(e){console.error(e)}C3.tex.needsUpdate=true;return s}
+ try{c3Paint(C3.g,ox,oy,pal);c3Grade(C3.g,ox,oy)}catch(e){console.error(e)}C3.tex.needsUpdate=true;return s}
+/* v4 r11: mesmo acabamento do 2D/2.5D (charGrade, CHAR_GRADE): roupa menos saturada e grão fixo por texel, traços escuros (olhos) intactos.
+   Contorno e pés mais escuros ficam no shader (C3_FS), porque no 3D a silhueta muda com a câmera. */
+function c3Grade(g,ox,oy){if(typeof CHAR_GRADE==='undefined'||!CHAR_GRADE.on)return;const G=CHAR_GRADE,T=C3.T,id=g.getImageData(ox,oy,T,T),o=id.data;
+ for(let y=0;y<T;y++)for(let x=0;x<T;x++){const i=(y*T+x)*4;let r=o[i],gg=o[i+1],b=o[i+2];const l=.299*r+.587*gg+.114*b;if(l<34)continue;
+  r+=(l-r)*G.desat;gg+=(l-gg)*G.desat;b+=(l-b)*G.desat;const h=((x*73856093)^(y*19349663)^(x*y*83492791))>>>0,f=1+((h%1000)/1000-.5)*2*G.grain;
+  o[i]=r*f;o[i+1]=gg*f;o[i+2]=b*f}
+ g.putImageData(id,ox,oy)}
 /* ---------- geometria (formato compacto, ~380 triângulos, peças rígidas) ---------- */
 function c3Geo(){if(C3.geo)return C3.geo;const P=[],N=[],U=[],K=[],I=[];let vi=0;const TW=C3.AW,TH=C3.AH;
  const cl=(a,lo,hi)=>a<lo?lo:a>hi?hi:a,uvAt=(r,u,v)=>[cl(r[0]+u*r[2],r[0]+.5,r[0]+r[2]-.5)/TW,1-cl(r[1]+v*r[3],r[1]+.5,r[1]+r[3]-.5)/TH] /* v4 r1: meio texel para dentro nas bordas (a emenda de trás pegava a coluna do quadro vizinho = risco fino) */,sw=k=>[(C3SW[k][0]+1.5)/TW,1-(C3SW[k][1]+2.5)/TH];
@@ -119,7 +126,7 @@ function c3Geo(){if(C3.geo)return C3.geo;const P=[],N=[],U=[],K=[],I=[];let vi=0
 const C3_VS=`
 attribute float part;
 uniform float uPhase,uAmt,uRun,uAim,uPunch,uSit,uAir,uIdle,uLong;uniform vec2 uTile;uniform vec3 uLight,uSunDir;
-varying vec2 vUv,vLoc;varying vec3 vLight;
+varying vec2 vUv,vLoc;varying vec3 vLight,vVN,vVP;varying float vFeet;
 #include <fog_pars_vertex>
 vec3 rx(vec3 v,vec3 p,float a){v-=p;float c=cos(a),s=sin(a);return p+vec3(v.x,c*v.y-s*v.z,s*v.y+c*v.z);}
 vec3 rxn(vec3 n,float a){float c=cos(a),s=sin(a);return vec3(n.x,c*n.y-s*n.z,s*n.y+c*n.z);}
@@ -149,20 +156,23 @@ void main(){
  vec4 wp=modelMatrix*vec4(p,1.);vec3 wn=normalize(mat3(modelMatrix)*n);
  float d=max(dot(wn,uSunDir),0.);vLight=uLight*(.74+.42*d);
  vec4 mvPosition=viewMatrix*wp;gl_Position=projectionMatrix*mvPosition;
- vUv=uv+uTile;vLoc=uv;
+ vUv=uv+uTile;vLoc=uv;vVN=mat3(viewMatrix)*wn;vVP=mvPosition.xyz;vFeet=clamp((.42-position.y)/.38,0.,1.); /* v4 r11: contorno e sombra dos pés (C3_FS) */
  #include <fog_vertex>
 }`;
 const C3_FS=`
-uniform sampler2D map;uniform float uAlpha,uBlink;uniform vec2 uTile;varying vec2 vUv,vLoc;varying vec3 vLight;
+uniform sampler2D map;uniform float uAlpha,uBlink,uGrade;uniform vec2 uTile;varying vec2 vUv,vLoc;varying vec3 vLight,vVN,vVP;varying float vFeet;
 #include <fog_pars_fragment>
 void main(){vec2 uvv=vUv;float lid=1.;
  /* r52: piscar = olhos (pixels 15–24 × 10–11 do quadro da cabeça) trocados pela pele logo abaixo; a linha de baixo um pouco mais escura (pálpebra) */
  if(uBlink>.5){vec2 q=vec2(vLoc.x*${C3.AW}.,(1.-vLoc.y)*${C3.AH}.);if(q.x>15.&&q.x<25.&&q.y>10.&&q.y<12.){uvv=vec2(16.5/${C3.AW}.,1.-13.5/${C3.AH}.)+uTile;lid=q.y>11.?.78:1.;}}
- vec3 c=texture2D(map,uvv).rgb*vLight*lid;c=floor(c*63.+.5)/63.; /* v4 r1: 64 níveis (31 desenhava curvas de nível no tronco) */gl_FragColor=vec4(c,uAlpha);
+ vec3 c=texture2D(map,uvv).rgb*vLight*lid;
+ /* v4 r11: acabamento do 2D no 3D (CHAR_GRADE): pés até 22% mais escuros perto do chão e contorno na borda da silhueta com o tom escuro da própria peça (34% + leve roxo), não preto */
+ if(uGrade>.5){c*=1.-.22*vFeet;float rim=1.-abs(dot(normalize(vVN),normalize(-vVP)));c=mix(c,c*.34+vec3(.04,.027,.055),smoothstep(.64,.92,rim));}
+ c=floor(c*63.+.5)/63.; /* v4 r1: 64 níveis (31 desenhava curvas de nível no tronco) */gl_FragColor=vec4(c,uAlpha);
  #include <fog_fragment>
 }`;
 function c3Material(){if(!C3.base)C3.base=new THREE.ShaderMaterial({vertexShader:C3_VS,fragmentShader:C3_FS,fog:true,
-  uniforms:THREE.UniformsUtils.merge([THREE.UniformsLib.fog,{map:{value:null},uTile:{value:new THREE.Vector2()},uPhase:{value:0},uAmt:{value:0},uRun:{value:0},uAim:{value:0},uPunch:{value:0},uSit:{value:0},uAir:{value:0},uIdle:{value:0},uLong:{value:0},uBlink:{value:0},uAlpha:{value:1},uLight:{value:new THREE.Color(1,1,1)},uSunDir:{value:new THREE.Vector3(0,1,0)}}])});
+  uniforms:THREE.UniformsUtils.merge([THREE.UniformsLib.fog,{map:{value:null},uTile:{value:new THREE.Vector2()},uPhase:{value:0},uAmt:{value:0},uRun:{value:0},uAim:{value:0},uPunch:{value:0},uSit:{value:0},uAir:{value:0},uIdle:{value:0},uLong:{value:0},uBlink:{value:0},uGrade:{value:1},uAlpha:{value:1},uLight:{value:new THREE.Color(1,1,1)},uSunDir:{value:new THREE.Vector3(0,1,0)}}])});
  const m=C3.base.clone();m.uniforms.map.value=c3Atlas();m.uniforms.uSunDir.value=C3.sunDir;return m}
 /* ---------- boneco preso a um sprite de personagem ---------- */
 function c3Make(o){const sp=o.sp,mat=c3Material(),mesh=new THREE.Mesh(c3Geo(),mat);mesh.matrixAutoUpdate=false;mesh.layers.set(1);mesh.castShadow=mesh.receiveShadow=false;mesh.raycast=()=>{};mesh.name='char3d';
@@ -215,7 +225,7 @@ function c3Place(o){const sp=o.sp;if(!sp||!sp.isSprite)return;
  if(Math.hypot(fx,fz)<1e-3&&st.mvx!==undefined&&st.spd>.2){fx=st.mvx;fz=st.mvz}
  if(Math.hypot(fx,fz)>1e-3){const ta=Math.atan2(fx,fz)+(skate?1.15:0); /* r41: no skate fica de lado na prancha */st.ang=st.ang===null?ta:c3AngTo(st.ang,ta,1-Math.exp(-dt*14))}
  if(st.ang===null)st.ang=0;
- const U=st.mat.uniforms;U.uPhase.value=st.amt>.02?st.ph:st.idle*1.3;U.uAmt.value=st.amt;U.uRun.value=st.run;U.uAim.value=st.aim;U.uPunch.value=st.punch;U.uSit.value=st.sit;U.uAir.value=st.air;U.uIdle.value=1-st.amt;
+ const U=st.mat.uniforms;U.uPhase.value=st.amt>.02?st.ph:st.idle*1.3;U.uAmt.value=st.amt;U.uRun.value=st.run;U.uAim.value=st.aim;U.uPunch.value=st.punch;U.uSit.value=st.sit;U.uAir.value=st.air;U.uIdle.value=1-st.amt;U.uGrade.value=typeof CHAR_GRADE!=='undefined'&&CHAR_GRADE.on?1:0;
  /* r52: piscar a cada 2–6 s (0,13 s fechado); deitado fica de olhos fechados; óculos e demogorgon não piscam */
  st.bk=(st.bk===undefined?Math.random()*4:st.bk)-dt;if(st.bk<-.13)st.bk=2+Math.random()*4;U.uBlink.value=pal.glasses||pal.demo?0:lying||st.bk<0?1:0;
  /* transparência do sprite (fantasma da proteção do online, aparições, revive) vale para o boneco */
