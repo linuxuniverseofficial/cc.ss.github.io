@@ -177,11 +177,11 @@ var MCP={stage:null,snap:null,ff:false,keep:false,t0:0,last:0};
 const MCP_STAGES=['driveFirst','prison','steal','phoneBuy','sms','ammo','motelDrive','motelGo'];
 function mcpIdx(st){const L=MISSION_STAGES.pier;return L.findIndex(q=>q.id===st)}
 function mcpSnap(){const cp=o=>o?JSON.parse(JSON.stringify(o)):null;if(GUN.has&&GUN.inv[GUN.w])GUN.inv[GUN.w].ammo=GUN.ammo;
- return{money:PL.money||0,cur:CHAR.cur,pal:cp(PLAYER_PAL),looks:CHAR.list.map(c=>cp(c.look)),jail:CHAR.list.map(c=>cp(c.jailLook)),inv:cp(GUN.inv),w:GUN.w,phones:[...PHONE.models],car:PROLOGUE.car?PROLOGUE.car.type:null}}
+ return{money:PL.money||0,bank:BANKACC.bal||0,cur:CHAR.cur,pal:cp(PLAYER_PAL),looks:CHAR.list.map(c=>cp(c.look)),jail:CHAR.list.map(c=>cp(c.jailLook)),inv:cp(GUN.inv),w:GUN.w,phones:[...PHONE.models],car:PROLOGUE.car?PROLOGUE.car.type:null}}
 function mcpMark(stage){if(MCP.ff||!PROLOGUE.active||!MCP_STAGES.includes(stage))return;if(MCP.stage&&mcpIdx(MCP.stage)>=mcpIdx(stage))return;
  MCP.stage=stage;MCP.snap=mcpSnap();if(stage!=='driveFirst')toast('<span style="color:#7dff8a">CHECKPOINT</span>')}
 function mcpRestore(){const S0=MCP.snap;if(!S0)return;const cp=o=>o?JSON.parse(JSON.stringify(o)):null;
- PL.money=S0.money;PHONE.models=[...S0.phones];
+ PL.money=S0.money;if(S0.bank!=null)BANKACC.bal=S0.bank;PHONE.models=[...S0.phones];
  CHAR.list.forEach((c,i)=>{const L=S0.cur===i?S0.pal:S0.looks[i];if(i===CHAR.cur){if(S0.cur!==i)return;Object.assign(PLAYER_PAL,cp(L));c.look={...PLAYER_PAL}}else if(L)c.look=cp(L);if(S0.jail[i])c.jailLook=cp(S0.jail[i]);else delete c.jailLook});
  try{applyPlayerLook();charFaces()}catch(e){}
  if(S0.inv&&Object.keys(S0.inv).length){GUN.inv=cp(S0.inv);if(GUN.has){const w=GUN.inv[S0.w]?S0.w:Object.keys(GUN.inv)[0];gunSelect(w,true)}}}

@@ -103,7 +103,7 @@ function drawMinimap0(){if(!mapCv)return;if((MINI_F=(MINI_F||0)+1)%60===1)miniRe
   if(v.special)mapUnknown(mctx,v.x+MOFF,v.z+MOFF,12,rot);
  }
  {const q=X9.p;if(q&&peds.includes(q)&&Math.floor(simT*5)%2){mctx.fillStyle='#fff';mctx.beginPath();mctx.arc(q.x+MOFF,q.z+MOFF,9,0,7);mctx.fill();mctx.fillStyle='#ff1a1a';mctx.beginPath();mctx.arc(q.x+MOFF,q.z+MOFF,7,0,7);mctx.fill()}} /* v1r21: X9 pisca vermelho */
- for(const k of pickups){if(k.kind==='hp'||k.kind==='cash'||Math.abs(k.x-p.x)>130||Math.abs(k.z-p.z)>130)continue;mapUnknown(mctx,k.x+MOFF,k.z+MOFF,12,rot)}
+ for(const k of pickups){if(k.kind==='hp'||k.kind==='cash'||k.npcDrop||Math.abs(k.x-p.x)>130||Math.abs(k.z-p.z)>130)continue;mapUnknown(mctx,k.x+MOFF,k.z+MOFF,12,rot)}
  for(const c of CELLS){if(c.s<.05)continue;mctx.fillStyle=`rgba(40,205,200,${.22*c.s})`;mctx.beginPath();mctx.arc(c.x+MOFF,c.z+MOFF,mapWeatherRadius(c),0,7);mctx.fill()}pylonMap(mctx,sc);wzMap(mctx,sc);drawPOISet(mctx,sc,true,p,rot);if(storyMap('gas'))gasMapIcons(mctx,15.3/sc,rot);drawTommyRadar(mctx,sc,p);
  rainArrows(mctx,sc,9);drawNav(mctx,sc,3,rot);drawPhoneServiceDots(mctx,sc,p);if(storyMap('safe')&&!city.haze)safeIcon(mctx,17/sc,rot);if(storyMap('tune'))tuneIcon(mctx,15.3/sc,rot);drawMissionIcons(mctx,sc,true,p,rot);{const lc=luciaMapPose();if(lc&&Math.abs(lc.x-p.x)<125&&Math.abs(lc.z-p.z)<125)luciaMapArrow(mctx,lc.x+MOFF,lc.z+MOFF,1/sc,lc.ang)}mctx.restore();
  mapIconFlush(mctx);if(ONLINE.on&&ONLINE.mmT){mctx.save();mctx.setTransform(ONLINE.mmT);netMinimap(mctx,p,sc);mctx.restore()} /* r22: jogadores por cima de todos os ícones (inclusive o carro pessoal), no mesmo transform do mapa */

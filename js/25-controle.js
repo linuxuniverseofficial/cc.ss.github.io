@@ -178,7 +178,7 @@ addEventListener('gamepadconnected',e=>{PAD.on=true;PAD.idx=e.gamepad.index;PAD.
 addEventListener('gamepaddisconnected',e=>{if(e.gamepad.index!==PAD.idx)return;PAD.idx=-1;const g=padGet();PAD.on=!!g;if(g)PAD.name=padName(g.id);PAD.lx=PAD.ly=PAD.rx=PAD.ry=PAD.r2=PAD.l2=0;PAD.hand=PAD.nitro=PAD.firing=false;GUN.firing=false;padStatus();toast('🎮 CONTROLE DESCONECTADO')});
 function padAxis(v){const a=Math.abs(v);if(a<PAD.dz)return 0;return Math.sign(v)*Math.min(1,(a-PAD.dz)/(1-PAD.dz))}
 addEventListener('mousemove',()=>document.body.classList.remove('padnav'));addEventListener('keydown',e=>{if(e.code==='Tab'||e.code.startsWith('Arrow'))document.body.classList.add('padnav')});
-function padDialog(){return onJoinVis()?$('#onJoin'):NEWS.open?$('#news'):AMMO.uiOpen?AMMO.panel:recordsOpen?$('#records'):SLOT.open?$('#slot'):TABLE_GAME.open?$('#tableGame'):MP.open?$('#modePick'):DEAL.open?$('#deal'):WARD.open?$('#ward'):cfgOpen?$('#cfg'):cmdsOpen?$('#cmds'):TUNE.open?$('#tune'):menuOpen?$('#menu'):null}
+function padDialog(){return onJoinVis()?$('#onJoin'):(typeof BANKACC!=='undefined'&&BANKACC.open)?BANKACC.el:NEWS.open?$('#news'):AMMO.uiOpen?AMMO.panel:recordsOpen?$('#records'):SLOT.open?$('#slot'):TABLE_GAME.open?$('#tableGame'):MP.open?$('#modePick'):DEAL.open?$('#deal'):WARD.open?$('#ward'):cfgOpen?$('#cfg'):cmdsOpen?$('#cmds'):TUNE.open?$('#tune'):menuOpen?$('#menu'):null}
 // v78: navegação ESPACIAL no controle (e setas do teclado na loja de armas). Antes a seta andava ±1 na ordem do DOM:
 // em grades (menu 2×2, abas, rodapés de 2 colunas) "baixo" ia para o vizinho do lado e os botões pareciam pular
 // alternados. Agora cada direção escolhe o elemento visível mais próximo naquele sentido (eixo principal + 2× desvio
@@ -263,7 +263,7 @@ function padPoll(dt){const g=PAD.on?padGet():null;if(!g){PAD.lx=PAD.ly=PAD.rx=PA
   return}
  const dlg=padDialog();
  if(EMOKB.open){emoKbPad(pr);return} /* v3r2: teclado de emojis por cima do guarda-roupa/skate shop */
- if(pr(9)){if(onJoinVis()&&!played){onJoinClose();return}if(PHOTO.on)photoExit();else if(NEWS.open)newsClose();else if(AMMO.uiOpen)ammoClose();else if(recordsOpen)closeRecords();else if(cfgOpen)closeCfg();else if(cmdsOpen)closeCmds();else if(TUNE.open)closeTune();else if(SLOT.open)slotClose();else if(TABLE_GAME.open)tableGameClose();else if(MP.open)modePickClose();else if(DEAL.open)dealClose();else if(WARD.open)closeWard(false);else if(NAV.open)closeMap();else if(menuOpen){if(played)closeMenu();else $('#play').click()}else if(played)openMenu();return}
+ if(pr(9)){if(onJoinVis()&&!played){onJoinClose();return}if(BANKACC.open){bankDlgClose();return}if(PHOTO.on)photoExit();else if(NEWS.open)newsClose();else if(AMMO.uiOpen)ammoClose();else if(recordsOpen)closeRecords();else if(cfgOpen)closeCfg();else if(cmdsOpen)closeCmds();else if(TUNE.open)closeTune();else if(SLOT.open)slotClose();else if(TABLE_GAME.open)tableGameClose();else if(MP.open)modePickClose();else if(DEAL.open)dealClose();else if(WARD.open)closeWard(false);else if(NAV.open)closeMap();else if(menuOpen){if(played)closeMenu();else $('#play').click()}else if(played)openMenu();return}
  if(POOL.on){poolPad(pr,dt);return}if(DICE.on){dicePad(pr);return}if(SKATE.ui){skUiPad(pr,dt);return}
  if(NAV.open){cheatPad(pr);if(pr(3))mapIntToggle(); /* v79r3: Y/△ alterna interior ⇄ cidade */
   if(NAV.inMode){const zt=((PAD.r2||0)-(PAD.l2||0))+(Math.abs(PAD.ry||0)>.25?-PAD.ry:0);if(Math.abs(zt)>.12)mapZoomAt(innerWidth/2,innerHeight/2,Math.exp(zt*dt*1.8));if((NAV.zoom||1)>1.001&&Math.hypot(PAD.lx||0,PAD.ly||0)>.15){const v=bigView();NAV.cx=(NAV.cx||0)+PAD.lx*420*dt/v.sc;NAV.cy=(NAV.cy||0)+PAD.ly*420*dt/v.sc;drawBigmap()}if(pr(1)||pr(8)||pr(17))closeMap();return}
@@ -271,7 +271,7 @@ function padPoll(dt){const g=PAD.on?padGet():null;if(!g){PAD.lx=PAD.ly=PAD.rx=PA
   if((NAV.zoom||1)>1.001){NAV.cx=NAV.cur.x+MOFF;NAV.cy=NAV.cur.z+MOFF}
   {const v=bigView();NAV.hover={x:v.ox+(NAV.cur.x+MOFF)*v.sc,y:v.oy+(NAV.cur.z+MOFF)*v.sc}}
   if(pr(0)){const v=bigView(),cx=v.ox+(NAV.cur.x+MOFF)*v.sc,cy=v.oy+(NAV.cur.z+MOFF)*v.sc;if(mapIconsAt(cx,cy).length)mapPickAt(cx,cy);else if(mapInside(NAV.cur.x,NAV.cur.z)){setMarker(NAV.cur.x,NAV.cur.z);drawBigmap()}}if(pr(1)||pr(8)||pr(17))closeMap();return}
- if(dlg){if(pr(0)&&NEWS.open){newsClose();return}if(pr(1)){if(dlg.id==='onJoin')onJoinClose();else if(NEWS.open)newsClose();else if(AMMO.uiOpen)ammoClose();else if(recordsOpen)closeRecords();else if(cfgOpen)closeCfg();else if(cmdsOpen)closeCmds();else if(TUNE.open)closeTune();else if(SLOT.open)slotClose();else if(TABLE_GAME.open)tableGameClose();else if(MP.open)modePickClose();else if(DEAL.open)dealClose();else if(WARD.open)closeWard(false);else if(menuOpen&&played)closeMenu();return}
+ if(dlg){if(pr(0)&&NEWS.open){newsClose();return}if(pr(1)){if(dlg.id==='onJoin')onJoinClose();else if(dlg.id==='bankDlg')bankDlgClose();else if(NEWS.open)newsClose();else if(AMMO.uiOpen)ammoClose();else if(recordsOpen)closeRecords();else if(cfgOpen)closeCfg();else if(cmdsOpen)closeCmds();else if(TUNE.open)closeTune();else if(SLOT.open)slotClose();else if(TABLE_GAME.open)tableGameClose();else if(MP.open)modePickClose();else if(DEAL.open)dealClose();else if(WARD.open)closeWard(false);else if(menuOpen&&played)closeMenu();return}
   {const ae0=document.activeElement,adj=ae0&&(ae0.type==='range'||ae0.tagName==='SELECT'||ae0.type==='color'),inD=ae0&&dlg.contains(ae0)&&ae0!==dlg;
    // analógico esquerdo também navega (com repetição) e ajusta sliders/listas
    PAD.navT=(PAD.navT||0)-dt;let sv=0,sh=0;if(PAD.navT<=0){if(PAD.ly>.6)sv=1;else if(PAD.ly<-.6)sv=-1;if(PAD.lx>.6)sh=1;else if(PAD.lx<-.6)sh=-1;if(sv||sh)PAD.navT=.2}else if(Math.abs(PAD.ly)<.3&&Math.abs(PAD.lx)<.3)PAD.navT=0;
@@ -330,7 +330,7 @@ function padPoll(dt){const g=PAD.on?padGet():null;if(!g){PAD.lx=PAD.ly=PAD.rx=PA
   if(modern){if(pr(10)&&!B[11])PAD.runLatch=!PAD.runLatch;if(Math.hypot(PAD.lx,PAD.ly)<.2)PAD.runLatch=false}else PAD.runLatch=false;
   PAD.run=Math.hypot(PAD.lx,PAD.ly)>.9||(!modern&&B[0])||B[10]||PAD.runLatch;
   if(pr(1))playerPunch(false);if(pr(4))wheelOpen('wpn','pad');
-  if(pr(15)){if(medNear())medLoad();else if(CTX.shop||CTX.mall||CTX.club||wardNear()||PL.inside==='heist'||PL.inside==='pawn'||(PL.inside==='ammo'&&ammoCounterNear())||(bankCounterNear()&&!BANK.rob)||slotNear()>=0||casinoTableNear())ctxAct(1);else taxiCall()}if(pr(14)){if(PLAYER_PAL.headphone)wheelOpen('radio','pad');else gunCycle(-1)}if(pr(12))phoneToggle()}
+  if(pr(15)){if(medNear())medLoad();else if(CTX.shop||CTX.mall||CTX.club||wardNear()||PL.inside==='heist'||PL.inside==='pawn'||(PL.inside==='ammo'&&ammoCounterNear())||bankAtmNear()||(bankCounterNear()&&!BANK.rob)||slotNear()>=0||casinoTableNear())ctxAct(1);else taxiCall()}if(pr(14)){if(PLAYER_PAL.headphone)wheelOpen('radio','pad');else gunCycle(-1)}if(pr(12))phoneToggle()}
  const fb=car?((B[4]&&B[5])||(B[2]&&!CTX.car)):V[7]>.35,fbP=car?((B[4]&&pr(5))||(pr(2)&&!CTX.car)):(V[7]>.35&&!PAD.firing);
  if(fb&&!PAD.firing&&fbP){PAD.firing=true;if(GUN.has){GUN.firing=true;playerShoot(camMode==='top')}else if(!car)playerPunch(false)}
  else if(!fb&&PAD.firing){PAD.firing=false;GUN.firing=false}

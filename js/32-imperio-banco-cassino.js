@@ -192,6 +192,40 @@ function empTick(dt){if(!played)return;if(S.style==='inverted'){if(EMP.arrOut)EM
 // e o cofre abre: +$1.000. Sair antes de terminar = assalto fracassado (continua procurado). Banco fecha por 1 dia de jogo.
 // Base para a futura missão de roubo a banco (storyOK('bankrob')).
 const BANK={grp:null,IN:null,lock:0,arrOut:null,arrIn:null,rob:null,closedUntil:0,tellers:[],waiters:[]};
+/* v4 r19 · CAIXA 2: conta no Sunset Bank, nos dois caixas eletrônicos do saguão (cantos do fundo, ao lado do balcão).
+   Saldo da conta (BANKACC.bal) não cai com a morte, prisão, assalto ou PIX hackeado (o PIX do online mexe só no dinheiro em mãos).
+   Conta do hospital: primeiro o dinheiro em mãos, o resto sai da conta (bankPay). Uma conta só para Nathan e Claire.
+   Vai no save (bank), nos checkpoints da história e, no online, na conta do jogador (campo bk do save da conta). */
+const BANKACC={bal:0,open:false,i:3,el:null,css:false};
+const BANKACC_ST=[10,50,100,500,1000,5000,10000,50000,0]; /* 0 = TUDO */
+const BANK_ATM=[{x:0,z:0,gy:0},{x:0,z:0,gy:0}];
+function bankAtmNear(){const IN=BANK.IN;if(PL.inside!=='bank'||!IN||PL.dead||BANK.rob)return null;for(let i=0;i<2;i++){const sx=i?9.9:-9.875;if(Math.abs(PL.x-(IN.x+sx))<1.15&&PL.z<IN.z-3.5&&PL.z>IN.z-5.3){const a=BANK_ATM[i];a.x=IN.x+sx;a.z=IN.z-5.4;return a}}return null}
+function bankFmt(n){return '$'+Math.max(0,Math.round(n||0)).toLocaleString(S.lang==='en'?'en-US':'pt-BR')}
+function bankAmt(kind){const v=BANKACC_ST[BANKACC.i],mx=kind==='dep'?Math.max(0,Math.floor(PL.money||0)):Math.floor(BANKACC.bal);return v===0?mx:Math.min(v,mx)}
+function bankPay(fee){fee=Math.max(0,Math.round(fee||0));const m=Math.max(0,Math.floor(PL.money||0)),a=Math.min(m,fee);if(a)PL.money=m-a;const r=Math.min(Math.floor(BANKACC.bal),fee-a);if(r>0)BANKACC.bal-=r;return{hand:a,acc:Math.max(0,r)}}
+function bankDlgEl(){if(BANKACC.el)return BANKACC.el;if(!BANKACC.css){BANKACC.css=true;const st=document.createElement('style');st.textContent='#bankDlg{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;background:rgba(4,10,8,.6);color:#fff;font-family:"Segoe UI",Arial,sans-serif}#bankDlg[hidden]{display:none}#bankDlg .bk-box{width:min(420px,calc(100vw - 32px));background:#0d1a16;border:2px solid #5ee0a0;border-radius:12px;padding:16px 18px;box-shadow:0 10px 40px rgba(0,0,0,.7);text-align:center}#bankDlg .bk-t{font-size:18px;color:#7dffb0;letter-spacing:.5px}#bankDlg .bk-s{display:flex;justify-content:center;gap:18px;margin:10px 0 2px;font-size:14px}#bankDlg .bk-s b{display:block;font-size:20px;color:#ffd23a}#bankDlg .bk-s .bk-a b{color:#7dffb0}#bankDlg .bk-n{font-size:11px;opacity:.75;margin:4px 0 0}#bankDlg .bk-btns{display:flex;gap:10px;justify-content:center;margin-top:10px}#bankDlg .bk-btns .btn{min-width:120px}#bankDlg .bk-btns .btn:disabled{opacity:.35}#bankDlg .bk-pad{font-size:11px;opacity:.7;margin-top:8px}#money .bkHud{display:block;font-size:11px;color:#9fe8c0;opacity:.85;margin-top:2px}@media (pointer:coarse){#bankDlg .btn{min-height:44px}}';document.head.appendChild(st)}
+ const d=document.createElement('div');d.id='bankDlg';d.hidden=true;d.setAttribute('role','dialog');d.setAttribute('aria-modal','true');
+ d.innerHTML='<div class="bk-box"><b class="bk-t" id="bkT"></b><div class="bk-s"><span class="bk-h"><small id="bkHL"></small><b id="bkH"></b></span><span class="bk-a"><small id="bkAL"></small><b id="bkA"></b></span></div><p class="bk-n" id="bkN"></p><div class="betStep" id="bkStep"><button type="button" class="btn" data-d="-1">−</button><b></b><button type="button" class="btn" data-d="1">+</button></div><div class="bk-btns"><button type="button" class="btn primary" id="bkDep"></button><button type="button" class="btn primary" id="bkSaq"></button></div><div class="bk-btns"><button type="button" class="btn" id="bkNo"></button></div><div class="bk-pad" id="bkPad"></div></div>';
+ document.body.appendChild(d);BANKACC.el=d;
+ d.querySelector('#bkStep').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;e.stopPropagation();BANKACC.i=clamp(BANKACC.i+(+b.dataset.d),0,BANKACC_ST.length-1);bankDlgUpd()});
+ d.querySelector('#bkDep').addEventListener('click',()=>bankMove('dep'));d.querySelector('#bkSaq').addEventListener('click',()=>bankMove('saq'));d.querySelector('#bkNo').addEventListener('click',()=>bankDlgClose());
+ d.addEventListener('click',e=>{if(e.target===d)bankDlgClose()});return d}
+function bankDlgUpd(){const d=BANKACC.el;if(!d)return;const en=S.lang==='en',t=(a,b)=>en?b:a,v=BANKACC_ST[BANKACC.i];
+ d.querySelector('#bkT').textContent=t('CAIXA 2 · CONTA','ATM · BANK ACCOUNT');d.querySelector('#bkHL').textContent=t('NA MÃO','CASH');d.querySelector('#bkAL').textContent=t('NA CONTA','IN ACCOUNT');
+ d.querySelector('#bkH').textContent=bankFmt(PL.money);d.querySelector('#bkA').textContent=bankFmt(BANKACC.bal);d.querySelector('#bkN').textContent=t('a conta não se perde quando você morre','the account is kept when you die');
+ const sb=d.querySelector('#bkStep');sb.querySelector('b').textContent=v===0?t('TUDO','ALL'):bankFmt(v);const[mn,pl]=sb.querySelectorAll('button');mn.disabled=BANKACC.i<=0;pl.disabled=BANKACC.i>=BANKACC_ST.length-1;
+ const a=bankAmt('dep'),b=bankAmt('saq');const bd=d.querySelector('#bkDep'),bs=d.querySelector('#bkSaq');bd.textContent=t('DEPOSITAR','DEPOSIT')+(a>0?' '+bankFmt(a):'');bs.textContent=t('SACAR','WITHDRAW')+(b>0?' '+bankFmt(b):'');bd.disabled=a<=0;bs.disabled=b<=0;
+ d.querySelector('#bkNo').textContent=t('SAIR','EXIT');const pa=typeof padActive==='function'&&padActive();d.querySelector('#bkPad').textContent=pa?t('✕ confirma · ○ sai','✕ select · ○ exit'):t('← → valor · ESC sai','← → amount · ESC exit')}
+function bankDlgOpen(){if(BANKACC.open)return;const d=bankDlgEl();BANKACC.open=true;for(const k in keys)keys[k]=false;if(document.pointerLockElement)document.exitPointerLock();bankDlgUpd();d.hidden=false;clang(.15);const f=d.querySelector('#bkDep');(f.disabled?d.querySelector('#bkSaq'):f).focus()}
+function bankDlgClose(){if(!BANKACC.open)return;BANKACC.open=false;if(BANKACC.el){BANKACC.el.hidden=true;const ae=document.activeElement;if(ae&&BANKACC.el.contains(ae))ae.blur()}for(const k in keys)keys[k]=false}
+function bankMove(kind){const v=bankAmt(kind);if(v<=0){clang(.1);return}const en=S.lang==='en';
+ if(kind==='dep'){PL.money=Math.max(0,Math.floor(PL.money||0)-v);BANKACC.bal+=v;toast((en?'DEPOSITED · ':'DEPÓSITO · ')+bankFmt(v))}
+ else{BANKACC.bal=Math.max(0,BANKACC.bal-v);money(v);toast((en?'WITHDRAWN · ':'SAQUE · ')+bankFmt(v))}
+ clang(.25);const el=$('#money');if(el){el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop')}bankDlgUpd();const d=BANKACC.el,ae=document.activeElement;if(d&&ae&&ae.disabled){const o=d.querySelector(kind==='dep'?'#bkSaq':'#bkDep');(o.disabled?d.querySelector('#bkNo'):o).focus()}}
+document.addEventListener('keydown',e=>{if(!BANKACC.open)return;const k=e.key;if(/^F\d+$/.test(k))return;
+ if(k==='ArrowLeft'||k==='a'||k==='A'){BANKACC.i=clamp(BANKACC.i-1,0,BANKACC_ST.length-1);bankDlgUpd()}else if(k==='ArrowRight'||k==='d'||k==='D'){BANKACC.i=clamp(BANKACC.i+1,0,BANKACC_ST.length-1);bankDlgUpd()}
+ else if(k==='Escape'||k==='Backspace'){bankDlgClose()}else if(k==='Enter'||k===' '){const ae=document.activeElement;if(ae&&BANKACC.el.contains(ae)&&ae.click&&!ae.disabled)ae.click()}else if(k==='Tab'||k==='ArrowUp'||k==='ArrowDown')return;
+ e.preventDefault();e.stopPropagation()},true);
 function bankLm(){return(city.lms||[]).find(l=>l.name==='bank')}
 function bankDoor(){const L=bankLm();if(!L)return null;
  if(city.bankDoor&&city.bankDoor.ri===L.ri)return city.bankDoor;

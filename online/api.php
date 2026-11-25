@@ -413,8 +413,8 @@ try {
         $wk = wkey($e['id'] ?? ''); if (!$wk) continue; $wk = 'pk:' . $wk; $r = wget($db, $wk);
         if (!$r || (int)$r['gone'] === 1) wput($db, $wk, 'pk', ['by' => $id], $id, 0);
       } elseif ($k === 'drop') {
-        /* jogador morreu: arma da mão + parte do dinheiro ficam no chão para qualquer um pegar */
-        $w = preg_replace('/[^a-z]/', '', (string)($e['w'] ?? '')); $am = (int)num($e['am'] ?? 0, 0, 9999); $m = (int)num($e['m'] ?? 0, 0, 100000);
+        /* jogador morreu: arma da mão + todo o dinheiro em mãos ficam no chão para qualquer um pegar (v4 r19) */
+        $w = preg_replace('/[^a-z]/', '', (string)($e['w'] ?? '')); $am = (int)num($e['am'] ?? 0, 0, 9999); $m = (int)num($e['m'] ?? 0, 0, 100000000);   /* v4 r19: cai todo o dinheiro em mãos (a conta do banco, campo bk do save, não cai) */
         if (($w === '' || $am <= 0) && $m <= 0) continue;
         wput($db, 'drop:' . $id . ':' . mt_rand(1000, 999999), 'drop', ['x' => round(num($e['x'] ?? 0, -2000, 4000), 2), 'z' => round(num($e['z'] ?? 0, -2000, 4000), 2), 'w' => $w, 'am' => $am, 'm' => $m, 'n' => $p['name']], $id, 0);
       } elseif ($k === 'loot') {

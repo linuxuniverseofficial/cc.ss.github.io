@@ -666,7 +666,7 @@ function roomStageLocalTick(dt){
  simT+=dt;updatePlayer(dt);meleeTick(dt);updateParts(dt);
  // v78: armas nos interiores com palco (impérios, banco, assalto…). Recarga, tiro contínuo, rastros, foguetes e marcas
  // só rodavam em update(): o 1º tiro saía e GUN.cd nunca baixava → arma travada (mouse e controle).
- weaponTick(dt);updateDecals(dt);
+ weaponTick(dt);updateDecals(dt);if(NPCDROP.n)try{updatePickups(dt)}catch(e){console.error(e)} /* v4 r19: espólio de quem morre dentro (banco, gangues do império) */
  // Interior may have been exited by player input, and the exterior must not
  // restart in the same frame. Each room runs only its own local rules.
  if(!roomStageKind())return;
