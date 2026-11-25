@@ -102,9 +102,9 @@ function fxGlowPatch(mat,k){if(!mat||mat.userData.fxGlow)return mat;mat.userData
 const WINR={pct:{value:.3}}; /* fração de janelas com cômodo (v4 r9: .3); no console WINR.pct.value=1 mostra em todas (teste) */
 function winReflPatch(mat,night){if(!mat||mat.userData.winRefl)return mat;mat.userData.winRefl=true;const old=mat.onBeforeCompile,key=(mat.customProgramCacheKey&&mat.customProgramCacheKey())||'';
  const rect=night?new THREE.Vector4(8/32,11/32,24/32,23/32):new THREE.Vector4(5/32,7/32,27/32,25/32),mull=night?0:1/32;
- mat.onBeforeCompile=(sh,r)=>{if(old)old.call(mat,sh,r);const K=skyMat.uniforms;Object.assign(sh.uniforms,{fxK:SHFX.U.fxK,top:K.top,hor:K.hor,sunDir:K.sunDir,night:K.night,sunDim:K.sunDim,csSun:K.csSun,synth:K.synth,wK:WTR.U.wK,wrRect:{value:rect},wrMull:{value:mull},wrTm:SHFX.U.fxT,wrPct:WINR.pct});
+ mat.onBeforeCompile=(sh,r)=>{if(old)old.call(mat,sh,r);const K=skyMat.uniforms;Object.assign(sh.uniforms,{fxK:SHFX.U.fxK,top:K.top,hor:K.hor,sunDir:K.sunDir,night:K.night,sunDim:K.sunDim,csSun:K.csSun,synth:K.synth,wK:WTR.U.wK,wrRect:{value:rect},wrMull:{value:mull},wrTm:SHFX.U.fxT,wrPct:WINR.pct,wrInv:{value:S.style==='inverted'?1:0}});
   sh.vertexShader='varying vec3 vWrW;\n'+sh.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\n vWrW=(modelMatrix*vec4(transformed,1.)).xyz;');
-  const dec=(sh.fragmentShader.includes('uniform vec4 fxK;')?'':'uniform vec4 fxK;')+`uniform vec3 top,hor,sunDir;uniform float night,sunDim,csSun,synth,wrMull,wrTm,wrPct;uniform vec4 wK,wrRect;varying vec3 vWrW;
+  const dec=(sh.fragmentShader.includes('uniform vec4 fxK;')?'':'uniform vec4 fxK;')+`uniform vec3 top,hor,sunDir;uniform float night,sunDim,csSun,synth,wrMull,wrTm,wrPct,wrInv;uniform vec4 wK,wrRect;varying vec3 vWrW;
  float wrHs(vec3 p){return fract(sin(dot(p,vec3(12.989,78.233,37.719)))*43758.55);}
  float wrBox(vec3 p,vec3 iv,vec3 b0,vec3 b1,out float f){vec3 t0=(b0-p)*iv,t1=(b1-p)*iv;vec3 tn=min(t0,t1),tf=max(t0,t1);
   float a=max(max(tn.x,tn.y),tn.z),b=min(min(tf.x,tf.y),tf.z);f=a==tn.y?1.:a==tn.z?.88:.72;return b>max(a,0.)?a:1e5;}
@@ -117,6 +117,9 @@ function winReflPatch(mat,night){if(!mat||mat.userData.winRefl)return mat;mat.us
   vec3 p=vec3(c.x*Wc,c.y*Hc,0.);d.xy=sign(d.xy)*max(abs(d.xy),vec2(1e-4));vec3 iv=1./d;
   float tx=((d.x>0.?Wc:0.)-p.x)*iv.x,ty=((d.y>0.?Hc:0.)-p.y)*iv.y,tz=D*iv.z;float t=min(tz,min(tx,ty));vec3 q=p+d*t;
   vec3 wc=h1<.25?vec3(.78,.74,.66):h1<.5?vec3(.62,.7,.74):h1<.75?vec3(.8,.66,.56):vec3(.7,.72,.62);
+  /* v4 r13: Synthwave = paredes em tons neon (roxo, ciano, rosa, azul); Mundo Invertido = cômodo abandonado (cinza mofado, puxado para o vermelho) */
+  if(synth>.5)wc=h1<.25?vec3(.55,.36,.78):h1<.5?vec3(.3,.62,.72):h1<.75?vec3(.78,.4,.62):vec3(.4,.42,.8);
+  if(wrInv>.5)wc=mix(vec3(dot(wc,vec3(.3,.59,.11))),vec3(.5,.36,.36),.45)*(.7+.3*h2);
   vec3 col;float sh;
   if(t==tz){col=wc;sh=.9;
    if(k<.5&&q.y>1.35&&q.y<2.05&&abs(q.x-Wc*(.3+h0*.4))<.42)col=vec3(.2+h2*.5,.25,.3+h1*.3)*.8;
@@ -133,7 +136,7 @@ function winReflPatch(mat,night){if(!mat||mat.userData.winRefl)return mat;mat.us
   else if(k<2.5){float bx=Wc*(.35+h0*.3);float f2;tb=wrBox(p,iv,vec3(bx-.8,0.,D-.45),vec3(bx+.8,.6,D),bf);bc=vec3(.28,.2,.14);
    float tt=wrBox(p,iv,vec3(bx-.62,.62,D-.12),vec3(bx+.62,1.32,D),f2);
    if(tt<tb){tb=tt;bf=f2;vec3 qt=p+d*tt;bc=vec3(.04);if(qt.z<D-.11&&abs(qt.x-bx)<.56&&qt.y>.67&&qt.y<1.27)bc=vec3(.04,.05,.07);}
-   float fl=.75+.25*sin(wrTm*7.+h1*30.)*sin(wrTm*2.3+h2*9.);gcol=vec3(.45,.6,1.)*fl*max(step(.04,max(lamp.r,lamp.g)),step(.5,night)*step(h1,.65));
+   float fl=.75+.25*sin(wrTm*7.+h1*30.)*sin(wrTm*2.3+h2*9.);gcol=vec3(.45,.6,1.)*fl*(1.-wrInv)*max(step(.04,max(lamp.r,lamp.g)),step(.5,night)*step(h1,.65));
    if(tt<1e4&&tb==tt){vec3 qt=p+d*tt;if(qt.z<D-.11&&abs(qt.x-bx)<.56&&qt.y>.67&&qt.y<1.27){bc=vec3(.06,.08,.1)+gcol*1.4;bf=1.;}}
    glow=.5;}
   else if(k<3.5){float lx=h0<.5?.55:Wc-.55;float f2;tb=wrBox(p,iv,vec3(lx-.04,0.,D-.6),vec3(lx+.04,1.4,D-.52),bf);bc=vec3(.2);
@@ -156,7 +159,7 @@ function winReflPatch(mat,night){if(!mat||mat.userData.winRefl)return mat;mat.us
     if(wrMull>0.)wrIn*=smoothstep(wrMull,wrMull+fwidth(wrC.x)*1.5,abs(wrC.x-.5));
     vec3 wrId=vec3(floor(vUv*8.),floor(dot(wrN,vWrW)*.37));float wrI=max(wrG,step(.04,wrL)*wrVt)*wrIn*(1.-smoothstep(90.,160.,wrDist))*step(wrHs(wrId+11.3),wrPct);
     if(wrI>.01){vec3 wrUp=vec3(0.,1.,0.);vec3 wrTg=normalize(cross(wrUp,-wrN));vec3 wrD=vec3(dot(wrV,wrTg),wrV.y,max(dot(wrV,-wrN),.02));wrD.xy*=.38*wrD.z*mix(.3,1.,smoothstep(4.,28.,wrDist)); /* v4 r10: de perto desloca ainda menos */
-     vec3 wrLamp=totalEmissiveRadiance*step(.04,wrL);float wrAmb=mix(.55,.025,night)*(.4+.6*sunDim);
+     vec3 wrLamp=totalEmissiveRadiance*step(.04,wrL)*mix(1.,.5,synth);float wrAmb=mix(mix(.55,.025,night)*(.4+.6*sunDim),.1,wrInv); /* v4 r13: no Synthwave a janela acesa (1,25 + bloom forte) estourava em branco; no Invertido não há luz elétrica: TV desligada e só a penumbra vermelha de fora */
      gl_FragColor.rgb=mix(gl_FragColor.rgb,wrRoom(wrA,wrD,wrId,wrLamp,wrAmb),wrI);}
     wrG*=1.-smoothstep(.04,.3,wrL);
     if(wrG>.01){vec3 wrR=reflect(wrV,wrN);float wrCs=clamp(dot(-wrV,wrN),0.,1.);
@@ -169,7 +172,7 @@ function winReflPatch(mat,night){if(!mat||mat.userData.winRefl)return mat;mat.us
      gl_FragColor.rgb=mix(gl_FragColor.rgb,wrS*mix(1.,.75,night),clamp(wrK,0.,.85))+vec3(1.,.93,.8)*wrSn*wrG;}}
    #endif
    #include <tonemapping_fragment>`)};
- mat.customProgramCacheKey=()=>key+'|winRefl3';mat.needsUpdate=true;return mat}
+ mat.customProgramCacheKey=()=>key+'|winRefl4';mat.needsUpdate=true;return mat}
 // neon (MeshBasic): núcleo mais branco no tubo, zumbido sutil e, à noite, brilho acima de 1 (o bloom pega quando ligado).
 /* v4 r13: steady=true (M.neonSt) = mesmo núcleo quente, sem zumbido nem falha (letreiros fixos: cruz e faixa do hospital) */
 function fxNeonPatch(mat,steady){if(!mat||mat.userData.fxNeon||!mat.isMeshBasicMaterial)return mat;mat.userData.fxNeon=true;const old=mat.onBeforeCompile,key=(mat.customProgramCacheKey&&mat.customProgramCacheKey())||'';
