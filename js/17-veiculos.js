@@ -95,7 +95,7 @@ const CAR_WHEEL_CAP=512,CAR_WHEEL_IM=new THREE.InstancedMesh(wheelGeo,wheelMat,C
 CAR_WHEEL_IM.castShadow=true;CAR_WHEEL_IM.receiveShadow=false;CAR_WHEEL_IM.frustumCulled=false;CAR_WHEEL_IM.count=0;CAR_WHEEL_IM.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
 CAR_HUB_IM.castShadow=false;CAR_HUB_IM.receiveShadow=false;CAR_HUB_IM.frustumCulled=false;CAR_HUB_IM.count=0;CAR_HUB_IM.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
 scene.add(CAR_WHEEL_IM,CAR_HUB_IM);
-function attachCarWheelMeshes(c){if(!c||!c.wheels||c.hasWheelMeshes)return;c.hasWheelMeshes=true;const r=c.t.wr;for(const wh of c.wheels){const wm=new THREE.Mesh(wheelGeo,wheelMat);wm.scale.copy(wh.w.scale);wm.rotation.copy(wh.w.rotation);wm.castShadow=true;wm.add(new THREE.Mesh(hubGeo,hubMat));wh.piv.remove(wh.w);wh.piv.add(wm);wh.w=wm}}
+function attachCarWheelMeshes(c){if(!c||!c.wheels||c.hasWheelMeshes)return;c.hasWheelMeshes=true;const r=c.t.wr;for(const wh of c.wheels){const wm=new THREE.Mesh(wheelGeo,wheelMat);wm.scale.copy(wh.w.scale);wm.rotation.copy(wh.w.rotation);wm.castShadow=true;wm.add(new THREE.Mesh(hubGeo,hubMat));wh.piv.remove(wh.w);wh.piv.add(wm);wh.w=wm}if(c.mudWheelMat&&(c.grime||0)>=.25&&typeof mudWheels==='function')mudWheels(c,true,Math.min(.5,(c.grime-.25)*.8))}
 function syncCarWheelInstances(){let n=0;for(const c of vehicles){if(!c.g||!c.g.visible||!c.wheels||c.hasWheelMeshes)continue;c.g.updateMatrixWorld();for(const wh of c.wheels){if(!wh.piv.visible||n>=CAR_WHEEL_CAP)continue;CAR_WHEEL_IM.setMatrixAt(n,wh.w.matrixWorld);CAR_HUB_IM.setMatrixAt(n,wh.w.matrixWorld);n++}}CAR_WHEEL_IM.count=n;CAR_HUB_IM.count=n;if(n){CAR_WHEEL_IM.instanceMatrix.needsUpdate=true;CAR_HUB_IM.instanceMatrix.needsUpdate=true}}
 const WHEEL_FULL=new THREE.CylinderGeometry(1,1,.32,16).toNonIndexed();WHEEL_FULL.rotateX(Math.PI/2);
 const WHEEL_NI=new THREE.CylinderGeometry(1,1,.32,16,1,false,-Math.PI/2,Math.PI).toNonIndexed();WHEEL_NI.rotateX(Math.PI/2); // carros distantes: só a metade de baixo da roda
@@ -565,7 +565,7 @@ function buildCarMesh(c){
  // v104: a malha detalhada é guardada por tipo+cor+carga+estilo, então trocar de LOD perto do jogador não refaz a geometria
  const gk=carGeoKey(c);let G=CAR_GEO.get(gk);
  if(!G)G=carGeoBuild(c,gk);
- const holed=!t.boat&&!t.hover&&c.type!=='moto'&&c.type!=='jetski';const shell=new THREE.Mesh(G.b,holed?carHoleMat(c,!!c.exploded):carBodyMat);shell.castShadow=shell.receiveShadow=true;ch.add(shell);
+ const holed=!t.boat&&!t.hover&&c.type!=='moto'&&c.type!=='jetski';const shell=new THREE.Mesh(G.b,holed?carHoleMat(c,!!c.exploded):carBodyMat);shell.castShadow=shell.receiveShadow=true;ch.add(shell);c.dirtShell=(t.boat||t.hover||c.type==='jetski')?null:shell;
  if(G.a)ch.add(new THREE.Mesh(G.a,carBodyMat));c.lampMesh=G.l?new THREE.Mesh(G.l,carLightMat):null;if(holed){c.dentParts={shell,lamp:c.lampMesh};c.dmgGk=gk;c.dmgG=G;if(!G.pre){G.pre=true;carDmgPrecalc(gk,t,G)}if(c.dmg)c.dmgDirty=true}if(c.lampMesh)ch.add(c.lampMesh);c.rider=null;
  if(c.type==='taxi')ch.add(taxiSign(c));
  const nCh0=ch.children.length;addCarPlates(c,ch);
