@@ -117,8 +117,8 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
  city.chunks.set(key,ch);curChunk=ch;let gunN=0,garaged=0,curRi=-1,curI=null;const pendingParkingSidewalk=[];if(!city.doors)city.doors=new Map();
  const regDoor=(dx,dz,f,u,house)=>{if(curRi<0)return;const r=city.rects[curRi];let ox,oz;if(f==='n'||f==='s'){ox=clamp(u,r[0]+2.5,r[2]-2.5);oz=f==='n'?r[1]+2:r[3]-2}else{oz=clamp(u,r[1]+2.5,r[3]-2.5);ox=f==='w'?r[0]+2:r[2]-2}
   city.doors.get(curRi).push({x:dx,z:dz,ox,oz,ri:curRi,td:perimNearest(perim(curRi),ox,oz),house,f})};
- const lodNear=new MB(),lodMid=new MB(),lodFarWindow=new MB(),signs=new MB(),clothes=new MB(),clothPins=[],sandMb=new MB(),towelMb=new MB(),foamMb=new MB(),wat=new MB(),fence=new MB(),walls=new MB(),abWalls=new MB(),roofs=new MB(),det=new MB(),roofD=new MB(),neonDN=new MB(),neon=new MB(),neonSt=new MB(),side=new MB(),forestFloor=new MB(),roadGround=new MB(),marks=new MB(),glow=new MB(),plants=new MB(false),forestPlants=new MB(false),roofs2=new MB(),hwin=new MB(),hwinS=new MB(),bins=new MB(false),tlp=new MB(false),bedMb=new MB(),waveMb=new MB(),hazeCastle=new MB();det.ab=1;lodNear.ab=1;lodMid.ab=1;neon.ab=1;neonSt.ab=1;tlp.ab=1;
- const isoBuilders=[walls,abWalls,roofs,roofs2,det,roofD,neonDN,lodNear,lodMid,lodFarWindow,hwin,hwinS,neon,neonSt,glow,signs];
+ const lodNear=new MB(),lodMid=new MB(),lodFarWindow=new MB(),signs=new MB(),signsB=new MB(),clothes=new MB(),clothPins=[],sandMb=new MB(),towelMb=new MB(),foamMb=new MB(),wat=new MB(),fence=new MB(),walls=new MB(),abWalls=new MB(),roofs=new MB(),det=new MB(),roofD=new MB(),neonDN=new MB(),neon=new MB(),neonSt=new MB(),side=new MB(),forestFloor=new MB(),roadGround=new MB(),marks=new MB(),glow=new MB(),plants=new MB(false),forestPlants=new MB(false),roofs2=new MB(),hwin=new MB(),hwinS=new MB(),bins=new MB(false),tlp=new MB(false),bedMb=new MB(),waveMb=new MB(),hazeCastle=new MB();det.ab=1;lodNear.ab=1;lodMid.ab=1;neon.ab=1;neonSt.ab=1;tlp.ab=1;
+ const isoBuilders=[walls,abWalls,roofs,roofs2,det,roofD,neonDN,lodNear,lodMid,lodFarWindow,hwin,hwinS,neon,neonSt,glow,signs,signsB];
  const isoCapture=fn=>(...args)=>{const starts=isoBuilders.map(b=>b.p.length),result=fn(...args);isoRecord(isoBuilders,starts);return result};
  const cMark=COL(st.mark),cCenter=COL(st.center),cSide=COL(st.side),cGrass=COL(st.grass),cDet=COL(st.detail);
  const own=(x,z)=>{const c=chunkOf(x,z);return c[0]===ci&&c[1]===cj};
@@ -374,7 +374,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
     signPlane(ch.group,mat,p[0],y,p[1],w,hh,Math.atan2(n[0],n[1]));const fr=COL('#2a2430');bxU(det,um2-w/2-.1,um2+w/2+.1,Math.min(a.fv,a.fv+a.s3*.05),Math.max(a.fv,a.fv+a.s3*.05),y-hh/2-.1,y+hh/2+.1,fr)}}
   NR.built=true};
  const rock=(x,z,s,col)=>{const c=COL(col||(night?'#4a4458':'#8a8680')).multiplyScalar(rr(.85,1.1));det.geo(GEO.ico,mtx(x,s*.35,z,s*rr(.9,1.3),s*rr(.55,.85),s*rr(.9,1.3),rr(0,3),rr(0,3),rr(0,.4)),c)};
- const coastPatio=(x0,z0,x1,z1,f,hotel,seed)=>{
+ const coastPatio=(x0,z0,x1,z1,f,hotel,seed,bh)=>{
   const ns=f==='n'||f==='s',nx=f==='w'?-1:f==='e'?1:0,nz=f==='n'?-1:f==='s'?1:0,cx=(x0+x1)/2,cz=(z0+z1)/2,fx=ns?cx:f==='w'?x0:x1,fz=ns?(f==='n'?z0:z1):cz,ux=ns?1:0,uz=ns?0:1,rr2=mulberry32(seed),width=ns?x1-x0:z1-z0;
   if(width<8)return;ch.patio=ch.patio||[];const metal=COL('#ddd8cd'),cloth=COL(rr2()<.5?'#2c9ca4':'#e8bc66'),wood=COL('#735037');
   const Q=(u,v,y,w,d,h,col)=>{const x=fx+ux*u+nx*v,z=fz+uz*u+nz*v;det.box(x-(ns?w:d)/2,y,z-(ns?d:w)/2,x+(ns?w:d)/2,y+h,z+(ns?d:w)/2,col)};
@@ -387,7 +387,15 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
     Q(u-.2,v,1.12,.1,.1,.17,COL('#f4e4ad'));Q(u+.2,v,1.12,.08,.08,.2,COL('#8fb8ab'));
    }
   }
-  const fs=ns?x0:z0;worldSignQuad(signs,f,x0,z0,x1,z1,fs+width*.2,fs+width*.8,3.45,4.65,.065,hotel?seed%8:16+seed%8,false);
+  const fs=ns?x0:z0;
+  /* v4 r19: estilo do letreiro (gerador próprio pela posição; o sorteio da cidade não muda). 0 clássico, 1 cursivo de neon, 2 marquise com lâmpadas, 3 ícone + texto, 4 bandeira em pé */
+  const uA=fs+width*.2,uB=fs+width*.8,idx=hotel?seed%8:16+seed%8,scI=hotel?seed%8:8+seed%8,SS=worldSignStyle(cx,cz,0x51a,night?[10,25,20,20,25]:[30,25,20,15,10]),sr=SS.r,NCs=st.neon||['#ff3a6a','#2ad6ff','#ffd23a','#7aff5a','#ff8a2a'];
+  let sty=SS.k;if(sty===4&&!(bh>=7.4))sty=1;const sc1=COL(NCs[Math.floor(sr()*NCs.length)]),sc2=COL(NCs[Math.floor(sr()*NCs.length)]);
+  if(sty===0)worldSignQuad(signs,f,x0,z0,x1,z1,uA,uB,3.45,4.65,.065,idx,false);
+  else if(sty===1)wsScript(f,x0,z0,x1,z1,(uA+uB)/2,4.05,Math.min(uB-uA,6.8),.07,scI);
+  else if(sty===2)wsMarquee(f,x0,z0,x1,z1,uA,uB,3.3,4.8,idx,sc1,sr);
+  else if(sty===3)wsIconSign(f,x0,z0,x1,z1,uA,uB,3.35,4.75,idx,hotel?[5,1,7,12][Math.floor(sr()*4)]:[0,2,4,9,14,15][Math.floor(sr()*6)],sc1,sc2);
+  else wsBlade(f,x0,z0,x1,z1,fs+width*(sr()<.5?.3:.7),3.0,Math.min(bh-.6,3.0+sr()*1.2+3.0),.25,1.35,[0,1,6,7,2,14][hotel?(sr()<.5?0:4):(sr()<.5?1:5)],sc1,sc2);
  };
  const building=isoCapture((x0,z0,x1,z1,h,opts={})=>{
    // Os braços de um L já foram medidos/recortados no planejamento. Encolher
@@ -399,7 +407,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
    // pelo menor teto aeroportuário dos dois braços + emenda.
    const airCap=opts.linkedL?Math.min(localAirCap,opts.linkedL.airCap):localAirCap;
    h=opts.linkedL?opts.linkedL.h:Math.min(h,35.2,Number.isFinite(airCap)?Math.max(5.8,airCap-5):Infinity);
-  const airRoof={x0,z0,x1,z1,ri:curRi,y:h+2};if(curRi>=0)city.buildingFootprints.push(airRoof);const fp=facadePlan(S.seed,x0,z0,h,opts.simple,opts.safe||opts.patio),facadeWalls=fp.abandoned&&!opts.linkedL?abWalls:walls;const NS=night&&!opts.patio&&neonStreet(opts.face,x0,z0,x1,z1);det.ab=0;
+  const airRoof={x0,z0,x1,z1,ri:curRi,y:h+2};if(curRi>=0)city.buildingFootprints.push(airRoof);const fp=facadePlan(S.seed,x0,z0,h,opts.simple,opts.safe||opts.patio),facadeWalls=fp.abandoned&&!opts.linkedL?abWalls:walls;const NS=night&&!opts.patio&&neonStreet(opts.face,x0,z0,x1,z1);det.ab=0;let wsTour=null; /* v4 r19: faixa (u0,u1) ocupada pelo letreiro do prédio turístico, para o letreiro de fachada do Synth não cair por cima */
   const wc=opts.pal?COL(opts.pal[0]):COL(pick(st.walls)).multiplyScalar(rr(.9,1.08)), rc=opts.pal?COL(opts.pal[1]):COL(pick(st.roof)).multiplyScalar(rr(.9,1.1));
   /* v3 r34 · BLDX: cor nova (~20%) e prédio redondo (elegíveis), sorteio próprio pela seed + posição */
   if(!opts.pal&&st===STYLES.modern&&!city.haze){const nc=bldxColor(bldxRng(x0,z0,0x0e5));if(nc)wc.copy(nc)}
@@ -526,8 +534,14 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
   if(!abandoned&&!opts.patio&&opts.tour&&opts.face&&ar()<.75){const f=opts.face,[fs,flen]=FL(f),NC=st.neon||['#ff3a6a','#2ad6ff','#ffd23a','#7aff5a','#ff8a2a'],c1=COL(NC[Math.floor(ar()*NC.length)]),c2=COL(NC[Math.floor(ar()*NC.length)]),bk=COL('#18141e');
    const vert=ar()<.5&&h>14;let bw,bh;if(vert){bw=arr(1.6,2.3);bh=arr(5,Math.min(10,h-6))}else{bw=Math.min(arr(5,9),flen-2);bh=arr(1.4,2.2)}
    if(bw>1.2&&flen>bw+1.6){const u0=fs+arr(.8,flen-bw-.8),u1=u0+bw,y0=vert?arr(4,Math.max(4.2,h-bh-1.5)):arr(3.5,Math.min(h-bh-.5,7.5)),y1=y0+bh,t=.12;
-    fbox(x0,z0,x1,z1,f,u0,u1,y0,y1,.02,.28,det,bk);fbox(x0,z0,x1,z1,f,u0,u1,y1-t,y1,.28,.38,neon,c1);fbox(x0,z0,x1,z1,f,u0,u1,y0,y0+t,.28,.38,neon,c1);fbox(x0,z0,x1,z1,f,u0,u0+t,y0,y1,.28,.38,neon,c1);fbox(x0,z0,x1,z1,f,u1-t,u1,y0,y1,.28,.38,neon,c1);
-    worldSignQuad(signs,f,x0,z0,x1,z1,u0,u1,y0,y1,.3,worldSignPick(x0,z0,vert),vert);}
+    /* v4 r19: além do clássico (caixa escura + moldura), bandeira em pé (vertical), cursivo sem placa, marquise com lâmpadas e ícone + texto (sorteio próprio, não mexe no ar()) */
+    const TS=worldSignStyle(x0,z0,0x70a,vert?[55,0,0,0,45]:[35,30,20,15,0]),tk=EX?0:TS.k;wsTour=[u0-.6,u1+.6];
+    if(tk===4)wsBlade(f,x0,z0,x1,z1,u0+bw/2,y0,y1,.25,.25+bw,worldSignPick(x0,z0,true),c1,c2);
+    else if(tk===1)wsScript(f,x0,z0,x1,z1,(u0+u1)/2,(y0+y1)/2,bw,.08,worldSignPick(x0,z0,false)%16);
+    else if(tk===2)wsMarquee(f,x0,z0,x1,z1,u0,u1,y0,y1,worldSignPick(x0,z0,false),c1,TS.r);
+    else if(tk===3)wsIconSign(f,x0,z0,x1,z1,u0,u1,y0,y1,worldSignPick(x0,z0,false),Math.floor(TS.r()*16),c1,c2);
+    else{fbox(x0,z0,x1,z1,f,u0,u1,y0,y1,.02,.28,det,bk);fbox(x0,z0,x1,z1,f,u0,u1,y1-t,y1,.28,.38,neon,c1);fbox(x0,z0,x1,z1,f,u0,u1,y0,y0+t,.28,.38,neon,c1);fbox(x0,z0,x1,z1,f,u0,u0+t,y0,y1,.28,.38,neon,c1);fbox(x0,z0,x1,z1,f,u1-t,u1,y0,y1,.28,.38,neon,c1);
+    worldSignQuad(signs,f,x0,z0,x1,z1,u0,u1,y0,y1,.3,worldSignPick(x0,z0,vert),vert);}}
    const ac=COL(['#e04a3a','#2a8ad6','#f2c21a','#3ab36a','#ff6fae'][Math.floor(ar()*5)]);for(let k=0;k<2;k++){const a=fs+arr(1,Math.max(1.2,flen-6));fbox(x0,z0,x1,z1,f,a,a+4.5,3.1,3.3,0,1.5,det,ac);fbox(x0,z0,x1,z1,f,a,a+4.5,2.75,3.1,1.42,1.5,det,COL('#f4f4f0'))}}
   // roof antennas, masts and dishes
   det.ab=0;
@@ -544,12 +558,24 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
  det.ab=1;
  if(night&&NS&&!fp.abandoned&&opts.face){
   const f=opts.face,fs=(f==='n'||f==='s')?x0:z0,flen=(f==='n'||f==='s')?w:d,cols=st.neon||['#ff4fa3','#33e6e6'],nc=COL(cols[fp.accent%cols.length]);
-  fbox(x0,z0,x1,z1,f,fs+.20,fs+flen-.20,h-.34,h-.22,.10,.15,neon,nc);
+  /* v4 r19: Synthwave mais variado — cada prédio sorteia (gerador próprio) a cornija (simples, dupla em 2 cores ou nenhuma) e o letreiro:
+     coluna (o de antes), bandeira em pé, cursivo de neon, marquise com lâmpadas ou ícone com anel; posição e 2ª cor também variam. Redondo (EX) fica na coluna. */
+  const SW5=worldSignStyle(x0,z0,0x4e3,[25,20,15,15,25]),sr=SW5.r,nc2=COL(cols[(fp.accent+1+Math.floor(sr()*Math.max(1,cols.length-1)))%cols.length]),cor=sr();
+  if(cor<.62||EX)fbox(x0,z0,x1,z1,f,fs+.20,fs+flen-.20,h-.34,h-.22,.10,.15,neon,nc);
+  else if(cor<.84){fbox(x0,z0,x1,z1,f,fs+.20,fs+flen-.20,h-.34,h-.22,.10,.15,neonSt,nc);fbox(x0,z0,x1,z1,f,fs+.20,fs+flen-.20,h-.66,h-.56,.10,.15,neonSt,nc2)}
   if(fp.family==='deco'&&h>14)for(const edge of [fs+.32,fs+flen-.32])fbox(x0,z0,x1,z1,f,edge-.045,edge+.045,3.4,h-.34,.10,.16,neon,nc);
-  if(h>9&&flen>8){const step=flen/Math.max(1,Math.floor(flen/3.5)),u=fs+step,sw=Math.min(.85,step*.22),y=3.6,sh=Math.min(5.2,h-4.4),a=u-sw/2,b=u+sw/2;
-   fbox(x0,z0,x1,z1,f,a,b,y,y+sh,.03,.17,det,COL('#15101e'));
-   for(const edge of [a,b-.045])fbox(x0,z0,x1,z1,f,edge,edge+.045,y,y+sh,.17,.20,neon,nc);
-   worldSignQuad(signs,f,x0,z0,x1,z1,a+.05,b-.05,y+.08,y+sh-.08,.205,worldSignPick(x0,z0,true),true);
+  if(h>9&&flen>8){const nst=Math.max(1,Math.floor(flen/3.5)),step=flen/nst,u=fs+step*(EX?1:1+Math.floor(sr()*Math.max(1,nst-1))),sw=Math.min(.85,step*.22),y=3.6,sh=Math.min(5.2,h-4.4),a=u-sw/2,b=u+sw/2;
+   let k=EX?0:SW5.k;const wordI=worldSignPick(x0,z0,false);
+   /* fica longe do letreiro do prédio turístico: escolhe o centro (uq) do lado livre da fachada; sem espaço, só a coluna estreita (como antes) */
+   const wsFree=(w)=>{let uq=Math.min(Math.max(u,fs+w/2+.4),fs+flen-w/2-.4);if(!wsTour||uq+w/2<wsTour[0]||uq-w/2>wsTour[1])return uq;const L=wsTour[0]-fs,Rg=fs+flen-wsTour[1];if(L>=w+.8)return fs+L/2;if(Rg>=w+.8)return wsTour[1]+Rg/2;return null};
+   if(k===4&&wsFree(.6)===null)k=0;
+   if(k===4)wsBlade(f,x0,z0,x1,z1,wsFree(.6),y,y+Math.min(sh+1.6,h-3),.25,.25+(sr()<.5?1.3:1.75),worldSignPick(x0,z0,true),nc,nc2);
+   else if(k===1&&wsFree(Math.min(flen*.62,7.4))!==null){const w=Math.min(flen*.62,7.4),uc=wsFree(w);wsScript(f,x0,z0,x1,z1,uc,Math.min(y+1.2+sr()*2.4,h-2.4),w,.07,wordI%16)}
+   else if(k===2&&wsFree(Math.min(flen*.55,6.2))!==null){const w=Math.min(flen*.55,6.2),uc=wsFree(w),yb=y+sr()*1.4;wsMarquee(f,x0,z0,x1,z1,uc-w/2,uc+w/2,yb,yb+w*.2+.3,wordI,nc,sr)}
+   else if(k===3&&wsFree(Math.min(flen*.6,6.4))!==null){const w=Math.min(flen*.6,6.4),uc=wsFree(w),yb=y+.4+sr()*1.6;wsIconSign(f,x0,z0,x1,z1,uc-w/2,uc+w/2,yb,yb+w*.3,wordI,Math.floor(sr()*16),nc,nc2)}
+   else if(!wsTour||b<wsTour[0]||a>wsTour[1]){fbox(x0,z0,x1,z1,f,a,b,y,y+sh,.03,.17,det,COL('#15101e'));
+    for(const edge of [a,b-.045])fbox(x0,z0,x1,z1,f,edge,edge+.045,y,y+sh,.17,.20,neon,nc);
+    worldSignQuad(signs,f,x0,z0,x1,z1,a+.05,b-.05,y+.08,y+sh-.08,.205,worldSignPick(x0,z0,true),true);}
   }
 
  }
@@ -707,6 +733,35 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
   const rest=face==='s'?[x0,z0,x1,z1-Dp-1]:face==='n'?[x0,z0+Dp+1,x1,z1]:face==='e'?[x0,z0,x1-Dp-1,z1]:[x0+Dp+1,z0,x1,z1];
   if(rest[2]-rest[0]>7&&rest[3]-rest[1]>7)building(rest[0],rest[1],rest[2],rest[3],Math.round(rr(9,22)/3.2)*3.2,{})});
  const fbox=(X0,Z0,X1,Z1,f,u0,u1,y0,y1,d0,d1,mb,col)=>{if(f==='n')mb.box(u0,y0,Z0-d1,u1,y1,Z0-d0,col);else if(f==='s')mb.box(u0,y0,Z1+d0,u1,y1,Z1+d1,col);else if(f==='w')mb.box(X0-d1,y0,u0,X0-d0,y1,u1,col);else mb.box(X1+d0,y0,u0,X1+d1,y1,u1,col)};
+ /* ---------- v4 r19 · letreiros novos (tudo nos lotes signs/neonSt/det do chunk: nenhum draw call novo) ----------
+    u = posição ao longo da fachada f (x em n/s, z em e/w), d = distância para fora da parede. Tubos = cilindro de 9 lados no neonSt (fixo, sem zumbido/falha). */
+ const wsP=(f,X0,Z0,X1,Z1,u,dd)=>f==='s'?[u,Z1+dd]:f==='n'?[u,Z0-dd]:f==='e'?[X1+dd,u]:[X0-dd,u];
+ const wsSeg=(f,X0,Z0,X1,Z1,uA,yA,dA,uB,yB,dB,r,col)=>{const a=wsP(f,X0,Z0,X1,Z1,uA,dA),b=wsP(f,X0,Z0,X1,Z1,uB,dB);wseg(neonSt,a[0],yA,a[1],b[0],yB,b[1],r,col)};
+ const wsRect=(f,X0,Z0,X1,Z1,u0,u1,y0,y1,d,r,col)=>{wsSeg(f,X0,Z0,X1,Z1,u0-r,y0,d,u1+r,y0,d,r,col);wsSeg(f,X0,Z0,X1,Z1,u0-r,y1,d,u1+r,y1,d,r,col);wsSeg(f,X0,Z0,X1,Z1,u0,y0,d,u0,y1,d,r,col);wsSeg(f,X0,Z0,X1,Z1,u1,y0,d,u1,y1,d,r,col)};
+ /* cursivo de neon: só as letras de tubo (célula 'sc' do atlas), sem placa; dois suportes finos escuros atrás */
+ const wsScript=(f,X0,Z0,X1,Z1,uc,yc,w,d,i)=>{const hh=w*96/512;worldSignFace(signs,f,X0,Z0,X1,Z1,uc-w/2,uc+w/2,yc-hh/2,yc+hh/2,d,worldSignUV(i,false,'sc'));
+  const mc=COL('#2a2630');for(const k of[-.3,.3])fbox(X0,Z0,X1,Z1,f,uc+k*w-.02,uc+k*w+.02,yc-hh*.18,yc+hh*.12,0,d-.012,det,mc)};
+ /* marquise: chapa escura com borda de lâmpadas (alternando branco-quente e a cor) e o texto clássico por cima */
+ const wsMarquee=(f,X0,Z0,X1,Z1,u0,u1,y0,y1,idx,col,rg)=>{const BK=['#1a1420','#22101a','#0e1626','#1c1a12'],warm=COL('#fff0c0');fbox(X0,Z0,X1,Z1,f,u0,u1,y0,y1,.03,.12,det,COL(BK[Math.floor(rg()*BK.length)]));
+  const st2=.32,b=.05;let n=0;const bulb=(u,y)=>{fbox(X0,Z0,X1,Z1,f,u-b,u+b,y-b,y+b,.125,.19,neonSt,(n++)%2?col:warm)};
+  for(let u=u0+.16;u<=u1-.15;u+=st2){bulb(u,y0+.14);bulb(u,y1-.14)}for(let y=y0+.14+st2;y<y1-.14-st2*.5;y+=st2){bulb(u0+.16,y);bulb(u1-.16,y)}
+  worldSignQuad(signs,f,X0,Z0,X1,Z1,u0+.32,u1-.32,y0+.2,y1-.2,.13,idx,false)};
+ /* ícone de tubo à esquerda (anel na 2ª cor) + texto clássico à direita, sobre chapa escura */
+ const wsIconSign=(f,X0,Z0,X1,Z1,u0,u1,y0,y1,idx,ic,c1,c2)=>{const hh=y1-y0,s2=Math.min(hh,(u1-u0)*.42),cu=u0+s2/2+.08,cy=(y0+y1)/2;
+  fbox(X0,Z0,X1,Z1,f,u0+s2+.15,u1,y0+hh*.18,y1-hh*.18,.03,.1,det,COL('#15101e'));
+  worldSignFace(signs,f,X0,Z0,X1,Z1,cu-s2*.42,cu+s2*.42,cy-s2*.42,cy+s2*.42,.14,worldSignUV(ic,false,'ic'));
+  const R=s2*.48,N=12;for(let k=0;k<N;k++){const a0=k/N*6.2832,a1=(k+1)/N*6.2832;wsSeg(f,X0,Z0,X1,Z1,cu+Math.cos(a0)*R,cy+Math.sin(a0)*R,.12,cu+Math.cos(a1)*R,cy+Math.sin(a1)*R,.12,.04,c2)}
+  wsRect(f,X0,Z0,X1,Z1,u0+s2+.2,u1-.05,y0+hh*.18,y1-hh*.18,.12,.035,c1);
+  worldSignQuad(signs,f,X0,Z0,X1,Z1,u0+s2+.3,u1-.12,y0+hh*.2,y1-hh*.2,.115,idx,false)};
+ /* bandeira: chapa em pé perpendicular à fachada, presa por 2 braços, texto vertical dos dois lados e moldura de tubo nas duas faces (c1 fora, c2 dentro) */
+ const wsBlade=(f,X0,Z0,X1,Z1,u,y0,y1,d0,d1,vi,c1,c2)=>{if(!(y1-y0>1.2&&d1-d0>.6))return;const th=.07,mc=COL('#3a3640');
+  fbox(X0,Z0,X1,Z1,f,u-th,u+th,y0,y1,d0,d1,det,COL('#15101e'));
+  for(const y of[y0+.35,y1-.35])fbox(X0,Z0,X1,Z1,f,u-.03,u+.03,y-.04,y+.04,0,d0+.04,det,mc);
+  const uv=worldSignUV(vi,true),hh=Math.min(y1-y0-.5,(d1-d0-.32)*4),ww=hh/4,dc=(d0+d1)/2,yc=(y0+y1)/2;
+  for(const sd of[-1,1]){worldSignBlade(signsB,f,X0,Z0,X1,Z1,u,dc-ww/2,dc+ww/2,yc-hh/2,yc+hh/2,th+.02,uv,sd);
+   const uu=u+sd*(th+.035);wsSeg(f,X0,Z0,X1,Z1,uu,y0+.08,d0+.08,uu,y1-.08,d0+.08,.035,c1);wsSeg(f,X0,Z0,X1,Z1,uu,y0+.08,d1-.08,uu,y1-.08,d1-.08,.035,c1);
+   wsSeg(f,X0,Z0,X1,Z1,uu,y0+.08,d0+.08,uu,y0+.08,d1-.08,.035,c1);wsSeg(f,X0,Z0,X1,Z1,uu,y1-.08,d0+.08,uu,y1-.08,d1-.08,.035,c1);
+   wsSeg(f,X0,Z0,X1,Z1,uu,y0+.22,d0+.2,uu,y1-.22,d0+.2,.025,c2);wsSeg(f,X0,Z0,X1,Z1,uu,y0+.22,d1-.2,uu,y1-.22,d1-.2,.025,c2)}};
  const roof=(x0,z0,x1,z1,y,rh,rc,wc)=>{const cx=(x0+x1)/2,cz=(z0+z1)/2,ref=[cx,y+rh*.3,cz],gc=wc.clone().multiplyScalar(.95),rc2=rc.clone().multiplyScalar(.86);
   const A=[x0,y,z0],B=[x1,y,z0],C=[x1,y,z1],Dd=[x0,y,z1];
   if(x1-x0>=z1-z0){const r0=[x0,y+rh,cz],r1=[x1,y+rh,cz];roofs2.qa(A,B,r1,r0,rc,ref);roofs2.qa(Dd,C,r1,r0,rc2,ref);roofs2.qa(A,Dd,r0,r0,gc,ref);roofs2.qa(B,C,r1,r1,gc,ref)}
@@ -2260,7 +2315,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
     const m=um?0:Math.min(rr(1.35,1.65),Math.max(.55,(Math.min(x1-x0,z1-z0)-9)/2));let h=um?um.h:(night?rr(10,40):rr(8,30));if(!um){h*=1+(1-dc)*(night?1.9:1.4);if(R()<.07)h*=1.8;if(info.low)h=rr(6.4,12.8);if(info.para)h=Math.max(h,19.2)}
     {let a=x0+m,b=z0+m,c=x1-m,d=z1-m;const shoreFace=['n','s','w','e'][city.coast],coastDist=city.coast===0?z0:city.coast===1?E-z1:city.coast===2?x0:E-x1,ps=((Math.round(x0*17)*73856093)^(Math.round(z0*13)*19349663)^S.seed)>>>0,pr=mulberry32(ps),eligible=face===shoreFace&&coastDist<o+SW+3&&onBeach((x0+x1)/2,(z0+z1)/2)&&!sOK&&!info.safe&&!info.tune&&!info.garage,patio=eligible&&pr()<.65,hotel=pr()<.5;
      if(patio){if(face==='n')b+=3.3;if(face==='s')d-=3.3;if(face==='w')a+=3.3;if(face==='e')c-=3.3}
-     building(a,b,c,d,um?um.h:Math.round(h/3.2)*3.2,{exo:!urbanPending.length,face,nrf:NRb?nrFace(x0,z0,x1,z1):null,tour:info.tour,para:info.para,safe:sOK,patio,pal:um&&um.pal,simple:!!um,linkedL:um||null});if(patio)coastPatio(a,b,c,d,face,hotel,ps)};if(sOK&&city.safe&&!had)city.safeLot=lk;
+     building(a,b,c,d,um?um.h:Math.round(h/3.2)*3.2,{exo:!urbanPending.length,face,nrf:NRb?nrFace(x0,z0,x1,z1):null,tour:info.tour,para:info.para,safe:sOK,patio,pal:um&&um.pal,simple:!!um,linkedL:um||null});if(patio)coastPatio(a,b,c,d,face,hotel,ps,um?um.h:Math.round(h/3.2)*3.2)};if(sOK&&city.safe&&!had)city.safeLot=lk;
    }
    if(urbanPending.length){
     // v253: nao somar duas margens de 1.55m (cada lado e cada ponto):
@@ -2669,7 +2724,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
  if(hazeCastle.p.length){const mat=M.castle||M.solid; /* v3 r60: M.castle = M.solid + reboco do SURF */const mesh=add(hazeCastle,mat,true,true); /* v78: material comum dos detalhes (o Standard próprio deixava o castelo quase preto) */ch.group.add(mesh);ch.hazeCastleMesh=mesh;}
  ch.actorWallMesh=add(walls,M.wall,true,true);ch.actorAbWallMesh=add(abWalls,M.abWall,true,true);prepareSurfaceMesh(add(roofs,M.surface,false,true),'flatRoof',st);ch.detMesh=add(det,M.solid,true,true);ch.roofDetMesh=add(roofD,M.solid,false,true); /* v78: objetos de telhado SEM sombra (fora dos grupos de sombra) */ch.lodNearMesh=add(lodNear,M.solid,true,true);ch.lodMidMesh=add(lodMid,M.solid,true,true);ch.lodFarWindowMesh=add(lodFarWindow,M.solid,false,true);if(ch.lodFarWindowMesh)ch.lodFarWindowMesh.visible=false;prepareSurfaceMesh(add(side,M.surface,false,true),'ground',st);ch.actorRoofMesh=prepareSurfaceMesh(add(roofs2,M.surface2,true,true),'roof',st);add(hwin,M.hwin,false,false);add(hwinS,M.hwinSoft||M.hwin,false,false);
  const towelMat=new THREE.MeshLambertMaterial({vertexColors:true,polygonOffset:true,polygonOffsetFactor:-8,polygonOffsetUnits:-8});city.mats.push(towelMat);add(towelMb,towelMat,false,true,4);
- add(bedMb,M.bed,false,true);add(wat,M.water,false,true,1);add(waveMb,M.wave,false,false,2);add(sandMb,M.sand,false,true,1);add(foamMb,M.foam,false,false,3);add(signs,M.sign,false,false,4);ch.fenceMesh=add(fence,M.fence,false,false);ch.roadGroundMesh=add(roadGround,M.mark,false,true);ch.markMesh=add(marks,M.mark,false,true);ch.plantMesh=add(plants,M.plant,true,true);
+ add(bedMb,M.bed,false,true);add(wat,M.water,false,true,1);add(waveMb,M.wave,false,false,2);add(sandMb,M.sand,false,true,1);add(foamMb,M.foam,false,false,3);add(signs,M.sign,false,false,4);add(signsB,M.signB||M.sign,false,false,4); /* v4 r19: texto das bandeiras (sem o polygonOffset forte do M.sign: a chapa esconde o lado de trás) */ch.fenceMesh=add(fence,M.fence,false,false);ch.roadGroundMesh=add(roadGround,M.mark,false,true);ch.markMesh=add(marks,M.mark,false,true);ch.plantMesh=add(plants,M.plant,true,true);
  // NÃO ALTERAR: malha da floresta não projeta NEM recebe sombras reais;
  // a copa original fica visível e segue o LOD. Fora da lista de castShadow.
  ch.forestTreeMesh=add(forestPlants,M.plant,false,false);
