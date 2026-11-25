@@ -559,20 +559,20 @@ function v67Hud(dt){if(!GUN.has&&!PL.car&&played){$('#gun').hidden=false;hudTx('
       :(near?`<kbd>${k}</kbd>COMPRAR LANCHE $20<br><small>+50 de vida</small>`:`CONVENIÊNCIA · LANCHE $20<br><small>chegue no balcão e aperte <kbd>${k}</kbd></small>`);
      if(tg.dataset.h!==h){tg.dataset.h=h;tg.innerHTML=h}tg.classList.toggle('food',bk==='food');tg.style.left=((v.x+1)/2*innerWidth)+'px';tg.style.top=((1-v.y)/2*innerHeight)+'px'}}}
   if(tg.hidden===show)tg.hidden=!show}
- const cp=$('#ctxp');let h='';CTX.skate=false;
- if(petNearCat())h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>ADOTAR GATINHO';
+ const cp=$('#ctxp');let h='';CTX.skate=false;CTXB.an=null;
+ if(ctxAt(petNearCat(),1.2))h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>ADOTAR GATINHO';
  else if(wardNear()&&!WARD.open)h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>GUARDA-ROUPA · ROUPAS E ACESSÓRIOS';
  else if(empHint())h=empHint();
  else if(bankCounterNear())h=BANK.rob?'':(GUN.has||Object.keys(GUN.inv||{}).length?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd><span style="color:#ff4a4a">ANUNCIAR O ASSALTO</span>':'BANCO · você precisa de uma arma para assaltar');
- else if(casinoTableNear()&&!TABLE_GAME.open)h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>'+(casinoTableNear().kind==='dice'?"DADOS · LIAR'S DICE":casinoTableNear().kind==='pool'?'SINUCA · CASTIGADO':casinoTableNear().kind==='bj'?'BLACKJACK · 21':casinoTableNear().kind==='roul'?'ROLETA · 0 A 36':'VIDEOPÔQUER · JACKS OR BETTER');
- else if(slotNear()>=0&&!SLOT.open)h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>CAÇA-NÍQUEL · $10 POR JOGADA';
+ else if(!TABLE_GAME.open&&ctxAt(casinoTableNear(),1.9))h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>'+(casinoTableNear().kind==='dice'?"DADOS · LIAR'S DICE":casinoTableNear().kind==='pool'?'SINUCA · CASTIGADO':casinoTableNear().kind==='bj'?'BLACKJACK · 21':casinoTableNear().kind==='roul'?'ROLETA · 0 A 36':'VIDEOPÔQUER · JACKS OR BETTER');
+ else if(slotNear()>=0&&!SLOT.open&&ctxAt(CAS.machines[slotNear()],2.3))h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>CAÇA-NÍQUEL · $10 POR JOGADA';
  else if(dbBoothNear())h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>'+(dbBoothNear().ang>.01||dbBoothNear().state==='rising'?'ABAIXAR A PONTE':'LEVANTAR A PONTE');
  else if(bedNear())h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>DEITAR NA CAMA · SALVAR O JOGO';
- else if(newsNear()&&!NEWS.open)h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>BANCA DE JORNAL · JORNAL $1';
- else if(duoWorldNear()&&storyOK('duo'))h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>BORA ROLÊ · '+duoName(1-CHAR.cur);
- else if(duoMateNear()&&storyOK('duo'))h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>CHAMAR '+duoName(1-CHAR.cur)+' PRA SAIR JUNTO';
- else if(duoPedNear())h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>MANDAR '+duoName(1-CHAR.cur)+' PRA CASA';
- else if(dealNear())h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>CONCESSIONÁRIA COASTAL · VER VEÍCULOS À VENDA';
+ else if(!NEWS.open&&ctxAt(newsNear(),2.9))h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>BANCA DE JORNAL · JORNAL $1';
+ else if(duoWorldNear()&&storyOK('duo')&&ctxAt(DUO.worldPed,2.5))h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>BORA ROLÊ · '+duoName(1-CHAR.cur);
+ else if(duoMateNear()&&storyOK('duo')&&ctxAt(SAFE.mate,2.5))h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>CHAMAR '+duoName(1-CHAR.cur)+' PRA SAIR JUNTO';
+ else if(duoPedNear()&&ctxAt(DUO.ped,2.5))h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>MANDAR '+duoName(1-CHAR.cur)+' PRA CASA';
+ else if(dealNear()&&ctxAt(DEAL.clerk,2.5))h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>CONCESSIONÁRIA COASTAL · VER VEÍCULOS À VENDA';
  else if(CTX.car&&PL.car){h=''}
  else if(PL.car&&washHint())h=washHint();
  else if(PL.inside==='shop'&&SHOP.rob>0&&!SHOP.alarm){const k=Math.min(1,SHOP.rob/3.2),n=12,f=Math.round(k*n);h=`<span style="color:#ff4a4a">ASSALTO</span> ${'█'.repeat(f)}${'░'.repeat(n-f)}`}
@@ -585,9 +585,27 @@ function v67Hud(dt){if(!GUN.has&&!PL.car&&played){$('#gun').hidden=false;hudTx('
  else if(PL.inside==='shop'&&SHOP.alarm)h=`<span style="color:#ff4a4a">ALARME · POLÍCIA EM ${Math.max(0,Math.ceil(SHOP.alarmT))}s</span>`;
  if(cp){if(cp.hidden===!!h)cp.hidden=!h;{const ak=h.indexOf('<kbd>')>=0;if(cp.classList.contains('act')!==ak)cp.classList.toggle('act',ak)} /* v79r49: lógica estava invertida desde a v77 — o aviso nunca aparecia (no PC o E funcionava às cegas; no toque o botão INTERAGIR depende dele) */if(h&&padActive())h=padCtxGlyph(h);if(h&&cp.dataset.h!==h){cp.dataset.h=h;cp.innerHTML=h}}
  if(h)$('#prompt').hidden=true;
+ ctxBalTick();
  const wz=$('#wzone');if(wz){const z=WZ.cur;const show=!!z&&played;if(wz.hidden===show)wz.hidden=!show;if(show){
   wz.querySelector('.sh').classList.toggle('on',!!z.lk);wz.querySelector('.cr').classList.toggle('on',!!z.ck);
   const t=$('#wzTxt');const txt=POL.wanted?'ZONA VERMELHA':z.inside?(WZ.susT>0?'SUSPEITO '+Math.max(0,Math.ceil(60-WZ.susT))+' min':(z.lk||z.ck)?'NA ZONA':'DISFARÇADO'):'BUSCA '+Math.max(0,Math.ceil(300-z.age))+' min';if(t.textContent!==txt)t.textContent=txt;wz.classList.toggle('hot',z.inside&&WZ.susT>0)}}}
+
+/* v4 r13: no PC (teclado/mouse), as barras de interação de baixo (#ctxp, #heistp, #tvp) viram o balão laranja do posto,
+   preso no alvo (ou acima do jogador quando o alvo não tem posição). Toque e controle continuam com a barra.
+   Só aparece com tecla na barra; sem ponto visível na tela (ex.: câmera 1ª pessoa) volta a ser barra. */
+const CTXB={an:null,v:new THREE.Vector3()};
+function ctxAt(o,hy){if(!o)return o;CTXB.an={x:o.x,z:o.z,gy:o.gy,h:hy};return o}
+function ctxBalPC(){return !document.body.classList.contains('touch')&&!padActive()}
+function ctxBalPt(an){const top=camMode==='top'&&!VIEW.orbit,v=CTXB.v;
+ v.set(an?an.x:PL.x,(an&&an.gy!==undefined&&isFinite(an.gy)?an.gy:(PL.gy||0))+(an?an.h:2.45)+(top?1.2:0),an?an.z:PL.z).project(camera);
+ return v.z<1&&Math.abs(v.x)<1&&Math.abs(v.y)<1}
+function ctxBalTick(){const pc=ctxBalPC();
+ for(const id of ['ctxp','heistp','tvp']){const el=$('#'+id);if(!el)continue;
+  let on=pc&&!el.hidden&&!!el.querySelector('kbd');
+  if(on){const an=id==='ctxp'?CTXB.an:id==='tvp'?ctxTvAnchor():null;on=ctxBalPt(an)||(!!an&&ctxBalPt(null))}
+  if(el.classList.contains('bal')!==on){if(on&&el._l0===undefined)el._l0=el.style.left;el.classList.toggle('bal',on);if(!on){el.style.left=el._l0||'';el.style.top=''}}
+  if(on){const x=Math.round((CTXB.v.x+1)/2*innerWidth)+'px',y=Math.round((1-CTXB.v.y)/2*innerHeight)+'px';if(el.style.left!==x)el.style.left=x;if(el.style.top!==y)el.style.top=y}}}
+function ctxTvAnchor(){const t=tvSpot();return t?{x:t.x,z:t.z,h:1.9}:null}
 
 function gasPicks(pick,ok,far,area){/* v161: postos passam a nascer juntos da concessionária em quadras compartilhadas; a reserva é feita depois, na etapa de especiais. */}
 function worldPicks(pick,ok,far,area,lr){

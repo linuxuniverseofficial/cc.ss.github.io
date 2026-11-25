@@ -211,6 +211,13 @@ body.padnav :is(button,label,select,input,[tabindex]):focus{outline:3px solid #f
 #mallTag kbd{display:inline-block;min-width:16px;text-align:center;background:#ff4fa0;color:#1b0010;padding:0 5px;margin-right:5px;font-family:inherit}
 #mallTag.food{border-color:#2ad67a}#mallTag.food::after{border-top-color:#2ad67a}#mallTag.food kbd{background:#2ad67a;color:#04210f}
 #pumpTag kbd{display:inline-block;min-width:16px;text-align:center;background:#ff8a1a;color:#1b0a00;padding:0 5px;margin-right:5px;font-family:inherit}
+/* v4 r13: no PC as barras de interação viram o balão laranja do posto (ctxBalTick em js/06-posto-rodas.js); só a 1ª tecla aparece (E/F) */
+:is(#ctxp,#heistp,#tvp).bal{bottom:auto!important;transform:translate(-50%,-100%)!important;font-family:var(--f-disp)!important;font-size:11px!important;letter-spacing:.06em;padding:5px 8px!important;background:#000d!important;border:2px solid #ff8a1a!important;color:#fff;white-space:nowrap;line-height:1.7;text-align:center;z-index:5!important;animation:balIn .18s ease-out}
+:is(#ctxp,#heistp,#tvp).bal::after{content:'';position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);border:6px solid transparent;border-top-color:#ff8a1a;border-bottom:0}
+:is(#ctxp,#heistp,#tvp).bal kbd{display:inline-block;min-width:16px;text-align:center;background:#ff8a1a!important;color:#1b0a00!important;padding:0 5px!important;margin-right:5px!important;font-family:inherit}
+:is(#ctxp,#heistp,#tvp).bal kbd+kbd{display:none}
+@keyframes balIn{from{opacity:0;margin-top:6px}to{opacity:1;margin-top:0}}
+body.inverted :is(#ctxp,#heistp,#tvp).bal{border-color:var(--acc)!important}body.inverted :is(#ctxp,#heistp,#tvp).bal::after{border-top-color:var(--acc)}body.inverted :is(#ctxp,#heistp,#tvp).bal kbd{background:var(--acc)!important;color:#140509!important}
 body.touch #prompt,body.touch #taxiRideHint,body.touch #ctxp.act,body.touch #ctxp:has(kbd),body.touch #jailp:has(kbd),body.touch #heistp:has(kbd),body.touch #tvp:has(kbd){display:none!important} /* v1r8: no toque somem só as barras com TECLA (o botão faz o papel); as informativas (assalto, alarme, avisos sem tecla) voltam. Só CSS — o hidden segue valendo pro botão (TOUCH.ctxPrompt) */
 #ctxp kbd{background:var(--acc);color:var(--acc-ink);padding:1px 6px;margin-right:4px;font-family:inherit}
 .bar.fuel i{background:linear-gradient(#ffa64a,#d0600e)}.bar.fuel.low{animation:wflash .5s steps(1) infinite}
