@@ -328,15 +328,49 @@ function gasTick(dt){const pc=PL.car||PL;
    Visual: a lataria do carro do jogador ganha um material próprio com a cor puxada para o barro (só ele; o material do tipo é compartilhado).
    Lavar no posto: 3ª opção do menu da bomba (teclado X / clique do meio, controle ▼ no direcional, toque no item). */
 const DIRT_COL=new THREE.Color('#9a7a50'),WASH_PRICE=15;
+/* v4 r32 · BARRO DE VERDADE: em vez de puxar a lataria inteira para o marrom, manchas de barro em shader (MUD_*):
+   forte nos para-lamas e atrás de cada roda, subindo pela parte de baixo da lateral conforme c.grime (0,3 = respingos nas rodas,
+   0,7 = barro forte embaixo, 1 = até ~metade da lateral; capô/teto quase limpos). Ruído em coordenada LOCAL do carro (as manchas
+   não escorregam com o movimento). Úmido (lama/chuva recentes, c.mudWet) = mais escuro e brilhante; seco = claro e fosco.
+   Um uniform por carro (c.mudU), programa compartilhado (customProgramCacheKey da base + '|mud'). Pneus ganham barro a partir de 0,25. */
+const MUD_FN=`float mudH(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453);}
+float mudN(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
+ return mix(mix(mix(mudH(i),mudH(i+vec3(1,0,0)),f.x),mix(mudH(i+vec3(0,1,0)),mudH(i+vec3(1,1,0)),f.x),f.y),mix(mix(mudH(i+vec3(0,0,1)),mudH(i+vec3(1,0,1)),f.x),mix(mudH(i+vec3(0,1,1)),mudH(i+vec3(1,1,1)),f.x),f.y),f.z);}
+float mudF(vec3 p){return mudN(p)*.55+mudN(p*2.07+3.1)*.3+mudN(p*4.13+7.7)*.15;}
+`;
+function mudInject(sh){sh.vertexShader='varying vec3 vMudP;varying vec3 vMudN;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\n vMudP=position;vMudN=normal;');
+ sh.fragmentShader='uniform vec2 uMud;uniform vec4 uMudB;uniform vec3 uMudC1,uMudC2;varying vec3 vMudP;varying vec3 vMudN;\n'+MUD_FN+sh.fragmentShader
+  .replace('#include <color_fragment>',`#include <color_fragment>
+ float mudK=0.;{vec3 p=vMudP;float g=uMud.x,top=max(uMudB.x,.6),h=clamp(p.y/top,0.,1.),wb=uMudB.y,wr=max(uMudB.z,.2);
+  float df=p.x-wb,dr=p.x+wb;df*=df<0.?.5:1.3;dr*=dr<0.?.5:1.3;float dy=(p.y-wr)*1.15;
+  float dw=min(length(vec2(df,dy)),length(vec2(dr,dy))),wheel=1.-smoothstep(wr*.9,wr*(1.6+.8*g),dw);
+  float low=1.-smoothstep(.1+.28*g,.22+.42*g,h);
+  float n=mudF(p*vec3(2.2,3.4,2.2)+uMudB.w),n2=mudN(p*vec3(10.,13.,10.)+uMudB.w*2.3);
+  float m=max(wheel*(.6+.4*g),low*(.3+.45*g));
+  float s=m+(n-.5)*.95+(n2-.5)*.5*wheel-(.98-.88*g);
+  mudK=smoothstep(0.,.09,s)*smoothstep(.04,.12,g)*(1.-smoothstep(.38+.14*g+(n-.5)*.12,.5+.14*g+(n-.5)*.12,h))*(1.-.88*smoothstep(.55,.85,vMudN.y)*step(.42,h));
+  vec3 mc=mix(uMudC1,uMudC2,uMud.y)*(.82+.36*n2);diffuseColor.rgb=mix(diffuseColor.rgb,mc,mudK*.96);}`)
+  .replace('#include <roughnessmap_fragment>','#include <roughnessmap_fragment>\n roughnessFactor=mix(roughnessFactor,mix(.97,.3,uMud.y),mudK);')}
+const MUD_COL={dry:new THREE.Color('#7a5a36'),wet:new THREE.Color('#3e2a17'),idry:new THREE.Color('#4a4640'),iwet:new THREE.Color('#2a2724')};
 function dirtTick(dt){const c=PL.car;if(!c||!c.alive||c.t.boat||c.t.hover||c.type==='jetski')return;const sp=Math.hypot(c.vx||0,c.vz||0);c.grime=c.grime||0;
- if(sp>1&&!(c.airY>0)){const mud=c.mudG||0,rural=isRural(c.x,c.z);let k=mud>.02?.0045:rural?.0007:0;if(k){const r=rainAt(c.x,c.z);if(r>.2)k*=1.6;c.grime=Math.min(1,c.grime+k*sp*dt)}
-  else if(rainAt(c.x,c.z)>.3)c.grime=Math.max(0,c.grime-.004*dt)}
+ const mud=c.mudG||0,rn=rainAt(c.x,c.z);c.mudWet=Math.max(0,Math.min(1,(c.mudWet||0)+((mud>.02&&sp>1)||rn>.2?dt*.6:-dt*.012)));
+ if(sp>1&&!(c.airY>0)){const rural=isRural(c.x,c.z);let k=mud>.02?.0045:rural?.0007:0;if(k){if(rn>.2)k*=1.6;c.grime=Math.min(1,c.grime+k*sp*dt)}
+  else if(rn>.3)c.grime=Math.max(0,c.grime-.004*dt)}
  if((c.grimeT=(c.grimeT||0)-dt)<=0){c.grimeT=.5;dirtApply(c)}}
-function dirtApply(c){const sh=c.dentParts&&c.dentParts.shell;if(!sh)return;const d=c.grime||0;
- if(d<.04){if(c.grimeMat&&sh.material===c.grimeMat&&c.grimeBase){sh.material=c.grimeBase}return}
+function mudWheels(c,on,f){if(!c.wheels)return;if(on&&!c.mudWheelMat){c.mudWheelMat=wheelMat.clone();c.mudWheelMat.userData.cached=false}
+ if(on)c.mudWheelMat.color.set(0x151515).lerp(S.style==='inverted'?MUD_COL.idry:MUD_COL.dry,f);
+ for(const wh of c.wheels){const w=wh.w;if(w&&w.isMesh&&w.geometry===wheelGeo)w.material=on?c.mudWheelMat:wheelMat}}
+function dirtApply(c){const sh=(c.dentParts&&c.dentParts.shell)||c.dirtShell;if(!sh)return;const d=c.grime||0;
+ if(d<.04){if(c.grimeMat&&sh.material===c.grimeMat&&c.grimeBase){sh.material=c.grimeBase}mudWheels(c,false);return}
  const base=sh.material===c.grimeMat?c.grimeBase:sh.material;if(!base||base.userData.burnt)return;
- if(!c.grimeMat||c.grimeBase!==base){if(c.grimeMat)c.grimeMat.dispose();const m=base.clone();m.onBeforeCompile=base.onBeforeCompile;m.customProgramCacheKey=base.customProgramCacheKey;m.userData={...base.userData,cached:false,dirt:true};c.grimeMat=m;c.grimeBase=base}
- const f=Math.min(.78,d*.78);c.grimeMat.color.setRGB(1,1,1).lerp(DIRT_COL,f);c.grimeMat.roughness=Math.min(1,(c.grimeBase.roughness??.5)+d*.5);if(sh.material!==c.grimeMat)sh.material=c.grimeMat}
+ const U=c.mudU||(c.mudU={uMud:{value:new THREE.Vector2()},uMudB:{value:new THREE.Vector4()},uMudC1:{value:new THREE.Color()},uMudC2:{value:new THREE.Color()}});
+ if(!c.grimeMat||c.grimeBase!==base){if(c.grimeMat)c.grimeMat.dispose();const m=base.clone(),bob=base.onBeforeCompile,bk=base.customProgramCacheKey?base.customProgramCacheKey():'';
+  m.onBeforeCompile=(s2,r)=>{if(bob)bob.call(base,s2,r);Object.assign(s2.uniforms,U);mudInject(s2)};m.customProgramCacheKey=()=>bk+'|mud';m.userData={...base.userData,cached:false,dirt:true};c.grimeMat=m;c.grimeBase=base}
+ const gg=sh.geometry;if(!gg.boundingBox)gg.computeBoundingBox();const inv=S.style==='inverted';
+ U.uMudB.value.set(gg.boundingBox.max.y,c.t.wb||0,c.t.wr||.35,c.mudSeed||(c.mudSeed=Math.random()*60));U.uMud.value.set(d,c.mudWet||0);
+ U.uMudC1.value.copy(inv?MUD_COL.idry:MUD_COL.dry);U.uMudC2.value.copy(inv?MUD_COL.iwet:MUD_COL.wet);
+ c.grimeMat.color.setRGB(1,1,1);c.grimeMat.roughness=c.grimeBase.roughness??.5;if(sh.material!==c.grimeMat)sh.material=c.grimeMat;
+ mudWheels(c,d>=.25,Math.min(.5,(d-.25)*.8))}
 /* toque/clique numa linha do menu da bomba = aquela opção (1 abastecer, 2 consertar, 3 lavar) */
 setTimeout(()=>{const tg=document.getElementById('pumpTag');if(!tg||tg.dataset.tap)return;tg.dataset.tap='1';const go=e=>{if(!CTX.car||!PL.car)return;e.preventDefault();e.stopPropagation();const r=tg.getBoundingClientRect(),y=(e.touches?e.touches[0].clientY:e.clientY)-r.top-5,n=Math.floor(y/((r.height-10)/(tg.querySelectorAll('br').length+1)))+1;if(n>=1&&n<=2){initAudio();ctxAct(n)}};
  tg.addEventListener('touchstart',go,{passive:false});tg.addEventListener('mousedown',go)},0);
