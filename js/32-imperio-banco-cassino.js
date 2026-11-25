@@ -212,7 +212,7 @@ function bankDlgEl(){if(BANKACC.el)return BANKACC.el;if(!BANKACC.css){BANKACC.cs
  d.addEventListener('click',e=>{if(e.target===d)bankDlgClose()});return d}
 function bankDlgUpd(){const d=BANKACC.el;if(!d)return;const en=S.lang==='en',t=(a,b)=>en?b:a,v=BANKACC_ST[BANKACC.i];
  d.querySelector('#bkT').textContent=t('CONTA CORRENTE','CHECKING ACCOUNT');d.querySelector('#bkHL').textContent=t('NA MÃO','CASH');d.querySelector('#bkAL').textContent=t('NA CONTA','IN ACCOUNT');
- d.querySelector('#bkH').textContent=bankFmt(PL.money);d.querySelector('#bkA').textContent=bankFmt(BANKACC.bal);d.querySelector('#bkN').textContent=t('a conta não se perde quando você morre','the account is kept when you die');
+ d.querySelector('#bkH').textContent=bankFmt(PL.money);d.querySelector('#bkA').textContent=bankFmt(BANKACC.bal);{const n=d.querySelector('#bkN');n.textContent='';n.style.display='none'}
  const sb=d.querySelector('#bkStep');sb.querySelector('b').textContent=v===0?t('TUDO','ALL'):bankFmt(v);const[mn,pl]=sb.querySelectorAll('button');mn.disabled=BANKACC.i<=0;pl.disabled=BANKACC.i>=BANKACC_ST.length-1;
  const a=bankAmt('dep'),b=bankAmt('saq');const bd=d.querySelector('#bkDep'),bs=d.querySelector('#bkSaq');bd.textContent=t('DEPOSITAR','DEPOSIT')+(a>0?' '+bankFmt(a):'');bs.textContent=t('SACAR','WITHDRAW')+(b>0?' '+bankFmt(b):'');bd.disabled=a<=0;bs.disabled=b<=0;
  d.querySelector('#bkNo').textContent=t('SAIR','EXIT');const pa=typeof padActive==='function'&&padActive();d.querySelector('#bkPad').textContent=pa?t('✕ confirma · ○ sai','✕ select · ○ exit'):t('← → valor · ESC sai','← → amount · ESC exit')}

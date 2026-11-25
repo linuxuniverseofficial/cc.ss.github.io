@@ -332,6 +332,9 @@ Estágios (`PROLOGUE`, Ctrl+Shift+F9 pula em debug): `dealer` → `driveFirst` (
 
 ## 9. Registro recente (v79 r1–r49 → v1)
 
+- **v4 r22 · Conta corrente sem frase explicativa.** Pedido do José: tirar frases expositivas ("o jogador tem que entender pela indireta"). Saiu o subtítulo "a conta não se perde quando você morre" da janela `#bankDlg` (`js/32-imperio-banco-cassino.js`, `#bkN` fica oculto) e a linha "o que está na conta corrente do banco não cai" do aviso de morte no online (`js/39-online.js`; fica só "−$N · DINHEIRO NO CHÃO"). A legenda da TV de recursos continua explicando (pedido dele). Testado: `node --check`. NÃO testado: janela e aviso ao vivo.
+  - Regra (reforço do CLAUDE.md, estilo dos textos): na tela do jogo nada de explicar a regra da mecânica ("não se perde", "não cai"); explicação fica só na TV de recursos.
+
 - **v4 r21 · "CAIXA 2" virou "CONTA CORRENTE".** Pedido do José. Só texto: balão do caixa eletrônico (`js/06-posto-rodas.js`), título da janela `#bankDlg` (`js/32-imperio-banco-cassino.js`, EN "CHECKING ACCOUNT"), chave do LANG_EN (`js/41-lang-en.js`), aviso de morte no online (`js/39-online.js`), comentário do hospital (`js/22-jogador.js`), canal da TV "ESPÓLIO E CONTA CORRENTE" + legenda e quadro refeito (`js/48-tvcat.js`, `tvcat/caixa2.jpg`, `tvcat/PLANO.md`). A placa física "CAIXA 2" do balcão do banco (guichê de saques, anterior à r19) e a "caixa 217" da missão 3 não mudaram. Testado: quadro da TV recapturado (headless, seed 716540) com o título novo; `node --check`. NÃO testado: balão e aviso do online ao vivo.
 
 - **v4 r20 · Cães e gatos em 2.5D e 3D.** Pedido do José: bichos só tinham sprite 2D; usar os humanos 3D como referência de modelagem, acabamento, textura e animação e os sprites para o tamanho. Causa: os bichos (`ANIM.list`, `PET.dog`/`PET.cat`) não passam por `placeSprite` e o `c3Place` ignora `petTex`. Feito em frente paralela (branch `frente-pets`).
