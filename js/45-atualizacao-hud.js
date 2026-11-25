@@ -119,7 +119,7 @@ function updateHUD(dt){if(TBAR.own&&simT-TBAR.t>.4){$('#tbar').hidden=true;TBAR.
  if(PL.car){const sp=Math.round(Math.abs(PL.car.fwd)*3.6),se=hudEl('#speed');if(se&&se._hs!==sp){se._hs=sp;se.firstChild.nodeValue=sp}{const rv=PL.car.fwd<-.3;if(se&&se._rv!==rv){se._rv=rv;se.classList.toggle('rev',rv)}}hudW('#carbar i',Math.max(0,PL.car.hp))}
  let near=false;if(!PL.car&&!PL.dead)for(const c of carsNearTmp(PL.x,PL.z,9)){if(c.alive&&Math.hypot(c.x-PL.x,c.z-PL.z)-c.t.W/2<5.5){near=true;break}}
  $('#prompt').hidden=!near;
- {const mv=PL.money||0,me=hudEl('#money');if(me&&me._hm!==mv){me._hm=mv;me.textContent='$ '+mv}}touchVisible();$('#gun').hidden=!GUN.has;if(GUN.has){hudTx('#gun b',GUN.ammo);hudTx('#gun span',WPN[GUN.w].name)}$('#xhair').hidden=!(GUN.has&&camMode==='fps'&&!PL.heli);
+ {const mv=PL.money||0,bk=Math.round(BANKACC.bal||0),me=hudEl('#money');if(me&&(me._hm!==mv||me._hb!==bk)){me._hm=mv;me._hb=bk;if(bk>0)me.innerHTML='$ '+mv+'<small class="bkHud">'+(S.lang==='en'?'BANK':'CONTA')+' $ '+bk+'</small>';else me.textContent='$ '+mv}}touchVisible();$('#gun').hidden=!GUN.has;if(GUN.has){hudTx('#gun b',GUN.ammo);hudTx('#gun span',WPN[GUN.w].name)}$('#xhair').hidden=!(GUN.has&&camMode==='fps'&&!PL.heli);
  if(POL._mgSync!==!!POL.wanted){POL._mgSync=!!POL.wanted;try{mgModeSync()}catch(e){}}
  $('#wanted').hidden=!POL.wanted;if(POL.wanted){{const lv=Math.max(1,POL.level||1),s='★'.repeat(lv)+'<i>'+'★'.repeat(3-lv)+'</i>',el=$('#wStars');if(el.dataset.s!==s){el.dataset.s=s;el.innerHTML=s}}
   const pc=PL.car||PL,cr=WZ.crime;
