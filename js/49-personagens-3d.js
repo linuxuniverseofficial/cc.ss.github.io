@@ -255,11 +255,11 @@ const C3AIM={on:false,x:0,z:1};
    Diálogo pausa o update() (heldGunTick não roda), então o próprio c3Place recoloca a arma enquanto o braço desce. */
 function c3Calm(){return (typeof DLG!=='undefined'&&DLG.on)||(typeof PROLOGUE!=='undefined'&&!!PROLOGUE.cut)||(typeof CAMP!=='undefined'&&(!!CAMP.cut||!!CAMP.intro))}
 function c3HeldPlace(){if(!(C3_ON()&&typeof HELD!=='undefined'&&HELD.g&&PL.sp&&PL.sp.userData.c3))return false;const top=camMode==='top';let ax,az;if(top){ax=PL.face[0];az=PL.face[1]}else{ax=-Math.sin(PL.yaw);az=-Math.cos(PL.yaw)}
-  const l=Math.hypot(ax,az)||1,nx=ax/l,nz=az/l,k=top&&!VIEW.orbit?1.5:1,st=PL.sp.userData.c3,a=st.ang==null?Math.atan2(nx,nz):st.ang,fx=Math.sin(a),fz=Math.cos(a),u=st.aim;
+  const l=Math.hypot(ax,az)||1,nx=ax/l,nz=az/l,k=top&&!VIEW.orbit?1.5:1,st=PL.sp.userData.c3,a=st.ang==null?Math.atan2(nx,nz):st.ang,fx=Math.sin(a),fz=Math.cos(a),ml=!!HELD.melee,u=ml?Math.max(st.aim,st.punch||0):st.aim; /* v4 r29: faca/taco seguem o soco */
   C3AIM.x=nx;C3AIM.z=nz;
   /* mão direita: ombro (−0,265; 1,30) + braço esticado para a frente conforme a pose de mira (u) */
   const fw=(.12+.5*u)*k,lat=.27*k,hy=(.86+.44*u)*k;
-  HELD.g.position.set(PL.x+fx*fw-fz*lat,PL.gy+(PL.jy||0)+hy,PL.z+fz*fw+fx*lat);HELD.g.scale.setScalar((GUN.w==='rpg'?.36:.24)*k);HELD.g.rotation.set(0,Math.atan2(-fz,fx),0);return true}
+  HELD.g.position.set(PL.x+fx*fw-fz*lat,PL.gy+(PL.jy||0)+hy,PL.z+fz*fw+fx*lat);HELD.g.scale.setScalar((ml?(HELD.w==='bat'?.48:.24):GUN.w==='rpg'?.36:.24)*k);HELD.g.rotation.set(0,Math.atan2(-fz,fx),ml&&typeof meleeTilt==='function'?meleeTilt(HELD.w):0);return true}
 /* v4 r14: polícia, gangue e ped que reage atiram com o braço direito erguido e uma arma na mão (igual ao jogador).
    c3Fire(p,tx,tz) é chamado em cada tiro de ped; a pose e a arma ficam 2,2 s depois do último tiro (os intervalos de tiro vão até ~1,8 s). Arma = 3 caixas com geometria/material compartilhados. */
 function c3Fire(p,tx,tz){if(!p||p===PL)return;const dx=tx-p.x,dz=tz-p.z,l=Math.hypot(dx,dz)||1;const a=p.c3aim||(p.c3aim={t:0,x:0,z:1});a.t=performance.now()+2200;a.x=dx/l;a.z=dz/l;p.mx=a.x;p.mz=a.z}
@@ -275,7 +275,7 @@ function c3NpcGun(o,st,k){if(!st.gun||st.gunSmg!==(o.wpn==='smg')){if(st.gun&&st
 copShoot=(f=>function(p){try{c3Fire(p,PL.x,PL.z)}catch(e){}return f.apply(this,arguments)})(copShoot);
 pedevGun=(f=>function(p,tgt){try{if(tgt)c3Fire(p,tgt.x,tgt.z)}catch(e){}return f.apply(this,arguments)})(pedevGun);
 eventShoot=(f=>function(from,target){try{if(from&&target&&from.sp)c3Fire(from,target.x,target.z)}catch(e){}return f.apply(this,arguments)})(eventShoot);
-heldGunTick=(f=>function(){const r=f.apply(this,arguments);C3AIM.on=c3HeldPlace();return r})(heldGunTick);
+heldGunTick=(f=>function(){const r=f.apply(this,arguments);C3AIM.on=c3HeldPlace()&&!HELD.melee;return r})(heldGunTick); /* v4 r29: faca/taco na mão não erguem o braço (só no golpe) */
 /* r45: diálogo comum pausa o jogo inteiro (update → dlgTick): o boneco do jogador continua sendo posado para abaixar a arma */
 dlgTick=(f=>function(){const r=f.apply(this,arguments);try{if(C3_ON()&&PL.sp&&PL.sp.userData.c3&&!PL.car&&PL.sp.visible)c3Place(PL)}catch(e){}return r})(dlgTick);
 /* r41: ped criado durante diálogo/cena (que pausam updatePeds) já nasce com o boneco, em vez de ficar 2D até a cena acabar */
