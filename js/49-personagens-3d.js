@@ -69,7 +69,7 @@ function c3Slot(key,pal){c3Atlas();let s=C3.slots.get(key);const now=performance
    Contorno e pés mais escuros ficam no shader (C3_FS), porque no 3D a silhueta muda com a câmera. */
 function c3Grade(g,ox,oy){if(typeof CHAR_GRADE==='undefined'||!CHAR_GRADE.on)return;const G=CHAR_GRADE,T=C3.T,id=g.getImageData(ox,oy,T,T),o=id.data;
  for(let y=0;y<T;y++)for(let x=0;x<T;x++){const i=(y*T+x)*4;let r=o[i],gg=o[i+1],b=o[i+2];const l=.299*r+.587*gg+.114*b;if(l<34)continue;
-  r+=(l-r)*G.desat;gg+=(l-gg)*G.desat;b+=(l-b)*G.desat;const h=((x*73856093)^(y*19349663)^(x*y*83492791))>>>0,f=1+((h%1000)/1000-.5)*2*G.grain;
+  r+=(l-r)*G.desat;gg+=(l-gg)*G.desat;b+=(l-b)*G.desat;const h=((x*73856093)^(y*19349663)^(x*y*83492791))>>>0,f=1+((h%1000)/1000-.5)*1.2*G.grain; /* v4 r13: 60% do grão do 2D (no 3D o texel fica grande na tela e parecia sujeira) */
   o[i]=r*f;o[i+1]=gg*f;o[i+2]=b*f}
  g.putImageData(id,ox,oy)}
 /* ---------- geometria (formato compacto, ~380 triângulos, peças rígidas) ---------- */
@@ -167,7 +167,7 @@ void main(){vec2 uvv=vUv;float lid=1.;
  if(uBlink>.5){vec2 q=vec2(vLoc.x*${C3.AW}.,(1.-vLoc.y)*${C3.AH}.);if(q.x>15.&&q.x<25.&&q.y>10.&&q.y<12.){uvv=vec2(16.5/${C3.AW}.,1.-13.5/${C3.AH}.)+uTile;lid=q.y>11.?.78:1.;}}
  vec3 c=texture2D(map,uvv).rgb*vLight*lid;
  /* v4 r11: acabamento do 2D no 3D (CHAR_GRADE): pés até 22% mais escuros perto do chão e contorno na borda da silhueta com o tom escuro da própria peça (34% + leve roxo), não preto */
- if(uGrade>.5){c*=1.-.22*vFeet;float rim=1.-abs(dot(normalize(vVN),normalize(-vVP)));c=mix(c,c*.34+vec3(.04,.027,.055),smoothstep(.64,.92,rim));}
+ if(uGrade>.5){c*=1.-.1*vFeet;float rim=1.-abs(dot(normalize(vVN),normalize(-vVP)));c=mix(c,c*.6+vec3(.02,.014,.03),.55*smoothstep(.8,.97,rim));} /* v4 r13: mais leve (r11 parecia graxa visto de cima) */
  c=floor(c*63.+.5)/63.; /* v4 r1: 64 níveis (31 desenhava curvas de nível no tronco) */gl_FragColor=vec4(c,uAlpha);
  #include <fog_fragment>
 }`;
