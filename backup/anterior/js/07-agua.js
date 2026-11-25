@@ -95,6 +95,8 @@ function fxGlowPatch(mat,k){if(!mat||mat.userData.fxGlow)return mat;mat.userData
    bate no fundo, nas laterais, no piso ou no teto (paralaxe de verdade, sem geometria). Cor da parede/piso/móveis sorteada por
    célula. De frente vê o cômodo; de lado o Fresnel deixa o reflexo mandar. De dia a sala é escura (luz de fora); à noite só a
    janela acesa (emissão) mostra a sala iluminada pela cor da luz. Some a 90–160 m. Mesma chave (fxK.z).
+   v4 r9 (José): só ~30% das janelas têm cômodo (sorteio por célula, wrHs(id+11.3)<.3) e paralaxe suave: o desvio lateral do raio
+   é multiplicado por .38*cos(ângulo) → deslocamento máximo de ~.38 da profundidade (passando longe quase não mexe; de frente mexe mais).
    night = layout da textura noturna (Synthwave): janela menor e sem o caixilho do meio.
    Remover de vez: tirar winReflPatch(M.wall,night) no generateCity (ver CONTEXT §2b). */
 function winReflPatch(mat,night){if(!mat||mat.userData.winRefl)return mat;mat.userData.winRefl=true;const old=mat.onBeforeCompile,key=(mat.customProgramCacheKey&&mat.customProgramCacheKey())||'';
@@ -128,9 +130,8 @@ function winReflPatch(mat,night){if(!mat||mat.userData.winRefl)return mat;mat.us
     vec2 wrC=fract(vUv*8.);vec2 wrA=(wrC-wrRect.xy)/(wrRect.zw-wrRect.xy);vec2 wrE=fwidth(wrC)*1.5/(wrRect.zw-wrRect.xy);
     float wrIn=smoothstep(0.,wrE.x,wrA.x)*smoothstep(0.,wrE.x,1.-wrA.x)*smoothstep(0.,wrE.y,wrA.y)*smoothstep(0.,wrE.y,1.-wrA.y);
     if(wrMull>0.)wrIn*=smoothstep(wrMull,wrMull+fwidth(wrC.x)*1.5,abs(wrC.x-.5));
-    float wrI=max(wrG,step(.04,wrL)*wrVt)*wrIn*(1.-smoothstep(90.,160.,wrDist));
-    if(wrI>.01){vec3 wrUp=vec3(0.,1.,0.);vec3 wrTg=normalize(cross(wrUp,-wrN));vec3 wrD=vec3(dot(wrV,wrTg),wrV.y,max(dot(wrV,-wrN),.02));
-     vec3 wrId=vec3(floor(vUv*8.),floor(dot(wrN,vWrW)*.37));
+    vec3 wrId=vec3(floor(vUv*8.),floor(dot(wrN,vWrW)*.37));float wrI=max(wrG,step(.04,wrL)*wrVt)*wrIn*(1.-smoothstep(90.,160.,wrDist))*step(wrHs(wrId+11.3),.3);
+    if(wrI>.01){vec3 wrUp=vec3(0.,1.,0.);vec3 wrTg=normalize(cross(wrUp,-wrN));vec3 wrD=vec3(dot(wrV,wrTg),wrV.y,max(dot(wrV,-wrN),.02));wrD.xy*=.38*wrD.z;
      vec3 wrLamp=totalEmissiveRadiance*step(.04,wrL);float wrAmb=mix(.42,.025,night)*(.4+.6*sunDim);
      gl_FragColor.rgb=mix(gl_FragColor.rgb,wrRoom(wrA,wrD,wrId,wrLamp,wrAmb),wrI);}
     wrG*=1.-smoothstep(.04,.3,wrL);

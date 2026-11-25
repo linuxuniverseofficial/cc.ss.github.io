@@ -99,27 +99,51 @@ function fxGlowPatch(mat,k){if(!mat||mat.userData.fxGlow)return mat;mat.userData
    é multiplicado por .38*cos(ângulo) → deslocamento máximo de ~.38 da profundidade (passando longe quase não mexe; de frente mexe mais).
    night = layout da textura noturna (Synthwave): janela menor e sem o caixilho do meio.
    Remover de vez: tirar winReflPatch(M.wall,night) no generateCity (ver CONTEXT §2b). */
+const WINR={pct:{value:.3}}; /* fração de janelas com cômodo (v4 r9: .3); no console WINR.pct.value=1 mostra em todas (teste) */
 function winReflPatch(mat,night){if(!mat||mat.userData.winRefl)return mat;mat.userData.winRefl=true;const old=mat.onBeforeCompile,key=(mat.customProgramCacheKey&&mat.customProgramCacheKey())||'';
  const rect=night?new THREE.Vector4(8/32,11/32,24/32,23/32):new THREE.Vector4(5/32,7/32,27/32,25/32),mull=night?0:1/32;
- mat.onBeforeCompile=(sh,r)=>{if(old)old.call(mat,sh,r);const K=skyMat.uniforms;Object.assign(sh.uniforms,{fxK:SHFX.U.fxK,top:K.top,hor:K.hor,sunDir:K.sunDir,night:K.night,sunDim:K.sunDim,csSun:K.csSun,synth:K.synth,wK:WTR.U.wK,wrRect:{value:rect},wrMull:{value:mull}});
+ mat.onBeforeCompile=(sh,r)=>{if(old)old.call(mat,sh,r);const K=skyMat.uniforms;Object.assign(sh.uniforms,{fxK:SHFX.U.fxK,top:K.top,hor:K.hor,sunDir:K.sunDir,night:K.night,sunDim:K.sunDim,csSun:K.csSun,synth:K.synth,wK:WTR.U.wK,wrRect:{value:rect},wrMull:{value:mull},wrTm:SHFX.U.fxT,wrPct:WINR.pct});
   sh.vertexShader='varying vec3 vWrW;\n'+sh.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\n vWrW=(modelMatrix*vec4(transformed,1.)).xyz;');
-  const dec=(sh.fragmentShader.includes('uniform vec4 fxK;')?'':'uniform vec4 fxK;')+`uniform vec3 top,hor,sunDir;uniform float night,sunDim,csSun,synth,wrMull;uniform vec4 wK,wrRect;varying vec3 vWrW;
+  const dec=(sh.fragmentShader.includes('uniform vec4 fxK;')?'':'uniform vec4 fxK;')+`uniform vec3 top,hor,sunDir;uniform float night,sunDim,csSun,synth,wrMull,wrTm,wrPct;uniform vec4 wK,wrRect;varying vec3 vWrW;
  float wrHs(vec3 p){return fract(sin(dot(p,vec3(12.989,78.233,37.719)))*43758.55);}
+ float wrBox(vec3 p,vec3 iv,vec3 b0,vec3 b1,out float f){vec3 t0=(b0-p)*iv,t1=(b1-p)*iv;vec3 tn=min(t0,t1),tf=max(t0,t1);
+  float a=max(max(tn.x,tn.y),tn.z),b=min(min(tf.x,tf.y),tf.z);f=a==tn.y?1.:a==tn.z?.88:.72;return b>max(a,0.)?a:1e5;}
+ /* v4 r10: cenários sorteados por janela (k): 0 sala (sofá+quadro), 1 quarto (cama+cabeceira), 2 sala com TV (tela acende à
+    noite e ilumina a sala), 3 sala com abajur (luz quente no canto), 4 corredor (fundo longo, portas nas laterais, luzes no teto).
+    Móveis = caixas com interseção analítica (wrBox), sem laço nem textura. */
  vec3 wrRoom(vec2 c,vec3 d,vec3 id,vec3 lamp,float amb){
-  float Wc=3.5,Hc=3.2,h0=wrHs(id),h1=wrHs(id+3.1),h2=wrHs(id+7.7),D=3.+h0*3.5;
-  vec3 p=vec3(c.x*Wc,c.y*Hc,0.);vec3 iv=1./d;
+  float Wc=3.5,Hc=3.2,h0=wrHs(id),h1=wrHs(id+3.1),h2=wrHs(id+7.7),k=floor(wrHs(id+5.9)*5.);
+  float D=k>3.5?9.+h0*5.:3.+h0*3.;
+  vec3 p=vec3(c.x*Wc,c.y*Hc,0.);d.xy=sign(d.xy)*max(abs(d.xy),vec2(1e-4));vec3 iv=1./d;
   float tx=((d.x>0.?Wc:0.)-p.x)*iv.x,ty=((d.y>0.?Hc:0.)-p.y)*iv.y,tz=D*iv.z;float t=min(tz,min(tx,ty));vec3 q=p+d*t;
   vec3 wc=h1<.25?vec3(.78,.74,.66):h1<.5?vec3(.62,.7,.74):h1<.75?vec3(.8,.66,.56):vec3(.7,.72,.62);
   vec3 col;float sh;
   if(t==tz){col=wc;sh=.9;
-   if(h2<.55&&q.y<.85&&abs(q.x-Wc*.5)<1.15)col=h2<.28?vec3(.32,.22,.18):vec3(.25,.3,.42);
-   else if(q.y>1.35&&q.y<2.05&&abs(q.x-Wc*(.3+h0*.4))<.42)col=vec3(.2+h2*.5,.25,.3+h1*.3)*.8;
-   else if(h2>.7&&q.y<2.1&&abs(q.x-Wc*.82)<.42)col=vec3(.36,.26,.17);}
+   if(k<.5&&q.y>1.35&&q.y<2.05&&abs(q.x-Wc*(.3+h0*.4))<.42)col=vec3(.2+h2*.5,.25,.3+h1*.3)*.8;
+   else if(k>.5&&k<1.5&&q.y<1.15&&abs(q.x-Wc*.5)<.9)col=vec3(.3,.2,.13);}
   else if(t==ty){if(d.y<0.){col=h0<.5?vec3(.46,.33,.21):vec3(.42,.42,.44);col*=.92+.08*step(.5,fract(q.z*1.6));sh=.7;}
-   else{col=vec3(.86,.84,.8);sh=1.;float lr=length(q.xz-vec2(Wc*.5,D*.5));col+=lamp*1.6*(1.-smoothstep(.12,.3,lr));}}
-  else{col=wc*.92;sh=.78;if(h2>.4&&q.z>D-1.6&&q.y<1.)col=vec3(.34,.25,.17);}
-  float fall=1.-.55*clamp(q.z/D,0.,1.);
-  vec3 L=lamp*1.5*mix(1.,.75,clamp(q.z/D,0.,1.))+vec3(amb)*fall*mix(vec3(1.),hor*1.3,.25);
+   else{col=vec3(.86,.84,.8);sh=1.;vec2 lc=k>3.5?vec2(Wc*.5,(floor(q.z/2.6)+.5)*2.6):vec2(Wc*.5,D*.5);col+=lamp*1.6*(1.-smoothstep(.12,.3,length(q.xz-lc)));}}
+  else{col=wc*.92;sh=.78;
+   if(k>3.5){float dz=fract(q.z/2.6+h2);if(q.y<2.1&&dz>.25&&dz<.6&&q.z>1.)col=vec3(.36,.25,.16)*(1.+.1*step(.56,dz));}
+   else if(h2>.4&&q.z>D-1.6&&q.y<1.)col=vec3(.34,.25,.17);}
+  float bf,tb;vec3 bc=vec3(0.);float glow=0.;vec3 gcol=vec3(0.);
+  if(k<.5){tb=wrBox(p,iv,vec3(Wc*.5-1.1,0.,D-.85),vec3(Wc*.5+1.1,.95,D),bf);bc=h2<.5?vec3(.32,.22,.18):vec3(.25,.3,.42);}
+  else if(k<1.5){float bx=Wc*(.38+h0*.24);tb=wrBox(p,iv,vec3(bx-.8,0.,D-2.),vec3(bx+.8,.75,D),bf);vec3 qb=p+d*tb;
+   bc=mix(vec3(.55,.3,.3),vec3(.3,.38,.6),h2);if(bf>.99&&qb.z>D-.55)bc=vec3(.88,.86,.82);}
+  else if(k<2.5){float bx=Wc*(.35+h0*.3);float f2;tb=wrBox(p,iv,vec3(bx-.8,0.,D-.45),vec3(bx+.8,.6,D),bf);bc=vec3(.28,.2,.14);
+   float tt=wrBox(p,iv,vec3(bx-.62,.62,D-.12),vec3(bx+.62,1.32,D),f2);
+   if(tt<tb){tb=tt;bf=f2;vec3 qt=p+d*tt;bc=vec3(.04);if(qt.z<D-.11&&abs(qt.x-bx)<.56&&qt.y>.67&&qt.y<1.27)bc=vec3(.04,.05,.07);}
+   float fl=.75+.25*sin(wrTm*7.+h1*30.)*sin(wrTm*2.3+h2*9.);gcol=vec3(.45,.6,1.)*fl*max(step(.04,max(lamp.r,lamp.g)),step(.5,night)*step(h1,.65));
+   if(tt<1e4&&tb==tt){vec3 qt=p+d*tt;if(qt.z<D-.11&&abs(qt.x-bx)<.56&&qt.y>.67&&qt.y<1.27){bc=vec3(.06,.08,.1)+gcol*1.4;bf=1.;}}
+   glow=.5;}
+  else if(k<3.5){float lx=h0<.5?.55:Wc-.55;float f2;tb=wrBox(p,iv,vec3(lx-.04,0.,D-.6),vec3(lx+.04,1.4,D-.52),bf);bc=vec3(.2);
+   float ts=wrBox(p,iv,vec3(lx-.24,1.35,D-.8),vec3(lx+.24,1.72,D-.32),f2);if(ts<tb){tb=ts;bf=1.;bc=vec3(.95,.82,.55)*(.6+1.6*step(.04,max(lamp.r,lamp.g)));}
+   gcol=vec3(1.,.72,.38)*step(.04,max(lamp.r,lamp.g));glow=1.;
+   if(t>tb||tb>1e4){vec3 lp=vec3(lx,1.55,D-.56);col+=gcol*.9*(1.-smoothstep(.2,1.6,length(q-lp)));}}
+  else tb=1e5;
+  float qz=q.z;if(tb<t){col=bc;sh=bf;qz=(p+d*tb).z;}
+  float fall=1.-.55*clamp(qz/D,0.,1.);
+  vec3 L=lamp*1.5*mix(1.,.75,clamp(qz/D,0.,1.))+vec3(amb)*fall*mix(vec3(1.),hor*1.3,.25)+gcol*glow*.35;
   return col*sh*L;}
 `;
   sh.fragmentShader=dec+sh.fragmentShader.replace('#include <tonemapping_fragment>',`#ifdef USE_MAP
@@ -130,9 +154,9 @@ function winReflPatch(mat,night){if(!mat||mat.userData.winRefl)return mat;mat.us
     vec2 wrC=fract(vUv*8.);vec2 wrA=(wrC-wrRect.xy)/(wrRect.zw-wrRect.xy);vec2 wrE=fwidth(wrC)*1.5/(wrRect.zw-wrRect.xy);
     float wrIn=smoothstep(0.,wrE.x,wrA.x)*smoothstep(0.,wrE.x,1.-wrA.x)*smoothstep(0.,wrE.y,wrA.y)*smoothstep(0.,wrE.y,1.-wrA.y);
     if(wrMull>0.)wrIn*=smoothstep(wrMull,wrMull+fwidth(wrC.x)*1.5,abs(wrC.x-.5));
-    vec3 wrId=vec3(floor(vUv*8.),floor(dot(wrN,vWrW)*.37));float wrI=max(wrG,step(.04,wrL)*wrVt)*wrIn*(1.-smoothstep(90.,160.,wrDist))*step(wrHs(wrId+11.3),.3);
-    if(wrI>.01){vec3 wrUp=vec3(0.,1.,0.);vec3 wrTg=normalize(cross(wrUp,-wrN));vec3 wrD=vec3(dot(wrV,wrTg),wrV.y,max(dot(wrV,-wrN),.02));wrD.xy*=.38*wrD.z;
-     vec3 wrLamp=totalEmissiveRadiance*step(.04,wrL);float wrAmb=mix(.42,.025,night)*(.4+.6*sunDim);
+    vec3 wrId=vec3(floor(vUv*8.),floor(dot(wrN,vWrW)*.37));float wrI=max(wrG,step(.04,wrL)*wrVt)*wrIn*(1.-smoothstep(90.,160.,wrDist))*step(wrHs(wrId+11.3),wrPct);
+    if(wrI>.01){vec3 wrUp=vec3(0.,1.,0.);vec3 wrTg=normalize(cross(wrUp,-wrN));vec3 wrD=vec3(dot(wrV,wrTg),wrV.y,max(dot(wrV,-wrN),.02));wrD.xy*=.38*wrD.z*mix(.3,1.,smoothstep(4.,28.,wrDist)); /* v4 r10: de perto desloca ainda menos */
+     vec3 wrLamp=totalEmissiveRadiance*step(.04,wrL);float wrAmb=mix(.55,.025,night)*(.4+.6*sunDim);
      gl_FragColor.rgb=mix(gl_FragColor.rgb,wrRoom(wrA,wrD,wrId,wrLamp,wrAmb),wrI);}
     wrG*=1.-smoothstep(.04,.3,wrL);
     if(wrG>.01){vec3 wrR=reflect(wrV,wrN);float wrCs=clamp(dot(-wrV,wrN),0.,1.);
@@ -145,7 +169,7 @@ function winReflPatch(mat,night){if(!mat||mat.userData.winRefl)return mat;mat.us
      gl_FragColor.rgb=mix(gl_FragColor.rgb,wrS*mix(1.,.75,night),clamp(wrK,0.,.85))+vec3(1.,.93,.8)*wrSn*wrG;}}
    #endif
    #include <tonemapping_fragment>`)};
- mat.customProgramCacheKey=()=>key+'|winRefl2';mat.needsUpdate=true;return mat}
+ mat.customProgramCacheKey=()=>key+'|winRefl3';mat.needsUpdate=true;return mat}
 // neon (MeshBasic): núcleo mais branco no tubo, zumbido sutil e, à noite, brilho acima de 1 (o bloom pega quando ligado).
 function fxNeonPatch(mat){if(!mat||mat.userData.fxNeon||!mat.isMeshBasicMaterial)return mat;mat.userData.fxNeon=true;const old=mat.onBeforeCompile,key=(mat.customProgramCacheKey&&mat.customProgramCacheKey())||'';
  mat.onBeforeCompile=sh=>{if(old)old.call(mat,sh);sh.uniforms.fxK=SHFX.U.fxK;sh.uniforms.fxT=SHFX.U.fxT;sh.uniforms.fxNk=SHFX.U.fxN;

@@ -322,6 +322,12 @@ Estágios (`PROLOGUE`, Ctrl+Shift+F9 pula em debug): `dealer` → `driveFirst` (
 
 ## 9. Registro recente (v79 r1–r49 → v1)
 
+- **v4 r10 · Cenários novos nos cômodos das janelas + paralaxe ainda mais lenta de perto.** Pedido do José: cenários variados (quarto, sala com TV, sala com abajur, corredor) e "desacelerar" a paralaxe perto da janela.
+  - Mudou só `js/07-agua.js` (`winReflPatch`/`wrRoom`): cenário sorteado por janela (`k`, 5 tipos): 0 sala (sofá + quadro), 1 quarto (cama com travesseiro + cabeceira), 2 sala com TV (rack + TV; tela acende à noite em ~65% das salas com TV mesmo com a janela apagada, cintila e ilumina a sala de azul), 3 sala com abajur (abajur de pé no canto; aceso quando a janela está acesa, luz quente na parede), 4 corredor (9–14 m de fundo, portas nas laterais a cada 2,6 m, luzes no teto). Móveis = caixas com interseção analítica (`wrBox`), sem laço nem textura. Sofá/cama mais altos e sala de dia um pouco mais clara (`wrAmb` .55). Paralaxe: desvio lateral × `mix(.3,1,smoothstep(4,28,dist))` (de perto até 70% menor). Uniforms novos: `wrTm` (= `SHFX.U.fxT`, cintilar da TV) e `wrPct` (`WINR.pct`, fração de janelas com cômodo = .3; `WINR.pct.value=1` no console mostra em todas, para teste).
+  - Arquivos: `js/07-agua.js`, `index.html` (só `?v=`), `js/inicio-versao.js`, `version.txt`, `CONTEXT.md`.
+  - Testado (Chromium headless swiftshader, seed 716540, `WINR.pct=1` para ver todos os tipos): fachada de dia e às 22h; `node --check`; sem erro de página/shader.
+  - NÃO testado: GPU real/celular (custo: até 2 caixas extras por pixel de vidro com cômodo), andando de verdade, outros mundos.
+
 - **v4 r9 · Cômodos só em ~30% das janelas e paralaxe suave.** Pedido do José depois da r8: cômodo em todas as janelas ficou ruim (reduzir para ~30%, aleatório) e a paralaxe estava curva e intensa demais (tem que deslocar pouco passando longe e mais passando na frente).
   - Mudou só `js/07-agua.js` (`winReflPatch`): sorteio por célula `wrHs(id+11.3)<.3` (as outras ficam só com vidro + reflexo, acesas à noite como antes); desvio lateral do raio dentro da sala multiplicado por `.38*cos(ângulo)` → deslocamento limitado a ~38% da profundidade e quase parado em ângulo rasante, com a variação maior quando a câmera passa de frente. (+ `index.html` só pelo `?v=`, `js/inicio-versao.js`, `version.txt`, `CONTEXT.md`.)
   - Testado (Chromium headless swiftshader, seed 716540): mesma fachada da r8 de frente, em ângulo e às 22h, comparando r8 × r9 (menos cômodos, fundo menos esticado); `node --check`; sem erro de página/shader.
