@@ -58,7 +58,7 @@ mecânicas houver (20, 30…). Coisas pequenas podem dividir canal (ex.: eclipse
 | 26 | AGIOTA | 1 | int_casino escurecido + cartão $10.000 |
 | 27 | DANCETERIA | 2 | poi_club · int_club |
 | 28 | ASSALTO AO BANCO | 2 | poi_bank · int_bank2 |
-| 28b | ESPÓLIO E CAIXA 2 (v4 r19, `loot`) | 2 | espolio · caixa2 |
+| 28b | ESPÓLIO E CONTA CORRENTE (v4 r19, `loot`) | 2 | espolio · caixa2 |
 | 29 | DISCOS RAROS | 2 | disco girando (HTML) · int_pawn2 |
 | 30 | CASA SEGURA | 1 | poi_safe |
 | 31 | MOTEL MIRAGEM | 1 | poi_motel |
