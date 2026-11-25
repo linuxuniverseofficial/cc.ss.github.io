@@ -89,27 +89,62 @@ function fxGlowPatch(mat,k){if(!mat||mat.userData.fxGlow)return mat;mat.userData
    (top/hor/sunDir/night: uniforms compartilhados, acompanha dia, pôr do sol, noite e os outros mundos sem CPU) + silhueta de
    prédios "do outro lado da rua" (altura sorteada por azimute do raio refletido: anda com a câmera, dá a paralaxe de reflexo)
    + brilho do sol. Só no vidro: o vidro do windowTextures é o único texel azulado (b>r) e escuro do map; janela acesa à noite
-   (emissão) fica sem. Nenhum draw call/textura novo: 1 leitura de textura a mais só nos pixels de parede.
-   Remover de vez: tirar winReflPatch(M.wall) no generateCity (ver CONTEXT §2b). */
-function winReflPatch(mat){if(!mat||mat.userData.winRefl)return mat;mat.userData.winRefl=true;const old=mat.onBeforeCompile,key=(mat.customProgramCacheKey&&mat.customProgramCacheKey())||'';
- mat.onBeforeCompile=(sh,r)=>{if(old)old.call(mat,sh,r);const K=skyMat.uniforms;Object.assign(sh.uniforms,{fxK:SHFX.U.fxK,top:K.top,hor:K.hor,sunDir:K.sunDir,night:K.night,sunDim:K.sunDim,csSun:K.csSun,synth:K.synth,wK:WTR.U.wK});
+   (emissão) fica sem reflexo. Nenhum draw call/textura novo: 1 leitura de textura a mais só nos pixels de parede.
+   v4 r8: CÔMODO POR TRÁS DO VIDRO (interior mapping). Cada célula da textura de janelas (1/8 do map = ~3,5 m × 3,2 m na
+   fachada, ver MB.box: u=len/28, v=y/25.6) vira uma sala-caixa de profundidade sorteada; o raio da câmera entra pelo vidro e
+   bate no fundo, nas laterais, no piso ou no teto (paralaxe de verdade, sem geometria). Cor da parede/piso/móveis sorteada por
+   célula. De frente vê o cômodo; de lado o Fresnel deixa o reflexo mandar. De dia a sala é escura (luz de fora); à noite só a
+   janela acesa (emissão) mostra a sala iluminada pela cor da luz. Some a 90–160 m. Mesma chave (fxK.z).
+   night = layout da textura noturna (Synthwave): janela menor e sem o caixilho do meio.
+   Remover de vez: tirar winReflPatch(M.wall,night) no generateCity (ver CONTEXT §2b). */
+function winReflPatch(mat,night){if(!mat||mat.userData.winRefl)return mat;mat.userData.winRefl=true;const old=mat.onBeforeCompile,key=(mat.customProgramCacheKey&&mat.customProgramCacheKey())||'';
+ const rect=night?new THREE.Vector4(8/32,11/32,24/32,23/32):new THREE.Vector4(5/32,7/32,27/32,25/32),mull=night?0:1/32;
+ mat.onBeforeCompile=(sh,r)=>{if(old)old.call(mat,sh,r);const K=skyMat.uniforms;Object.assign(sh.uniforms,{fxK:SHFX.U.fxK,top:K.top,hor:K.hor,sunDir:K.sunDir,night:K.night,sunDim:K.sunDim,csSun:K.csSun,synth:K.synth,wK:WTR.U.wK,wrRect:{value:rect},wrMull:{value:mull}});
   sh.vertexShader='varying vec3 vWrW;\n'+sh.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\n vWrW=(modelMatrix*vec4(transformed,1.)).xyz;');
-  const dec=(sh.fragmentShader.includes('uniform vec4 fxK;')?'':'uniform vec4 fxK;')+'uniform vec3 top,hor,sunDir;uniform float night,sunDim,csSun,synth;uniform vec4 wK;varying vec3 vWrW;\n';
+  const dec=(sh.fragmentShader.includes('uniform vec4 fxK;')?'':'uniform vec4 fxK;')+`uniform vec3 top,hor,sunDir;uniform float night,sunDim,csSun,synth,wrMull;uniform vec4 wK,wrRect;varying vec3 vWrW;
+ float wrHs(vec3 p){return fract(sin(dot(p,vec3(12.989,78.233,37.719)))*43758.55);}
+ vec3 wrRoom(vec2 c,vec3 d,vec3 id,vec3 lamp,float amb){
+  float Wc=3.5,Hc=3.2,h0=wrHs(id),h1=wrHs(id+3.1),h2=wrHs(id+7.7),D=3.+h0*3.5;
+  vec3 p=vec3(c.x*Wc,c.y*Hc,0.);vec3 iv=1./d;
+  float tx=((d.x>0.?Wc:0.)-p.x)*iv.x,ty=((d.y>0.?Hc:0.)-p.y)*iv.y,tz=D*iv.z;float t=min(tz,min(tx,ty));vec3 q=p+d*t;
+  vec3 wc=h1<.25?vec3(.78,.74,.66):h1<.5?vec3(.62,.7,.74):h1<.75?vec3(.8,.66,.56):vec3(.7,.72,.62);
+  vec3 col;float sh;
+  if(t==tz){col=wc;sh=.9;
+   if(h2<.55&&q.y<.85&&abs(q.x-Wc*.5)<1.15)col=h2<.28?vec3(.32,.22,.18):vec3(.25,.3,.42);
+   else if(q.y>1.35&&q.y<2.05&&abs(q.x-Wc*(.3+h0*.4))<.42)col=vec3(.2+h2*.5,.25,.3+h1*.3)*.8;
+   else if(h2>.7&&q.y<2.1&&abs(q.x-Wc*.82)<.42)col=vec3(.36,.26,.17);}
+  else if(t==ty){if(d.y<0.){col=h0<.5?vec3(.46,.33,.21):vec3(.42,.42,.44);col*=.92+.08*step(.5,fract(q.z*1.6));sh=.7;}
+   else{col=vec3(.86,.84,.8);sh=1.;float lr=length(q.xz-vec2(Wc*.5,D*.5));col+=lamp*1.6*(1.-smoothstep(.12,.3,lr));}}
+  else{col=wc*.92;sh=.78;if(h2>.4&&q.z>D-1.6&&q.y<1.)col=vec3(.34,.25,.17);}
+  float fall=1.-.55*clamp(q.z/D,0.,1.);
+  vec3 L=lamp*1.5*mix(1.,.75,clamp(q.z/D,0.,1.))+vec3(amb)*fall*mix(vec3(1.),hor*1.3,.25);
+  return col*sh*L;}
+`;
   sh.fragmentShader=dec+sh.fragmentShader.replace('#include <tonemapping_fragment>',`#ifdef USE_MAP
    if(fxK.z>.5){vec3 wrT=texture2D(map,vUv).rgb;float wrG=smoothstep(.015,.06,wrT.b-wrT.r)*(1.-smoothstep(.5,.62,wrT.b));
-    vec3 wrN=normalize(inverseTransformDirection(normal,viewMatrix));wrG*=1.-smoothstep(.3,.5,abs(wrN.y));
-    float wrL=max(totalEmissiveRadiance.r,max(totalEmissiveRadiance.g,totalEmissiveRadiance.b));wrG*=1.-smoothstep(.04,.3,wrL);
-    if(wrG>.01){vec3 wrV=normalize(vWrW-cameraPosition);if(dot(wrN,wrV)>0.)wrN=-wrN;vec3 wrR=reflect(wrV,wrN);float wrC=clamp(dot(-wrV,wrN),0.,1.);
-     float wrF=.14+.66*pow(1.-wrC,3.);float u=wrR.y;
+    vec3 wrN=normalize(inverseTransformDirection(normal,viewMatrix));float wrVt=1.-smoothstep(.3,.5,abs(wrN.y));wrG*=wrVt;
+    float wrL=max(totalEmissiveRadiance.r,max(totalEmissiveRadiance.g,totalEmissiveRadiance.b));float wrDist=length(vWrW-cameraPosition);
+    vec3 wrV=normalize(vWrW-cameraPosition);if(dot(wrN,wrV)>0.)wrN=-wrN;
+    vec2 wrC=fract(vUv*8.);vec2 wrA=(wrC-wrRect.xy)/(wrRect.zw-wrRect.xy);vec2 wrE=fwidth(wrC)*1.5/(wrRect.zw-wrRect.xy);
+    float wrIn=smoothstep(0.,wrE.x,wrA.x)*smoothstep(0.,wrE.x,1.-wrA.x)*smoothstep(0.,wrE.y,wrA.y)*smoothstep(0.,wrE.y,1.-wrA.y);
+    if(wrMull>0.)wrIn*=smoothstep(wrMull,wrMull+fwidth(wrC.x)*1.5,abs(wrC.x-.5));
+    float wrI=max(wrG,step(.04,wrL)*wrVt)*wrIn*(1.-smoothstep(90.,160.,wrDist));
+    if(wrI>.01){vec3 wrUp=vec3(0.,1.,0.);vec3 wrTg=normalize(cross(wrUp,-wrN));vec3 wrD=vec3(dot(wrV,wrTg),wrV.y,max(dot(wrV,-wrN),.02));
+     vec3 wrId=vec3(floor(vUv*8.),floor(dot(wrN,vWrW)*.37));
+     vec3 wrLamp=totalEmissiveRadiance*step(.04,wrL);float wrAmb=mix(.42,.025,night)*(.4+.6*sunDim);
+     gl_FragColor.rgb=mix(gl_FragColor.rgb,wrRoom(wrA,wrD,wrId,wrLamp,wrAmb),wrI);}
+    wrG*=1.-smoothstep(.04,.3,wrL);
+    if(wrG>.01){vec3 wrR=reflect(wrV,wrN);float wrCs=clamp(dot(-wrV,wrN),0.,1.);
+     float wrF=.1+.7*pow(1.-wrCs,3.);float u=wrR.y;
      vec3 wrS=u>0.?mix(hor,top,pow(u,.55)):mix(hor*.7,hor*.24+vec3(.04),smoothstep(0.,.4,-u));
      float az=atan(wrR.z,wrR.x)*9.;float wrH=fract(sin(floor(az)*12.989+floor(vWrW.x/48.)*3.7+floor(vWrW.z/48.)*7.3)*43758.55);
      float wrB=step(u,.04+wrH*wrH*.32)*step(-.02,u)*step(.25,wrH);wrS=mix(wrS,hor*mix(.42,.3,wrH)+top*.06,wrB*.85);
-     vec3 wrD=normalize(sunDir);float wrSn=pow(max(dot(wrR,wrD),0.),220.)*2.4*smoothstep(-.03,.08,wrD.y)*sunDim*(1.-.85*csSun)*(1.-night)*(1.-wK.y)*(1.-wrB);
-     float wrK=wrF*wrG*mix(1.,mix(.3,.6,synth),night)*(1.-smoothstep(260.,420.,length(vWrW-cameraPosition))*.5);
+     vec3 wrSd=normalize(sunDir);float wrSn=pow(max(dot(wrR,wrSd),0.),220.)*2.4*smoothstep(-.03,.08,wrSd.y)*sunDim*(1.-.85*csSun)*(1.-night)*(1.-wK.y)*(1.-wrB);
+     float wrK=wrF*wrG*mix(1.,mix(.3,.6,synth),night)*(1.-smoothstep(260.,420.,wrDist)*.5);
      gl_FragColor.rgb=mix(gl_FragColor.rgb,wrS*mix(1.,.75,night),clamp(wrK,0.,.85))+vec3(1.,.93,.8)*wrSn*wrG;}}
    #endif
    #include <tonemapping_fragment>`)};
- mat.customProgramCacheKey=()=>key+'|winRefl';mat.needsUpdate=true;return mat}
+ mat.customProgramCacheKey=()=>key+'|winRefl2';mat.needsUpdate=true;return mat}
 // neon (MeshBasic): núcleo mais branco no tubo, zumbido sutil e, à noite, brilho acima de 1 (o bloom pega quando ligado).
 function fxNeonPatch(mat){if(!mat||mat.userData.fxNeon||!mat.isMeshBasicMaterial)return mat;mat.userData.fxNeon=true;const old=mat.onBeforeCompile,key=(mat.customProgramCacheKey&&mat.customProgramCacheKey())||'';
  mat.onBeforeCompile=sh=>{if(old)old.call(mat,sh);sh.uniforms.fxK=SHFX.U.fxK;sh.uniforms.fxT=SHFX.U.fxT;sh.uniforms.fxNk=SHFX.U.fxN;
