@@ -916,7 +916,7 @@ function gangTick(dt){
  for(const t of GANG.T){if(t.clear)continue;const d=Math.hypot(f.x-t.x,f.z-t.z);
   if(!t.peds.length){if(d<110&&!PL.inside)gangSpawn(t);continue}
   if(d>230||PL.inside){t.left=gangAlive(t).length;gangDespawn(t);continue}
-  const alive=gangAlive(t);if(alive.length<t.peds.length&&!t.hot&&alive.length<t.left)t.hot=true;t.left=alive.length;
+  const alive=gangAlive(t);if(!t.hot&&(alive.length<t.peds.length&&alive.length<t.left||alive.some(q=>q.state!=='clerk')))t.hot=true;t.left=alive.length;
   if(!alive.length){const D0=GANG_DEF[t.g];t.clear=true;gangDespawn(t);if(t.byPl>0)money(500,'<span style="color:'+D0.col+'">'+translatePlain('BECO APAZIGUADO')+'</span> · +$500');else toast(translatePlain('A OUTRA GANGUE LIMPOU O BECO'));continue}
   if(!t.hot&&d<30&&!PL.dead){t.hot=true;const q=alive[0];say(q,['Tá perdido, playboy?','Esse beco é nosso!','Pega ele!'],1.8)}
   if(t.hot)empGangTick({gang:alive},dt);else for(const q of alive){q.vx=q.vz=0}}

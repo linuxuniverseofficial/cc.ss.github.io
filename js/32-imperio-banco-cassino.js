@@ -43,7 +43,11 @@ function empGangFromDoor(e){if(e.gang.length)return;for(let k=0;k<4;k++){
  q.state='clerk';q.fixed=true;q.at={x,z};q.gang=true;q.hp=3;q.wpn='smg';q.shootAcc=.30;q.shootT=1.4+k*.25;q.hitT=0;q.mx=0;q.mz=1;
  q.doorWait=k*.22;q.doorOutZ=e.z+3.2+k*.35;e.gang.push(q)}}
 function empGangAlive(e){return e.gang.filter(q=>peds.includes(q)&&q.state!=='dead'&&q.hp>0)}
-function empGangTick(e,dt){for(const q of e.gang){if(!peds.includes(q)||q.state==='dead'||q.hp<=0)continue;if(q.state!=='clerk'){q.state='clerk';q.fixed=true;q.at={x:q.x,z:q.z}}
+/* v4 r14: inimigo derrubado (soco com hp 1, skate etc.) fica caído até levantar; ao retomar o controle, volta em pé (rot 0).
+   Antes o tick forçava 'clerk' com o rot de deitado ainda setado → o corpo deslizava atrás do jogador. */
+function hostileHold(q){if(q.state==='dead'||q.hp<=0)return true;if(q.state==='down')return true;
+ if(q.state!=='clerk'){q.state='clerk';q.fixed=true;q.at={x:q.x,z:q.z};q.rot=0;q.vx=q.vz=0}return false}
+function empGangTick(e,dt){for(const q of e.gang){if(!peds.includes(q)||hostileHold(q))continue;
   if(q.doorOutZ!==undefined){q.doorWait-=dt;if(q.doorWait>0)continue;
    q.at.z=Math.min(q.doorOutZ,q.at.z+4.6*dt);q.x=q.at.x;q.z=q.at.z;
    if(q.at.z<q.doorOutZ-.04)continue;q.doorOutZ=undefined}
@@ -303,7 +307,7 @@ function bankTick(dt){if(PL.inside==='bank')bankClockTick();const d=bankDoor();i
   // ondas de policiais entrando pela porta
   R0.spawnT-=dt;const alive=R0.cops.filter(q=>peds.includes(q)&&q.state!=='dead'&&q.hp>0);
   if(!R0.done&&R0.spawned<R0.total&&alive.length<3&&R0.spawnT<=0){R0.spawnT=1.6;const x=IN.x+(Math.random()-.5)*2,z=IN.z+7.2;const q=spawnPed(null,{x,z,vx:0,vz:0,pal:copPal()});if(q){q.cop=true;q.bankCop=true;q.hp=3;q.state='clerk';q.fixed=true;const tx=[-8.5,-3.5,3.5,8.5][R0.spawned%4];q.at={x,z};q.goal={x:IN.x+tx+(Math.random()<.5?-1.3:1.3),z:IN.z+3.4+Math.random()*2};q.shootT=1.2+Math.random();q.mx=0;q.mz=-1;q.timer=0;R0.cops.push(q);R0.spawned++;say(q,['POLÍCIA! MÃOS PRA CIMA!','LARGA A ARMA!','CERCA ELE!'][R0.spawned%3],2)}}
-  for(const q of R0.cops){if(!peds.includes(q))continue;if(q.state==='dead'||q.hp<=0){if(!q.counted){q.counted=true;R0.killed++}continue}if(q.state!=='clerk'){q.state='clerk';q.fixed=true;q.at={x:q.x,z:q.z}}
+  for(const q of R0.cops){if(!peds.includes(q))continue;if(q.state==='dead'||q.hp<=0){if(!q.counted){q.counted=true;R0.killed++}continue}if(hostileHold(q))continue;
    const gx=q.goal.x-q.at.x,gz=q.goal.z-q.at.z,gl=Math.hypot(gx,gz);if(gl>.2){q.at.x+=gx/gl*Math.min(gl,3.2*dt);q.at.z+=gz/gl*Math.min(gl,3.2*dt)}
    const dx=PL.x-q.x,dz=PL.z-q.z,dd=Math.hypot(dx,dz)||1;q.mx=dx;q.mz=dz;q.shootT-=dt;
    if(q.shootT<=0){q.shootT=1+Math.random()*.8;const hit=Math.random()<.32,o=new THREE.Vector3(q.x,1.3,q.z),e=new THREE.Vector3(PL.x+(hit?0:(Math.random()-.5)*2.6),hit?1.1:1.4,PL.z+(hit?0:(Math.random()-.5)*2.6));tracer(o,e,0xff9a7a);gunSound(.7,.85);

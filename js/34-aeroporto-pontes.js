@@ -779,7 +779,7 @@ function rampEnd(ok){RAMP.on=false;for(const q of RAMP.list)if(peds.includes(q))
 function rampageTick(dt){if(PL.dead){rampEnd(false);return}if(PL.car||PL.inside){rampEnd(false);return}RAMP.t-=dt;if(GUN.w===RAMP.w){GUN.ammo=999;GUN.has=true}
  RAMP.spawnT-=dt;const alive=RAMP.list.filter(q=>peds.includes(q)&&q.state!=='dead');if(RAMP.spawnT<=0&&alive.length<Math.min(14,6+Math.floor((90-RAMP.t)/10))){RAMP.spawnT=.5;rampSpawn()}
  for(const q of RAMP.list.slice()){if(!peds.includes(q)){RAMP.list.splice(RAMP.list.indexOf(q),1);continue}if(q.state==='dead'||q.hp<=0){if(!q.counted){q.counted=true;RAMP.kills++;q.deadAt=simT}if(simT-(q.deadAt||simT)>3){removePed(q);RAMP.list.splice(RAMP.list.indexOf(q),1)}continue}
-  if(q.state!=='clerk'){q.state='clerk';q.fixed=true;q.at={x:q.x,z:q.z}}const dx=PL.x-q.x,dz=PL.z-q.z,d=Math.hypot(dx,dz)||1;q.mx=dx;q.mz=dz;
+  if(hostileHold(q))continue;const dx=PL.x-q.x,dz=PL.z-q.z,d=Math.hypot(dx,dz)||1;q.mx=dx;q.mz=dz;
   if(d>1.2){const v=Math.min(d-1.1,3.8*dt);q.at.x+=dx/d*v;q.at.z+=dz/d*v}else{q.hitT-=dt;if(q.hitT<=0){q.hitT=1;if(!CHEAT.hp){PL.hp-=armorHit(9);rumble(.3,.6,120);bloodHit(PL.x,1.1,PL.z,new THREE.Vector3(dx,0,dz).normalize());if(PL.hp<=0){killPlayer('DEVORADO');return}}}}}
  sideHud('<span style="color:#ff3b3b">RAMPAGE</span> · '+Math.max(0,Math.ceil(RAMP.t))+' s · '+RAMP.kills+' ABATES');if(RAMP.t<=0)rampEnd(true)}
 // v264: guardiao da floresta. Mesmo personagem DEMO_PAL do Rampage (9 HP,
@@ -804,7 +804,7 @@ function forestTick(dt){
   e.demo=true;e.forestEnemy=true;e.hp=9;e.hitT=0;FOREST.enemy=e;
  }
  const e=FOREST.enemy;
- if(!e||!peds.includes(e)||e.state==='dead'||PL.dead||PL.inside)return;
+ if(!e||!peds.includes(e)||e.state==='dead'||PL.dead||PL.inside||hostileHold(e))return;
  const dx=PL.x-e.x,dz=PL.z-e.z,d=Math.hypot(dx,dz)||1;
  e.mx=dx/d;e.mz=dz/d;
  if(!PL.car&&d<35){
