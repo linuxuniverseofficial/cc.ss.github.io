@@ -712,23 +712,23 @@ function animalTex(kind,ci){const key=kind+ci;let cv0=ANIM.cache.get(key);if(!cv
 /* ================= v227: CARAMELO & GATINHO (SPRITES EXISTENTES) ================= */
 const PET={dog:null,cat:null,adopted:false,catCi:0,smsSent:false,speechT:0};
 function petFree(){return GAMEMODE==='free'&&!city.haze&&S.style!=='inverted'}
-function petDestroy(sp){if(!sp)return;scene.remove(sp);sp.material.map.dispose();sp.material.dispose()}
+function petDestroy(sp){if(!sp)return;try{pet3Drop(sp)}catch(e){}scene.remove(sp);sp.material.map.dispose();sp.material.dispose()}
 function petsClear(){petDestroy(PET.dog);petDestroy(PET.cat);PET.dog=PET.cat=null}
-function petNew(kind,ci){const tex=animalTex(kind,ci),sp=makeActorLitSprite(tex);sp.scale.set(kind==='dog'?1.4:1.05,kind==='dog'?1.06:.79,1);sp.userData.petTex=tex;return sp}
+function petNew(kind,ci){const tex=animalTex(kind,ci),sp=makeActorLitSprite(tex);sp.scale.set(kind==='dog'?1.4:1.05,kind==='dog'?1.06:.79,1);sp.userData.petTex=tex;sp.userData.petKind=kind;sp.userData.petCi=ci;return sp}
 function petNearCat(){if(!petFree()||PET.adopted||PL.dead||PL.inside||PL.car||PL.heli||Math.hypot(PL.vx||0,PL.vz||0)>1.35)return null;
  let best=null,dd=2.25;for(const a of ANIM.list){if(a.kind!=='cat'||a.home!=='alley'||a.dead||a.onBin||a.flee>0)continue;const d=Math.hypot(PL.x-a.x,PL.z-a.z);if(d<dd){best=a;dd=d}}return best}
 function petAdopt(){const a=petNearCat();if(!a)return false;PET.adopted=true;PET.catCi=a.ci??0;
- scene.remove(a.sp);a.tex.dispose();a.sp.material.dispose();ANIM.list.splice(ANIM.list.indexOf(a),1);toast('GATINHO ADOTADO!<br><small style="font-size:11px;color:#fff">ele vai esperar por você na casa segura</small>');return true}
+ try{pet3Drop(a.sp)}catch(e){}scene.remove(a.sp);a.tex.dispose();a.sp.material.dispose();ANIM.list.splice(ANIM.list.indexOf(a),1);toast('GATINHO ADOTADO!<br><small style="font-size:11px;color:#fff">ele vai esperar por você na casa segura</small>');return true}
 function petsTick(dt){if(!petFree()||!city.safe){if(PET.dog)PET.dog.visible=false;if(PET.cat)PET.cat.visible=false;return}
  const ss=city.safe,dx=ss.x+ss.nx*3.8, dz=ss.z+ss.nz*3.8;
  const dogNear=!PL.inside&&Math.hypot(PL.x-dx,PL.z-dz)<145;
  if(dogNear&&!PET.dog)PET.dog=petNew('dog',3);
- if(PET.dog){PET.dog.visible=dogNear; if(dogNear){PET.dog.position.set(dx,groundY(dx,dz),dz);PET.dog.userData.petTex.offset.set((Math.floor(simT*.5)%3)*.25,1-24/96)}}
+ if(PET.dog){PET.dog.visible=dogNear; if(dogNear){const gy=groundY(dx,dz);PET.dog.position.set(dx,gy,dz);PET.dog.userData.petTex.offset.set((Math.floor(simT*.5)%3)*.25,1-24/96);if(typeof pet3==='function'){const pd=Math.hypot(PL.x-dx,PL.z-dz),nr=pd<9;try{pet3(PET.dog,'dog',3,dx,dz,nr?PL.x-dx:ss.nx,nr?PL.z-dz:ss.nz,1,nr?1:.25,gy)}catch(e){console.error(e)}}}}
  const catNear=!!(PET.adopted&&PL.inside===true);
  if(catNear&&!PET.cat)PET.cat=petNew('cat',PET.catCi);
- if(PET.cat){PET.cat.visible=catNear;if(catNear){const cs=SAFE.catSpot||{x:SAFE.IN.x+2.75,z:SAFE.IN.z-.7},cx=cs.x,cz=cs.z;PET.cat.position.set(cx,groundY(cx,cz),cz);PET.cat.userData.petTex.offset.set(0,1-24/96)}}
+ if(PET.cat){PET.cat.visible=catNear;if(catNear){const cs=SAFE.catSpot||{x:SAFE.IN.x+2.75,z:SAFE.IN.z-.7},cx=cs.x,cz=cs.z;const gy=groundY(cx,cz);PET.cat.position.set(cx,gy,cz);PET.cat.userData.petTex.offset.set(0,1-24/96);if(typeof pet3==='function')try{pet3(PET.cat,'cat',PET.catCi,cx,cz,PL.x-cx,PL.z-cz,1,1,gy)}catch(e){console.error(e)}}}
 }
-function animalsClear(){for(const a of ANIM.list){scene.remove(a.sp);a.sp.material.map.dispose();a.sp.material.dispose()}ANIM.list.length=0}
+function animalsClear(){for(const a of ANIM.list){try{pet3Drop(a.sp)}catch(e){}scene.remove(a.sp);a.sp.material.map.dispose();a.sp.material.dispose()}ANIM.list.length=0}
 function animalOk(x,z,a){if(inWater(x,z)||riverZone(x,z))return false;if(query(x,z,1).some(b=>!b.dead&&(b.kind==='bld'||b.kind==='rock'||b.kind==='tree')&&x>b.x0-.3&&x<b.x1+.3&&z>b.z0-.3&&z<b.z1+.3))return false;if(a&&a.home==='yard'&&groundY(x,z)===0)return false;return true}
 function catAlleyNearby(){const p=PL.car||PL;return (city.catSpots||[]).some(q=>{const r=q.r;return Math.hypot((r[0]+r[2])*.5-p.x,(r[1]+r[3])*.5-p.z)<125})}
 function catSpawnInAlley(){
@@ -773,8 +773,8 @@ function animalsTick(dt){if(!city.ext)return;const hidden=PL.inside&&!TVM.on;ANI
  }}
  const p=PL.car||PL,pv=PL.car?Math.hypot(PL.car.vx,PL.car.vz):Math.hypot(PL.vx||0,PL.vz||0);
  for(let i=ANIM.list.length-1;i>=0;i--){const a=ANIM.list[i];const d=Math.hypot(a.x-p.x,a.z-p.z);
-  if(d>170||(a.dead&&(a.deadT+=dt)>25)){scene.remove(a.sp);a.tex.dispose();a.sp.material.dispose();ANIM.list.splice(i,1);continue}
-  a.sp.visible=!hidden;if(a.dead){a.sp.material.rotation=Math.PI/2;a.sp.position.set(a.x,groundY(a.x,a.z)+.05,a.z);continue}
+  if(d>170||(a.dead&&(a.deadT+=dt)>25)){try{pet3Drop(a.sp)}catch(e){}scene.remove(a.sp);a.tex.dispose();a.sp.material.dispose();ANIM.list.splice(i,1);continue}
+  a.sp.visible=!hidden;if(a.dead){a.sp.material.rotation=Math.PI/2;const gy0=groundY(a.x,a.z);a.sp.position.set(a.x,gy0+.05,a.z);if(typeof pet3==='function')try{pet3(a.sp,a.kind,a.ci,a.x,a.z,a.mx,a.mz,2,0,gy0)}catch(e){}continue}
   // atropelamento
   if(!a.onBin)for(const c of carsNear(a.x,a.z,6)){const sp=Math.hypot(c.vx||0,c.vz||0);if(sp<3||!c.alive)continue;const ca=Math.cos(c.a),sa=Math.sin(c.a),dx=a.x-c.x,dz=a.z-c.z,lx=dx*ca+dz*sa,lz=-dx*sa+dz*ca;
    if(Math.abs(lx)<c.t.L/2+.3&&Math.abs(lz)<c.t.W/2+.3){a.dead=true;a.deadT=0;bloodHit(a.x,.5,a.z,{x:ca,z:sa});thud&&thud(3);break}}
@@ -791,4 +791,6 @@ function animalsTick(dt){if(!city.ext)return;const hidden=PL.inside&&!TVM.on;ANI
     else{const R0=a.home==='street'?4:a.home==='beach'?9:6;a.tx=a.hx+(Math.random()-.5)*2*R0;a.tz=a.hz+(Math.random()-.5)*2*R0}}
    else{const nx=a.x+ex/l*sp*dt,nz=a.z+ez/l*sp*dt;if(a.spot&&(nx<a.spot.r[0]+.2||nx>a.spot.r[2]-.2||nz<a.spot.r[1]+.2||nz>a.spot.r[3]-.2)){a.tx=a.x;a.tz=a.z}else if(animalOk(nx,nz,a)){a.x=nx;a.z=nz;a.mx=ex;a.mz=ez;a.anim+=dt*sp*1.8}else{a.tx=a.x;a.tz=a.z}}}
   const top=camMode==='top'&&!VIEW.orbit,s=(a.kind==='dog'?1.25:.95)*(top?1.5:1);a.sp.scale.set(s,s*.75,1);a.sp.material.rotation=0;a.y+=((a.onBin?1.32:0)-a.y)*Math.min(1,dt*10);a.sp.position.set(a.x,groundY(a.x,a.z)+a.y+(top?.6:0),a.z);
-  const dir=pickDir(a.mx,a.mz,a.x,a.z),fr=a.wait>0?0:1+(Math.floor(a.anim*3)%2);a.tex.offset.set(fr*32/128,1-(dir+1)*24/96)}}
+  const dir=pickDir(a.mx,a.mz,a.x,a.z),fr=a.wait>0?0:1+(Math.floor(a.anim*3)%2);a.tex.offset.set(fr*32/128,1-(dir+1)*24/96);PICK8.fresh=false;
+  /* v4: cães e gatos 2.5D/3D (js/50-pets-3d.js); senta em cima da lixeira e nas paradas longas */
+  if(typeof pet3==='function')try{pet3(a.sp,a.kind,a.ci,a.x,a.z,a.mx,a.mz,a.onBin||a.wait>1.3?1:0,a.kind==='cat'?1:a.aggro?0:a.flee>0?.15:a.wait>0?1:.45,groundY(a.x,a.z)+a.y)}catch(e){if(!PET3.err){PET3.err=1;console.error(e)}}}}

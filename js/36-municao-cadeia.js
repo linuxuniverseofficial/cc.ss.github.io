@@ -365,7 +365,7 @@ function heistTick(dt){panicTick(dt);try{isleTick(dt)}catch(e){console.error(e)}
  HEIST.arrows.forEach((a,i)=>{const hs=HEIST.list[i];const v=ok&&night&&hs&&!HEIST.robbed.has(hs.id)&&Math.hypot(PL.x-hs.x,PL.z-hs.z)<34;a.visible=!!v;if(!v)return;a.position.x=hs.x;a.position.z=hs.z;
   const d=Math.hypot((PL.car||PL).x-hs.x,(PL.car||PL).z-hs.z);
   if(hs.dog&&!HEIST.dogs.has(hs.id)&&d<28&&!PL.car){HEIST.dogs.add(hs.id);try{const ci=Math.floor(Math.random()*DOG_COLS.length),tex=animalTex('dog',ci),sp=makeActorLitSprite(tex);const x=hs.x+hs.nrm[0]*3,z=hs.z+hs.nrm[1]*3;
-   ANIM.list.push({kind:'dog',home:'street',spot:null,y:0,onBin:null,x,z,hx:x,hz:z,tx:x,tz:z,sp,tex,mx:1,mz:0,anim:0,wait:0,flee:0,dead:false,deadT:0,aggro:true,biteT:.6});toast('<span style="color:#ff4a4a">TEM CACHORRO NESSA CASA!</span>');say(ANIM.list[ANIM.list.length-1],'AU AU! GRRR!',2.5)}catch(e){console.error(e)}}
+   ANIM.list.push({kind:'dog',ci,home:'street',spot:null,y:0,onBin:null,x,z,hx:x,hz:z,tx:x,tz:z,sp,tex,mx:1,mz:0,anim:0,wait:0,flee:0,dead:false,deadT:0,aggro:true,biteT:.6});toast('<span style="color:#ff4a4a">TEM CACHORRO NESSA CASA!</span>');say(ANIM.list[ANIM.list.length-1],'AU AU! GRRR!',2.5)}catch(e){console.error(e)}}
   if(!PL.car&&!PL.dead&&HEIST.lock<=0&&d<1.1)heistEnter(hs)})}
 /* ================= BALÕES DE FALA (pixel art) =================
    say(alvo, texto | [variantes], segundos) — alvo é qualquer coisa com x/z (pedestre, NPC, carro, animal).
