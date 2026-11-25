@@ -171,14 +171,15 @@ function winReflPatch(mat,night){if(!mat||mat.userData.winRefl)return mat;mat.us
    #include <tonemapping_fragment>`)};
  mat.customProgramCacheKey=()=>key+'|winRefl3';mat.needsUpdate=true;return mat}
 // neon (MeshBasic): núcleo mais branco no tubo, zumbido sutil e, à noite, brilho acima de 1 (o bloom pega quando ligado).
-function fxNeonPatch(mat){if(!mat||mat.userData.fxNeon||!mat.isMeshBasicMaterial)return mat;mat.userData.fxNeon=true;const old=mat.onBeforeCompile,key=(mat.customProgramCacheKey&&mat.customProgramCacheKey())||'';
+/* v4 r13: steady=true (M.neonSt) = mesmo núcleo quente, sem zumbido nem falha (letreiros fixos: cruz e faixa do hospital) */
+function fxNeonPatch(mat,steady){if(!mat||mat.userData.fxNeon||!mat.isMeshBasicMaterial)return mat;mat.userData.fxNeon=true;const old=mat.onBeforeCompile,key=(mat.customProgramCacheKey&&mat.customProgramCacheKey())||'';
  mat.onBeforeCompile=sh=>{if(old)old.call(mat,sh);sh.uniforms.fxK=SHFX.U.fxK;sh.uniforms.fxT=SHFX.U.fxT;sh.uniforms.fxNk=SHFX.U.fxN;
   sh.vertexShader='varying vec3 fxNw;\n'+sh.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\n fxNw=(modelMatrix*vec4(transformed,1.)).xyz;');
   sh.fragmentShader='uniform vec4 fxK;uniform float fxT,fxNk;varying vec3 fxNw;\n'+sh.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
    if(fxK.y>.5){vec3 nc=diffuseColor.rgb;float nl=max(nc.r,max(nc.g,nc.b));float hs=fract(sin(dot(floor(fxNw.xz/12.),vec2(12.99,78.23)))*43758.55);
-    float hum=.95+.05*sin(fxT*(23.+hs*17.)+hs*40.);float fl=1.-.55*step(.93,hs)*step(.82,fract(sin(floor(fxT*9.+hs*50.)*1.7)*913.3));
+    float hum=.95+.05*sin(fxT*(23.+hs*17.)+hs*40.);float fl=1.-.55*step(.93,hs)*step(.82,fract(sin(floor(fxT*9.+hs*50.)*1.7)*913.3));${steady?'hum=1.;fl=1.;':''}
     diffuseColor.rgb=mix(nc,vec3(nl),.22*nl)*(1.+.35*fxNk*nl)*hum*fl;}`)};
- mat.customProgramCacheKey=()=>key+'|fxNeon';mat.needsUpdate=true;return mat}
+ mat.customProgramCacheKey=()=>key+'|fxNeon'+(steady?'St':'');mat.needsUpdate=true;return mat}
 /* v3 r33: TEXTURAS DE SUPERFÍCIE (SURF). Mesma técnica da água/nuvens: tudo no shader dos materiais que já existem
    (onBeforeCompile), ruído pela posição do mundo (nada se repete, nenhuma textura/geometria/draw call novo, então
    não existe camada nova que possa dar z-fight). Cada superfície ganha camadas de ruído sobrepostas DENTRO do shader:

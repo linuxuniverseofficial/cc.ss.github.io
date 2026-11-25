@@ -117,8 +117,8 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
  city.chunks.set(key,ch);curChunk=ch;let gunN=0,garaged=0,curRi=-1,curI=null;const pendingParkingSidewalk=[];if(!city.doors)city.doors=new Map();
  const regDoor=(dx,dz,f,u,house)=>{if(curRi<0)return;const r=city.rects[curRi];let ox,oz;if(f==='n'||f==='s'){ox=clamp(u,r[0]+2.5,r[2]-2.5);oz=f==='n'?r[1]+2:r[3]-2}else{oz=clamp(u,r[1]+2.5,r[3]-2.5);ox=f==='w'?r[0]+2:r[2]-2}
   city.doors.get(curRi).push({x:dx,z:dz,ox,oz,ri:curRi,td:perimNearest(perim(curRi),ox,oz),house,f})};
- const lodNear=new MB(),lodMid=new MB(),lodFarWindow=new MB(),signs=new MB(),clothes=new MB(),clothPins=[],sandMb=new MB(),towelMb=new MB(),foamMb=new MB(),wat=new MB(),fence=new MB(),walls=new MB(),abWalls=new MB(),roofs=new MB(),det=new MB(),roofD=new MB(),neonDN=new MB(),neon=new MB(),side=new MB(),forestFloor=new MB(),roadGround=new MB(),marks=new MB(),glow=new MB(),plants=new MB(false),forestPlants=new MB(false),roofs2=new MB(),hwin=new MB(),hwinS=new MB(),bins=new MB(false),tlp=new MB(false),bedMb=new MB(),waveMb=new MB(),hazeCastle=new MB();det.ab=1;lodNear.ab=1;lodMid.ab=1;neon.ab=1;tlp.ab=1;
- const isoBuilders=[walls,abWalls,roofs,roofs2,det,roofD,neonDN,lodNear,lodMid,lodFarWindow,hwin,hwinS,neon,glow,signs];
+ const lodNear=new MB(),lodMid=new MB(),lodFarWindow=new MB(),signs=new MB(),clothes=new MB(),clothPins=[],sandMb=new MB(),towelMb=new MB(),foamMb=new MB(),wat=new MB(),fence=new MB(),walls=new MB(),abWalls=new MB(),roofs=new MB(),det=new MB(),roofD=new MB(),neonDN=new MB(),neon=new MB(),neonSt=new MB(),side=new MB(),forestFloor=new MB(),roadGround=new MB(),marks=new MB(),glow=new MB(),plants=new MB(false),forestPlants=new MB(false),roofs2=new MB(),hwin=new MB(),hwinS=new MB(),bins=new MB(false),tlp=new MB(false),bedMb=new MB(),waveMb=new MB(),hazeCastle=new MB();det.ab=1;lodNear.ab=1;lodMid.ab=1;neon.ab=1;neonSt.ab=1;tlp.ab=1;
+ const isoBuilders=[walls,abWalls,roofs,roofs2,det,roofD,neonDN,lodNear,lodMid,lodFarWindow,hwin,hwinS,neon,neonSt,glow,signs];
  const isoCapture=fn=>(...args)=>{const starts=isoBuilders.map(b=>b.p.length),result=fn(...args);isoRecord(isoBuilders,starts);return result};
  const cMark=COL(st.mark),cCenter=COL(st.center),cSide=COL(st.side),cGrass=COL(st.grass),cDet=COL(st.detail);
  const own=(x,z)=>{const c=chunkOf(x,z);return c[0]===ci&&c[1]===cj};
@@ -1355,8 +1355,8 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
    F.box(W*.05,tu0,v0+8,v1,.26,Hw,wc2,walls,true,{win:[.125,.25]});F.box(tu1,W*.95,v0+8,v1,.26,Hw,wc2,walls,true,{win:[.125,.25]});
    for(const[u0,u1] of [[W*.05,tu0],[tu1,W*.95]]){F.box(u0,u1,v0+7.7,v0+8,Hw-1.4,Hw-.6,tl);F.box(u0-.2,u1+.2,v0+7.8,v1+.2,Hw,Hw+.5,wc.clone().multiplyScalar(.85))}
    F.box(W/2-2.4,W/2+2.4,v0-.12,v0,6,H-2,COL(night?'#ffd9a0':'#7ab0d0'),hwinS);F.box(tu0,tu0+.6,v0-.4,v0,.26,H,tl);F.box(tu1-.6,tu1,v0-.4,v0,.26,H,tl);
-   F.box(W/2-8,W/2+8,v0-6,v0,.26,5,COL(night?'#ffd9a0':'#9ac8e0'),hwinS,true);F.box(W/2-8.3,W/2+8.3,v0-6.3,v0,5,5.4,wc);F.box(W/2-8.3,W/2+8.3,v0-6.35,v0-6.2,4.6,5.4,red,neon);
-   const cr=(u,y,s2,v)=>{F.box(u-s2*.5,u+s2*.5,v-.25,v-.05,y-s2*1.5,y+s2*1.5,red,neon);F.box(u-s2*1.5,u+s2*1.5,v-.25,v-.05,y-s2*.5,y+s2*.5,red,neon)};cr(W/2,H-3.5,1.3,v0);cr(W*.19,Hw-4,.9,v0+8);cr(W*.81,Hw-4,.9,v0+8);
+   F.box(W/2-8,W/2+8,v0-6,v0,.26,5,COL(night?'#ffd9a0':'#9ac8e0'),hwinS,true);F.box(W/2-8.3,W/2+8.3,v0-6.3,v0,5,5.4,wc);F.box(W/2-8.36,W/2+8.36,v0-6.36,v0-6.2,4.6,5.44,red,neonSt); /* v4 r13: faixa 6 cm mais larga e 4 cm mais alta que a marquise (antes topo e pontas no mesmo plano dela = z-fight) e no neon fixo */
+   const cr=(u,y,s2,v)=>{F.box(u-s2*.5,u+s2*.5,v-.25,v-.05,y-s2*1.5,y+s2*1.5,red,neonSt);for(const sd of[-1,1])F.box(u+sd*s2*.5,u+sd*s2*1.5,v-.25,v-.05,y-s2*.5,y+s2*.5,red,neonSt)}; /* v4 r13: cruz em 3 peças sem sobrepor (antes os 2 braços cruzavam a haste: frente no mesmo plano) e no neon fixo */cr(W/2,H-3.5,1.3,v0);cr(W*.19,Hw-4,.9,v0+8);cr(W*.81,Hw-4,.9,v0+8);
    const hp=F.pt(W/2,(v0+v1)/2),HH=H+4;cyl(hp[0],HH,HH+.15,hp[1],Math.min(7,(v1-v0)/2-4),COL('#3a3a40'));const hs=COL('#f4f4f0');det.box(hp[0]-2,HH+.15,hp[1]-2.5,hp[0]-1.2,HH+.22,hp[1]+2.5,hs);det.box(hp[0]+1.2,HH+.15,hp[1]-2.5,hp[0]+2,HH+.22,hp[1]+2.5,hs);det.box(hp[0]-1.2,HH+.15,hp[1]-.4,hp[0]+1.2,HH+.22,hp[1]+.4,hs);
    bldKit(F,tu0,tu1,v0,v1,H+.5,{col:wc,roof:false,backRoom:D-v1});for(const[a0,a1] of [[W*.05,tu0],[tu1,W*.95]])bldKit(F,a0,a1,v0+8,v1,Hw+.5,{col:wc2,service:false,fireEscape:false,tank:false});
    /* v78 · HOSPITAL (ref. GTA IV/SA): marquise de concreto das ambulâncias, letreiros, placa no gramado, torre de antenas, chaminé, oxigênio */
@@ -1366,9 +1366,9 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
      for(const[u,v] of [[a0+.4,b0+.4],[a1-.4,b0+.4],[a0+.4,b1-.4],[a1-.4,b1-.4]])F.box(u-.4,u+.4,v-.4,v+.4,.26,4.3,conc,det,'rock')}
     // letreiros em letras soltas (fundo transparente)
     const letters=(txt,col,w,h,u,y,v)=>{const c=cv(1024,128),g=c.getContext('2d');g.font='700 96px Fredoka, Arial Black, sans-serif';g.textAlign='center';g.textBaseline='middle';g.lineWidth=8;g.strokeStyle='#1a1a20';g.strokeText(translatePlain(txt),512,68);g.fillStyle=col;g.fillText(translatePlain(txt),512,68);
-     const t=new THREE.CanvasTexture(c),m=new THREE.MeshBasicMaterial({map:t,transparent:true,alphaTest:.4}),p=F.p3(u,y,v);signPlane(ch.group,m,p[0],p[1],p[2],w,h,ry)};
+     const t=new THREE.CanvasTexture(c),m=new THREE.MeshBasicMaterial({map:t,transparent:true,alphaTest:.4,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}),p=F.p3(u,y,v);signPlane(ch.group,m,p[0],p[1],p[2],w,h,ry)}; /* v4 r13: polygonOffset contra o piscado do texto sobre a faixa */
     letters('HOSPITAL CENTRAL',night?'#e8f4ff':'#e8eef2',(tu1-tu0)*.9,(tu1-tu0)*.11,W/2,H-1.2,v0-.45);
-    letters('EMERGÊNCIA','#ffffff',6.5,.8,W/2,5.0,v0-6.42); /* sobre a faixa vermelha, abaixo da placa do hospital */
+    letters('EMERGÊNCIA','#ffffff',6.5,.8,W/2,5.02,v0-6.48); /* sobre a faixa vermelha, abaixo da placa do hospital */
     // placa baixa de pedra no gramado da frente
     {const u=W*.84,v=4.6;F.box(u-2.6,u+2.6,v-.35,v+.35,.26,1.5,conc,det,'rock');F.box(u-2.8,u+2.8,v-.45,v+.45,1.5,1.62,conc.clone().multiplyScalar(.9),det);
      const c=cv(512,96),g=c.getContext('2d');g.fillStyle='#e8e2d4';g.fillRect(0,0,512,96);g.fillStyle='#2a6a6a';g.font='700 40px Fredoka, Arial Black, sans-serif';g.textAlign='center';g.fillText(translatePlain('HOSPITAL DE'),256,42);g.font='700 30px Fredoka, Arial Black, sans-serif';g.fillText('SUNSET SHORES',256,80);
@@ -2662,7 +2662,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
  for(const p of pendingParkingSidewalk)finishParkingSidewalk(p.bx0,p.bz0,p.bx1,p.bz1,p.ri,p.col);
  /* --- assemble --- */
  const ringBatches=new Map();
- const reflOK=new Set([walls,abWalls,roofs,roofs2,neon,hwin,hwinS,glow]);const add=(mb,mat,cast,recv,ro)=>{const m=mb.mesh(mat,cast,recv);if(m){if(mat&&mat.userData.cityAge)ageTopAttr(m.geometry);isoAttach(m,mb);if(mb===det||mb===marks||mb===roadGround||mb===side)bridgeVisualMaterial(mat);ch.group.add(m);if(ro)m.renderOrder=ro;if(!reflOK.has(mb))m.layers.set(1);if(ringGeometry.length&&isoBuilders.includes(mb))ringBatches.set(mb,m)}return m};
+ const reflOK=new Set([walls,abWalls,roofs,roofs2,neon,neonSt,hwin,hwinS,glow]);const add=(mb,mat,cast,recv,ro)=>{const m=mb.mesh(mat,cast,recv);if(m){if(mat&&mat.userData.cityAge)ageTopAttr(m.geometry);isoAttach(m,mb);if(mb===det||mb===marks||mb===roadGround||mb===side)bridgeVisualMaterial(mat);ch.group.add(m);if(ro)m.renderOrder=ro;if(!reflOK.has(mb))m.layers.set(1);if(ringGeometry.length&&isoBuilders.includes(mb))ringBatches.set(mb,m)}return m};
  ch.binMesh=add(bins,M.solid,true,true);ch.tlpMesh=add(tlp,M.signal,true,true);if(ch.tlpMesh){const a=new Float32Array(tlp.p.length/3*4);for(const t of ch.tls)for(let v=t.vh;v<t.v1;v++)a.set([t.hx,t.hz,5.39,1],v*4);ch.tlpMesh.geometry.setAttribute('windPivot',new THREE.BufferAttribute(a,4))}
  const clothMesh=add(clothes,M.cloth,false,true);if(clothMesh)clothMesh.geometry.setAttribute('clothPin',new THREE.Float32BufferAttribute(clothPins,3));
  // Point Haze castle is structural geometry, independent of shared detail shaders/LOD.
@@ -2674,7 +2674,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
  // a copa original fica visível e segue o LOD. Fora da lista de castShadow.
  ch.forestTreeMesh=add(forestPlants,M.plant,false,false);
  prepareSurfaceMesh(add(forestFloor,M.surface,false,false),'ground',st);
- ch.neonMesh=add(neon,M.neon,false,false);if(ch.ads&&ch.ads.length&&!city.haze){ch.adMesh=adsMesh(ch.ads);if(ch.adMesh)ch.group.add(ch.adMesh)}if(ch.graf&&ch.graf.length){ch.grafMesh=grafMesh(ch.graf);if(ch.grafMesh)ch.group.add(ch.grafMesh)}if(ch.mags&&ch.mags.length){ch.magMesh=magsMesh(ch.mags);if(ch.magMesh)ch.group.add(ch.magMesh)}ch.neonDNMesh=add(neonDN,M.neonDN,false,false);ch.glowMesh=st.noLamps?null:add(glow,M.glow,false,false,2);
+ ch.neonMesh=add(neon,M.neon,false,false);ch.neonStMesh=add(neonSt,M.neonSt||M.neon,false,false);if(ch.ads&&ch.ads.length&&!city.haze){ch.adMesh=adsMesh(ch.ads);if(ch.adMesh)ch.group.add(ch.adMesh)}if(ch.graf&&ch.graf.length){ch.grafMesh=grafMesh(ch.graf);if(ch.grafMesh)ch.group.add(ch.grafMesh)}if(ch.mags&&ch.mags.length){ch.magMesh=magsMesh(ch.mags);if(ch.magMesh)ch.group.add(ch.magMesh)}ch.neonDNMesh=add(neonDN,M.neonDN,false,false);ch.glowMesh=st.noLamps?null:add(glow,M.glow,false,false,2);
  // v264: registrar a geometria estrutural de oclusao dos atores NA GERACAO.
  // O SHADOW DISTANCE (v259) altera castShadow dinamicamente; se o raycaster
  // montar o cache DEPOIS dessa alteracao, paredes de prédios largos e em L
