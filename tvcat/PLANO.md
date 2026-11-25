@@ -84,7 +84,7 @@ mecânicas houver (20, 30…). Coisas pequenas podem dividir canal (ex.: eclipse
 **Novos na v3 r1** (ordem no `TVCAT`: armas depois do hospital, eventos de pedestres depois de "pedestres e seu carro", carros e posto depois do carro sujo, residências depois dos discos, rampas depois dos veículos especiais, e rádio/notícias/modo foto/cheats antes das estatísticas):
 | Canal | Layout | Quadros / HTML |
 |---|---|---|
-| ARMAS | 4 | weap_wheel · gang_alley+traçantes · weap_boom · cartão da bomba remota |
+| ARMAS | 4 | weap_wheel · weap_melee (faca/taco na fatia de objetos, v4 r29) · weap_bat (taco derruba, v4 r29) · gang_alley+traçantes · weap_boom · cartão da bomba remota |
 | EVENTOS DE PEDESTRES | alt | pedev · scn_chase+traçantes · car_dmc |
 | CARROS: DANO E DIREÇÃO | 2 | car_dmg · car_spin |
 | POSTO E CONVENIÊNCIA | 2 | gas_pump+menu da bomba · gas_shop+"ASSALTO!" |
