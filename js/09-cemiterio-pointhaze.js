@@ -747,11 +747,11 @@ function foamCoast(fm,s,t0,t1,W,sd){if(t1-t0<.05)return;const tg=s<2?[1,0]:[0,1]
  while(a<t1-.01){let b=Math.min(t1,a+3);if(!coastW(a)&&!coastW(b)&&!coastW((a+b)/2)){let e=b;while(e<t1-.01&&!coastW(Math.min(t1,e+3)))e=Math.min(t1,e+3);b=e}
   const pb=wTU(s,b,coastUr(b,W)),dx=pb[0]-pa[0],dz=pb[1]-pa[1],L=Math.hypot(dx,dz)||1;let nx=dz/L,nz=-dx/L;if(nx*sd[0]+nz*sd[1]<0){nx=-nx;nz=-nz}
   worldFoamStrip(fm,pa[0],pa[1],pb[0],pb[1],nx,nz,11,SEA_Y+.035);a=b;pa=pb}}
-function beachSand(mb,s,t0,t1,col){const us=[SAND0,SAND_FLAT];for(let u=SAND_FLAT+1.5;u<SHORE+3;u+=1.5)us.push(u);us.push(SHORE+3);
+function beachSand(mb,s,t0,t1,col){col=col.clone().multiplyScalar(SAND_TONE);const us=[SAND0,SAND_FLAT];for(let u=SAND_FLAT+1.5;u<SHORE+3;u+=1.5)us.push(u);us.push(SHORE+3);
  const P3=(t,u,y)=>{const q=wTU(s,t,coastUr(t,u));return[q[0],y,q[1]]},uv=start=>{for(let k=start.p;k<mb.p.length;k+=3){const i=k/3;mb.u[i*2]=mb.p[k]/9;mb.u[i*2+1]=mb.p[k+2]/9}};
  /* v3 r35: u aqui é o efetivo (perfil igual ao de antes); cada coluna de 4 m é empurrada para a borda irregular por coastUr */
  const nT=Math.max(1,Math.ceil((t1-t0)/4));for(let j=0;j<nT;j++){const ta=t0+(t1-t0)*j/nT,tb=t0+(t1-t0)*(j+1)/nT;
- for(let i=0;i<us.length-1;i++){const u=us[i],v=us[i+1],yu=beachProfile(u),yv=beachProfile(v),st={p:mb.p.length};mb.qa(P3(ta,u,yu),P3(tb,u,yu),P3(tb,v,yv),P3(ta,v,yv),wetSand(col,(u+v)/2),P3((ta+tb)/2,u,-20));uv(st)}}
+ for(let i=0;i<us.length-1;i++){const u=us[i],v=us[i+1],yu=beachProfile(u),yv=beachProfile(v),st={p:mb.p.length};mb.qa(P3(ta,u,yu),P3(tb,u,yu),P3(tb,v,yv),P3(ta,v,yv),wetSand(col,(u+v)/2),P3((ta+tb)/2,u,-20));uv(st);sandUp(mb,st.p)}} /* v4 r26: luz de chão plano (a rampa de 15% até o mar fazia 2 tons) */
  const br=beachRange(),wall=COL(city.st&&city.st.synth?'#4a4458':'#9a958a');
  for(const[t,inside] of [[t0,t0+5],[t1,t1-5]]){if(Math.abs(t-br[0])>.01&&Math.abs(t-br[1])>.01)continue;
   for(let i=0;i<us.length-1;i++){const u=us[i],v=Math.min(SHORE-.5,us[i+1]);if(u>=v)break;mb.qa(P3(t,u,beachProfile(u)),P3(t,v,beachProfile(v)),P3(t,v,.2),P3(t,u,.2),wall,P3(t+(t-inside),(u+v)/2,0))}}}

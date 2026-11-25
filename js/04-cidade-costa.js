@@ -145,6 +145,8 @@ function tuRect(t0,t1,u0,u1){const a=wTU(city.coast,t0,u0),b=wTU(city.coast,t1,u
 function coastGround(x,z){if(city.coast===undefined||!city.ext)return null;const u=outDist(x,z);if(u<=SAND0)return null;
  if(city.lh&&lhLand(x,z))return .2;if(city.haze)return beachProfile(u)+.03;const t=city.coast<2?x:z,r=beachRange();if(t<r[0]||t>r[1])return null;return beachProfile(u)+.03}
 // Areia molhada: escurece perto da linha d'água.
+/* v4 r26 · areia da praia num tom só: normal para cima (a altura não muda) + cor 8% mais escura (tom da metade da rampa) */
+const SAND_TONE=.92;function sandUp(mb,st){for(let k=st;k<mb.p.length;k+=3){mb.n[k]=0;mb.n[k+1]=1;mb.n[k+2]=0}}
 function wetSand(col,u){const w=clamp((u-(SHORE-3))/3,0,1);return w>0?col.clone().multiplyScalar(1-.28*w):col}
 /* v3 r27 · FOZ EM CORNETA. Antes: canal reto (60 m) e margens retas de 10 m até o mar. Agora o canal continua reto sob a ponte e no
    calçadão, e da areia (SAND0) até a linha d'água (SHORE) cada margem abre numa curva assintótica:
@@ -199,9 +201,10 @@ function mouthMesh(sandMb,bedMb,s,ta,tb,night){const m=mouthGeo();if(!m||s!==cit
  const beachUs=[SAND0,SAND_FLAT];for(let u=SAND_FLAT+.75;u<SHORE+2;u+=.75)beachUs.push(u);beachUs.push(SHORE+2); /* passo 0,75 (metade do da beachSand: a emenda cai nos mesmos u) — linha d'água sem serrilhado */
  const bankUs=[o-.3];for(let u=o+2;u<SAND0-.01;u+=2)bankUs.push(u);
  const H=(t,u)=>{const y=mouthY(m,t,u);return(y===null?coastTop(u)+.03:y)-.03},P3=(t,u)=>{const q=wTU(s,t,u);return[q[0],H(t,u),q[1]]};
- const sand=COL(night?'#5a4a62':'#e3cf9a').multiplyScalar(1.12),bedA=COL(night?'#5a5a7a':'#d8d4c8'),bedB=COL(night?'#6a6488':'#ffffff'),bedP=COL(night?'#2a2018':'#5a4630'),c=s;
+ const sand=COL(night?'#5a4a62':'#e3cf9a').multiplyScalar(1.12*SAND_TONE),bedA=COL(night?'#5a5a7a':'#d8d4c8'),bedB=COL(night?'#6a6488':'#ffffff'),bedP=COL(night?'#2a2018':'#5a4630'),c=s;
  const nrm=(mb,st)=>{for(let k=st;k<mb.p.length;k+=3){const x=mb.p[k],z=mb.p[k+2],t=c<2?x:z,u=outDist(x,z),h=.35,gt=(H(t+h,u)-H(t-h,u))/(2*h),gu=(H(t,u+h)-H(t,u-h))/(2*h);
-   let nx,nz;if(c===0){nx=-gt;nz=gu}else if(c===1){nx=-gt;nz=-gu}else if(c===2){nx=gu;nz=-gt}else{nx=-gu;nz=-gt}const l=Math.hypot(nx,1,nz);mb.n[k]=nx/l;mb.n[k+1]=1/l;mb.n[k+2]=nz/l;
+   let nx,nz;if(c===0){nx=-gt;nz=gu}else if(c===1){nx=-gt;nz=-gu}else if(c===2){nx=gu;nz=-gt}else{nx=-gu;nz=-gt}if(mb===sandMb&&outDist(x,z)>=SAND0-.01){if(c===0||c===1)nz=0;else nx=0} /* v4 r26: sem a rampa da praia (só a margem do canal) */
+   const l=Math.hypot(nx,1,nz);mb.n[k]=nx/l;mb.n[k+1]=1/l;mb.n[k+2]=nz/l;
    const q=k/3;mb.u[q*2]=x/(mb===bedMb?8:9);mb.u[q*2+1]=z/(mb===bedMb?8:9)}};
  for(let i=0;i<ts.length-1;i++){const ta0=ts[i],ta1=ts[i+1],tc=(ta0+ta1)/2;if(tc<ta||tc>=tb)continue;const inner=tc>m.a-10&&tc<m.b+10,us=inner?bankUs.concat(beachUs):beachUs;
   for(let j=0;j<us.length-1;j++){const u=us[j],v=us[j+1],A=P3(ta0,u),B=P3(ta1,u),C=P3(ta1,v),D=P3(ta0,v),ymax=Math.max(A[1],B[1],C[1],D[1]),uc=(u+v)/2,ref=wTU(s,tc,uc);
