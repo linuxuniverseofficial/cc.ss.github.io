@@ -23,6 +23,12 @@ function updateCamera(dt,snapCamera=false){
 }
 // Shared bank-style vertical limit for all indoor third-person cameras.
 function interiorCameraHeight(p,aiming){if(PL.inside)p.y=Math.min(p.y,aiming?2.7:2.75);if(PL.inside==='lab')labCamClamp(p);if(PL.inside==='motel'&&MOTEL.rooms)houseCamClamp(p);return p}
+/* v4 r27 · moto em 1ª pessoa: olho na cabeça do piloto (acompanha a inclinação da moto como o corpo), câmera inclina 35% para o MESMO lado
+   e levanta o nariz junto no empinar. Antes caía no ramo genérico do carro: olho a 1,2 m (no tanque) e 18 cm de lado, roll inteiro e no sentido contrário. */
+const MOTO_EYE=new THREE.Vector3(),MOTO_EYE_L=[-.06,1.62,0];
+function motoFpsCam(c){setLens(74,.2);c.g.updateMatrixWorld();MOTO_EYE.set(MOTO_EYE_L[0],MOTO_EYE_L[1],MOTO_EYE_L[2]).applyMatrix4(c.ch.matrixWorld);
+ camera.up.set(0,1,0);camera.position.copy(MOTO_EYE);camera.rotation.order='YXZ';
+ camera.rotation.set(-LOOK.pitch*.6+(c.pitch||0)*.7,-c.a-Math.PI/2-LOOK.yaw,-(c.roll||0)*.35)}
 function gameplayCamera(dt,snapCamera=false){const cameraStep=snapCamera?1e6:dt;LOOK.yaw=cameraAngle(LOOK.yaw);
 if(DEAL.open&&city.deal){dealCam(dt);return}if(TVM.on){tvCam(dt);return}switchCapSync();if(SWITCH.on){switchCam(dt);return}if(CAMHOP.on){camHopTick(dt);return}if(BR.fall){brFallCam(dt);return}
  let fx,fz;
@@ -39,8 +45,9 @@ if(DEAL.open&&city.deal){dealCam(dt);return}if(TVM.on){tvCam(dt);return}switchCa
   // controlado. Alt alterna Nathan/Claire, sem teleporte, transicao ou mudar o carro.
   const openTop=c.type==='conv'||c.type==='roadster',duet=DUO.on&&DUO.car===c;
   const seatZ=duet&&CHAR.cur!==DUO.drv?.40:-.40;
+  if(c.type==='moto'){motoFpsCam(c);fx=c.x;fz=c.z}else{
   camera.up.set(0,1,0);camera.position.set(c.x+ca*(openTop?-.18:ox)-sa*(openTop?seatZ:oz),c.gy+(c.hopY||0)+(c.airY||0)+(c.rampY||0)+(openTop?(c.type==='roadster'?1.12:1.24):(HOOD?HOOD[1]:c.t.H*.83)),c.z+sa*(openTop?-.18:ox)+ca*(openTop?seatZ:oz));
-  camera.rotation.order='YXZ';camera.rotation.set(-LOOK.pitch*.6-c.pitch,-c.a-Math.PI/2-LOOK.yaw,c.roll);fx=c.x;fz=c.z;
+  camera.rotation.order='YXZ';camera.rotation.set(-LOOK.pitch*.6-c.pitch,-c.a-Math.PI/2-LOOK.yaw,c.roll);fx=c.x;fz=c.z}
  }else if(PL.car){const c=PL.car;LOOK.t+=dt;if(LOOK.t>lookHold()){const k=1-Math.exp(-dt*2.5);LOOK.yaw-=LOOK.yaw*k;LOOK.pitch-=LOOK.pitch*k}
   const ang=c.a+LOOK.yaw,ca=Math.cos(ang),sa=Math.sin(ang);const zc=VIEW.tpz||0,dist=[6.5+c.t.L*.55,4.2+c.t.L*.5,2.6+c.t.L*.45][zc],ht=[2.4+c.t.H*.7,2.05+c.t.H*.75,1.6+c.t.H*.75][zc]+Math.sin(LOOK.pitch)*dist, /* v77: perto/bem perto acima do teto (estilo GTA III/VC/SA) para ver o trânsito por cima dos carros */hd=dist*Math.cos(LOOK.pitch);
   const want=new THREE.Vector3(c.x-ca*hd,c.gy+(c.airY||0)*.7+Math.max(.8,ht),c.z-sa*hd);chasePos.lerp(want,1-Math.exp(-cameraStep*(LOOK.t<lookHold()?14:5)));
