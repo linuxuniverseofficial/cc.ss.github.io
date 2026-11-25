@@ -341,7 +341,7 @@ function updateDayNight(dt,force){dt=eclipseStep(dt);if(ECLIPSE.on)force=true;co
  const lampF=Math.max(nf,DN.sL);LAMPF=lampF;
  for(const chk of city.chunks.values()){const IM=chk.lampIM;if(!IM)continue;let chg=false;for(const l of chk.lamps){if(l.broken)continue;const on=st.noLamps?false:(lampF>l.th&&!jammerBlocked(l.x,l.z));if(on!==l.on){l.on=on;chg=true;IM.head.setColorAt(l.i,on?LAMP_ON:LAMP_OFF);IM.glow.setMatrixAt(l.i,on&&S.lampLighting!==false?lampGlowM(l):ZM)}}
   if(chg){IM.head.instanceColor.needsUpdate=true;IM.glow.instanceMatrix.needsUpdate=true}}
- if(city.M)city.M.hwin.emissiveIntensity=st.noWindows?0:Math.max(0,(nf-.3)/.7)*.9;{const k=st.noWindows?0:Math.max(0,(nf-.25)/.6);if(city.M&&city.M.neonDN&&!st.noWindows){const v=.42+.58*Math.min(1,k);city.M.neonDN.color.setRGB(v,v,v)}for(const m of DN_SIGNS)m.emissiveIntensity=(m.userData.dnK||.5)*Math.min(1,k)}if(city.M&&city.M.hwinSoft)city.M.hwinSoft.emissiveIntensity=city.M.hwin.emissiveIntensity*.28;}
+ if(city.M)city.M.hwin.emissiveIntensity=st.noWindows?0:Math.max(0,(nf-.3)/.7)*.9;{const k=st.noWindows?0:Math.max(0,(nf-.25)/.6);if(city.M&&city.M.neonDN&&!st.noWindows){const v=.42+.58*Math.min(1,k);city.M.neonDN.color.setRGB(v,v,v)}for(const m of DN_SIGNS)m.emissiveIntensity=(m.userData.dnK||.5)*Math.min(1,k);if(GAS.haloMat)GAS.haloMat.opacity=.18+.82*Math.min(1,k)} /* v4 r19: halo do neon do posto acende com o anoitecer */if(city.M&&city.M.hwinSoft)city.M.hwinSoft.emissiveIntensity=city.M.hwin.emissiveIntensity*.28;}
 
 /* ================= FIRE & EXPLOSIONS ================= */
 const boomLight=new THREE.PointLight(0xff9040,0,55,2);boomLight.visible=true;scene.add(boomLight);let boomT=0,shake=0;

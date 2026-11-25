@@ -180,6 +180,15 @@ function gasVisual(st){const{W,D,ch}=st;const F0=st.F;if(!F0)return;const F={...
  const NE=burnt?d:n,cyl=(x,y0,y1,z,r,col)=>d.geo(GEO.cyl,mtx(x,(y0+y1)/2,z,r,y1-y0,r),col);
  const Wc=st.Wc||W,cu0=Wc*.14,cu1=Wc*.86,cv0=4.5,cv1=16.5,isl=st.isl,[sv0,sv1]=st.sv.map(v=>v+GAS_SHIFT),[su0,su1]=st.su||[W*.2,W*.8],sw=su1-su0,sc=(su0+su1)/2,SU=f=>su0+(f-.2)/.6*sw;
  const rf=new MB();rf.ab=1;st.roofSigns=[]; /* v4 r5: laje da cobertura num lote próprio, para ficar transparente na vista de cima */
+ /* v4 r19: neon da borda da cobertura em TUBO (cilindro com pontas redondas) + halo aditivo (lote gasHalo, 1 malha por posto) e
+    2 barras vermelhas fracas ("neon velho"). e = borda em coordenadas locais (u,v) na face externa: [u0,v0,u1,v1,du,dv]; gap = trecho sem tubo (letreiro) */
+ const hal=[],WT=COL('#ffffff'),tubeSeg=(e,t0,t1,y,r,col,mb,hk,caps,hw=1)=>{const[u0,v0,u1,v1,du,dv]=e,o=r+.012,ua=u0+(u1-u0)*t0+du*o,va=v0+(v1-v0)*t0+dv*o,ub=u0+(u1-u0)*t1+du*o,vb=v0+(v1-v0)*t1+dv*o,A=F.p3(ua,y,va),B=F.p3(ub,y,vb);
+   wseg(mb,A[0],A[1],A[2],B[0],B[1],B[2],r,col,GEO.cyl);if(caps)for(const Q of [A,B])mb.geo(GEO.bulb,mtx(Q[0],Q[1],Q[2],r,r,r),col);
+   if(hk>0&&!burnt){const O=F.p3(ua+du,y,va+dv);hal.push(A,B,[O[0]-A[0],O[2]-A[2]],r*hw,col,hk)}},
+  tube=(e,y,r,col,mb,hk,gap,dim,hw)=>{const L=Math.hypot(e[2]-e[0],e[3]-e[1]),cuts=[[0,1]];if(gap){const a=(gap[0]-Math.min(e[0],e[2]))/L,b=(gap[1]-Math.min(e[0],e[2]))/L;if(b>0&&a<1){cuts.length=0;if(a>.02)cuts.push([0,a]);if(b<.98)cuts.push([b,1])}}
+   for(const[c0,c1] of cuts){if(!dim){tubeSeg(e,c0,c1,y,r,col,mb,hk,true,hw);continue}
+    const n=Math.max(1,Math.round((c1-c0)*L/1.6)),gp=.02/L;for(let i=0;i<n;i++){const h=((i*37+Math.round(e[0]*7+e[1]*13+y*29))%11)/10,k=.55+.45*h;tubeSeg(e,c0+(c1-c0)*i/n+(i?gp:0),c0+(c1-c0)*(i+1)/n-(i<n-1?gp:0),y,r,col.clone().multiplyScalar(k),mb,hk*k,i===0||i===n-1)}}}, /* segmentos com 4 cm de folga (tubos separados, como neon de verdade; sem tampas coladas = sem z-fight) */
+  RDIM=COL('#ff2a2a').multiplyScalar(.36);
  // pátio: concreto mais claro sob a cobertura + mancha de queimado
  F.box(cu0-1,cu1+1,cv0-1,cv1+1,.26,.285,C(night?'#5a5468':'#b8b4aa'),d);
  if(burnt){for(let k=0;k<5;k++){const p=F.pt(W*(.3+.1*k),9+((k*37)%5));d.box(p[0]-3.5,.285,p[1]-3.2,p[0]+3.5,.29,p[1]+3.2,COL('#0c0b0a'))}}
@@ -197,16 +206,23 @@ function gasVisual(st){const{W,D,ch}=st;const F0=st.F;if(!F0)return;const F={...
   const a0=cu0-3.5,a1=cu1+3.5,b0=cv0+1.2,b1=cv1-1.2,y=5.5-sag;
   F.box(a0,a1,b0,b1,y+.18,y+.36,white,rf);F.box(a0+1,a1-1,b0+.6,b1-.6,y,y+.18,under,rf);
   F.box(a0,a1,b0-.06,b0,y+.12,y+.36,red,rf);F.box(a0,a1,b1,b1+.06,y+.12,y+.36,red,rf);F.box(a0-.06,a0,b0,b1,y+.12,y+.36,red,rf);F.box(a1,a1+.06,b0,b1,y+.12,y+.36,red,rf);
-  if(!burnt){F.box(a0,a1,b0-.1,b0-.06,y+.2,y+.28,COL('#ff3a3a'),n);F.box(a0,a1,b1+.06,b1+.1,y+.2,y+.28,COL('#ff3a3a'),n)}
+  {const E=[[a0-.06,b0-.06,a1+.06,b0-.06,0,-1],[a0-.06,b1+.06,a1+.06,b1+.06,0,1],[a0-.06,b0-.06,a0-.06,b1+.06,-1,0],[a1+.06,b0-.06,a1+.06,b1+.06,1,0]];
+   for(const e of E){tube(e,y+.24,.055,burnt?C('#ff3a3a'):COL('#ff4a40'),burnt?d:n,1,null,false,.55);if(!burnt)for(const yy of [y+.13,y+.35])tube(e,yy,.028,RDIM,n,.3,null,true)}} /* v4 r19: tubo vermelho grosso nas 4 bordas + 2 barras vermelhas fracas (antes 2 faixas chapadas de 8 cm só na frente e atrás) */
   for(const u of isl)for(const sd of [-1,1]){const A=F.p3(u,.28,10.7+sd*2.7),Bp=F.p3(u,y+.05,10.7+sd*.3);wseg(d,A[0],A[1],A[2],Bp[0],Bp[1],Bp[2],.16,red,GEO.cyl)}
   if(!burnt)for(let u=a0+2;u<a1-1.5;u+=3.4){const p=F.pt(u,b0+1.5),q=F.pt(u+1.4,b1-1.5);n.box(Math.min(p[0],q[0]),y-.04,Math.min(p[1],q[1]),Math.max(p[0],q[0]),y,Math.max(p[1],q[1]),COL('#fff6dc'))}
   if(!burnt&&night){const a=F.pt(a0,b0),b=F.pt(a1,b1);gl.flat(Math.min(a[0],b[0]),Math.min(a[1],b[1]),Math.max(a[0],b[0]),Math.max(a[1],b[1]),.3,COL('#fff2c8').multiplyScalar(.28))}
   {const c=cv(256,96),g=c.getContext('2d');g.font='900 84px Impact,Arial Black,sans-serif';g.textAlign='center';g.textBaseline='middle';g.lineWidth=10;g.strokeStyle='#ffffff';g.strokeText('GAS',128,52);g.fillStyle=burnt?'#2a1a1a':'#d8202a';g.fillText('GAS',128,52);
    const t=new THREE.CanvasTexture(c);const mt0=new THREE.MeshBasicMaterial({map:t,transparent:true,side:THREE.DoubleSide}),mt=S.style==='inverted'?unlitSignMat(mt0):mt0;const m=new THREE.Mesh(new THREE.PlaneGeometry(3.6,1.35),mt),p=F.p3(a0+2.4,y+1.05,b0+.4);m.position.set(p[0],p[1],p[2]);m.rotation.y=Math.atan2(st.nrm[0],st.nrm[1]);grp.add(m);st.roofSigns.push(m)}
- }else if(!burnt||true){const sag=burnt?.35:0;F.box(cu0,cu1,cv0,cv1,5.2-sag,5.95-sag,C(br.vc?'#f0dcd2':'#cfd0d4'),rf);for(const[a0,a1,b0,b1] of [[cu0-.08,cu1+.08,cv0-.08,cv0],[cu0-.08,cu1+.08,cv1,cv1+.08],[cu0-.08,cu0,cv0,cv1],[cu1,cu1+.08,cv0,cv1]]){F.box(a0,a1,b0,b1,5.2-sag,6.05-sag,C(br.a),rf);F.box(a0-.01,a1+.01,b0-.01,b1+.01,5.3-sag,5.42-sag,C(br.b),burnt?d:NE)}
+ }else if(!burnt||true){const sag=burnt?.35:0;F.box(cu0,cu1,cv0,cv1,5.2-sag,5.95-sag,C(br.vc?'#f0dcd2':'#cfd0d4'),rf);for(const[a0,a1,b0,b1] of [[cu0-.08,cu1+.08,cv0-.08,cv0],[cu0-.08,cu1+.08,cv1,cv1+.08],[cu0-.08,cu0,cv0,cv1],[cu1,cu1+.08,cv0,cv1]]){F.box(a0,a1,b0,b1,5.2-sag,6.05-sag,C(br.a),rf)} /* v4 r19: a faixa chapada de neon (5,3–5,42, a 1 cm da face) virou tubo (abaixo) */
   if(!burnt)for(let u=cu0+2;u<cu1-1;u+=3.2)for(const v of [7,10.5,14]){const a=F.pt(u,v-.5),b=F.pt(u+1.6,v+.5);n.box(Math.min(a[0],b[0]),5.15,Math.min(a[1],b[1]),Math.max(a[0],b[0]),5.2,Math.max(a[1],b[1]),COL('#fff6dc'))}
   if(!burnt&&night){const a=F.pt(cu0,cv0),b=F.pt(cu1,cv1);gl.flat(Math.min(a[0],b[0]),Math.min(a[1],b[1]),Math.max(a[0],b[0]),Math.max(a[1],b[1]),.3,COL('#fff2c8').multiplyScalar(.28))}
-  if(VC){for(const y of [5.3-sag,5.88-sag]){for(const[v0,v1] of [[cv0-.24,cv0-.08],[cv1+.08,cv1+.24]]){F.box(cu0-.24,Wc/2,v0,v1,y,y+.16,PK,n);F.box(Wc/2,cu1+.24,v0,v1,y,y+.16,CY,n)}F.box(cu0-.24,cu0-.08,cv0-.08,cv1+.08,y,y+.16,PK,n);F.box(cu1+.08,cu1+.24,cv0-.08,cv1+.08,y,y+.16,CY,n)}
+  {const g0=cu0-.08,g1=cu1+.08,h0=cv0-.08,h1=cv1+.08,sgw=Math.min(9,(cu1-cu0)*.5),gap=[Wc/2-sgw/2-.25,Wc/2+sgw/2+.25],
+    EF=[g0,h0,g1,h0,0,-1],EB=[g0,h1,g1,h1,0,1],EL=[g0,h0,g0,h1,-1,0],ER=[g1,h0,g1,h1,1,0];
+   if(VC){/* Synthwave: rosa na metade esquerda, ciano na direita, em dois níveis */
+    for(const[y,r,gp] of [[5.32-sag,.075,null],[5.95-sag,.06,gap]]){for(const e of [EF,EB]){tube([g0,e[1],Wc/2,e[1],0,e[5]],y,r,PK,n,1,gp);tube([Wc/2,e[1],g1,e[1],0,e[5]],y,r,CY,n,1,gp)}tube(EL,y,r,PK,n,1);tube(ER,y,r,CY,n,1)}
+    for(const yy of [5.56-sag,5.76-sag])for(const e of [EF,EB,EL,ER])tube(e,yy,.032,RDIM,n,.22,e===EF?gap:null,true)}
+   else{for(const e of [EF,EB,EL,ER]){tube(e,5.32-sag,.075,burnt?C(br.b):COL(br.b),NE,1);if(!burnt)for(const yy of [5.62,5.84])tube(e,yy,.032,RDIM,n,.22,e===EF?gap:null,true)}}} /* v4 r19: tubo grosso (raio 7,5 cm) + 2 barras vermelhas fracas; no Synth substitui as faixas de 16 cm */
+  if(VC){
    for(const[a0,a1,col] of [[cu0-3,Wc/2,PK],[Wc/2,cu1+3,CY]]){const a=F.pt(a0,cv0-3),b=F.pt(a1,cv1+3);gl.flat(Math.min(a[0],b[0]),Math.min(a[1],b[1]),Math.max(a[0],b[0]),Math.max(a[1],b[1]),.3,col.clone().multiplyScalar(.42))}}
   const sm0=gasTex('can',br,burnt),sm=S.style==='inverted'?unlitSignMat(sm0):sm0,sg=new THREE.PlaneGeometry(Math.min(9,(cu1-cu0)*.5),.52),m=new THREE.Mesh(sg,sm),p=F.p3(Wc/2,5.75-sag,cv0-.08);st.roofSigns.push(m);m.position.set(p[0]+st.nrm[0]*.02,p[1],p[2]+st.nrm[1]*.02);m.rotation.y=Math.atan2(st.nrm[0],st.nrm[1]);grp.add(m)}
  // loja de conveniência
@@ -237,9 +253,24 @@ function gasVisual(st){const{W,D,ch}=st;const F0=st.F;if(!F0)return;const F={...
   if(!burnt&&night)n.box(p[0]-1.05,8.6,p[1]-1.05,p[0]+1.05,8.7,p[1]+1.05,COL(br.b))}
  if(st.wash)try{washBuild(st,grp,C,d,n)}catch(e){console.error(e)}
  const add=(mb,mat,ro)=>{const m=mb.mesh(mat,true,true);if(m){grp.add(m);if(ro)m.renderOrder=ro}return m};add(d,M.solid);
- {const b=M.solid,mt=b.clone();mt.onBeforeCompile=b.onBeforeCompile;mt.customProgramCacheKey=b.customProgramCacheKey;mt.userData={...b.userData,cached:false};const m=add(rf,mt);st.roof=m?{m,mat:mt,a:1}:null}add(n,M.neon);add(h,M.hwinSoft||M.hwin);if(!city.st.noLamps)add(gl,M.glow,2);
+ {const b=M.solid,mt=b.clone();mt.onBeforeCompile=b.onBeforeCompile;mt.customProgramCacheKey=b.customProgramCacheKey;mt.userData={...b.userData,cached:false};const m=add(rf,mt);st.roof=m?{m,mat:mt,a:1}:null}add(n,M.neonSt||M.neon);add(h,M.hwinSoft||M.hwin);if(!city.st.noLamps)add(gl,M.glow,2); /* v4 r19: neon do posto fixo (M.neonSt: sem zumbido nem falha por célula de 12 m, que fazia o posto da cidade "falhar" à noite) */
+ if(hal.length&&!burnt&&!city.st.noLamps){const m=gasHaloMesh(hal);if(m){grp.add(m);m.renderOrder=3}}
  grp.position.y=-.24; // v77: sem o piso elevado: o pátio do posto assenta no concreto novo
  if(ch&&city.chunks.get(ch.key)===ch)ch.group.add(grp)}
+/* v4 r19: halo dos tubos de neon do posto. Faixa vertical aditiva na frente de cada tubo, com pontas redondas (3 quads: ponta, meio, ponta);
+   textura = núcleo claro estreito + brilho largo. Halos de alturas diferentes ficam a 6–12 mm um do outro (planos coincidentes contam como z-fight no detector). Material único (GAS.haloMat, cached); a opacidade acompanha o anoitecer em updateDayNight. */
+function gasHaloMat(){if(GAS.haloMat)return GAS.haloMat;const c=cv(64,64),g=c.getContext('2d'),im=g.createImageData(64,64);
+ for(let j=0;j<64;j++)for(let i=0;i<64;i++){const dx=(i+.5)/32-1,dy=(j+.5)/32-1,dd=Math.min(1,Math.hypot(dx,dy)),v=Math.min(1,Math.exp(-(dd/.13)*(dd/.13))*.9+Math.exp(-(dd/.5)*(dd/.5))*.42)*(1-dd*dd),q=(j*64+i)*4;im.data[q]=im.data[q+1]=im.data[q+2]=Math.round(255*v);im.data[q+3]=255}
+ g.putImageData(im,0,0);const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.ClampToEdgeWrapping;
+ const m=jammerBasicMaterial(new THREE.MeshBasicMaterial({map:t,vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));m.userData.cached=true;GAS.haloMat=m;return m}
+function gasHaloMesh(H){const nq=H.length/6*3,pos=new Float32Array(nq*18),uv=new Float32Array(nq*12),col=new Float32Array(nq*18);let k=0;const W=new THREE.Color(1,1,1),cc=new THREE.Color();
+ const quad=(ax,az,bx,bz,y,w,ox,oz,ua,ub,c)=>{const v=[[ax,y-w,az,ua,0],[bx,y-w,bz,ub,0],[bx,y+w,bz,ub,1],[ax,y-w,az,ua,0],[bx,y+w,bz,ub,1],[ax,y+w,az,ua,1]];
+  for(const q of v){pos[k*3]=q[0]+ox;pos[k*3+1]=q[1];pos[k*3+2]=q[2]+oz;uv[k*2]=q[3];uv[k*2+1]=q[4];col[k*3]=c.r;col[k*3+1]=c.g;col[k*3+2]=c.b;k++}};
+ for(let i=0;i<H.length;i+=6){const A=H[i],B=H[i+1],O=H[i+2],r=H[i+3],hk=H[i+5];cc.copy(H[i+4]).lerp(W,.18).multiplyScalar(hk);
+  const ol=Math.hypot(O[0],O[1])||1,oo=r+.03+(Math.round(A[1]*20)%3)*.006,ox=O[0]/ol*oo,oz=O[1]/ol*oo,w=Math.max(.1,r*4.2),L=Math.hypot(B[0]-A[0],B[2]-A[2])||1,tx=(B[0]-A[0])/L,tz=(B[2]-A[2])/L,y=A[1];
+  quad(A[0]-tx*w,A[2]-tz*w,A[0],A[2],y,w,ox,oz,0,.5,cc);quad(A[0],A[2],B[0],B[2],y,w,ox,oz,.5,.5,cc);quad(B[0],B[2],B[0]+tx*w,B[2]+tz*w,y,w,ox,oz,.5,1,cc)}
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('uv',new THREE.BufferAttribute(uv,2));g.setAttribute('color',new THREE.BufferAttribute(col,3));
+ const m=new THREE.Mesh(g,gasHaloMat());m.frustumCulled=true;g.computeBoundingSphere();return m}
 function gasShot(pt,w){if(!pt)return;for(const st of GAS.list.values()){if(st.burnt||!st.pumps)continue;if(Math.abs(st.x-pt.x)>30||Math.abs(st.z-pt.z)>30)continue;
  for(const p of st.pumps)if(Math.hypot(pt.x-p[0],pt.z-p[1])<.95&&pt.y<2.5){st.hits+=w==='magnum'?2:1;for(let i=0;i<8;i++)emit(p[0],1.4,p[1],(Math.random()-.5)*4,Math.random()*3,(Math.random()-.5)*4,.3,.3,.06,0xffd070,true,1);
   if(st.hits>=2)gasExplode(st,true);return}}}
