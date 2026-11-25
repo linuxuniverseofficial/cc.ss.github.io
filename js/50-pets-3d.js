@@ -92,7 +92,10 @@ function p3Geo(kind){if(PET3.geo[kind])return PET3.geo[kind];const P=[],N=[],U=[
    loft(part,piv,6,[{c:[.05,y0+.01,z],a:.034,b:.036,v:0},{c:[.05,.12,z-(fr?0:.015)],a:.026,b:.028,v:.45},{c:[.05,.03,z],a:.022,b:.024,v:.85},{c:[.05,.012,z+.012],a:.026,b:.032,v:.92},{c:[.05,0,z+.012],a:.024,b:.03,v:1}],P3RG.leg,null,sw('light'),mx);
    ball(part,piv,[.05,y0,z],.033,P3RG.leg,.05,mx)}}}
  const ge=new THREE.BufferGeometry();ge.setAttribute('position',new THREE.Float32BufferAttribute(P,3));ge.setAttribute('normal',new THREE.Float32BufferAttribute(N,3));
- ge.setAttribute('uv',new THREE.Float32BufferAttribute(U,2));ge.setAttribute('part',new THREE.Float32BufferAttribute(K,1));ge.setAttribute('piv',new THREE.Float32BufferAttribute(V,3));ge.setIndex(I);
+ ge.setAttribute('uv',new THREE.Float32BufferAttribute(U,2));ge.setAttribute('part',new THREE.Float32BufferAttribute(K,1));ge.setAttribute('piv',new THREE.Float32BufferAttribute(V,3));/* v4 r27: desvira o triângulo cuja face não bate com a normal (2/3 estavam do avesso → bicho "transparente") */
+ for(let t=0;t<I.length;t+=3){const a=I[t]*3,b=I[t+1]*3,c=I[t+2]*3,ux=P[b]-P[a],uy=P[b+1]-P[a+1],uz=P[b+2]-P[a+2],vx=P[c]-P[a],vy=P[c+1]-P[a+1],vz=P[c+2]-P[a+2];
+  if((uy*vz-uz*vy)*(N[a]+N[b]+N[c])+(uz*vx-ux*vz)*(N[a+1]+N[b+1]+N[c+1])+(ux*vy-uy*vx)*(N[a+2]+N[b+2]+N[c+2])<0){const k=I[t+1];I[t+1]=I[t+2];I[t+2]=k}}
+ ge.setIndex(I);
  ge.computeBoundingSphere();ge.boundingSphere.radius+=.4;ge.userData.cached=true;PET3.geo[kind]=ge;return ge}
 /* ---------- shader: pose contínua ---------- */
 const P3_VS=`
