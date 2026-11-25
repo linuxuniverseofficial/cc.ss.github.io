@@ -145,7 +145,7 @@ void main(){
   if(part>2.5&&part<6.5){bool L=part<4.5;float sg=L?1.:-1.;float ss=L?-s:s;vec3 sh=vec3(.265*sg,1.3,0.),el=vec3(.27*sg,1.04,0.);
    float ar=A*(.36+.3*Rn)*ss,eb=-.12-A*(.18*max(0.,ss)+.04)-Rn*A*.9;
    ar=mix(ar,L?.35:-.25,uAir*.7);
-   if(!L){ar=mix(ar,1.45,max(uAim,uPunch));eb=mix(eb,-.05,max(uAim,uPunch));}else{ar=mix(ar,1.15,uAim*.85);eb=mix(eb,-.35,uAim*.85);}
+   if(!L){ar=mix(ar,1.45,max(uAim,uPunch));eb=mix(eb,-.05,max(uAim,uPunch));}else{ar=mix(ar,.05,uAim*.8);eb=mix(eb,-.18,uAim*.8);} /* v4 r14: só o braço direito sobe com a arma; o esquerdo fica solto ao lado */
    ar=mix(ar,.45,uSit*(1.-uAim));eb=mix(eb,-.9,uSit*(1.-uAim));
    if(part==4.||part==6.){p=rx(p,el,eb);n=rxn(n,eb);} p=rx(p,sh,-ar);n=rxn(n,-ar);}
   if(part>.5){p=ry(p,twist*(1.-uAim));n=ry(n,twist*(1.-uAim));
@@ -180,7 +180,7 @@ function c3Make(o){const sp=o.sp,mat=c3Material(),mesh=new THREE.Mesh(c3Geo(),ma
  mesh.onBeforeRender=(r,sc,cam)=>{const local=sp.userData.actorLocal;if(cam===camera){sp.userData.actorLastDraw=simT;if(local){try{actorLighting(sp,local)}catch(e){}}}
   const L=mat.uniforms.uLight.value;if(local)L.copy(local.value);else L.copy(ACTOR_LIGHT.value);if(sp.userData.actorTint)L.multiply(sp.userData.actorTint)};
  sp.add(mesh);sp.userData.c3=st;C3.list.add(st);return st}
-function c3Drop(sp){const st=sp&&sp.userData.c3;if(!st)return;if(st.mesh.parent)st.mesh.parent.remove(st.mesh);st.mat.dispose();C3.list.delete(st);delete sp.userData.c3;if(sp.material)sp.material.visible=true}
+function c3Drop(sp){const st=sp&&sp.userData.c3;if(!st)return;if(st.gun){if(st.gun.parent)st.gun.parent.remove(st.gun);st.gun=null}if(st.mesh.parent)st.mesh.parent.remove(st.mesh);st.mat.dispose();C3.list.delete(st);delete sp.userData.c3;if(sp.material)sp.material.visible=true}
 const _c3m=new THREE.Matrix4(),_c3a=new THREE.Matrix4(),_c3q=new THREE.Quaternion(),_c3e=new THREE.Euler(),_c3v=new THREE.Vector3(),_c3s=new THREE.Vector3();
 function c3AngTo(a,b,k){let d=b-a;d=Math.atan2(Math.sin(d),Math.cos(d));return a+d*k}
 /* chamado depois do placeSprite original: decide pose, ângulo e roupa */
@@ -209,13 +209,15 @@ function c3Place(o){const sp=o.sp;if(!sp||!sp.isSprite)return;
  const c3sc=camMode==='top'&&!VIEW.orbit?1.5:1,c3th=Math.max(.04,st.amt*(.42+.22*st.run)),stride=Math.PI*2*.72*c3th*c3sc;st.ph+=(st.spd*dt)/stride*Math.PI*2*(st.amt>.02?1:0);
  st.idle=(st.idle||0)+dt;
  /* mira / soco / pulo / sentado */
- const calm=o===PL&&c3Calm(),aimT=ride==='moto'?.7:o===PL&&!calm&&(C3AIM.on||typeof GUN!=='undefined'&&GUN.has&&GUN.w!=='jammer'&&(GUN.firing||GUN.cd>0))?1:0,punchT=o===PL&&typeof MELEE!=='undefined'&&MELEE.t>0?1:0;
+ const na=o!==PL&&o.c3aim&&o.c3aim.t>now&&o.state!=='dead'&&o.state!=='down'&&!ride;
+ const calm=o===PL&&c3Calm(),aimT=na?1:ride==='moto'?.7:o===PL&&!calm&&(C3AIM.on||typeof GUN!=='undefined'&&GUN.has&&GUN.w!=='jammer'&&(GUN.firing||GUN.cd>0))?1:0,punchT=o===PL&&typeof MELEE!=='undefined'&&MELEE.t>0?1:0;
  st.aim+=(aimT-st.aim)*(1-Math.exp(-dt*(aimT?18:5)));st.punch+=(punchT-st.punch)*(1-Math.exp(-dt*(punchT?30:8)));
  const airT=(o.jy||0)>.08?1:0;st.air+=(airT-st.air)*(1-Math.exp(-dt*10));st.sit+=((sitting?1:skate?.14:0)-st.sit)*(1-Math.exp(-dt*10)); /* skate: joelho levemente dobrado */
  /* direção: para onde olha/anda; gira suave */
  let fx=0,fz=0;if(patio){fx=Math.sin(o.patioSpot.angle||0);fz=Math.cos(o.patioSpot.angle||0)}
  else if(lying&&o.lieNs!==undefined){fx=o.lieNs?0:1;fz=o.lieNs?1:0} /* r52: na toalha, deitado no comprido dela */
  else if(rideV){fx=Math.cos(rideV.a);fz=Math.sin(rideV.a)}
+ else if(na){fx=o.c3aim.x;fz=o.c3aim.z} /* v4 r14: ped atirando vira para o alvo */
  else if(skate&&o===PL){fx=Math.cos(SKATE.ride.a);fz=Math.sin(SKATE.ride.a)}
  else if(o===PL&&MELEE&&MELEE.t>0){fx=MELEE.d[0];fz=MELEE.d[1]}
  else if(o===PL&&C3AIM.on&&!calm){fx=C3AIM.x;fz=C3AIM.z}
@@ -238,9 +240,10 @@ function c3Place(o){const sp=o.sp;if(!sp||!sp.isSprite)return;
  _c3q.setFromEuler(_c3e);_c3v.set(0,-lift+ly,0);
  /* r52: deitado, a malha tem os pés na origem; centra o corpo (≈1,75 m) no colchão/toalha. Espreguiçadeira: cabeça no encosto (lado −frente), pés para +frente */
  if(lying){const hd=_c3e.x>0?1:-1,fa=st.ang,d=(patio?.9:-.85*hd)*sc;_c3v.x+=Math.sin(fa)*d;_c3v.z+=Math.cos(fa)*d}_c3s.set(sc,sc,sc);_c3a.compose(_c3v,_c3q,_c3s);
- const s=sp.scale;_c3m.makeScale(1/(s.x||1),1/(s.y||1),1/(s.z||1));st.mesh.matrix.multiplyMatrices(_c3m,_c3a);st.mesh.matrixWorldNeedsUpdate=true;if(calm)c3HeldPlace()}
+ const s=sp.scale;_c3m.makeScale(1/(s.x||1),1/(s.y||1),1/(s.z||1));st.mesh.matrix.multiplyMatrices(_c3m,_c3a);st.mesh.matrixWorldNeedsUpdate=true;if(na)c3NpcGun(o,st,sc);else if(st.gun)st.gun.visible=false;if(calm)c3HeldPlace()}
 /* sol: direção da luz principal (uma vez por quadro, usada por todos os bonecos) */
 function c3Frame(){if(!C3_ON())return;try{C3.sunDir.copy(sun.position).sub(sun.target.position).normalize();if(C3.sunDir.y<.15){C3.sunDir.y=.15;C3.sunDir.normalize()}}catch(e){}
+ if(C3.frame%10===0){const t=performance.now();for(const st of C3.list)if(st.gun&&st.gun.visible&&!(st.o&&st.o.c3aim&&st.o.c3aim.t>t&&st.o.sp&&st.o.sp.parent))st.gun.visible=false} /* v4 r14: arma de ped que parou de ser posado (longe/removido) some */
  if(++C3.frame%120===0){for(const st of C3.list)if(!st.o||!st.o.sp||!st.o.sp.parent){if(st.o&&st.o.sp&&st.o.sp.userData.c3===st)c3Drop(st.o.sp);else{C3.list.delete(st);if(st.mesh.parent)st.mesh.parent.remove(st.mesh);st.mat.dispose()}}}}
 /* troca de modo: liga/desliga em todos os personagens já criados */
 function c3ApplyMode(){if(!C3_ON()){for(const st of [...C3.list]){if(st.o&&st.o.sp&&st.o.sp.userData.c3===st)c3Drop(st.o.sp);else{C3.list.delete(st);if(st.mesh.parent)st.mesh.parent.remove(st.mesh);st.mat.dispose()}}}const all=[PL,...peds];for(const o of all){if(!o||!o.sp)continue;if(!C3_ON())c3Drop(o.sp);else{try{c3Place(o)}catch(e){console.error(e)}}}}
@@ -257,6 +260,21 @@ function c3HeldPlace(){if(!(C3_ON()&&typeof HELD!=='undefined'&&HELD.g&&PL.sp&&P
   /* mão direita: ombro (−0,265; 1,30) + braço esticado para a frente conforme a pose de mira (u) */
   const fw=(.12+.5*u)*k,lat=.27*k,hy=(.86+.44*u)*k;
   HELD.g.position.set(PL.x+fx*fw-fz*lat,PL.gy+(PL.jy||0)+hy,PL.z+fz*fw+fx*lat);HELD.g.scale.setScalar((GUN.w==='rpg'?.36:.24)*k);HELD.g.rotation.set(0,Math.atan2(-fz,fx),0);return true}
+/* v4 r14: polícia, gangue e ped que reage atiram com o braço direito erguido e uma arma na mão (igual ao jogador).
+   c3Fire(p,tx,tz) é chamado em cada tiro de ped; a pose e a arma ficam 2,2 s depois do último tiro (os intervalos de tiro vão até ~1,8 s). Arma = 3 caixas com geometria/material compartilhados. */
+function c3Fire(p,tx,tz){if(!p||p===PL)return;const dx=tx-p.x,dz=tz-p.z,l=Math.hypot(dx,dz)||1;const a=p.c3aim||(p.c3aim={t:0,x:0,z:1});a.t=performance.now()+2200;a.x=dx/l;a.z=dz/l;p.mx=a.x;p.mz=a.z}
+const C3GUN={};
+function c3GunMake(smg){if(!C3GUN.mat){C3GUN.mat=new THREE.MeshLambertMaterial({color:0x26272b});C3GUN.mat.userData.cached=true;C3GUN.body=new THREE.BoxGeometry(1,1,1);C3GUN.body.userData.cached=true}
+ const g=new THREE.Group(),b=(x,y,z,sx,sy,sz)=>{const m=new THREE.Mesh(C3GUN.body,C3GUN.mat);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=false;g.add(m)};
+ /* cano para +x (mesma convenção do HELD do jogador) */
+ if(smg){b(.07,0,0,.34,.075,.05);b(-.02,-.08,0,.05,.13,.045);b(.1,-.08,0,.045,.12,.04)}else{b(.05,0,0,.22,.065,.045);b(-.025,-.075,0,.055,.12,.045)}
+ g.position.set(0,-9999,0);scene.add(g);return g}
+function c3NpcGun(o,st,k){if(!st.gun||st.gunSmg!==(o.wpn==='smg')){if(st.gun&&st.gun.parent)st.gun.parent.remove(st.gun);st.gunSmg=o.wpn==='smg';st.gun=c3GunMake(st.gunSmg)}
+ const a=st.ang,fx=Math.sin(a),fz=Math.cos(a),u=st.aim,fw=(.12+.5*u)*k,lat=.27*k,hy=(.86+.44*u)*k;
+ st.gun.visible=o.sp.visible;st.gun.position.set(o.x+fx*fw-fz*lat,(o.gy||0)+(o.jy||0)+hy,o.z+fz*fw+fx*lat);st.gun.scale.setScalar(k);st.gun.rotation.set(0,Math.atan2(-fz,fx),0)}
+copShoot=(f=>function(p){try{c3Fire(p,PL.x,PL.z)}catch(e){}return f.apply(this,arguments)})(copShoot);
+pedevGun=(f=>function(p,tgt){try{if(tgt)c3Fire(p,tgt.x,tgt.z)}catch(e){}return f.apply(this,arguments)})(pedevGun);
+eventShoot=(f=>function(from,target){try{if(from&&target&&from.sp)c3Fire(from,target.x,target.z)}catch(e){}return f.apply(this,arguments)})(eventShoot);
 heldGunTick=(f=>function(){const r=f.apply(this,arguments);C3AIM.on=c3HeldPlace();return r})(heldGunTick);
 /* r45: diálogo comum pausa o jogo inteiro (update → dlgTick): o boneco do jogador continua sendo posado para abaixar a arma */
 dlgTick=(f=>function(){const r=f.apply(this,arguments);try{if(C3_ON()&&PL.sp&&PL.sp.userData.c3&&!PL.car&&PL.sp.visible)c3Place(PL)}catch(e){}return r})(dlgTick);
