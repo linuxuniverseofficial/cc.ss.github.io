@@ -196,7 +196,7 @@ function paraPlayer(dt){
   }else{PL.x=clamp(PL.x+dx*4.3*dt,a.s.x0,a.s.x1);PL.z=clamp(PL.z+dz*4.3*dt,a.s.z0,a.s.z1);PL.gy=a.s.y;}
  }else if(a.freefall){
   PL.x+=a.vx*dt;PL.z+=a.vz*dt;a.fallSpeed+=9.8*dt;PL.gy-=a.fallSpeed*dt;
-  const floor=groundY(PL.x,PL.z);if(PL.gy<=floor){PL.gy=floor;paraTargetClear();PARA.active=null;if(inWater(PL.x,PL.z))drown();else{PL.hp=0;killPlayer('QUEDA');}return true;}
+  const floor=groundY(PL.x,PL.z);if(PL.gy<=floor){PL.gy=floor;paraTargetClear();PARA.active=null;if(drownAt(PL.x,PL.z))drown();else{PL.hp=0;killPlayer('QUEDA');}return true;}
  }else{
   if(!a.g)a.g=paraModel(false);
   paraFlightStep(a,clamp(x,-1,1),clamp(z,-1,1),dt);
@@ -205,7 +205,7 @@ function paraPlayer(dt){
   a.g.rotation.set(0,-a.heading,0);a.g.rotateZ(a.pitch);a.g.rotateX(a.bank);PL.face=[Math.cos(a.heading),Math.sin(a.heading)];setFrame(PL.tex,pickDir(PL.face[0],PL.face[1],PL.x,PL.z),0);
   if(PL.gy<=(shipAt(PL.x,PL.z)?shipSupportY(PL.x,PL.z,PL.gy):groundY(PL.x,PL.z))+.1){
    PL.gy=shipAt(PL.x,PL.z)?shipSupportY(PL.x,PL.z,PL.gy):groundY(PL.x,PL.z);paraDrop(a.g);paraTargetClear();PARA.active=null;
-   if(inWater(PL.x,PL.z))drown();
+   if(drownAt(PL.x,PL.z))drown();
    else{const td=Math.hypot(PL.x-a.target.x,PL.z-a.target.z);if(td<=3.1){const v=td<=.6?300:td<=1.55?150:60,lb=td<=.6?'NA MOSCA!':td<=1.55?'ANEL DO MEIO':'NA BORDA';if(!CHEAT.used)money(v,lb+' · +$'+v);else toast(lb+' · RECOMPENSA BLOQUEADA (CHEAT)')}}
   }
  }
@@ -300,7 +300,7 @@ function updatePlayer(dt){
   else{const f=clamp(((keys.KeyW||keys.ArrowUp)?1:0)-((keys.KeyS||keys.ArrowDown)?1:0)-PAD.ly,-1,1),s=clamp((keys.KeyD?1:0)-(keys.KeyA?1:0)+PAD.lx,-1,1);
    if(keys.ArrowLeft)PL.yaw+=dt*2.2;if(keys.ArrowRight)PL.yaw-=dt*2.2;
    const fx=-Math.sin(PL.yaw),fz=-Math.cos(PL.yaw),rx=Math.cos(PL.yaw),rz=-Math.sin(PL.yaw);mx=fx*f+rx*s;mz=fz*f+rz*s}
-  const l=Math.hypot(mx,mz);const pm=Math.hypot(PAD.lx,PAD.ly),spd=keys.ShiftLeft||keys.ShiftRight||(PAD.on&&PAD.run)?7.8:(pm>0&&pm<.5&&!(keys.KeyW||keys.KeyS||keys.KeyA||keys.KeyD||keys.ArrowUp||keys.ArrowDown))?4.3*Math.max(.45,pm*2):4.3;const spdM=maskOn()?3:1; /* v78: Maskara = supervelocidade a pé */
+  const l=Math.hypot(mx,mz);const pm=Math.hypot(PAD.lx,PAD.ly),spd=keys.ShiftLeft||keys.ShiftRight||(PAD.on&&PAD.run)?7.8:(pm>0&&pm<.5&&!(keys.KeyW||keys.KeyS||keys.KeyA||keys.KeyD||keys.ArrowUp||keys.ArrowDown))?4.3*Math.max(.45,pm*2):4.3;let spdM=maskOn()?3:1;if(spdM===1&&!PL.car){const wd=wadeDepth(PL.x,PL.z);if(wd>.05){spdM=1-.5*Math.min(1,wd/WADE_D);if(l&&Math.random()<dt*7)emit(PL.x,waterLevel(PL.x,PL.z)+.05,PL.z,(Math.random()-.5)*2,1+Math.random()*1.5,(Math.random()-.5)*2,.5,.3,.1,0xd8ecff,false,.7)}} /* v4 r29: no raso anda mais devagar e espirra água */ /* v78: Maskara = supervelocidade a pé */
   const tx=l?mx/l*spd*spdM:0,tz=l?mz/l*spd*spdM:0;PL.vx+=(tx-PL.vx)*Math.min(1,dt*12);PL.vz+=(tz-PL.vz)*Math.min(1,dt*12);
   if(l){plFace(mx/l,mz/l);PL.anim+=dt*(spd>5?11:7)}else PL.anim=0;
   const bx=PL.x,bz=PL.z;PL.x+=PL.vx*dt;PL.z+=PL.vz*dt;circleVsWorld(PL,.4);shipPlayerVsContainers(PL,.38);
@@ -317,7 +317,7 @@ function updatePlayer(dt){
   else if(h&&h.v>4.2){const dmg=Math.round((h.v-3)*4.5);PL.hp-=armorHit(dmg);rumble(.8,.8,300);PL.down=1.4;PL.vx=h.pvx*.8+h.nx*4;PL.vz=h.pvz*.8+h.nz*4;PL.rot=Math.PI/2;thud(h.v);
   if(h.c.ai&&h.v>6)h.c.ai.stun=1.2;
   if(PL.hp<=0){NEWS.cause='ATROPELADO';if(!storyMissionFail('VOCÊ MORREU ATROPELADO')){PL.hp=0;PL.dead=true;PL.deadT=5;$('#ko').hidden=false}}}}
- const es=maskOn()?null:estuaryAt(PL.x,PL.z,true);if(es&&!PL.car&&!PL.dead){const pk=(1-es.edge)*5*clamp((es.bank-1.2)/1.6,0,1)*clamp(es.sl/.2,0,1)*dt;PL.x+=es.dx*pk;PL.z+=es.dz*pk;if(es.wet)drown()} /* v3 r27: escorrega só nas margens altas (perto da ponte, como antes); na corneta rasa perto do mar, não */if(!worldPlGy(dt)){let sy=shipAt(PL.x,PL.z)?shipSupportY(PL.x,PL.z,PL.gy+PL.jy):groundY(PL.x,PL.z);{ /* v79r2: Maskara correndo na água passa POR BAIXO das pontes — segue no nível da água, ignora a mureta baixa e some sob a laje (balão 1x por passagem) */
+ const es=maskOn()?null:estuaryAt(PL.x,PL.z,true);if(es&&!PL.car&&!PL.dead){const pk=(1-es.edge)*5*clamp((es.bank-1.2)/1.6,0,1)*clamp(es.sl/.2,0,1)*dt;PL.x+=es.dx*pk;PL.z+=es.dz*pk;if(es.wet&&drownAt(PL.x,PL.z))drown()} /* v3 r27: escorrega só nas margens altas (perto da ponte, como antes); na corneta rasa perto do mar, não */if(!worldPlGy(dt)){let sy=shipAt(PL.x,PL.z)?shipSupportY(PL.x,PL.z,PL.gy+PL.jy):groundY(PL.x,PL.z);{ /* v79r2: Maskara correndo na água passa POR BAIXO das pontes — segue no nível da água, ignora a mureta baixa e some sob a laje (balão 1x por passagem) */
   const mk=maskOn()&&!PL.car&&!PL.inside,wet=mk&&inWater(PL.x,PL.z),dk=(m)=>(city.decks||[]).some(r=>PL.x>r[0]-m&&PL.x<r[2]+m&&PL.z>r[1]-m&&PL.z<r[3]+m);
   PL.ubr=mk&&!wet&&PL.gy<-1&&dk(1.2);PL.ubrIn=PL.ubr&&dk(-.3);if(PL.ubrIn&&!PL.ubrSaid){PL.ubrSaid=true;think(PL,'Gostoso esse concreto todo',2.6)}if(!PL.ubr&&!dk(3))PL.ubrSaid=false;
   if(wet||PL.ubr)sy=waterLevel(PL.x,PL.z)+.02} /* v78: só fora de interiores (o lab fica em coordenada de mar) */ /* v78: Maskara corre por cima de rio e mar */if(SKATE.ride)sy=SKATE.ride.dbFlight?SK_UP:sy+SK_UP;PL.gy+=(sy-PL.gy)*Math.min(1,dt*10)}

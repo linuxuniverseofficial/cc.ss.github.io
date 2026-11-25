@@ -222,6 +222,9 @@ function estuaryAt(x,z,grad){const m=mouthGeo();if(!m)return null;const u=outDis
   if(l>1e-4){r.sl=l;const dt=-gt/l,du=-gu/l,c=city.coast;/* (t,u) → (x,z): wTU */r.dx=c<2?dt:(c===2?-du:du);r.dz=c<2?(c===0?-du:du):dt}}
  return r}
 function inWater(x,z){if(SHIPS.list.length&&shipAt(x,z))return false;if(city.dbs&&city.dbs.length&&dbHole(x,z))return true;const est=estuaryAt(x,z);if(est)return est.wet;if(city.piers&&city.piers.length&&pierY(x,z)!==null)return false;if(city.lh&&lhLand(x,z))return false;return outDist(x,z)>SHORE+.4||(city.riv&&city.riv.size>0&&waterAt(x,z))}
+/* v4 r29 · raso dá pé: o jogador só se afoga com a água cobrindo a cabeça (WADE_D = altura do boneco); antes bastava a 0,4 m da linha d'água (5 cm de fundo) */
+const WADE_D=1.7;function wadeDepth(x,z){return inWater(x,z)&&wadeSea(x,z)?Math.max(0,waterLevel(x,z)-groundY(x,z)):0}function wadeSea(x,z){if(city.dbs&&city.dbs.length&&dbHole(x,z))return false;const es=estuaryAt(x,z);if(es)return es.wet;return outDist(x,z)>SHORE+.4} /* rio e vão de ponte: fundo/parede, afoga na hora */
+function drownAt(x,z){if(!inWater(x,z))return false;if(!wadeSea(x,z))return true;return waterLevel(x,z)-groundY(x,z)>WADE_D}
 function isRiv(i,j){const N=city.N;if(city.flowX){if(j<0||j>=N)return false;i=i<0?0:i>=N?N-1:i}else{if(i<0||i>=N)return false;j=j<0?0:j>=N?N-1:j}return city.riv.has(i*1000+j)}
 function riverZone(x,z){if(!city.riv||!city.riv.size)return false;const o=RW/2,kx=Math.round(x/P),kz=Math.round(z/P),onV=Math.abs(x-kx*P)<=o,onH=Math.abs(z-kz*P)<=o;
  if(!onV&&!onH)return isRiv(Math.floor(x/P),Math.floor(z/P));if(onV&&!onH){const j=Math.floor(z/P);return isRiv(kx-1,j)&&isRiv(kx,j)}

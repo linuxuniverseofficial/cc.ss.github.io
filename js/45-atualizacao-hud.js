@@ -81,7 +81,7 @@ function update(dt){if(SKATE.ui)return;if(POOL.on){poolTick(dt);return}if(DICE.o
  const _profPeds=MON.on?performance.now():0;
  updatePeds(dt);netFrame(dt);npcMingleTick(dt);pedevTick(dt);try{obraTick(dt)}catch(err){console.error('[obra]',err)}try{carrxTick(dt)}catch(err){console.error('[carrx]',err)}try{gangTick(dt)}catch(err){console.error('[gang]',err)}try{scnTick(dt)}catch(err){console.error('[cenas]',err);try{scnEnd(true)}catch(e2){}SCN.cur=null}if(MON.on){PERF.peds+=performance.now()-_profPeds;PERF.frames++}updateFallers(dt);newsTick();updatePickups(dt);
  weaponTick(dt);updateGrenades(dt);remoteTick(dt);updateDecals(dt);myTick(dt);
- if(!PL.dead&&!PL.car&&!PL.heli&&!PARA.active&&!PL.inside&&!LH.fall&&!SKATE.ride?.dbFlight&&inWater(PL.x,PL.z))drown();
+ if(!PL.dead&&!PL.car&&!PL.heli&&!PARA.active&&!PL.inside&&!LH.fall&&!SKATE.ride?.dbFlight&&drownAt(PL.x,PL.z))drown();
  if(boomT>0){boomT-=dt;boomLight.intensity=Math.max(0,boomT/.7)*10}
  updateVehicleWrecks(dt);
  popT-=dt;if(popT<=0&&(!PL.inside||TVM.on)){popT=.35;const pp=BENCH.running?BENCH.focus:(TVM.on?TVM.foc:PL.car||PL);
