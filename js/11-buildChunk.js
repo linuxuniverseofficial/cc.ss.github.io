@@ -374,6 +374,22 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
     signPlane(ch.group,mat,p[0],y,p[1],w,hh,Math.atan2(n[0],n[1]));const fr=COL('#2a2430');bxU(det,um2-w/2-.1,um2+w/2+.1,Math.min(a.fv,a.fv+a.s3*.05),Math.max(a.fv,a.fv+a.s3*.05),y-hh/2-.1,y+hh/2+.1,fr)}}
   NR.built=true};
  const rock=(x,z,s,col)=>{const c=COL(col||(night?'#4a4458':'#8a8680')).multiplyScalar(rr(.85,1.1));det.geo(GEO.ico,mtx(x,s*.35,z,s*rr(.9,1.3),s*rr(.55,.85),s*rr(.9,1.3),rr(0,3),rr(0,3),rr(0,.4)),c)};
+ /* v4 r28 · decoração da mata da borda (chamada com R trocado por gerador próprio): grupos de pedra assentados + árvores (mais densas na borda de fora) */
+ const wildEdgeDecor=(x0,z0,x1,z1,face)=>{const W=x1-x0,D=z1-z0,area=W*D,hz=face==='s'||face==='n',lo=face==='s'||face==='e',
+   out=(x,z)=>hz?(lo?(z1-z)/D:(z-z0)/D):(lo?(x1-x)/W:(x-x0)/W), /* 0 = lado da cidade, 1 = fim do mapa */
+   RG=rockGeos(),rp=night?['#5a546a','#4e4a5e','#625a70','#46425a']:['#8d877c','#7d786e','#968e80','#6f6b64','#857e70'],
+   dirt=COL(night?'#2a2436':'#5e5240'),gB=cGrass,clusters=[];
+  const rockSeat=(x,z,s,col)=>{const g=RG[Math.floor(R()*RG.length)],bb=g.boundingBox,sx=s*rr(.9,1.25),sy=s*rr(.55,.85),sz=s*rr(.9,1.25);
+   mbGeoTint(det,g,mtx(x,.22-bb.min.y*sy*.55,z,sx,sy,sz,(R()-.5)*.24,R()*6.283,(R()-.5)*.24),col)}; /* base 45% enterrada na grama: nada flutua */
+  const nC=Math.max(1,Math.round(area/340*rr(.6,1.3)));
+  for(let k=0,t=0;k<nC&&t<nC*8;t++){const x=rr(x0+3,x1-3),z=rr(z0+3,z1-3);if(clusters.some(c=>Math.hypot(c[0]-x,c[1]-z)<c[2]+6))continue;
+   const s=rr(1.3,2.7),col=COL(pick(rp)),r=s*1.9;softStain(side,x,z,r,r*rr(.75,1.1),.2315,dirt,gB,x*1.7+z*2.3);rockSeat(x,z,s,col);
+   for(let j=0,nj=2+Math.floor(R()*3);j<nj;j++){const a=R()*6.283,d=s*rr(.95,1.7),q=rr(.35,.95);rockSeat(x+Math.cos(a)*d,z+Math.sin(a)*d,q,col.clone().multiplyScalar(rr(.88,1.08)))}
+   clusters.push([x,z,r]);k++}
+  const nT=Math.round(area/(S.style==='inverted'?135:78)),pl=[]; /* árvore morta do Invertido pesa ~2× */
+  for(let k=0,t=0;k<nT&&t<nT*10;t++){const x=rr(x0+2.4,x1-2.4),z=rr(z0+2.4,z1-2.4),o=out(x,z);if(R()>.4+.6*o)continue;
+   if(clusters.some(c=>Math.hypot(c[0]-x,c[1]-z)<c[2]+1.6)||pl.some(q=>(q[0]-x)**2+(q[1]-z)**2<30))continue;
+   tree(x,z,.22,rr(.78,1.15),false,true,true);pl.push([x,z]);k++}};
  const coastPatio=(x0,z0,x1,z1,f,hotel,seed,bh)=>{
   const ns=f==='n'||f==='s',nx=f==='w'?-1:f==='e'?1:0,nz=f==='n'?-1:f==='s'?1:0,cx=(x0+x1)/2,cz=(z0+z1)/2,fx=ns?cx:f==='w'?x0:x1,fz=ns?(f==='n'?z0:z1):cz,ux=ns?1:0,uz=ns?0:1,rr2=mulberry32(seed),width=ns?x1-x0:z1-z0;
   if(width<8)return;ch.patio=ch.patio||[];const metal=COL('#ddd8cd'),cloth=COL(rr2()<.5?'#2c9ca4':'#e8bc66'),wood=COL('#735037');
@@ -2439,8 +2455,17 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
  if(city.lh&&own(clamp(city.lh.cx,0,E-1),clamp(city.lh.cz,0,E-1)))worldLighthouse({det,neon,hwin,sandMb,signs,night});
  for(const r of city.ramps||[]){if(!own(clamp(r.x,0,E-1),clamp(r.z,0,E-1)))continue;if(r.field!=null&&!rampField(r))continue;rampMesh(r,det,neon,marks)}
  if(city.body&&!city.picked.has(city.body.id)&&own(clamp(city.body.x,0,E-1),clamp(city.body.z,0,E-1))&&bodyInWater(city.body)){const b=city.body;const q=spawnLying(b.x,b.z);q.corpse=true;q.gy=RY+.05;ch.peds.push(q);const am=b.loot==='cash'?250:b.loot==='rpg'?4:120;makePickup(b.id,b.x+1.5,b.z,am,ch,b.loot)}
- for(const wp of city.wild){const[x0,z0,x1,z1]=wp;if(!own((x0+x1)/2,(z0+z1)/2))continue;side.box(x0,0,z0,x1,.22,z1,cGrass,{});lawn(x0+.4,z0+.4,x1-.4,z1-.4,.224,.7);addCol(x0,z0,x1,z1,'rock');
-  for(let x=x0+1.5;x<x1-1;x+=rr(3.4,5))for(let z=z0+1.5;z<z1-1;z+=rr(3.4,5)){if(R()<.16){rock(x,z,rr(2,4.5))}else tree(x+rr(-1,1),z+rr(-1,1),.22,rr(1.05,1.75),false,true)}}
+ for(const wp of city.wild){const[x0,z0,x1,z1,face]=wp;if(!own((x0+x1)/2,(z0+z1)/2))continue;
+  /* v4 r28 · mata da borda do mapa: antes o colisor da parcela entrava ANTES das árvores e o treeRaw recusava todas (colisor 'rock' a 0 m),
+     sobrando só pedregulhos de icosaedro girados em qualquer eixo (pareciam flutuar/tombar) e as frestas de 0,6 m entre parcelas (linhas pretas).
+     Agora: grama contínua por cima das frestas, mata de verdade (árvore da floresta, sem sombra) mais fechada na borda de fora,
+     pedras assentadas em grupos (rockGeos, só giro em Y + leve inclinação) sobre mancha de terra. Gerador próprio por parcela;
+     o R() da cidade avança exatamente como antes (laço "seco" abaixo), então o resto do chunk/seed não muda. */
+  const hz=face==='s'||face==='n',ex=.3;side.box(hz?x0-ex:x0,0,hz?z0:z0-ex,hz?x1+ex:x1,.22,hz?z1:z1+ex,cGrass,{});lawn(x0+.4,z0+.4,x1-.4,z1-.4,.224,.7);
+  for(let x=x0+1.5;x<x1-1;x+=rr(3.4,5))for(let z=z0+1.5;z<z1-1;z+=rr(3.4,5)){if(R()<.16){for(let k=0;k<8;k++)R()}else{R();R();R()}}
+  const R0=R;R=mulberry32(((Math.round(x0*7)*73856093)^(Math.round(z0*7)*19349663)^(S.seed*0x2f3)^0x91d5)>>>0);
+  try{wildEdgeDecor(x0,z0,x1,z1,face)}finally{R=R0}
+  addCol(x0,z0,x1,z1,'rock')}
  /* --- rivers: water, parapets along every water edge, bridge decoration --- */
  if(city.water&&city.water.length){const wc=COL(night?'#141a40':'#2a78a4'),pc=COL(night?'#4a4460':'#c8c2b4'),pc2=pc.clone().multiplyScalar(.8);
   const PL2=city.poll,cw=COL(night?'#3a3448':'#8a857c'),cw2=COL(night?'#2a2436':'#5a5a52');
