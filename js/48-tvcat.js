@@ -188,8 +188,8 @@ const TVCAT=[
   g:['No menu de pausa, 📷 congela o jogo: câmera livre, FOV, filtros e foto sem a interface.','In the pause menu, 📷 freezes the game: free camera, FOV, filters and a shot without the HUD.'],
   p:[tvcP('photo',['CÂMERA LIVRE','FREE CAMERA'])]},
  {k:'char3d',ic:'🧍',c:'#2f6fd6',l:'1',n:['PERSONAGENS 3D','3D CHARACTERS'],
-  g:['Gráficos › Visual dos personagens: 2D, 2.5D ou 3D. O 3D (experimental) é um boneco low-poly com a roupa de cada um.','Graphics › Character look: 2D, 2.5D or 3D. 3D (experimental) is a low-poly figure wearing each person\'s outfit.'],
-  p:[tvcP('char3d_rua',['NA RUA','ON THE STREET']),tvcP('char3d_perto',['DE PERTO','UP CLOSE']),tvcP('char3d_retrato',['RETRATO NAS CONVERSAS','PORTRAIT IN DIALOGUE']),tvcP('char3d_pets',['CÃES E GATOS','DOGS AND CATS'])]},
+  g:['Gráficos › Visual dos personagens: 2D, 2.5D ou 3D. O 3D (experimental) é um boneco low-poly com a roupa de cada um; atropelado ou na explosão, o corpo cai solto.','Graphics › Character look: 2D, 2.5D or 3D. 3D (experimental) is a low-poly figure wearing each person\'s outfit; hit by a car or caught in a blast, the body goes limp.'],
+  p:[tvcP('char3d_rua',['NA RUA','ON THE STREET']),tvcP('char3d_perto',['DE PERTO','UP CLOSE']),tvcP('char3d_retrato',['RETRATO NAS CONVERSAS','PORTRAIT IN DIALOGUE']),tvcP('char3d_pets',['CÃES E GATOS','DOGS AND CATS']),tvcP('char3d_ragdoll',['CORPO SOLTO','RAGDOLL'])]},
  {k:'cheats',ic:'⌨',c:'#7ae07a',l:'2',n:['CHEATS','CHEATS'],
   g:['Aperte ` (crase) e digite o código: HESOYAM, AEZAKMI, THEMASK, IMPOSSIBLETOSEE e outros. Atenção: qualquer cheat bloqueia o save até um jogo novo.','Press ` (backtick) and type a code: HESOYAM, AEZAKMI, THEMASK, IMPOSSIBLETOSEE and more. Warning: any cheat blocks saving until a new game.'],
   p:[tvcP('cheat_box',['CAIXA DE CHEAT','CHEAT BOX']),tvcP('its',['IMPOSSIBLETOSEE','IMPOSSIBLETOSEE'])]}

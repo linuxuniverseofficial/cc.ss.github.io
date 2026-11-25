@@ -125,7 +125,7 @@ function c3Geo(){if(C3.geo)return C3.geo;const P=[],N=[],U=[],K=[],I=[];let vi=0
 /* ---------- shader: pose contínua (sem quadros) ---------- */
 const C3_VS=`
 attribute float part;
-uniform float uPhase,uAmt,uRun,uAim,uPunch,uSit,uAir,uIdle,uLong;uniform vec2 uTile;uniform vec3 uLight,uSunDir;
+uniform float uPhase,uAmt,uRun,uAim,uPunch,uSit,uAir,uIdle,uLong,uRagOn;uniform vec2 uTile;uniform vec3 uLight,uSunDir;uniform mat4 uRM[11];
 varying vec2 vUv,vLoc;varying vec3 vLight,vVN,vVP;varying float vFeet;
 #include <fog_pars_vertex>
 vec3 rx(vec3 v,vec3 p,float a){v-=p;float c=cos(a),s=sin(a);return p+vec3(v.x,c*v.y-s*v.z,s*v.y+c*v.z);}
@@ -134,7 +134,10 @@ vec3 ry(vec3 v,float a){float c=cos(a),s=sin(a);return vec3(c*v.x+s*v.z,v.y,-s*v
 void main(){
  vec3 p=position,n=normal;float ph=uPhase,s=sin(ph),A=uAmt,Rn=uRun;
  if(part>10.5&&uLong<.5)p=vec3(0.,1.5,0.);
- float bob=A*(.022+.03*Rn)*abs(cos(ph))-uSit*0.+uIdle*.006*sin(ph*.5);
+ float bob=0.;
+ if(uRagOn>.5){int ri=int(part+.5);if(ri>10)ri=2;mat4 RM=uRM[0];for(int k=1;k<11;k++){if(k==ri)RM=uRM[k];} /* v4 r28 · ragdoll: matriz por peça (mundo) */
+  p=(RM*vec4(p,1.)).xyz;n=mat3(RM)*n;}else{
+ bob=A*(.022+.03*Rn)*abs(cos(ph))-uSit*0.+uIdle*.006*sin(ph*.5);
  float twist=A*(.07+.05*Rn)*s;
  if(part>6.5&&part<10.5){bool L=part<8.5;float sg=L?1.:-1.;float ss=L?s:-s;vec3 hip=vec3(.1*sg,.78,0.),knee=vec3(.1*sg,.44,0.);
   float th=A*(.42+.22*Rn)*ss,kn=A*((.55+.5*Rn)*max(0.,sin(ph+(L?0.:3.14159)+1.3))+.06);
@@ -151,7 +154,7 @@ void main(){
   if(part>.5){p=ry(p,twist*(1.-uAim));n=ry(n,twist*(1.-uAim));
    float lean=.12*Rn*A+uIdle*.012*sin(ph*.5+1.);p=rx(p,vec3(0.,.78,0.),lean);n=rxn(n,lean);}
   if(part==2.||part>10.5){float nod=A*.035*sin(ph*2.);p=rx(p,vec3(0.,1.36,0.),nod);}
- }
+ }}
  p.y+=bob;
  vec4 wp=modelMatrix*vec4(p,1.);vec3 wn=normalize(mat3(modelMatrix)*n);
  float d=max(dot(wn,uSunDir),0.);vLight=uLight*(.74+.42*d);
@@ -172,7 +175,7 @@ void main(){vec2 uvv=vUv;float lid=1.;
  #include <fog_fragment>
 }`;
 function c3Material(){if(!C3.base)C3.base=new THREE.ShaderMaterial({vertexShader:C3_VS,fragmentShader:C3_FS,fog:true,
-  uniforms:THREE.UniformsUtils.merge([THREE.UniformsLib.fog,{map:{value:null},uTile:{value:new THREE.Vector2()},uPhase:{value:0},uAmt:{value:0},uRun:{value:0},uAim:{value:0},uPunch:{value:0},uSit:{value:0},uAir:{value:0},uIdle:{value:0},uLong:{value:0},uBlink:{value:0},uGrade:{value:1},uAlpha:{value:1},uLight:{value:new THREE.Color(1,1,1)},uSunDir:{value:new THREE.Vector3(0,1,0)}}])});
+  uniforms:THREE.UniformsUtils.merge([THREE.UniformsLib.fog,{map:{value:null},uTile:{value:new THREE.Vector2()},uPhase:{value:0},uAmt:{value:0},uRun:{value:0},uAim:{value:0},uPunch:{value:0},uSit:{value:0},uAir:{value:0},uIdle:{value:0},uLong:{value:0},uRagOn:{value:0},uRM:{value:Array.from({length:11},()=>new THREE.Matrix4())},uBlink:{value:0},uGrade:{value:1},uAlpha:{value:1},uLight:{value:new THREE.Color(1,1,1)},uSunDir:{value:new THREE.Vector3(0,1,0)}}])});
  const m=C3.base.clone();m.uniforms.map.value=c3Atlas();m.uniforms.uSunDir.value=C3.sunDir;return m}
 /* ---------- boneco preso a um sprite de personagem ---------- */
 function c3Make(o){const sp=o.sp,mat=c3Material(),mesh=new THREE.Mesh(c3Geo(),mat);mesh.matrixAutoUpdate=false;mesh.layers.set(1);mesh.castShadow=mesh.receiveShadow=false;mesh.raycast=()=>{};mesh.name='char3d';
@@ -180,7 +183,7 @@ function c3Make(o){const sp=o.sp,mat=c3Material(),mesh=new THREE.Mesh(c3Geo(),ma
  mesh.onBeforeRender=(r,sc,cam)=>{const local=sp.userData.actorLocal;if(cam===camera){sp.userData.actorLastDraw=simT;if(local){try{actorLighting(sp,local)}catch(e){}}}
   const L=mat.uniforms.uLight.value;if(local)L.copy(local.value);else L.copy(ACTOR_LIGHT.value);if(sp.userData.actorTint)L.multiply(sp.userData.actorTint)};
  sp.add(mesh);sp.userData.c3=st;C3.list.add(st);return st}
-function c3Drop(sp){const st=sp&&sp.userData.c3;if(!st)return;if(st.gun){if(st.gun.parent)st.gun.parent.remove(st.gun);st.gun=null}if(st.mesh.parent)st.mesh.parent.remove(st.mesh);st.mat.dispose();C3.list.delete(st);delete sp.userData.c3;if(sp.material)sp.material.visible=true}
+function c3Drop(sp){const st=sp&&sp.userData.c3;if(!st)return;if(st.rag)ragEnd(st);if(st.gun){if(st.gun.parent)st.gun.parent.remove(st.gun);st.gun=null}if(st.mesh.parent)st.mesh.parent.remove(st.mesh);st.mat.dispose();C3.list.delete(st);delete sp.userData.c3;if(sp.material)sp.material.visible=true}
 const _c3m=new THREE.Matrix4(),_c3a=new THREE.Matrix4(),_c3q=new THREE.Quaternion(),_c3e=new THREE.Euler(),_c3v=new THREE.Vector3(),_c3s=new THREE.Vector3();
 function c3AngTo(a,b,k){let d=b-a;d=Math.atan2(Math.sin(d),Math.cos(d));return a+d*k}
 /* chamado depois do placeSprite original: decide pose, ângulo e roupa */
@@ -194,6 +197,7 @@ function c3Place(o){const sp=o.sp;if(!sp||!sp.isSprite)return;
  /* sem lixo por quadro: a chave (string) só é refeita quando a paleta troca de objeto ou, no jogador (lojas mudam PLAYER_PAL no lugar), a cada ~0,4 s ou quando o sprite troca de textura */
  st.kT-=dt;if(!st.slot||pal!==st.pal||o===PL&&(st.kT<=0||sp.material.map!==st.map)){st.kT=.4;st.pal=pal;st.map=sp.material.map;st.mat.uniforms.uLong.value=pal.long?1:0;const k=c3Key(pal);if(k!==st.key){st.key=k;st.slot=null}}
  if(!st.slot||C3.slots.get(st.key)!==st.slot){st.slot=c3Slot(st.key,pal);const n=C3.AW/C3.T;st.mat.uniforms.uTile.value.set((st.slot.i%n)*C3.T/C3.AW,-Math.floor(st.slot.i/n)*C3.T/C3.AH)}else st.slot.last=now;
+ if(st.rag&&st.rag.ok){if(o.state==='dead'){ragPlace(o,st);return}ragEnd(st)} /* v4 r28: corpo solto (ragdoll) */
  /* velocidade pelo deslocamento real (suaviza troca entre parado/andar/correr) */
  let spd=0;if(st.lx!==null&&dt>0){const dx=o.x-st.lx,dz=o.z-st.lz,d=Math.hypot(dx,dz);if(d<3){spd=d/dt;st.mvx=dx;st.mvz=dz}else{st.ang=null}}st.lx=o.x;st.lz=o.z;
  const k=1-Math.exp(-dt*7),patio=o.state==='patio'&&o.patioSpot,lying=patio?o.patioSpot.kind==='recline':Math.abs(o.rot||0)>1;let sitting=patio&&!lying;
@@ -302,3 +306,87 @@ function c3Portrait(pal){const k=c3Key(pal);let P=C3PT.cache.get(k);if(P)return 
  finally{ATLAS8.scene.remove(M)}
  if(C3PT.cache.size>40)C3PT.cache.delete(C3PT.cache.keys().next().value);C3PT.cache.set(k,P);return P}
 window.c3Debug=()=>({on:C3_ON(),chars:C3.list.size,slots:C3.slots.size,free:C3.free.length,tris:C3.geo?C3.geo.index.count/3:0});
+/* ===================== v4 r28 · RAGDOLL LEVE (só no visual 3D) =====================
+   Quem morre com o boneco 3D cai "solto": 14 partículas (Verlet) ligadas por distâncias fixas (tronco e cabeça rígidos,
+   braços e pernas com cotovelo/joelho livres), chão plano na altura do quadril, atrito no chão e empurrão para fora das paredes.
+   O impulso vem da velocidade que o jogo já dá ao corpo (p.vx/p.vz do atropelamento, explosão, soco) + um pulo para cima;
+   morte sem empurrão (tiro) só desaba. Cada peça do boneco recebe uma matriz de mundo (uRM no C3_VS). Dura até ~3 s e congela
+   na pose em que caiu; o corpo some como antes. No máximo RAG.MAX simulando ao mesmo tempo (o resto deita do jeito antigo).
+   Sem alocação por quadro: buffers criados na largada de cada ragdoll. */
+const RAG={MAX:4,live:new Set(),
+ /* juntas do modelo (lado esq. = +x): 0 quadril E 1 quadril D 2 pescoço 3 topo da cabeça 4 ombro E 5 cotovelo E 6 mão E 7 ombro D 8 cotovelo D 9 mão D 10 joelho E 11 pé E 12 joelho D 13 pé D */
+ J:[[.1,.78,0],[-.1,.78,0],[0,1.33,0],[0,1.73,0],[.265,1.3,0],[.27,1.04,0],[.272,.7,0],[-.265,1.3,0],[-.27,1.04,0],[-.272,.7,0],[.1,.44,0],[.1,.06,0],[-.1,.44,0],[-.1,.06,0]],
+ RAD:[.1,.1,.12,.12,.08,.06,.05,.08,.06,.05,.07,.06,.07,.06],
+ RIG:[[0,1],[0,2],[1,2],[4,7],[4,2],[7,2],[4,0],[7,1],[4,1],[7,0],[3,2],[3,4],[3,7],[4,5],[5,6],[7,8],[8,9],[0,10],[10,11],[1,12],[12,13]],
+ MIN:[[4,6,.26],[7,9,.26],[0,11,.42],[1,13,.42],[6,0,.18],[9,1,.18],[11,1,.16],[13,0,.16]],
+ /* peças: [junta proximal, junta distal, peça-mãe] (mãe −1 = tronco) */
+ LIMB:{3:[4,5,-1],4:[5,6,3],5:[7,8,-1],6:[8,9,5],7:[0,10,-1],8:[10,11,7],9:[1,12,-1],10:[12,13,9]},
+ tmpO:{x:0,z:0},v0:new THREE.Vector3(),v1:new THREE.Vector3(),v2:new THREE.Vector3(),v3:new THREE.Vector3(),q:new THREE.Quaternion(),m:new THREE.Matrix4(),m2:new THREE.Matrix4(),
+ rot:Array.from({length:11},()=>new THREE.Matrix4())};
+function ragOK(o,st){return !!(st&&st.mesh&&st.mesh.visible&&o&&o.sp&&o.sp.userData.c3===st)}
+/* começa: (vx,vz) = velocidade do corpo; up = pulo extra (m/s) */
+function ragStart(o,st,vx,vz,up){if(RAG.live.size>=RAG.MAX)return false;
+ const sc=camMode==='top'&&!VIEW.orbit?1.5:1,a=st.ang||0,ca=Math.cos(a),sa=Math.sin(a),N=RAG.J.length;
+ const r=st.rag||(st.rag={x:new Float32Array(N*3),px:new Float32Array(N*3),L:new Float32Array(RAG.RIG.length),Lm:new Float32Array(RAG.MIN.length),rm:Array.from({length:11},()=>new THREE.Matrix4())});
+ r.ok=true;r.t=0;r.calm=0;r.frozen=false;r.sc=sc;r.acc=0;const gy=(o.gy!==undefined?o.gy:groundY(o.x,o.z));r.g=gy;
+ const sp=Math.hypot(vx,vz),dirx=sp>.1?vx/sp:-sa,dirz=sp>.1?vz/sp:-ca,soft=sp<1.5; /* sem empurrão: desaba para trás */
+ for(let i=0;i<N;i++){const j=RAG.J[i],lx=j[0]*sc,ly=j[1]*sc,lz=j[2]*sc,wx=o.x+ca*lx+sa*lz,wz=o.z-sa*lx+ca*lz,wy=gy+ly,k=i*3;
+  r.x[k]=wx;r.x[k+1]=wy;r.x[k+2]=wz;
+  /* atropelamento: pernas levam o tranco cheio e o tronco menos (o corpo gira por cima do capô); explosão: tudo junto */
+  const legs=i>=10||i<2,head=i===2||i===3,f=soft?(head?1:legs?-.25:.5):legs?1:head?.62:.8,fu=soft?0:(legs?.55:1)*up,h=1/60;
+  const ex=soft?dirx*1.3*(ly/1.7):vx*f,ez=soft?dirz*1.3*(ly/1.7):vz*f;
+  r.px[k]=wx-ex*h;r.px[k+1]=wy-fu*h;r.px[k+2]=wz-ez*h}
+ /* torção leve para não cair sempre "certinho" */
+ const tw=(Math.random()-.5)*(soft?.6:2.4);for(let i=0;i<N;i++){const k=i*3,dx=r.x[k]-o.x,dz=r.x[k+2]-o.z;r.px[k]+=dz*tw/60;r.px[k+2]-=dx*tw/60}
+ for(let c=0;c<RAG.RIG.length;c++){const[a1,b1]=RAG.RIG[c];r.L[c]=Math.hypot(r.x[a1*3]-r.x[b1*3],r.x[a1*3+1]-r.x[b1*3+1],r.x[a1*3+2]-r.x[b1*3+2])}
+ for(let c=0;c<RAG.MIN.length;c++)r.Lm[c]=RAG.MIN[c][2]*sc;
+ const U=st.mat.uniforms;U.uRM.value=r.rm;U.uRagOn.value=1;st.mesh.frustumCulled=false;RAG.live.add(st);ragPose(st);return true}
+function ragEnd(st){RAG.live.delete(st);if(st.rag){st.rag.ok=false}if(st.mat){st.mat.uniforms.uRagOn.value=0;st.mat.uniforms.uRM.value=RAG.rot}if(st.mesh)st.mesh.frustumCulled=true}
+function ragStep(st,h){const r=st.rag,x=r.x,px=r.px,N=RAG.J.length,G=-13*h*h,g=r.g;let mv=0;
+ for(let i=0;i<N;i++){const k=i*3;for(let e=0;e<3;e++){const c=x[k+e],v=(c-px[k+e])*.995;px[k+e]=c;x[k+e]=c+v+(e===1?G:0);if(e!==1)mv=Math.max(mv,Math.abs(v))}}
+ for(let it=0;it<8;it++){
+  for(let c=0;c<RAG.RIG.length;c++){const a=RAG.RIG[c][0]*3,b=RAG.RIG[c][1]*3,dx=x[b]-x[a],dy=x[b+1]-x[a+1],dz=x[b+2]-x[a+2],d=Math.hypot(dx,dy,dz)||1e-6,f=(d-r.L[c])/d*.5;
+   x[a]+=dx*f;x[a+1]+=dy*f;x[a+2]+=dz*f;x[b]-=dx*f;x[b+1]-=dy*f;x[b+2]-=dz*f}
+  for(let c=0;c<RAG.MIN.length;c++){const a=RAG.MIN[c][0]*3,b=RAG.MIN[c][1]*3,dx=x[b]-x[a],dy=x[b+1]-x[a+1],dz=x[b+2]-x[a+2],d=Math.hypot(dx,dy,dz)||1e-6;if(d>=r.Lm[c])continue;const f=(d-r.Lm[c])/d*.5;
+   x[a]+=dx*f;x[a+1]+=dy*f;x[a+2]+=dz*f;x[b]-=dx*f;x[b+1]-=dy*f;x[b+2]-=dz*f}
+  for(let i=0;i<N;i++){const k=i*3,lo=g+RAG.RAD[i]*r.sc;if(x[k+1]<lo){x[k+1]=lo;if(px[k+1]<lo)px[k+1]=lo+(lo-px[k+1])*.15; /* quique pequeno */
+    px[k]+=(x[k]-px[k])*.12;px[k+2]+=(x[k+2]-px[k+2])*.12}}} /* atrito no chão */
+ /* paredes: cada partícula sai das caixas dos colisores (lista pega 1× por quadro em ragTick); colisor baixo (banco, lixeira) só pega o que está abaixo da altura dele */
+ const near=r.near;if(near)for(let i=0;i<N;i++){const k=i*3,rr=RAG.RAD[i]*r.sc,hy=x[k+1]-g;for(const c of near){if(c.dead)continue;const top=c.kind==='bin'?(c.bin?.height??.9):c.low;if(top&&hy>top)continue;
+   const cx=x[k]<c.x0?c.x0:x[k]>c.x1?c.x1:x[k],cz=x[k+2]<c.z0?c.z0:x[k+2]>c.z1?c.z1:x[k+2],dx=x[k]-cx,dz=x[k+2]-cz,d=Math.hypot(dx,dz);if(d>=rr)continue;
+   if(d>1e-5){x[k]=cx+dx/d*rr;x[k+2]=cz+dz/d*rr}else{const d0=x[k]-c.x0,d1=c.x1-x[k],d2=x[k+2]-c.z0,d3=c.z1-x[k+2],m=Math.min(d0,d1,d2,d3);if(m===d0)x[k]=c.x0-rr;else if(m===d1)x[k]=c.x1+rr;else if(m===d2)x[k+2]=c.z0-rr;else x[k+2]=c.z1+rr}
+   px[k]+=(x[k]-px[k])*.5;px[k+2]+=(x[k+2]-px[k+2])*.5}} /* perde metade da velocidade ao bater */
+ return mv/h}
+/* matrizes de mundo de cada peça a partir das partículas */
+function ragPose(st){const r=st.rag,x=r.x,sc=r.sc,J=RAG.J,v0=RAG.v0,v1=RAG.v1,v2=RAG.v2,v3=RAG.v3,M=RAG.m,R=RAG.rot,P=(i,v)=>v.set(x[i*3],x[i*3+1],x[i*3+2]);
+ const put=(part,rot,jw,jm)=>{/* W = T(jw)·R·S(sc)·T(−jm) */const m=r.rm[part];m.copy(rot);m.elements[0]*=sc;m.elements[1]*=sc;m.elements[2]*=sc;m.elements[4]*=sc;m.elements[5]*=sc;m.elements[6]*=sc;m.elements[8]*=sc;m.elements[9]*=sc;m.elements[10]*=sc;
+  const e=m.elements;e[12]=jw.x-(e[0]*jm[0]+e[4]*jm[1]+e[8]*jm[2]);e[13]=jw.y-(e[1]*jm[0]+e[5]*jm[1]+e[9]*jm[2]);e[14]=jw.z-(e[2]*jm[0]+e[6]*jm[1]+e[10]*jm[2]);e[3]=e[7]=e[11]=0;e[15]=1};
+ /* tronco: up = quadril→pescoço; lado = ombro D→E + quadril D→E */
+ P(0,v0);P(1,v1);const hx=(v0.x+v1.x)/2,hy=(v0.y+v1.y)/2,hz=(v0.z+v1.z)/2;P(2,v2);const up=v3.set(v2.x-hx,v2.y-hy,v2.z-hz).normalize();
+ const sx=x[12]-x[21]+v0.x-v1.x,sy=x[13]-x[22]+v0.y-v1.y,sz=x[14]-x[23]+v0.z-v1.z;let d=sx*up.x+sy*up.y+sz*up.z;v0.set(sx-up.x*d,sy-up.y*d,sz-up.z*d).normalize();
+ v1.crossVectors(v0,up);R[1].makeBasis(v0,up,v1);v2.set(hx,hy,hz);put(0,R[1],v2,[0,.78,0]);put(1,R[1],v2,[0,.78,0]);
+ /* cabeça: up = pescoço→topo, lado do tronco */
+ {const nk=P(2,v2),ux=x[9]-nk.x,uy=x[10]-nk.y,uz=x[11]-nk.z,l=Math.hypot(ux,uy,uz)||1;const hu=RAG.v3.set(ux/l,uy/l,uz/l);d=v0.x*hu.x+v0.y*hu.y+v0.z*hu.z;
+  const hs=v1.set(v0.x-hu.x*d,v0.y-hu.y*d,v0.z-hu.z*d).normalize(),hf=RAG.v0.crossVectors(hs,hu);R[2].makeBasis(hs,hu,hf);put(2,R[2],v2,[0,1.33,0]);
+  /* refaz a base do tronco (v0/v1 foram reaproveitados) */}
+ R[0].copy(R[1]);
+ for(let part=3;part<=10;part++){const[a,b,par]=RAG.LIMB[part],Rp=par<0?R[1]:R[par],ja=J[a],jb=J[b];
+  v0.set(jb[0]-ja[0],jb[1]-ja[1],jb[2]-ja[2]).normalize().applyMatrix4(M.extractRotation(Rp));
+  v1.set(x[b*3]-x[a*3],x[b*3+1]-x[a*3+1],x[b*3+2]-x[a*3+2]).normalize();RAG.q.setFromUnitVectors(v0,v1);
+  R[part].makeRotationFromQuaternion(RAG.q).multiply(Rp);P(a,v2);put(part,R[part],v2,ja)}}
+/* passo da simulação (chamado no update e no palco dos interiores) */
+function ragTick(dt){if(!C3_ON()||!dt)return;
+ /* largada: corpo 3D recém-morto */
+ for(const p of peds){if(p.state!=='dead'){if(p._ragS)p._ragS=0;continue}if(p._ragS)continue;p._ragS=1;const sp=p.sp,st=sp&&sp.userData.c3;if(!ragOK(p,st))continue;
+  const v=Math.hypot(p.vx||0,p.vz||0);if(ragStart(p,st,p.vx||0,p.vz||0,v>2?1.6+v*.28:0)){p.vx=p.vz=0}}
+ for(const st of RAG.live){const o=st.o,r=st.rag;if(!r||!r.ok||!o||!o.sp||o.sp.userData.c3!==st||o.state!=='dead'){ragEnd(st);continue}
+  r.t+=dt;r.acc=Math.min(r.acc+dt,.1);{const A=r.near||(r.near=[]);A.length=0;try{const q=query((r.x[0]+r.x[3])/2,(r.x[2]+r.x[5])/2,2.6*r.sc);for(let i=0;i<q.length;i++)A.push(q[i])}catch(e){}} /* query devolve um vetor compartilhado: copia */let mv=0;const h=1/60;while(r.acc>=h){mv=Math.max(mv,ragStep(st,h));r.acc-=h}
+  r.calm=mv<.35?r.calm+dt:0;ragPose(st);
+  /* o ped (sombra, espólio, colisão) segue o quadril */
+  o.x=(r.x[0]+r.x[3])/2;o.z=(r.x[2]+r.x[5])/2;{const g=groundY(o.x,o.z);if(isFinite(g)&&Math.abs(g-r.g)<1.2)r.g=g}
+  if(r.t>3||r.t>1.1&&r.calm>.35){r.frozen=true;RAG.live.delete(st)}}}
+/* posiciona o boneco em ragdoll: as matrizes já estão em coordenadas de mundo → anula a matriz do sprite */
+function ragPlace(o,st){const sp=o.sp,s=sp.scale,p=sp.position,m=st.mesh.matrix;m.makeTranslation(-p.x,-p.y,-p.z);RAG.m2.makeScale(1/(s.x||1),1/(s.y||1),1/(s.z||1));m.premultiply(RAG.m2);
+ if(sp.parent&&sp.parent!==scene){sp.parent.updateMatrixWorld();RAG.m2.copy(sp.parent.matrixWorld).invert();m.multiply(RAG.m2)}
+ st.mesh.matrixWorldNeedsUpdate=true;const U=st.mat.uniforms;U.uBlink.value=1;U.uRagOn.value=1;if(st.gun)st.gun.visible=false;
+ {const op=sp.material.opacity;if(op<.995){if(!st.mat.transparent){st.mat.transparent=true;st.mat.depthWrite=false}U.uAlpha.value=op}else if(st.mat.transparent){st.mat.transparent=false;st.mat.depthWrite=true;U.uAlpha.value=1}}}
