@@ -59,6 +59,57 @@ function adsMesh(list){if(!list||!list.length)return null;const pos=[],uv=[],idx
   for(const p of q.pts)pos.push(...p);uv.push(u0,v0,u1,v0,u1,v1,u0,v1);const b=n*4;idx.push(b,b+1,b+2,b,b+2,b+3)});
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();
  const m=new THREE.Mesh(g,adsAtlas());m.castShadow=false;m.receiveShadow=false;return m}
+/* v4 r12 · BANCA DE JORNAL: 1 atlas (1024×512) com 29 capas de revista (96×128), placa "JORNAL $1", 3 primeiras páginas de jornal,
+   3 jornais dobrados e o letreiro BANCA. Feito uma vez com sorteio fixo (não usa R()). Material compartilhado (cached) que acende
+   de leve ao anoitecer (DN_SIGNS); cada chunk junta as capas numa malha só (ch.magMesh = 1 draw). Remover: tirar o push em ch.mags. */
+const MAG={tex:null,mat:null,W:1024,H:512};
+const MAGUV={cover:i=>magUV((i%10)*96,Math.floor(i/10)*128,96,128),board:()=>magUV(9*96,2*128,96,128),paper:i=>magUV(i*96,384,96,128),
+ fold:i=>magUV(288+i*128,384,128,96),sign:()=>magUV(672,388,352,80)};
+function magUV(x,y,w,h){const W=MAG.W,H=MAG.H;return[(x+.5)/W,1-(y+h-.5)/H,(x+w-.5)/W,1-(y+.5)/H]}
+function magAtlas(){if(MAG.mat)return MAG.mat;const c=cv(MAG.W,MAG.H),g=c.getContext('2d'),rnd=mulberry32(0x6a9b12);const rr2=(a,b)=>a+rnd()*(b-a),pk=a=>a[Math.floor(rnd()*a.length)];
+ const TIT=['SURF','MODA','AUTO','GAMER','VIP','GOL!','CINE','TECH','PESCA','ROCK','FOFOCA','CASA','PET','PRAIA','MOTO','DANCE','SAÚDE','NOVELA','TURBO','CHEF','STAR','ARTE','KIDS','RÁDIO','FIT','TV','SOM','VIAGEM','HQ'];
+ const BG=[['#d8202a','#ff7a3a'],['#2a6ab0','#2af0ff'],['#f2c21a','#ff8a1a'],['#ff6fae','#ffd0e4'],['#f4f4f0','#c8d0d8'],['#3ab36a','#c8f06a'],['#14141c','#5a2a8a'],['#0aa0c8','#f2f0d0'],['#8a2ad8','#ff5adc'],['#1a1a2a','#d8202a']];
+ const LINES=['NOVO!','TOP 10','GRÁTIS','ESPECIAL','#1','VERÃO','DICAS','BÔNUS','100%','HOJE'];
+ const FAM='Fredoka, Arial Black, sans-serif';
+ const fit=(t,x,y,maxW,px,w8)=>{let f=px;g.font=(w8||'700 ')+f+'px '+FAM;while(f>7&&g.measureText(t).width>maxW){f--;g.font=(w8||'700 ')+f+'px '+FAM}g.fillText(t,x,y)};
+ const bars=(x,y,w,n,col)=>{g.fillStyle=col;for(let k=0;k<n;k++)g.fillRect(x,y+k*5,w*rr2(.55,1),2.4)};
+ for(let i=0;i<29;i++){const x=(i%10)*96,y=Math.floor(i/10)*128,W=96,H=128;g.save();g.translate(x,y);g.beginPath();g.rect(0,0,W,H);g.clip();
+  const b=BG[i%BG.length],gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,b[0]);gr.addColorStop(1,b[1]);g.fillStyle=gr;g.fillRect(0,0,W,H);
+  const dark=/^#(14|1a|2a|8a|0a|d8|3a)/.test(b[0]),ink=dark?'#fff':'#14141c',acc=pk(['#ffd21a','#ff3e6a','#2af0ff','#fff','#7dff6a']);
+  /* arte do meio */const kind=i%6,cx=W/2,cy=72;g.lineJoin='round';
+  if(kind===0){/* retrato */g.fillStyle=pk(['#f0c8a0','#c88a5a','#8a5a3a','#f8dcc0']);g.beginPath();g.arc(cx,cy-6,17,0,7);g.fill();g.fillStyle=pk(['#2a1a10','#e8c040','#8a3a1a','#111']);g.beginPath();g.arc(cx,cy-12,18,Math.PI,0);g.fill();
+   g.fillStyle=pk(['#2a6ab0','#d8202a','#fff','#111','#3ab36a']);g.beginPath();g.moveTo(cx-30,H);g.quadraticCurveTo(cx-28,cy+14,cx,cy+12);g.quadraticCurveTo(cx+28,cy+14,cx+30,H);g.fill();g.fillStyle='#111';g.fillRect(cx-8,cy-8,4,3);g.fillRect(cx+4,cy-8,4,3);g.fillStyle='#b03030';g.fillRect(cx-5,cy+2,10,2.5)}
+  else if(kind===1){/* carro */const cc=pk(['#d8202a','#f2c21a','#2a6ab0','#111','#fff']);g.fillStyle=cc;g.beginPath();g.moveTo(10,cy+14);g.lineTo(14,cy);g.lineTo(32,cy-2);g.lineTo(44,cy-14);g.lineTo(68,cy-14);g.lineTo(80,cy-1);g.lineTo(88,cy+2);g.lineTo(88,cy+14);g.closePath();g.fill();
+   g.fillStyle='#9ad0e8';g.fillRect(47,cy-11,18,9);g.fillStyle='#111';for(const wx of[28,72]){g.beginPath();g.arc(wx,cy+15,7,0,7);g.fill()}g.fillStyle='#bbb';for(const wx of[28,72]){g.beginPath();g.arc(wx,cy+15,3,0,7);g.fill()}}
+  else if(kind===2){/* pôr do sol com palmeira */g.fillStyle='#ffd21a';g.beginPath();g.arc(cx,cy+10,22,Math.PI,0);g.fill();g.fillStyle='rgba(255,255,255,.5)';for(let k=0;k<3;k++)g.fillRect(cx-22,cy+12+k*6,44,2);
+   g.strokeStyle='#14141c';g.lineWidth=4;g.beginPath();g.moveTo(cx+20,H-8);g.quadraticCurveTo(cx+14,cy+4,cx+24,cy-14);g.stroke();g.fillStyle='#14141c';for(const a of[-2.6,-1.9,-1.2,-.5,.2]){g.beginPath();g.ellipse(cx+24+Math.cos(a)*12,cy-14+Math.sin(a)*7,13,3.5,a,0,7);g.fill()}}
+  else if(kind===3){/* bola */g.fillStyle='#fff';g.beginPath();g.arc(cx,cy,22,0,7);g.fill();g.fillStyle='#111';g.beginPath();for(let k=0;k<5;k++){const a=-Math.PI/2+k*1.2566;g.lineTo(cx+Math.cos(a)*8,cy+Math.sin(a)*8)}g.fill();
+   for(let k=0;k<5;k++){const a=-Math.PI/2+k*1.2566;g.beginPath();g.arc(cx+Math.cos(a)*19,cy+Math.sin(a)*19,4.5,0,7);g.fill()}g.strokeStyle='#111';g.lineWidth=1.5;g.beginPath();g.arc(cx,cy,22,0,7);g.stroke()}
+  else if(kind===4){/* guitarra / nota */g.fillStyle=acc;g.beginPath();g.ellipse(cx-6,cy+12,14,16,-.4,0,7);g.fill();g.fillStyle='#14141c';g.beginPath();g.arc(cx-6,cy+12,5,0,7);g.fill();g.save();g.translate(cx-6,cy+12);g.rotate(.62);g.fillStyle='#6a3a1a';g.fillRect(-2.5,-46,5,34);g.fillStyle='#14141c';g.fillRect(-4,-52,8,8);g.restore()}
+  else{/* estrela / prêmio */g.fillStyle=acc;g.beginPath();for(let k=0;k<10;k++){const a=-Math.PI/2+k*Math.PI/5,r=k%2?11:26;g.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r)}g.closePath();g.fill();g.strokeStyle=ink;g.lineWidth=2;g.stroke()}
+  /* nome da revista */g.textAlign='center';g.textBaseline='top';const t=TIT[i];g.fillStyle=ink;if(rnd()<.5){g.fillStyle='rgba(0,0,0,.25)';g.fillRect(0,0,W,30);g.fillStyle=ink}
+  fit(t,W/2,3,W-8,28);g.fillStyle=acc;g.fillRect(6,31,W-12,2);
+  /* chamadas */g.textAlign='left';g.fillStyle=acc;fit(pk(LINES),6,37,48,11);bars(6,51,30,3,ink);
+  if(rnd()<.6){g.fillStyle=pk(['#ffd21a','#ff3e6a','#2af0ff']);g.beginPath();g.arc(W-17,47,13,0,7);g.fill();g.fillStyle='#14141c';g.textAlign='center';g.textBaseline='middle';fit('$'+(2+Math.floor(rnd()*8)),W-17,47,22,12)}
+  g.fillStyle='rgba(0,0,0,.35)';g.fillRect(0,H-20,W,20);g.textAlign='left';g.textBaseline='top';g.fillStyle='#fff';fit(pk(LINES)+' '+pk(LINES),5,H-17,62,10);
+  g.fillStyle='#fff';g.fillRect(W-22,H-17,17,13);g.fillStyle='#111';for(let k=0;k<7;k++)g.fillRect(W-20+k*2.2,H-15,k%3?1:1.6,9);
+  g.restore()}
+ /* placa de calçada "JORNAL $1" (lousa) */{const x=9*96,y=256,W=96,H=128;g.save();g.translate(x,y);g.fillStyle='#8a5a36';g.fillRect(0,0,W,H);g.fillStyle='#24302a';g.fillRect(6,6,W-12,H-12);
+  g.textAlign='center';g.textBaseline='middle';g.fillStyle='#f4f4ec';fit('JORNAL',W/2,30,W-18,22);g.fillStyle='#ffd21a';fit('$1',W/2,68,W-20,46);g.fillStyle='#f4f4ec';fit('REVISTAS',W/2,104,W-20,14);g.strokeStyle='rgba(244,244,236,.6)';g.lineWidth=1.5;g.beginPath();g.moveTo(18,86);g.lineTo(W-18,86);g.stroke();g.restore()}
+ /* primeiras páginas de jornal (em pé) */const MH=['SUNSET POST','O LITORAL','DIÁRIO DA COSTA'],HL=['CAOS NA ORLA','CALOR RECORDE','PERSEGUIÇÃO!'];
+ for(let i=0;i<3;i++){const x=i*96,y=384,W=96,H=128;g.save();g.translate(x,y);g.fillStyle='#ece8dc';g.fillRect(0,0,W,H);g.fillStyle='#14141c';g.textAlign='center';g.textBaseline='top';
+  g.font="700 13px Georgia, 'Times New Roman', serif";let f=13;while(f>7&&g.measureText(MH[i]).width>W-8){f--;g.font='700 '+f+"px Georgia, 'Times New Roman', serif"}g.fillText(MH[i],W/2,4);g.fillRect(4,21,W-8,1.5);g.fillRect(4,24,W-8,.8);
+  fit(HL[i],W/2,28,W-8,15,'800 ');g.fillStyle='#8a8a86';g.fillRect(6,48,50,40);g.fillStyle='#5a5a58';g.beginPath();g.arc(30,62,8,0,7);g.fill();g.fillRect(18,72,24,16);
+  bars(60,50,30,8,'#6a6a66');bars(6,94,40,6,'#6a6a66');bars(52,94,40,6,'#6a6a66');g.fillStyle=pk(['#d8202a','#2a6ab0']);g.fillRect(4,H-6,W-8,3);g.restore()}
+ /* jornais dobrados (deitados no balcão) */for(let i=0;i<3;i++){const x=288+i*128,y=384,W=128,H=96;g.save();g.translate(x,y);g.fillStyle='#e8e4d8';g.fillRect(0,0,W,H);g.fillStyle='#14141c';g.textAlign='center';g.textBaseline='top';
+  g.font="700 15px Georgia, 'Times New Roman', serif";let f=15;while(f>7&&g.measureText(MH[(i+1)%3]).width>W-10){f--;g.font='700 '+f+"px Georgia, 'Times New Roman', serif"}g.fillText(MH[(i+1)%3],W/2,5);g.fillRect(5,24,W-10,1.5);
+  fit(HL[(i+2)%3],W/2,29,W-10,16,'800 ');g.fillStyle='#8a8a86';g.fillRect(6,50,44,36);bars(56,52,62,7,'#6a6a66');g.fillStyle='rgba(0,0,0,.18)';g.fillRect(0,H-4,W,4);g.restore()}
+ /* letreiro BANCA */{const x=672,y=388,W=352,H=80;g.save();g.translate(x,y);g.fillStyle='#1e5a38';g.fillRect(0,0,W,H);g.strokeStyle='#ece6d2';g.lineWidth=5;g.strokeRect(4,4,W-8,H-8);
+  g.textAlign='center';g.textBaseline='middle';g.fillStyle='#14301e';fit('BANCA',W/2+3,32,W-40,46);g.fillStyle='#ffd21a';fit('BANCA',W/2,30,W-40,46);g.fillStyle='#ece6d2';fit('JORNAIS · REVISTAS · FIGURINHAS',W/2,64,W-40,14);g.restore()}
+ const t=new THREE.CanvasTexture(c);t.anisotropy=4;MAG.tex=t;const m=dnSignMat(t,.3);m.polygonOffset=true;m.polygonOffsetFactor=-1;m.polygonOffsetUnits=-2;m.userData.cached=true;MAG.mat=m;return m}
+function magsMesh(list){if(!list||!list.length)return null;const pos=[],uv=[],idx=[];list.forEach((q,n)=>{const u=q.uv;for(const p of q.pts)pos.push(...p);uv.push(u[0],u[1],u[2],u[1],u[2],u[3],u[0],u[3]);const b=n*4;idx.push(b,b+1,b+2,b,b+2,b+3)});
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();
+ const m=new THREE.Mesh(g,magAtlas());m.castShadow=false;m.receiveShadow=true;return m}
 function fitFill(g,t,x,y,maxW,px,fam){let f=px;g.font='700 '+f+'px '+fam;while(f>8&&g.measureText(t).width>maxW){f--;g.font='700 '+f+'px '+fam}g.fillText(t,x,y)}
 function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if(city.neonRoad&&!city.neonRoad.prepped){city.neonRoad.prepped=true;try{nrMouthPrep(city.neonRoad)}catch(e){}}
  const st=city.st,night=!!st.synth,M=city.M,N=city.N,E=city.ext,NC=Math.ceil(N/CS),o=RW/2,Rsave=R;
@@ -2495,10 +2546,48 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
     const bc=addCol(...rect(S0,t-1,t+1,d0,db),'rock');bc.low=1.15}}}
   // banca de jornal numa esquina + caixa de correio
   if(fr()<.42){const S0=side(pkF()),t=4.8+fr()*2,d0=2.0,d1=3.6,R0=rect(S0,t-1.3,t+1.3,d0-.9,d1);
-   if(free(...R0)){const kiosk=COL('#2a7a4a'),awn=COL('#e8c040'),mag=['#d8202a','#2a6ab0','#f2c21a','#ff6fae','#f4f4f0','#3ab36a'];
-    BX(S0,t-1.2,t+1.2,d0,d1,.26,2.3,kiosk);BX(S0,t-1.35,t+1.35,d0-.9,d1+.1,2.3,2.42,awn);BX(S0,t-1.35,t+1.35,d0-.95,d0-.85,2.0,2.42,awn);
-    for(let k=0;k<6;k++){const tt=t-1.05+k*.36;BX(S0,tt,tt+.3,d0-.06,d0,1.0,1.4,COL(mag[k]));BX(S0,tt,tt+.3,d0-.06,d0,1.5,1.9,COL(mag[(k+2)%6]))}
-    BX(S0,t-1.2,t+1.2,d0-.35,d0,.26,.9,COL('#1e5a38'));for(let k=0;k<5;k++){const tt=t-1+k*.42;BX(S0,tt,tt+.34,d0-.34,d0-.04,.9,.93,COL(mag[(k+3)%6]))}
+   if(free(...R0)){
+    /* v4 r12: banca detalhada — base escura, cantoneiras e cornija creme, 3 prateleiras com revistas inclinadas (capas do atlas MAG),
+       revistas nas laterais, balcão com jornais dobrados em pilha e primeiras páginas na frente, toldo listrado com babado recortado,
+       letreiro BANCA (frente e verso), revistas penduradas no varal, 2 lâmpadas (acendem ao anoitecer) e lousa "JORNAL $1" na calçada.
+       Sorteio próprio da banca (kr): não consome fr()/R(). Mesmo colisor e mesmo ponto do cliente de antes. */
+    const kr=mulberry32((ri*374761393+S.seed*668265263+0xba9ca)>>>0),kpk=n=>Math.floor(kr()*n);
+    const kiosk=COL('#2a7a4a'),kioskD=COL('#1e5a38'),trim=COL('#ece6d2'),base=COL('#24282a'),metal=COL('#7c8288'),paper=COL('#e6e2d6'),
+     awnA=COL(night?'#ff3ec8':'#e8c040'),awnB=COL('#f6f2e8');
+    const PY=(tt,dd,y)=>{const q=S0.P(tt,dd);return[q[0],y,q[1]]};
+    const MQ=(pts,uv)=>(ch.mags=ch.mags||[]).push({pts,uv});
+    /* frente (normal para a rua): quem olha da rua vê +t à esquerda; dB/dT = afastamento na base/topo (inclinação) */
+    const QF=(tc,hw,dB,dT,y0,y1,uv)=>MQ([PY(tc+hw,dB,y0),PY(tc-hw,dB,y0),PY(tc-hw,dT,y1),PY(tc+hw,dT,y1)],uv);
+    const QBk=(tc,hw,dd,y0,y1,uv)=>MQ([PY(tc-hw,dd,y0),PY(tc+hw,dd,y0),PY(tc+hw,dd,y1),PY(tc-hw,dd,y1)],uv);
+    /* lateral: sg=+1 lado +t, -1 lado -t; tB/tT = posição t na base/topo */
+    const QS=(sg,tB,tT,dc,hw,y0,y1,uv)=>sg>0?MQ([PY(tB,dc+hw,y0),PY(tB,dc-hw,y0),PY(tT,dc-hw,y1),PY(tT,dc+hw,y1)],uv):MQ([PY(tB,dc-hw,y0),PY(tB,dc+hw,y0),PY(tT,dc+hw,y1),PY(tT,dc-hw,y1)],uv);
+    const QU=(tc,hw,dc,hh,y,uv)=>MQ([PY(tc+hw,dc-hh,y),PY(tc-hw,dc-hh,y),PY(tc-hw,dc+hh,y),PY(tc+hw,dc+hh,y)],uv);
+    let ci=kpk(29);const cov=()=>MAGUV.cover(ci=(ci+11)%29); /* passo 11 (primo com 29): 29 capas seguidas sem repetir */
+    // corpo, base, balcão e acabamentos
+    BX(S0,t-1.23,t+1.23,d0-.38,d1+.03,.26,.42,base);BX(S0,t-1.2,t+1.2,d0,d1,.42,2.18,kiosk);BX(S0,t-1.2,t+1.2,d0-.35,d0,.42,.86,kioskD);
+    BX(S0,t-1.24,t+1.24,d0-.4,d0,.86,.9,trim);BX(S0,t-1.24,t+1.24,d0-.04,d1+.04,2.18,2.3,trim);
+    for(const tt of[t-1.2,t+1.2]){BX(S0,tt-.04,tt+.04,d0-.04,d0+.04,.9,2.18,trim);BX(S0,tt-.04,tt+.04,d1-.04,d1+.04,.42,2.18,trim)}
+    // prateleiras da frente: 3 fileiras × 8 revistas encostadas (base 8 cm pra fora, topo 2 cm)
+    for(const y0 of[.96,1.36,1.76]){BX(S0,t-1.16,t+1.16,d0-.1,d0,y0-.04,y0+.01,metal);
+     for(let k=0;k<8;k++){const tc=t-1.14+.1425+k*.285;QF(tc,.125,d0-.085,d0-.022,y0+.012,y0+.35,cov())}}
+    // laterais: 2 fileiras × 2 revistas de cada lado, perto da frente
+    for(const sg of[-1,1]){const ts=t+sg*1.2;for(const y0 of[1.0,1.42]){BX(S0,Math.min(ts,ts+sg*.06),Math.max(ts,ts+sg*.06),d0+.16,d0+.86,y0-.04,y0+.01,metal);
+     for(const dc of[d0+.34,d0+.68])QS(sg,ts+sg*.055,ts+sg*.018,dc,.125,y0+.012,y0+.35,cov())}}
+    // balcão: pilhas de jornal dobrado em cima, primeiras páginas presas na frente
+    for(let k=0;k<4;k++){const tc=t-.87+k*.58,hgt=.015+kr()*.045;BX(S0,tc-.2,tc+.2,d0-.34,d0-.05,.9,.9+hgt,paper);QU(tc,.2,d0-.195,.145,.9+hgt+.004,MAGUV.fold(kpk(3)))}
+    BX(S0,t-1.1,t+1.1,d0-.38,d0-.35,.82,.85,metal);for(let k=0;k<3;k++)QF(t-.7+k*.7,.15,d0-.362,d0-.362,.43,.83,MAGUV.paper((k+kpk(3))%3));
+    // toldo listrado (6 faixas) + babado da frente recortado + abas laterais + mãos-francesas
+    for(let k=0;k<6;k++){const ta=t-1.35+k*.45,tb=ta+.45,cl=k%2?awnB:awnA;BX(S0,ta,tb,d0-.9,d1+.1,2.3,2.42,cl);BX(S0,ta,tb,d0-.95,d0-.9,2.1,2.42,cl);BX(S0,ta+.08,tb-.08,d0-.95,d0-.9,2.02,2.1,cl)}
+    for(const tt of[t-1.35,t+1.35])BX(S0,tt-.025,tt+.025,d0-.9,d1+.1,2.22,2.3,awnA);
+    for(const tt of[t-1.12,t+1.12])BX(S0,tt-.025,tt+.025,d0-.86,d0,2.25,2.3,metal);
+    for(const tt of[t-.6,t+.6])BX(S0,tt-.07,tt+.07,d0-.55,d0-.45,2.22,2.3,COL('#fff2c8'),neonDN);
+    // letreiro BANCA em cima do toldo (frente e verso)
+    BX(S0,t-1.0,t+1.0,d0-.06,d0+.02,2.42,2.9,trim);QF(t,.94,d0-.072,d0-.072,2.45,2.87,MAGUV.sign());QBk(t,.94,d0+.032,2.45,2.87,MAGUV.sign());
+    // varal com revistas penduradas nos cantos da frente (fora do lugar do cliente)
+    for(const sg of[-1,1]){BX(S0,Math.min(t+sg*.6,t+sg*1.15),Math.max(t+sg*.6,t+sg*1.15),d0-.63,d0-.61,2.08,2.1,COL('#2a2a2a'));
+     for(const tc of[t+sg*.74,t+sg*1.0]){BX(S0,tc-.115,tc+.115,d0-.6,d0-.595,1.76,2.06,paper);QF(tc,.11,d0-.612,d0-.612,1.77,2.06,cov());BX(S0,tc-.015,tc+.015,d0-.64,d0-.58,2.04,2.12,COL('#c8a070'))}}
+    // lousa "JORNAL $1" na calçada, do lado da banca (só se o lugar estiver livre)
+    {const ts=t-1.72,dc=d0-.45;if(free(...rect(S0,ts-.3,ts+.3,dc-.3,dc+.3))){QS(-1,ts-.17,ts-.03,dc,.22,.27,.88,MAGUV.board());QS(1,ts+.17,ts+.03,dc,.22,.27,.88,MAGUV.board());BX(S0,ts-.04,ts+.04,dc-.23,dc+.23,.86,.91,COL('#8a5a36'))}}
     addCol(...rect(S0,t-1.2,t+1.2,d0-.35,d1),'rock');{const kp=S0.P(t,d0-.85);(ch.kiosks=ch.kiosks||[]).push({x:kp[0],z:kp[1]})} // v78: ponto do cliente da banca (jornal $1)
     const m=S0.P(t+2.1,.9);if(free(m[0]-.4,m[1]-.4,m[0]+.4,m[1]+.4)){det.box(m[0]-.28,.26,m[1]-.22,m[0]+.28,1.1,m[1]+.22,COL('#2a5ab0'));det.geo(GEO.cyl,mtx(m[0],1.1,m[1],.28,.06,.22),COL('#2a5ab0'));det.box(m[0]-.2,.9,m[1]-.23,m[0]+.2,.95,m[1]+.23,COL('#f2c21a'));det.box(m[0]-.05,.26,m[1]-.05,m[0]+.05,.4,m[1]+.05,COL('#1a1a20'))}}}
  }
@@ -2585,7 +2674,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
  // a copa original fica visível e segue o LOD. Fora da lista de castShadow.
  ch.forestTreeMesh=add(forestPlants,M.plant,false,false);
  prepareSurfaceMesh(add(forestFloor,M.surface,false,false),'ground',st);
- ch.neonMesh=add(neon,M.neon,false,false);if(ch.ads&&ch.ads.length&&!city.haze){ch.adMesh=adsMesh(ch.ads);if(ch.adMesh)ch.group.add(ch.adMesh)}if(ch.graf&&ch.graf.length){ch.grafMesh=grafMesh(ch.graf);if(ch.grafMesh)ch.group.add(ch.grafMesh)}ch.neonDNMesh=add(neonDN,M.neonDN,false,false);ch.glowMesh=st.noLamps?null:add(glow,M.glow,false,false,2);
+ ch.neonMesh=add(neon,M.neon,false,false);if(ch.ads&&ch.ads.length&&!city.haze){ch.adMesh=adsMesh(ch.ads);if(ch.adMesh)ch.group.add(ch.adMesh)}if(ch.graf&&ch.graf.length){ch.grafMesh=grafMesh(ch.graf);if(ch.grafMesh)ch.group.add(ch.grafMesh)}if(ch.mags&&ch.mags.length){ch.magMesh=magsMesh(ch.mags);if(ch.magMesh)ch.group.add(ch.magMesh)}ch.neonDNMesh=add(neonDN,M.neonDN,false,false);ch.glowMesh=st.noLamps?null:add(glow,M.glow,false,false,2);
  // v264: registrar a geometria estrutural de oclusao dos atores NA GERACAO.
  // O SHADOW DISTANCE (v259) altera castShadow dinamicamente; se o raycaster
  // montar o cache DEPOIS dessa alteracao, paredes de prédios largos e em L

@@ -115,7 +115,7 @@ function chunkLod(ch,d,immediate=false){
   // São malhas batch já existentes. Apenas um clone de material por batch.
   const batch=(meshes,a,reverse=false)=>meshes.filter(Boolean).map(o=>lodSoftBind(o,a,reverse)).filter(Boolean);
   ch._lodFade={near:batch([ch.lodNearMesh,ch.fenceMesh],near),
-   mid:batch([ch.lodMidMesh,ch.markMesh,ch.binMesh,ch.wireIns,ch.tlpMesh,ch.plantMesh,ch.forestTreeMesh,ch.glowMesh,ch.neonMesh,ch.neonDNMesh,ch.adMesh,...(ch.tlIMs||[])],mid),
+   mid:batch([ch.lodMidMesh,ch.markMesh,ch.binMesh,ch.wireIns,ch.tlpMesh,ch.plantMesh,ch.forestTreeMesh,ch.glowMesh,ch.neonMesh,ch.neonDNMesh,ch.adMesh,ch.magMesh,...(ch.tlIMs||[])],mid),
    windows:batch([ch.lodFarWindowMesh],windows,true),
    // v78: postes (haste + luminária) somem com dither na faixa "far" (100 m desktop / 80 m mobile × OBJECT DISTANCE).
    // Antes ficavam sempre, chunk inteiro, até o fim da névoa. O brilho noturno (glow) continua.
