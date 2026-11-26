@@ -106,6 +106,13 @@ function magAtlas(){if(MAG.mat)return MAG.mat;const c=cv(MAG.W,MAG.H),g=c.getCon
   fit(HL[(i+2)%3],W/2,29,W-10,16,'800 ');g.fillStyle='#8a8a86';g.fillRect(6,50,44,36);bars(56,52,62,7,'#6a6a66');g.fillStyle='rgba(0,0,0,.18)';g.fillRect(0,H-4,W,4);g.restore()}
  /* letreiro BANCA */{const x=672,y=388,W=352,H=80;g.save();g.translate(x,y);g.fillStyle='#1e5a38';g.fillRect(0,0,W,H);g.strokeStyle='#ece6d2';g.lineWidth=5;g.strokeRect(4,4,W-8,H-8);
   g.textAlign='center';g.textBaseline='middle';g.fillStyle='#14301e';fit('BANCA',W/2+3,32,W-40,46);g.fillStyle='#ffd21a';fit('BANCA',W/2,30,W-40,46);g.fillStyle='#ece6d2';fit('JORNAIS · REVISTAS · FIGURINHAS',W/2,64,W-40,14);g.restore()}
+ /* v4 r48 · envelhecido: papel amarelado e manchado, cantos gastos nas capas, letreiro desbotado com borda lascada e escorrido */
+ {const ar=mulberry32(0x0a6ed);const sp=(x,y,w,h,n,col,a0,a1,r0,r1)=>{g.save();g.beginPath();g.rect(x,y,w,h);g.clip();g.fillStyle=col;for(let k=0;k<n;k++){g.globalAlpha=a0+ar()*(a1-a0);g.beginPath();g.arc(x+ar()*w,y+ar()*h,r0+ar()*(r1-r0),0,6.283);g.fill()}g.restore();g.globalAlpha=1};
+  for(let i=0;i<30;i++){const x=(i%10)*96,y=Math.floor(i/10)*128;g.globalAlpha=.09;g.fillStyle='#c8a860';g.fillRect(x,y,96,128);g.globalAlpha=1;sp(x,y,96,128,7,'#8a7040',.05,.12,4,14);
+   g.globalAlpha=.35;g.fillStyle='#f2ead2';for(const[cx,cy]of[[x,y],[x+96,y],[x,y+128],[x+96,y+128]]){g.beginPath();g.arc(cx,cy,3+ar()*5,0,6.283);g.fill()}g.globalAlpha=1;sp(x,y,96,128,25,'#ffffff',.15,.35,.4,1.2)}
+  g.globalAlpha=.16;g.fillStyle='#c8a050';g.fillRect(0,384,672,128);g.globalAlpha=1;sp(0,384,672,128,30,'#8a6a30',.05,.14,3,12); /* jornais amarelados */
+  {const x=672,y=388,W=352,H=80;g.globalAlpha=.2;g.fillStyle='#d8d0b0';g.fillRect(x,y,W,H);g.globalAlpha=1;sp(x,y,W,H,60,'#e8e0c8',.35,.7,.6,2.2);sp(x,y,W,8,24,'#1e5a38',.5,.9,1,3.5);
+   g.globalAlpha=.22;g.fillStyle='#3a2a1a';for(let k=0;k<14;k++){const sx=x+ar()*W;g.fillRect(sx,y+H*.55+ar()*H*.2,1+ar()*2,H*.25+ar()*H*.2)}g.globalAlpha=1;sp(x,y+H-10,W,10,30,'#5a3a1a',.2,.45,1,3)}}
  const t=new THREE.CanvasTexture(c);t.anisotropy=4;MAG.tex=t;const m=dnSignMat(t,.3);m.polygonOffset=true;m.polygonOffsetFactor=-1;m.polygonOffsetUnits=-2;m.userData.cached=true;MAG.mat=m;return m}
 function magsMesh(list){if(!list||!list.length)return null;const pos=[],uv=[],idx=[];list.forEach((q,n)=>{const u=q.uv;for(const p of q.pts)pos.push(...p);uv.push(u[0],u[1],u[2],u[1],u[2],u[3],u[0],u[3]);const b=n*4;idx.push(b,b+1,b+2,b,b+2,b+3)});
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();
@@ -2634,8 +2641,9 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
        letreiro BANCA (frente e verso), revistas penduradas no varal, 2 lâmpadas (acendem ao anoitecer) e lousa "JORNAL $1" na calçada.
        Sorteio próprio da banca (kr): não consome fr()/R(). Mesmo colisor e mesmo ponto do cliente de antes. */
     const kr=mulberry32((ri*374761393+S.seed*668265263+0xba9ca)>>>0),kpk=n=>Math.floor(kr()*n);
-    const kiosk=COL('#2a7a4a'),kioskD=COL('#1e5a38'),trim=COL('#ece6d2'),base=COL('#24282a'),metal=COL('#7c8288'),paper=COL('#e6e2d6'),
-     awnA=COL(night?'#ff3ec8':'#e8c040'),awnB=COL('#f6f2e8');
+    const kiosk=COL('#33714f'),kioskD=COL('#25553a'),trim=COL('#d8cfb4'),base=COL('#2a2a28'),metal=COL('#72736e'),paper=COL('#ddd4bc'),
+     awnA=COL(night?'#e443b8':'#d6b24c'),awnB=COL('#e6decb'); /* v4 r48: cores desbotadas (antes 2a7a4a/1e5a38/ece6d2/24282a/7c8288/e6e2d6, e8c040/f6f2e8) */
+    const BXA=(t0,t1,da,db,y0,y1,col,k,rust,cell)=>{const a=S0.P(t0,da),b=S0.P(t1,db);mbAgedBox(det,Math.min(a[0],b[0]),y0,Math.min(a[1],b[1]),Math.max(a[0],b[0]),y1,Math.max(a[1],b[1]),col,.26,k,rust,cell)}; /* v4 r48: faces envelhecidas (cor por vértice) */
     const PY=(tt,dd,y)=>{const q=S0.P(tt,dd);return[q[0],y,q[1]]};
     const MQ=(pts,uv)=>(ch.mags=ch.mags||[]).push({pts,uv});
     /* frente (normal para a rua): quem olha da rua vê +t à esquerda; dB/dT = afastamento na base/topo (inclinação) */
@@ -2646,7 +2654,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
     const QU=(tc,hw,dc,hh,y,uv)=>MQ([PY(tc+hw,dc-hh,y),PY(tc-hw,dc-hh,y),PY(tc-hw,dc+hh,y),PY(tc+hw,dc+hh,y)],uv);
     let ci=kpk(29);const cov=()=>MAGUV.cover(ci=(ci+11)%29); /* passo 11 (primo com 29): 29 capas seguidas sem repetir */
     // corpo, base, balcão e acabamentos
-    BX(S0,t-1.23,t+1.23,d0-.38,d1+.03,.26,.42,base);BX(S0,t-1.2,t+1.2,d0,d1,.42,2.18,kiosk);BX(S0,t-1.2,t+1.2,d0-.35,d0,.42,.86,kioskD);
+    BXA(t-1.23,t+1.23,d0-.38,d1+.03,.26,.42,base,1.2,true,.1);BXA(t-1.2,t+1.2,d0,d1,.42,2.18,kiosk,1,true,.14);BXA(t-1.2,t+1.2,d0-.35,d0,.42,.86,kioskD,1.1,true,.1);
     BX(S0,t-1.24,t+1.24,d0-.4,d0,.86,.9,trim);BX(S0,t-1.24,t+1.24,d0-.04,d1+.04,2.18,2.3,trim);
     for(const tt of[t-1.2,t+1.2]){BX(S0,tt-.04,tt+.04,d0-.04,d0+.04,.9,2.18,trim);BX(S0,tt-.04,tt+.04,d1-.04,d1+.04,.42,2.18,trim)}
     // prateleiras da frente: 3 fileiras × 8 revistas encostadas (base 8 cm pra fora, topo 2 cm)
@@ -2659,7 +2667,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
     for(let k=0;k<4;k++){const tc=t-.87+k*.58,hgt=.015+kr()*.045;BX(S0,tc-.2,tc+.2,d0-.34,d0-.05,.9,.9+hgt,paper);QU(tc,.2,d0-.195,.145,.9+hgt+.004,MAGUV.fold(kpk(3)))}
     BX(S0,t-1.1,t+1.1,d0-.38,d0-.35,.82,.85,metal);for(let k=0;k<3;k++)QF(t-.7+k*.7,.15,d0-.362,d0-.362,.43,.83,MAGUV.paper((k+kpk(3))%3));
     // toldo listrado (6 faixas) + babado da frente recortado + abas laterais + mãos-francesas
-    for(let k=0;k<6;k++){const ta=t-1.35+k*.45,tb=ta+.45,cl=k%2?awnB:awnA;BX(S0,ta,tb,d0-.9,d1+.1,2.3,2.42,cl);BX(S0,ta,tb,d0-.95,d0-.9,2.1,2.42,cl);BX(S0,ta+.08,tb-.08,d0-.95,d0-.9,2.02,2.1,cl)}
+    for(let k=0;k<6;k++){const ta=t-1.35+k*.45,tb=ta+.45,cl=k%2?awnB:awnA;BX(S0,ta,tb,d0-.9,d1+.1,2.3,2.42,cl);BXA(ta,tb,d0-.95,d0-.9,2.1,2.42,cl,.7,false,.08);BX(S0,ta+.08,tb-.08,d0-.95,d0-.9,2.02,2.1,cl)}
     for(const tt of[t-1.35,t+1.35])BX(S0,tt-.025,tt+.025,d0-.9,d1+.1,2.22,2.3,awnA);
     for(const tt of[t-1.12,t+1.12])BX(S0,tt-.025,tt+.025,d0-.86,d0,2.25,2.3,metal);
     for(const tt of[t-.6,t+.6])BX(S0,tt-.07,tt+.07,d0-.55,d0-.45,2.22,2.3,COL('#fff2c8'),neonDN);

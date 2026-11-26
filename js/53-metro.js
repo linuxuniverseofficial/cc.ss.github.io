@@ -27,6 +27,13 @@ function metroSignTex(sty){const c=cv(512,128),g=c.getContext('2d');const en=S.l
  g.fillText(txt,26,66);g.shadowBlur=0;
  const cols=sty==='inv'?['#3a2e2a','#2e3430','#3a3628','#2a2e36','#3a3028']:['#ee352e','#00933c','#fccc0a','#0039a6','#ff6319'];
  for(let i=0;i<5;i++){g.fillStyle=cols[i];g.beginPath();g.arc(318+i*38,66,15,0,6.283);g.fill();if(sty!=='inv'){g.fillStyle='rgba(255,255,255,.85)';g.font='bold 16px Arial,sans-serif';g.textAlign='center';g.fillText(String(i+1),318+i*38,67);g.textAlign='left'}}
+ /* v4 r48 · placa gasta: desbotada, riscos, borda lascada e sujeira escorrendo de baixo (Synthwave mais leve; Invertido já é apagado) */
+ {const ar=mulberry32(0x3e7a91),k=sty==='syn'?.5:sty==='inv'?.6:1;g.save();g.globalAlpha=.12*k;g.fillStyle='#b8b0a0';g.fillRect(0,0,512,128);
+  for(let i=0;i<70*k;i++){g.globalAlpha=(.15+ar()*.3)*k;g.fillStyle=ar()<.6?'#2a2622':'#d8d0c0';g.beginPath();g.arc(ar()*512,ar()*128,.6+ar()*2.4,0,6.283);g.fill()}
+  for(let i=0;i<26*k;i++){g.globalAlpha=(.1+ar()*.18)*k;g.fillStyle='#3a2a1a';const x=ar()*512;g.fillRect(x,70+ar()*30,1+ar()*2.5,18+ar()*40)}
+  g.globalAlpha=.18*k;g.strokeStyle='#e8e0d0';g.lineWidth=.8;for(let i=0;i<30;i++){const x=ar()*512,y=ar()*128,a=ar()*6.283,l=6+ar()*26;g.beginPath();g.moveTo(x,y);g.lineTo(x+Math.cos(a)*l,y+Math.sin(a)*l);g.stroke()}
+  g.globalAlpha=.55*k;g.fillStyle='#1a1612';for(let i=0;i<40;i++){const e=ar()*4|0,u=ar(),r=1.5+ar()*5;const x=e<2?u*512:(e===2?0:512),y=e<2?(e?128:0):u*128;g.beginPath();g.arc(x,y,r,0,6.283);g.fill()}
+  g.restore()}
  const t=new THREE.CanvasTexture(c);t.anisotropy=2;return t}
 /* ---------- geometria (sistema local: x = largura, z = comprimento; boca em z<0, placa em z>0; y=0 é a calçada) ---------- */
 function metroGeo(sty){const M=MTR,mb=new MB();
@@ -49,6 +56,13 @@ function metroGeo(sty){const M=MTR,mb=new MB();
  /* postes com globo na boca */
  for(const s of[-1,1]){const x=s*(ox+.08),z=iz0-.06;mb.box(x-.07,-.02,z-.07,x+.07,.14,z+.07,post);mb.box(x-.035,.14,z-.035,x+.035,2.32,z+.035,post);mb.box(x-.06,2.3,z-.06,x+.06,2.36,z+.06,top)}
  const body=mb.mesh(null).geometry;
+ /* v4 r48 · envelhecido: UV em metros (0,7 m por repetição da textura de desgaste) e cor por vértice desbotada com ferrugem subindo da base */
+ {const P=body.attributes.position.array,N=body.attributes.normal.array,C=body.attributes.color&&body.attributes.color.array,n=P.length/3,uv=new Float32Array(n*2),T=.7,k=sty==='syn'?.55:sty==='inv'?1.3:1;
+  for(let i=0;i<n;i++){const x=P[i*3],y=P[i*3+1],z=P[i*3+2],nx=Math.abs(N[i*3]),ny=Math.abs(N[i*3+1]);
+   if(ny>.5){uv[i*2]=x/T;uv[i*2+1]=z/T}else if(nx>.5){uv[i*2]=z/T;uv[i*2+1]=y/T}else{uv[i*2]=x/T;uv[i*2+1]=y/T}
+   if(C){let r=C[i*3],g=C[i*3+1],b=C[i*3+2];const L=r*.3+g*.59+b*.11,f=.22*k;r+=(L-r)*f;g+=(L-g)*f;b+=(L*.9-b)*f;
+    const ru=Math.max(0,1-(y+.03)/.5)*(.45+.55*ageN((x+z)*2.3+1.1,y*3.1))*.6*k;r+=(.42-r)*ru;g+=(.25-g)*ru;b+=(.14-b)*ru;C[i*3]=r;C[i*3+1]=g;C[i*3+2]=b}}
+  body.setAttribute('uv',new THREE.BufferAttribute(uv,2));if(C)body.attributes.color.needsUpdate=true}
  const sb=new MB(),W=COL('#ffffff');
  sb.quad([ox-.03,1.1,bz-.071],[-ox+.03,1.1,bz-.071],[-ox+.03,1.48,bz-.071],[ox-.03,1.48,bz-.071],0,0,-1,[0,0,1,1],W); /* frente (vista da boca) */
  sb.quad([-ox+.03,1.1,bz-.029],[ox-.03,1.1,bz-.029],[ox-.03,1.48,bz-.029],[-ox+.03,1.48,bz-.029],0,0,1,[0,0,1,1],W);  /* verso */
@@ -92,12 +106,13 @@ void main(){vec3 ro=vec3(vL.x,0.,vL.z);vec3 rd=normalize(vL-vC);rd.y=min(rd.y,-.
  vec3 col;vec3 p;
  if(hit>0.){float a=hit-dt,b=hit;for(int j=0;j<6;j++){float m=.5*(a+b);vec3 q=ro+rd*m;if(q.y<flo(q.z))b=m;else a=m;}
   p=ro+rd*b;vec3 qa=ro+rd*a;bool riser=stepI(qa.z)<stepI(p.z);float fz=fract((p.z-Z0)/RUN);
-  if(riser)col=uSt*.58;else{col=uSt*(.92+.08*fract(sin(stepI(p.z)*12.9)*437.5));if(fz>.84)col=uEd;}
+  if(riser)col=uSt*.52;else{col=uSt*(.86+.1*fract(sin(stepI(p.z)*12.9)*437.5));if(fz>.84)col=mix(uEd,uSt*.62,step(.55,fract(sin(dot(floor(p.xz*11.),vec2(5.1,2.3)))*311.7))*.85);col*=1.-.18*fract(sin(dot(floor(p.xz*4.),vec2(1.7,9.2)))*91.7);}
  }else{p=ro+rd*tw;
   if(tw==tb)col=uSt*.4;
   else{vec2 uv=(tw==tx)?vec2(p.z,p.y):vec2(p.x,p.y);vec2 g=floor(uv/.16);float ch=mod(g.x+g.y,2.);
-   col=uT1*(.9+.1*ch);if(p.y<-.32&&p.y>-.52)col=uT2;if(p.y<-1.9)col=mix(uT1,uT2,.55)*.8;
-   vec2 f=fract(uv/.16);if(f.x<.07||f.y<.07)col*=.78;
+   col=uT1*(.86+.1*ch)*(1.-.12*fract(sin(dot(g,vec2(12.9,78.2)))*43758.5));if(p.y<-.32&&p.y>-.52)col=uT2;if(p.y<-1.9)col=mix(uT1,uT2,.55)*.8;
+   vec2 f=fract(uv/.16);if(f.x<.07||f.y<.07)col*=.58; /* v4 r48: rejunte sujo */
+   col*=1.-.3*smoothstep(-.4,-2.2,p.y)*step(.45,fract(sin(dot(floor(uv/.48),vec2(3.1,7.7)))*91.3)); /* manchas de umidade descendo */
    if(tw==tz&&rd.z>0.){float fl=-NS*RISE;if(abs(p.x)<HW-.2&&p.y<fl+2.05)col=vec3(.02,.02,.025);}
    if(tw==tz&&rd.z<0.)col*=.85;}}
  float dk=exp(p.y*.62);col*=uL*mix(.18,1.,dk);col+=vec3(.05,.045,.03)*uN*dk;
@@ -146,7 +161,7 @@ function metroPlace(){metroClear();if(!city.rects||!city.info||city.haze||!city.
  out.forEach((s,i)=>{s.i=i;s.name=names[i];const W=(lx,lz)=>[s.x+lx*s.cs+lz*s.sn,s.z-lx*s.sn+lz*s.cs];const e=W(0,MTR.OZ0-.75),o=W(0,MTR.OZ0-2);s.ex=e[0];s.ez=e[1];s.fx=o[0]-s.x;s.fz=o[1]-s.z;const fl=Math.hypot(s.fx,s.fz)||1;s.fx/=fl;s.fz/=fl});
  METRO.list=out;metroBuild()}
 function metroBuild(){const out=METRO.list,n=out.length;if(!n)return;const sty=metroStyle(),geo=metroGeo(sty);METRO.tex=metroSignTex(sty);
- const bm=new THREE.MeshLambertMaterial({vertexColors:true}),sm=new THREE.MeshBasicMaterial({map:METRO.tex}),gm=new THREE.MeshBasicMaterial({color:sty==='inv'?0x121312:sty==='syn'?0x59f6ff:0x3dff7a});
+ const bm=new THREE.MeshLambertMaterial({vertexColors:true,map:ageWearTex()}) /* v4 r48: textura de desgaste (lascas, riscos, ferrugem) */,sm=new THREE.MeshBasicMaterial({map:METRO.tex}),gm=new THREE.MeshBasicMaterial({color:sty==='inv'?0x121312:sty==='syn'?0x59f6ff:0x3dff7a});
  METRO.pitMat=metroPitMat(sty);
  const B=new THREE.InstancedMesh(geo.body,bm,n),SG=new THREE.InstancedMesh(geo.sign,sm,n),GL=new THREE.InstancedMesh(geo.glb,gm,n),PT=new THREE.InstancedMesh(geo.pit,METRO.pitMat,n);
  const m=new THREE.Matrix4(),q=new THREE.Quaternion(),up=new THREE.Vector3(0,1,0),p=new THREE.Vector3(),one=new THREE.Vector3(1,1,1);

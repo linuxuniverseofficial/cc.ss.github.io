@@ -280,3 +280,46 @@ function addCol(x0,z0,x1,z1,kind){const c={x0,z0,x1,z1,kind,stamp:0,dead:false,k
 const qOut=[];
 function query(x,z,r){stampN++;qOut.length=0;
  for(let gx=Math.floor((x-r)/GR);gx<=Math.floor((x+r)/GR);gx++)for(let gz=Math.floor((z-r)/GR);gz<=Math.floor((z+r)/GR);gz++){const l=grid.get(gx*100003+gz);if(!l)continue;for(const c of l)if(c.stamp!==stampN){c.stamp=stampN;qOut.push(c)}}return qOut}
+
+/* v4 r48 · ENVELHECIMENTO de mobiliário urbano (banca de jornal, entrada do metrô): ruído determinístico por posição (sem R()),
+   cor envelhecida por vértice (tinta desbotada, sujeira subindo da base, escorrido vertical, lascas e ferrugem) e textura de desgaste
+   (canvas único, gerado uma vez) para materiais com mapa. Nada roda por quadro. */
+const AGE={tex:null};
+function ageH(x,y){let h=(Math.imul(x|0,374761393)+Math.imul(y|0,668265263))|0;h=Math.imul(h^(h>>>13),1274126177);return((h^(h>>>16))>>>0)/4294967296}
+function ageN(x,y){const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi,u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf);
+ const a=ageH(xi,yi),b=ageH(xi+1,yi),c=ageH(xi,yi+1),d=ageH(xi+1,yi+1);return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v}
+/* cor envelhecida no ponto (s = coordenada horizontal ao longo da face, y = altura acima da base do objeto); k = intensidade (0–1.3);
+   rust = quanto da sujeira de baixo vira ferrugem (metal) */
+function ageColor(col,s,y,k,rust,out){const n=ageN(s*1.6,y*1.6)*.6+ageN(s*4.1+7.3,y*4.1)*.4;
+ let r=col.r,g=col.g,b=col.b;const L=r*.3+g*.59+b*.11;
+ /* desbotado: puxa para o cinza e amarela de leve */const f=.2*k;r+=(L*1.02-r)*f;g+=(L*1.0-g)*f;b+=(L*.86-b)*f;
+ /* sujeira subindo da base (altura irregular) */const hb=.22+.5*ageN(s*.9+3.1,.5);const base=(1-Math.min(1,Math.max(0,y/hb)))*(.55+.45*n)*k;
+ const dr=rust?.42:.34,dg=rust?.26:.3,db=rust?.15:.24;r+=(dr-r)*base*.7;g+=(dg-g)*base*.7;b+=(db-b)*base*.7;
+ /* escorrido vertical (ruído fino na horizontal, longo na vertical) */const st=ageN(s*9.5+1.7,y*.35);const drip=Math.max(0,st-.55)*2.2*k;r*=1-drip*.32;g*=1-drip*.34;b*=1-drip*.35;
+ /* manchas grandes */const bl=Math.max(0,n-.55)*1.6*k;r*=1-bl*.26;g*=1-bl*.26;b*=1-bl*.22;
+ /* lascas: pontos claros (tinta de baixo) e, no metal, ferrugem */const ch=ageH(Math.floor(s*14),Math.floor(y*14));if(ch>.955-.03*k){if(rust&&ch>.985){r=.48;g=.27;b=.14}else{r=r*.55+.36;g=g*.55+.35;b=b*.55+.32}}
+ out[0]=Math.min(1,Math.max(0,r));out[1]=Math.min(1,Math.max(0,g));out[2]=Math.min(1,Math.max(0,b));return out}
+const AGE_TMP=[0,0,0];
+/* quad subdividido com cor por vértice (MB indexado). a,b,d = cantos (a→b horizontal, a→d vertical); n = normal; fn(x,y,z,out) devolve a cor */
+function mbAgedQuad(mb,a,b,d,nx,ny,nz,nu,nv,fn){if(!mb.idx){const c=[b[0]+d[0]-a[0],b[1]+d[1]-a[1],b[2]+d[2]-a[2]];fn((a[0]+c[0])/2,(a[1]+c[1])/2,(a[2]+c[2])/2,AGE_TMP);
+  mb.quad(a,b,c,d,nx,ny,nz,[0,0,1,1],new THREE.Color(AGE_TMP[0],AGE_TMP[1],AGE_TMP[2]));return}
+ const P=mb.p,b0=P.length/3,ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2],vx=d[0]-a[0],vy=d[1]-a[1],vz=d[2]-a[2];
+ for(let j=0;j<=nv;j++)for(let i=0;i<=nu;i++){const u=i/nu,v=j/nv,x=a[0]+ux*u+vx*v,y=a[1]+uy*u+vy*v,z=a[2]+uz*u+vz*v;P.push(x,y,z);mb.n.push(nx,ny,nz);mb.u.push(u,v);fn(x,y,z,AGE_TMP);mb.c.push(AGE_TMP[0],AGE_TMP[1],AGE_TMP[2])}
+ const W=nu+1;for(let j=0;j<nv;j++)for(let i=0;i<nu;i++){const p0=b0+j*W+i;mb.idx.push(p0,p0+1,p0+W+1,p0,p0+W+1,p0+W)}}
+/* caixa alinhada aos eixos com as 4 laterais envelhecidas (topo liso, cor desbotada); gy = altura da base do objeto (sujeira sobe dela) */
+function mbAgedBox(mb,x0,y0,z0,x1,y1,z1,col,gy,k,rust,cell){cell=cell||.12;const nv=Math.max(1,Math.round((y1-y0)/cell)),fx=Math.max(1,Math.round((x1-x0)/cell)),fz=Math.max(1,Math.round((z1-z0)/cell));
+ const fn=(sx)=>(x,y,z,o)=>ageColor(col,sx(x,z),y-gy,k,rust,o);
+ mb.quad([x0,y1,z1],[x1,y1,z1],[x1,y1,z0],[x0,y1,z0],0,1,0,[0,0,1,1],ageColor(col,x0+z0,y1-gy+3,k*.6,rust,AGE_TMP)&&new THREE.Color(AGE_TMP[0],AGE_TMP[1],AGE_TMP[2]));
+ mbAgedQuad(mb,[x1,y0,z1],[x1,y0,z0],[x1,y1,z1],1,0,0,fz,nv,fn((x,z)=>-z));
+ mbAgedQuad(mb,[x0,y0,z0],[x0,y0,z1],[x0,y1,z0],-1,0,0,fz,nv,fn((x,z)=>z+31.7));
+ mbAgedQuad(mb,[x0,y0,z1],[x1,y0,z1],[x0,y1,z1],0,0,1,fx,nv,fn((x,z)=>x+57.1));
+ mbAgedQuad(mb,[x1,y0,z0],[x0,y0,z0],[x1,y1,z0],0,0,-1,fx,nv,fn((x,z)=>-x+13.3))}
+/* textura de desgaste 256² (multiplica a cor do material): lascas, riscos, escorrido, pontos de ferrugem. Gerada uma vez (mulberry32 fixo). */
+function ageWearTex(){if(AGE.tex)return AGE.tex;const N=256,c=cv(N,N),g=c.getContext('2d'),r=mulberry32(0x5eed42);g.fillStyle='#f2f2f2';g.fillRect(0,0,N,N);
+ const dot=(x,y,rr,col,a)=>{g.globalAlpha=a;g.fillStyle=col;for(const ox of[-N,0,N])for(const oy of[-N,0,N]){g.beginPath();g.arc(x+ox,y+oy,rr,0,6.283);g.fill()}};
+ for(let i=0;i<90;i++)dot(r()*N,r()*N,6+r()*22,'#7a7468',.1+r()*.12); /* manchas */
+ for(let i=0;i<40;i++){const x=r()*N,w=1+r()*2.5,y0=r()*N,h=20+r()*90;g.globalAlpha=.14+r()*.14;g.fillStyle='#4a4238';for(const ox of[-N,0,N]){g.fillRect(x+ox,y0,w,h);g.fillRect(x+ox,y0-N,w,h)}} /* escorrido (v = vertical) */
+ for(let i=0;i<260;i++)dot(r()*N,r()*N,1+r()*2.6,r()<.5?'#ffffff':'#c9c2b4',.5+r()*.4); /* lascas claras */
+ for(let i=0;i<70;i++)dot(r()*N,r()*N,1+r()*2.4,'#7a4422',.6+r()*.35); /* ferrugem */
+ g.globalAlpha=.18;g.strokeStyle='#4a4640';g.lineWidth=.8;for(let i=0;i<50;i++){const x=r()*N,y=r()*N,a=r()*6.283,l=4+r()*18;g.beginPath();g.moveTo(x,y);g.lineTo(x+Math.cos(a)*l,y+Math.sin(a)*l);g.stroke()} /* riscos */
+ g.globalAlpha=1;const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=4;AGE.tex=t;return t}
