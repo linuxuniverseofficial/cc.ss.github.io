@@ -227,3 +227,25 @@ Object.assign(MAP_ICON_DEFS,{metro:{c:'#3aa0ff',p:'M12 2.5A9.5 9.5 0 1 1 11.99 2
 {const f0=mapLegendItems;mapLegendItems=function(){const A=f0.apply(this,arguments);if(city.haze||S.style==='inverted'||!METRO.list.length)return A;if(storyMap('metro'))A.push(['metro','METRÔ',true]);return A}}
 /* ---------- cidade nova ---------- */
 {const f0=generateCity;generateCity=async function(){const r=await f0.apply(this,arguments);try{metroPlace()}catch(e){console.error('[metrô]',e)}return r}}
+
+/* ---------- v4 r52 · linha do metrô no mapa ----------
+   Na boca de uma estação (balão METRÔ ativo) o mapa e o minimapa desenham a linha ligando todas as estações, por cima do
+   mapa, em trechos retos em L (túnel: não segue as ruas), com contorno e bolinha por estação; a estação atual fica maior.
+   Ordem da linha = vizinho mais próximo a partir da estação mais a oeste, refeita quando a lista muda (METRO.lineFor). */
+const METRO_LINE={for:null,pts:[]};
+function metroLineBuild(){const L=METRO.list;METRO_LINE.for=L;METRO_LINE.n=L.length;const P=METRO_LINE.pts;P.length=0;if(L.length<2)return;
+ const left=L.slice();left.sort((a,b)=>a.x-b.x);const ord=[left.shift()];
+ while(left.length){const c=ord[ord.length-1];let bi=0,bd=1e18;for(let i=0;i<left.length;i++){const d=(left[i].x-c.x)**2+(left[i].z-c.z)**2;if(d<bd){bd=d;bi=i}}ord.push(left.splice(bi,1)[0])}
+ for(let i=0;i<ord.length;i++){const a=ord[i];P.push([a.x,a.z]);const b=ord[i+1];if(!b)break;
+  /* cotovelo: anda primeiro no eixo mais longo (linha de mapa de metrô) */
+  if(Math.abs(b.x-a.x)>=Math.abs(b.z-a.z))P.push([b.x,a.z]);else P.push([a.x,b.z])}
+ METRO_LINE.ord=ord}
+function metroMapOn(){return !city.haze&&S.style!=='inverted'&&METRO.list.length>1&&!!metroNear()}
+function metroMapDraw(g,sc,lw,rot){if(!metroMapOn())return;if(METRO_LINE.for!==METRO.list||METRO_LINE.n!==METRO.list.length)metroLineBuild();const P=METRO_LINE.pts;if(P.length<2)return;
+ const cur=METRO.near&&METRO.near.st;g.save();g.lineJoin='miter';g.lineCap='square';
+ const path=()=>{g.beginPath();for(let i=0;i<P.length;i++){const q=P[i];if(i)g.lineTo(q[0]+MOFF,q[1]+MOFF);else g.moveTo(q[0]+MOFF,q[1]+MOFF)}};
+ path();g.strokeStyle='rgba(5,18,40,.9)';g.lineWidth=lw*2.1/sc;g.stroke();
+ path();g.strokeStyle='#3aa0ff';g.lineWidth=lw*1.25/sc;g.stroke();
+ for(const s of METRO_LINE.ord){const r=(s===cur?6.5:4.2)*(lw>=4?1.3:1)/sc;g.beginPath();g.arc(s.x+MOFF,s.z+MOFF,r,0,Math.PI*2);g.fillStyle='#fff';g.fill();g.lineWidth=Math.max(1.2,lw*.55)/sc;g.strokeStyle=s===cur?'#ffd24a':'#3aa0ff';g.stroke()}
+ g.restore()}
+{const f0=drawNav;drawNav=function(g,sc,lw,rot){try{metroMapDraw(g,sc,lw,rot||0)}catch(e){console.error(e)}return f0.apply(this,arguments)}}
