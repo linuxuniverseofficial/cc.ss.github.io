@@ -2669,7 +2669,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
      for(const tc of[t+sg*.74,t+sg*1.0]){BX(S0,tc-.115,tc+.115,d0-.6,d0-.595,1.76,2.06,paper);QF(tc,.11,d0-.612,d0-.612,1.77,2.06,cov());BX(S0,tc-.015,tc+.015,d0-.64,d0-.58,2.04,2.12,COL('#c8a070'))}}
     // lousa "JORNAL $1" na calçada, do lado da banca (só se o lugar estiver livre)
     {const ts=t-1.72,dc=d0-.45;if(free(...rect(S0,ts-.3,ts+.3,dc-.3,dc+.3))){QS(-1,ts-.17,ts-.03,dc,.22,.27,.88,MAGUV.board());QS(1,ts+.17,ts+.03,dc,.22,.27,.88,MAGUV.board());BX(S0,ts-.04,ts+.04,dc-.23,dc+.23,.86,.91,COL('#8a5a36'))}}
-    addCol(...rect(S0,t-1.2,t+1.2,d0-.35,d1),'rock');{const kp=S0.P(t,d0-.85);(ch.kiosks=ch.kiosks||[]).push({x:kp[0],z:kp[1]})} // v78: ponto do cliente da banca (jornal $1)
+    addCol(...rect(S0,t-1.2,t+1.2,d0-.35,d1),'rock');{const kp=S0.P(t,d0-.85);(ch.kiosks=ch.kiosks||[]).push({x:kp[0],z:kp[1],box:rect(S0,t-1.2,t+1.2,d0-.35,d1)})} // v78: ponto do cliente da banca (jornal $1)
     const m=S0.P(t+2.1,.9);if(free(m[0]-.4,m[1]-.4,m[0]+.4,m[1]+.4)){det.box(m[0]-.28,.26,m[1]-.22,m[0]+.28,1.1,m[1]+.22,COL('#2a5ab0'));det.geo(GEO.cyl,mtx(m[0],1.1,m[1],.28,.06,.22),COL('#2a5ab0'));det.box(m[0]-.2,.9,m[1]-.23,m[0]+.2,.95,m[1]+.23,COL('#f2c21a'));det.box(m[0]-.05,.26,m[1]-.05,m[0]+.05,.4,m[1]+.05,COL('#1a1a20'))}}}
  }
  /* --- r33 · LIXO NAS CALÇADAS dos quarteirões de prédios: pouco e espalhado, na faixa entre a linha dos pedestres (2 m da guia) e a fachada (SW=4).

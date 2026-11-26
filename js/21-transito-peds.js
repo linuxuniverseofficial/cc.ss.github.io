@@ -528,7 +528,7 @@ function updatePeds(dt){try{ped3dJobTick()}catch(e){console.error(e);PED3JOB.cur
      if(ds&&ds.length){const L=2*((p.r[2]-p.r[0])+(p.r[3]-p.r[1])),a=((t0%L)+L)%L,stp=Math.abs(p.t-t0);
       for(const d of ds){const g=p.dir>0?((d.td-a)%L+L)%L:((a-d.td)%L+L)%L;if(g<=stp&&R2()<(p.rainMode?.5:d.house?.14:.1)){p.state='toDoor';p.wp=[[d.ox,d.oz],[d.x,d.z]];break}}}
      if(p.state==='walk'&&!run&&R2()<dt*.005&&city.info[p.ri]&&city.info[p.ri].kind==='bld'){const pt=pedPointTmp(p);p.state='gaze';p.timer=5+R2()*9;p.mx=-pt[3];p.mz=pt[2]}}}
-   if(p.state==='walk'||p.state==='idle'||p.state==='talk'||p.state==='gaze'){const pt=pedPointTmp(p);const nx=pt[0],nz=pt[1];if(p.state==='walk'){p.mx=pt[2]*p.dir;p.mz=pt[3]*p.dir}
+   if(p.state==='walk'||p.state==='idle'||p.state==='talk'||p.state==='gaze'){let pt=pedPointTmp(p);if(p.state==='walk'&&pedBlockAt(pt[0],pt[1])&&!pedBlockAt(p.x,p.z)){p.dir*=-1;p.t+=p.dir*.35;pt=pedPointTmp(p)} /* v4 r42: meia-volta antes de banca/metrô/caixa eletrônico */const nx=pt[0],nz=pt[1];if(p.state==='walk'){p.mx=pt[2]*p.dir;p.mz=pt[3]*p.dir}
     p.x=nx;p.z=nz;p.vx=p.mx*p.spd;p.vz=p.mz*p.spd;if(p.state!=='walk'){p.vx=p.vz=0}}
   }else{
    p.timer-=dt;p.x+=p.vx*dt;p.z+=p.vz*dt;const f=(p.state==='down'||p.state==='dead')?Math.exp(-dt*3):1;p.vx*=f;p.vz*=f;
@@ -578,3 +578,13 @@ function placeSprite(o){
  /* v78: sombra redonda só até ~38 m da câmera (longe ela some na tela e custava 1 draw por ped) */if(o!==PL&&!PL.inside){const c=camera.position,dx=o.x-c.x,dz=o.z-c.z;if(dx*dx+dz*dz>38*38){o.sh.visible=false;return}}
  o.sh.visible=true;o.sh.position.set(o.x,o.gy+(PL.inside?.075:.045),o.z);const ss=1/(1+jy*.35);o.sh.scale.set(ss,ss,ss)}
 
+
+/* v4 r42 · obstáculos de calçada que o pedestre não atravessa (banca de jornal, entrada do metrô, caixa eletrônico): ao chegar perto dá meia-volta.
+   Lista montada uma vez por cidade (PEDOBS.city), caixas com folga de 0,3 m. */
+const PEDOBS={city:null,b:[]};
+function pedObsBuild(){PEDOBS.city=city;const B=PEDOBS.b;B.length=0;const add=(x0,z0,x1,z1)=>{B.push(Math.min(x0,x1)-.3,Math.min(z0,z1)-.3,Math.max(x0,x1)+.3,Math.max(z0,z1)+.3)};
+ if(city&&city.chunks)for(const ch of city.chunks.values())for(const k of ch.kiosks||[])if(k.box)add(k.box[0],k.box[1],k.box[2],k.box[3]);
+ if(typeof METRO!=='undefined')for(const s of METRO.list||[])if(s.box)add(s.box[0],s.box[1],s.box[2],s.box[3]);
+ if(typeof ATMQ!=='undefined')for(const a of ATMQ.list||[])add(a.x-a.hw,a.z-a.hd,a.x+a.hw,a.z+a.hd)}
+function pedBlockAt(x,z){if(PEDOBS.city!==city||PEDOBS.n!==((typeof METRO!=='undefined'?METRO.list.length:0)+(typeof ATMQ!=='undefined'?ATMQ.list.length:0))){pedObsBuild();PEDOBS.n=(typeof METRO!=='undefined'?METRO.list.length:0)+(typeof ATMQ!=='undefined'?ATMQ.list.length:0)}
+ const B=PEDOBS.b;for(let i=0;i<B.length;i+=4)if(x>B[i]&&x<B[i+2]&&z>B[i+1]&&z<B[i+3])return true;return false}
