@@ -428,3 +428,4 @@ Object.assign(LANG_EN,{"NÍVEL 0": "LEVEL 0", "DE VOLTA À REALIDADE": "BACK TO 
 Object.assign(LANG_EN,{"LAVA-JATO · PARE ENTRE OS TRILHOS · $15": "CAR WASH · STOP BETWEEN THE RAILS · $15", "NÃO CABE NO LAVA-JATO": "TOO BIG FOR THE CAR WASH", "LAVAGEM CANCELADA": "WASH CANCELED", "LAVANDO…": "WASHING…"});
 Object.assign(LANG_EN,{"FACA": "KNIFE", "TACO": "BAT", "corpo a corpo": "melee", "segure TAB: roda de armas": "hold TAB: weapon wheel"}); /* v4 r29 */
 Object.assign(LANG_EN,{"TREVO DE 4 FOLHAS": "FOUR-LEAF CLOVER"});
+Object.assign(LANG_EN,{"METRÔ FECHADO · PROCURADO": "SUBWAY CLOSED · WANTED", "METRÔ FECHADO": "SUBWAY CLOSED", "METRÔ": "SUBWAY"});

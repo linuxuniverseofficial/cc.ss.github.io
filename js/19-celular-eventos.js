@@ -3,15 +3,14 @@
    Script clássico (não é módulo): todos os js/NN-*.js dividem o mesmo escopo global e entram na ordem do index.html. */
 /* ================= CELULAR =================
    P (teclado) ou ↑ no direcional (controle) abre/fecha — em GTA V é ↑ no PC; aqui ↑ também anda, por isso o P.
-   Com o celular aberto, setas/WASD navegam, ENTER/E seleciona, BACKSPACE apaga/volta, ESC/P fecha; números discam direto.
+   v4 r36: smartphone, sem teclado. Setas/WASD navegam na grade de apps, ENTER/E abre, BACKSPACE volta, ESC/P fecha.
    Controle: direcional navega, ✕/A seleciona, ○/B volta. Funciona a pé e dentro de veículos.
-   190 polícia · 192 ambulância (com giroflex; o paramédico enche a vida) · 555 táxi.
+   Agenda: polícia (190) · ambulância (192, o paramédico enche a vida) · táxi (555) — liga tocando no contato.
    SMS de dicas a cada 1 min (desligável no app CONFIG, a engrenagem); apagam após 24 h de jogo. */
 const PHONE_MODELS={android:{name:'PIXDROID S',price:400,body:'#1d1f24',edge:'#3a3e46',acc:'#3ddc84',scr:'#0c1512',txt:'#d8ffe8',key:'#1a2a22'},
  ios:{name:'iPIXEL 15',price:800,body:'#e6e6ea',edge:'#a8a8b0',acc:'#0a84ff',scr:'#0c1018',txt:'#eaf2ff',key:'#1c2230'},
  retro:{name:'TIJOLÃO 3310',price:90,body:'#2a3a6a',edge:'#1a2448',acc:'#f2c21a',scr:'#9ab84a',txt:'#1a2a10',key:'#c8ccd4'}};
-const PHONE={amt:'',open:false,scr:'home',zone:'keys',k:4,si:0,num:'',msgs:[],notif:true,tipT:120,bag:[],models:['android','ios'],callT:0,callTxt:'',flash:false,el:null,cv:null};
-const PHONE_KEYS=['1','2','3','4','5','6','7','8','9','*','0','#','TELA','LIGAR','APAGAR'];
+const PHONE={amtI:3,open:false,scr:'home',zone:'scr',si:0,num:'',msgs:[],notif:true,tipT:120,bag:[],models:['android','ios'],callT:0,callTxt:'',flash:false,el:null,cv:null};
 const PHONE_CONTACTS=[{name:'POLÍCIA',number:'190'},{name:'AMBULÂNCIA',number:'192'},{name:'TÁXI',number:'555'}];
 // v276: a agenda mostra o companheiro oposto ao personagem ativo (um contato por telefone).
 // Números internos não conflitam com polícia, ambulância, táxi ou bomba remota.
@@ -88,7 +87,7 @@ function callStart(){const sc=CALL_SCRIPTS[Math.floor(Math.random()*CALL_SCRIPTS
  toast('📞 '+translatePlain('CELULAR TOCANDO')+'<br><small style="font-size:11px;color:#fff">'+CALL.cur.num+' · '+translatePlain(TOUCH.on?'toque no celular':PAD.on?'↑ atende':'P atende')+'</small>');if(PHONE.open){PHONE.scr='incoming';PHONE.zone='scr';PHONE.si=0;phoneDraw()}else phonePeekShow()}
 /* r20: celular tocando aparece sozinho na tela (modo 'peek': visível, sem capturar teclado/controle; P/↑/toque atende) */
 function phonePeekShow(){if(PHONE.open||PHONE.peek)return;const el=phoneEl();PHONE.peek=true;PHONE.scr='incoming';PHONE.zone='scr';PHONE.si=0;el.classList.add('peek');el.hidden=false;phoneDraw()}
-function phonePeekHide(){if(!PHONE.peek)return;PHONE.peek=false;const el=PHONE.el;if(el){el.classList.remove('peek');if(!PHONE.open)el.hidden=true}if(!PHONE.open){PHONE.scr='home';PHONE.zone='keys';PHONE.k=4}}
+function phonePeekHide(){if(!PHONE.peek)return;PHONE.peek=false;const el=PHONE.el;if(el){el.classList.remove('peek');if(!PHONE.open)el.hidden=true}if(!PHONE.open)phoneHome()}
 function callEnd(){CALL.ring=0;CALL.cur=null;phonePeekHide();if(PHONE.open&&PHONE.scr==='incoming'){PHONE.scr='home';PHONE.zone='scr';PHONE.si=0;phoneDraw()}}
 function callDecline(){if(!CALL.cur)return callEnd();callEnd();clang(.08)}
 function callAnswer(){const C=CALL.cur;if(!C)return callEnd();CALL.ring=0;CALL.cur=null;phonePeekHide();if(PHONE.open)phoneToggle();
@@ -104,15 +103,59 @@ function phoneTick(dt){if(!played)return;try{callTick(dt)}catch(e){console.error
  if(PHONE.notif&&running&&!menuOpen&&(!storyOn()||STORY.cleared)){PHONE.tipT-=dt;if(PHONE.tipT<=0){PHONE.tipT=240+Math.random()*120;if(!PHONE.bag.length)PHONE.bag=PHONE_TIPS.map((_,i)=>i).sort(()=>Math.random()-.5);const petSMS=petFree()&&!PET.adopted&&!PET.smsSent&&Math.random()<.34;const tip=petSMS?'Os gatinhos dos becos são ariscos. Aproxime-se devagar, a pé, para conseguir adotar um.':PHONE_TIPS[PHONE.bag.pop()];if(petSMS)PET.smsSent=true;PHONE.msgs.unshift({t:now,txt:tip,read:false});if(PHONE.msgs.length>30)PHONE.msgs.length=30;phoneBeep()}}
  if(PHONE.callT>0){const r0=Math.floor(PHONE.callT/.8);PHONE.callT-=dt;if(PHONE.callT>0&&Math.floor(PHONE.callT/.8)!==r0)phoneRing();if(PHONE.callT<=0){const n=PHONE.num;PHONE.num='';PHONE.scr='home';phoneDoCall(n)}}
  if(PHONE.open)phoneDraw()}
+/* v4 r36 · SMARTPHONE: sem teclado físico. Tela inteira com grade de apps coloridos; ligar = tocar no contato da agenda.
+   PC: setas/WASD navegam, ENTER/E abre, BACKSPACE volta (desliga a chamada), ESC/P fecha. Controle: direcional, ✕ abre, ○ volta.
+   Toque/mouse: ícones, contatos e a barra de navegação (◁ voltar · ○ início) embaixo da tela. */
+const PHONE_APPS_ALL=[{k:'AGENDA',pt:'AGENDA',en:'CONTACTS',c:'#27c45a',ic:'tel'},{k:'MSG',pt:'MENSAGENS',en:'MESSAGES',c:'#2f86ff',ic:'msg'},{k:'MAP',pt:'MAPA',en:'MAP',c:'#ff8a2a',ic:'map'},
+ {k:'PAY',pt:'PIXel',en:'PIXel',c:'#12b3a2',ic:'pay'},{k:'CTOS',pt:'ctOS',en:'ctOS',c:'#0d2630',ic:'ctos',need:()=>CTOS.installed},{k:'CFG',pt:'AJUSTES',en:'SETTINGS',c:'#76808f',ic:'cfg'}];
+const PIX_STEPS=[10,20,50,100,200,500,1000,2000,5000,10000,20000,50000,-1];
+function phoneApps(){const l=[];for(const a of PHONE_APPS_ALL)if(!a.need||a.need())l.push(a.k);return l}
+function phoneAppIx(k){return Math.max(0,phoneApps().indexOf(k))}
+function phoneHome(k){PHONE.scr='home';PHONE.zone='scr';PHONE.si=k?phoneAppIx(k):0}
+function pixAmt(){const v=PIX_STEPS[clamp(PHONE.amtI|0,0,PIX_STEPS.length-1)];return v<0?Math.max(0,PL.money||0):v}
+function pixStep(d){PHONE.amtI=clamp((PHONE.amtI|0)+d,0,PIX_STEPS.length-1);clang(.05)}
+function phoneHangUp(){if(PHONE.scr!=='call')return false;PHONE.callT=0;PHONE.num='';phoneTone(false);PHONE.scr='agenda';PHONE.zone='scr';return true}
 function phoneTapAt(clientX,clientY){if((!PHONE.open&&!PHONE.peek)||DLG.on)return;if(PHONE.peek&&!PHONE.open){initAudio();const r0=PHONE.el.getBoundingClientRect(),y0=(clientY-r0.top)*232/(r0.height||1);const h0=(PHONE.hits||[]).find(h=>h.zone==='scr'&&h.i===1&&y0>=h.y&&y0<=h.y+h.h&&((clientX-r0.left)*120/(r0.width||1))>=h.x&&((clientX-r0.left)*120/(r0.width||1))<=h.x+h.w);if(h0)callDecline();else callAnswer();return}
  const r=PHONE.el.getBoundingClientRect();if(!r.width||!r.height)return;
  const x=(clientX-r.left)*120/r.width,y=(clientY-r.top)*232/r.height;
  const hit=(PHONE.hits||[]).find(h=>x>=h.x&&x<=h.x+h.w&&y>=h.y&&y<=h.y+h.h);
  if(!hit)return;initAudio();
- if(hit.zone==='keys'){PHONE.zone='keys';PHONE.k=hit.i;phoneOK()}
+ if(hit.zone==='nav'){if(hit.i===0)phoneBack();else if(PHONE.scr==='incoming'){}else if(PHONE.scr!=='home'){const cur=PHONE.scr==='msgs'?'MSG':PHONE.scr==='agenda'||PHONE.scr==='mate'||PHONE.scr==='call'?'AGENDA':PHONE.scr==='xfer'?'PAY':PHONE.scr==='ctos'||PHONE.scr==='perfil'?'CTOS':PHONE.scr==='cfg'?'CFG':'';if(PHONE.scr==='call')phoneHangUp();phoneHome(cur)}}
+ else if(hit.zone==='hang')phoneHangUp();
+ else if(hit.zone==='pix'){PHONE.si=0;pixStep(hit.i)}
  else{PHONE.zone='scr';PHONE.si=hit.i;if(PHONE.scr==='msgs'){if(PHONE.msgs[hit.i])PHONE.msgs[hit.i].read=true}else phoneOK()}
  if(PHONE.open)phoneDraw();
 }
+function phoneToggle(){if(PHONE.peek&&!PHONE.open){if(CALL.cur&&!DLG.on){callAnswer();return}phonePeekHide()}if(!PHONE.open&&missionUiBlocked('phone'))return;if(!PHONE.models[CHAR.cur]){toast('VOCÊ AINDA NÃO TEM CELULAR');return}if(!played||PL.dead||menuOpen||NAV.open||WARD.open||DEAL.open||TVM.on)return;if(TECH.open)closeTech();const el=phoneEl();PHONE.open=!PHONE.open;el.hidden=!PHONE.open;$('#phoneTouchClose').hidden=!PHONE.open;if(PHONE.open){for(const k in keys)keys[k]=false;if(PHONE.callT>0)PHONE.scr='call';else phoneHome();PHONE.zone='scr';initAudio();phoneDraw()}}
+function phoneItems(){return PHONE.scr==='home'?phoneApps():PHONE.scr==='incoming'?['ATENDER','RECUSAR']:PHONE.scr==='ctos'?ctosItems():PHONE.scr==='perfil'?profItems():PHONE.scr==='agenda'?phoneContacts():PHONE.scr==='msgs'?PHONE.msgs.map((_,i)=>i):PHONE.scr==='cfg'?['NOTIF','SILENT','FLASH']:PHONE.scr==='mate'?['SIM','NÃO']:PHONE.scr==='xfer'?['AMT','SEND']:[]}
+function phoneNav(dx,dy){PHONE.zone='scr';const it=phoneItems(),n=it.length;if(!n)return;
+ if(PHONE.scr==='home'){let i=clamp(PHONE.si,0,n-1);if(dx)i=clamp(i+dx,0,n-1);if(dy){const j=i+dy*3;if(j>=0&&j<n)i=j;else if(dy>0&&Math.floor(i/3)<Math.floor((n-1)/3))i=n-1}PHONE.si=i;return}
+ if(PHONE.scr==='incoming'||PHONE.scr==='mate'){if(dx)PHONE.si=dx<0?0:1;return}
+ if(PHONE.scr==='xfer'){if(dx)pixStep(dx);if(dy)PHONE.si=dy>0?1:0;return}
+ if(!dy)return;PHONE.si=clamp(PHONE.si+dy,0,n-1);if(PHONE.scr==='msgs'&&PHONE.msgs[PHONE.si])PHONE.msgs[PHONE.si].read=true}
+function phoneBack(){if(PHONE.scr==='incoming'){callDecline();return}if(phoneHangUp())return;
+ if(PHONE.scr==='perfil'){PHONE.scr='ctos';PHONE.zone='scr';PHONE.si=1;return}
+ const back={agenda:'AGENDA',mate:'AGENDA',msgs:'MSG',xfer:'PAY',ctos:'CTOS',cfg:'CFG'}[PHONE.scr];if(back){phoneHome(back);return}
+ if(PHONE.scr!=='home'){phoneHome();return}phoneToggle()}
+function phoneOK(){if(PHONE.callT>0)return;PHONE.zone='scr';
+ if(PHONE.scr==='home'){const k=phoneApps()[PHONE.si];
+  if(k==='AGENDA'){PHONE.scr='agenda';PHONE.si=0}
+  else if(k==='MSG'){PHONE.scr='msgs';PHONE.si=0;if(PHONE.msgs[0])PHONE.msgs[0].read=true}
+  else if(k==='MAP'){phoneToggle();openMap()}
+  else if(k==='PAY'){PHONE.scr='xfer';PHONE.amtI=3;PHONE.si=0}
+  else if(k==='CTOS'&&CTOS.installed){PHONE.scr='ctos';PHONE.si=0}
+  else if(k==='CFG'){PHONE.scr='cfg';PHONE.si=0}
+  return}
+ if(PHONE.scr==='incoming'){if(PHONE.si===0)callAnswer();else callDecline();return}
+ if(PHONE.scr==='agenda'){const c=phoneContacts()[PHONE.si];if(c){if(c.remote){remoteStart();phoneHome('AGENDA')}else{PHONE.num=c.number;PHONE.callT=2.4;PHONE.scr='call';phoneRing()}}return}
+ if(PHONE.scr==='xfer'){if(PHONE.si===0)PHONE.si=1;else phoneXfer();return}
+ if(PHONE.scr==='ctos'){ctosAct(ctosItems()[PHONE.si]);return}
+ if(PHONE.scr==='perfil'){profAct(profItems()[PHONE.si]);return}
+ if(PHONE.scr==='cfg'){const k=phoneItems()[PHONE.si];if(k==='NOTIF'){PHONE.notif=!PHONE.notif;PHONE.tipT=240+Math.random()*120;toast(PHONE.notif?'NOTIFICAÇÕES LIGADAS':'NOTIFICAÇÕES DESLIGADAS')}else if(k==='SILENT'){PHONE.silent=!PHONE.silent;toast(PHONE.silent?'CELULAR NO SILENCIOSO':'SILENCIOSO DESLIGADO')}else if(k==='FLASH'){PHONE.flash=!PHONE.flash;toast(PHONE.flash?'LANTERNA DO CELULAR LIGADA':'LANTERNA DO CELULAR DESLIGADA')}return}
+ if(PHONE.scr==='mate'){const yes=PHONE.si===0;phoneHome('AGENDA');if(yes){const ok=phoneMateCall();if(ok&&PHONE.open)phoneToggle()}return}}
+function phoneKey(e){const c=e.code;if(c==='Escape'||c==='KeyP'){phoneToggle();return}
+ if(c==='Backspace')return phoneBack();if(c==='Enter'||c==='NumpadEnter'||c==='KeyE'||c==='Space')return phoneOK();
+ if(c==='ArrowUp'||c==='KeyW')phoneNav(0,-1);else if(c==='ArrowDown'||c==='KeyS')phoneNav(0,1);else if(c==='ArrowLeft'||c==='KeyA')phoneNav(-1,0);else if(c==='ArrowRight'||c==='KeyD')phoneNav(1,0)}
 function phoneBindTouch(d){let start=null,ignore=0;
  d.addEventListener('touchstart',e=>{e.stopPropagation();const t=e.touches[0];start=e.touches.length===1?{id:t.identifier,x:t.clientX,y:t.clientY}:null},{passive:true});
  d.addEventListener('touchend',e=>{e.preventDefault();e.stopPropagation();ignore=performance.now()+800;const p=start;start=null;if(!p||e.touches.length)return;
@@ -126,70 +169,68 @@ function phoneBindTouch(d){let start=null,ignore=0;
  d.addEventListener('mousedown',e=>e.stopPropagation());
 }
 function phoneEl(){if(PHONE.el)return PHONE.el;const d=document.createElement('canvas');d.id='phone';d.width=360;d.height=696;d.hidden=true;document.body.appendChild(d);PHONE.el=d;phoneBindTouch(d);const close=document.createElement('button');close.id='phoneTouchClose';close.className='btn';close.textContent=translatePlain('FECHAR');close.hidden=true;close.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();if(PHONE.open)phoneToggle()});document.body.appendChild(close);const g=d.getContext('2d'),ft=g.fillText.bind(g);g.fillText=(t,x,y,mw)=>ft(translatePlain(String(t)),x,y,mw||100);PHONE.cv=g;return d}
-function phoneToggle(){if(PHONE.peek&&!PHONE.open){if(CALL.cur&&!DLG.on){callAnswer();return}phonePeekHide()}if(!PHONE.open&&missionUiBlocked('phone'))return;if(!PHONE.models[CHAR.cur]){toast('VOCÊ AINDA NÃO TEM CELULAR');return}if(!played||PL.dead||menuOpen||NAV.open||WARD.open||DEAL.open||TVM.on)return;if(TECH.open)closeTech();const el=phoneEl();PHONE.open=!PHONE.open;el.hidden=!PHONE.open;$('#phoneTouchClose').hidden=!PHONE.open;if(PHONE.open){for(const k in keys)keys[k]=false;PHONE.scr=PHONE.num?'dial':'home';PHONE.zone='keys';PHONE.k=4;initAudio();phoneDraw()}}
-function phoneItems(){return PHONE.scr==='home'?['APPS','CFG']:PHONE.scr==='apps'?(CTOS.installed?['MSG','AGENDA','PAY','CTOS']:['MSG','AGENDA','PAY']):PHONE.scr==='incoming'?['ATENDER','RECUSAR']:PHONE.scr==='ctos'?ctosItems():PHONE.scr==='perfil'?profItems():PHONE.scr==='agenda'?phoneContacts():PHONE.scr==='msgs'?PHONE.msgs.map((_,i)=>i):PHONE.scr==='cfg'?['NOTIF','SILENT','FLASH']:PHONE.scr==='mate'?['SIM','NÃO']:[]}
-function phoneNav(dx,dy){if(PHONE.zone==='keys'){let r=Math.floor(PHONE.k/3),c=PHONE.k%3;if(dy<0&&r===0){const it=phoneItems();if(it.length){PHONE.zone='scr';PHONE.si=(PHONE.scr==='home'||PHONE.scr==='mate'||PHONE.scr==='incoming')?Math.min(PHONE.si,1):it.length-1}return}r=clamp(r+dy,0,4);c=clamp(c+dx,0,2);PHONE.k=r*3+c}
- else{const it=phoneItems();if(PHONE.scr==='home'||PHONE.scr==='mate'||PHONE.scr==='incoming'){if(dx)PHONE.si=dx<0?0:1;if(dy>0){PHONE.zone='keys';PHONE.k=1}return}PHONE.si+=dy;if(PHONE.si>=it.length){PHONE.zone='keys';PHONE.k=1;PHONE.si=it.length-1}if(PHONE.si<0)PHONE.si=0;if(PHONE.scr==='msgs'&&PHONE.msgs[PHONE.si])PHONE.msgs[PHONE.si].read=true}}
-function phoneDigit(d){if(PHONE.callT>0)return;if(PHONE.scr==='xfer'){if(/\d/.test(d)&&PHONE.amt.length<7&&!(PHONE.amt===''&&d==='0'))PHONE.amt+=d;return}if(PHONE.num.length<12)PHONE.num+=d;PHONE.scr='dial'}
-function phoneBack(){if(PHONE.scr==='incoming'){callDecline();return}if(PHONE.scr==='xfer'){if(PHONE.amt){PHONE.amt=PHONE.amt.slice(0,-1);return}PHONE.scr='apps';PHONE.zone='scr';PHONE.si=2;return}if(PHONE.scr==='dial'&&PHONE.num){PHONE.num=PHONE.num.slice(0,-1);if(!PHONE.num)PHONE.scr='home';return}if(PHONE.scr==='agenda'){PHONE.scr='apps';PHONE.zone='scr';PHONE.si=1;return}if(PHONE.scr==='ctos'){PHONE.scr='apps';PHONE.zone='scr';PHONE.si=3;return}if(PHONE.scr==='msgs'){PHONE.scr='apps';PHONE.zone='scr';PHONE.si=0;return}if(PHONE.scr==='apps'){PHONE.scr='home';PHONE.zone='scr';PHONE.si=0;return}if(PHONE.scr==='cfg'){PHONE.scr='home';PHONE.zone='scr';PHONE.si=1;return}if(PHONE.scr==='perfil'){PHONE.scr='ctos';PHONE.zone='scr';PHONE.si=1;return}if(PHONE.scr!=='home'){PHONE.scr='home';PHONE.zone='keys';return}phoneToggle()}
-function phoneOK(){if(PHONE.callT>0)return;if(PHONE.zone==='keys'){const k=PHONE_KEYS[PHONE.k];if(k==='TELA'){PHONE.scr='home';PHONE.zone='scr';PHONE.si=0;return}if(k==='APAGAR'){phoneBack();return}if(k==='LIGAR'){if(PHONE.scr==='xfer'){phoneXfer();return}if(PHONE.scr==='dial'&&PHONE.num){PHONE.callT=2.4;PHONE.scr='call';phoneRing()}else{PHONE.zone='scr';PHONE.si=0}return}phoneDigit(k);return}
- if(PHONE.scr==='home'){if(PHONE.si===0){PHONE.scr='apps';PHONE.si=0;PHONE.zone='scr'}else{PHONE.scr='cfg';PHONE.si=0;PHONE.zone='scr'}return}
- if(PHONE.scr==='incoming'){if(PHONE.si===0)callAnswer();else callDecline();return}
- if(PHONE.scr==='apps'){const k=phoneItems()[PHONE.si];if(k==='MSG'){PHONE.scr='msgs';PHONE.si=0;if(PHONE.msgs[0])PHONE.msgs[0].read=true}else if(k==='AGENDA'){PHONE.scr='agenda';PHONE.si=0;PHONE.zone='scr'}else if(k==='PAY'){PHONE.scr='xfer';PHONE.amt='';PHONE.zone='keys';PHONE.k=4}else if(k==='CTOS'&&CTOS.installed){PHONE.scr='ctos';PHONE.si=0;PHONE.zone='scr'}return}
- if(PHONE.scr==='agenda'){const c=phoneContacts()[PHONE.si];if(c){if(c.remote){remoteStart();PHONE.scr='apps';PHONE.zone='scr';PHONE.si=1}else{PHONE.num=c.number;PHONE.callT=2.4;PHONE.scr='call';PHONE.zone='keys';PHONE.k=13;phoneRing()}}return}
- if(PHONE.scr==='ctos'){ctosAct(ctosItems()[PHONE.si]);return}
- if(PHONE.scr==='perfil'){profAct(profItems()[PHONE.si]);return}
- if(PHONE.scr==='cfg'){const k=phoneItems()[PHONE.si];if(k==='NOTIF'){PHONE.notif=!PHONE.notif;PHONE.tipT=240+Math.random()*120;toast(PHONE.notif?'NOTIFICAÇÕES LIGADAS':'NOTIFICAÇÕES DESLIGADAS')}else if(k==='SILENT'){PHONE.silent=!PHONE.silent;toast(PHONE.silent?'CELULAR NO SILENCIOSO':'SILENCIOSO DESLIGADO')}else if(k==='FLASH'){PHONE.flash=!PHONE.flash;toast(PHONE.flash?'LANTERNA DO CELULAR LIGADA':'LANTERNA DO CELULAR DESLIGADA')}return}
- if(PHONE.scr==='mate'){const yes=PHONE.si===0;PHONE.scr='home';PHONE.zone='scr';PHONE.si=1;if(yes){const ok=phoneMateCall();if(ok&&PHONE.open)phoneToggle()}return}}
-function phoneKey(e){const c=e.code;if(c==='Escape'||c==='KeyP'){phoneToggle();return}if(/^(Digit|Numpad)[0-9]$/.test(c)){phoneDigit(c.slice(-1));return}if(c==='NumpadMultiply')return phoneDigit('*');
- if(c==='Backspace')return phoneBack();if(c==='Enter'||c==='NumpadEnter'||c==='KeyE'||c==='Space')return phoneOK();
- if(c==='ArrowUp'||c==='KeyW')phoneNav(0,-1);else if(c==='ArrowDown'||c==='KeyS')phoneNav(0,1);else if(c==='ArrowLeft'||c==='KeyA')phoneNav(-1,0);else if(c==='ArrowRight'||c==='KeyD')phoneNav(1,0)}
 function phoneWrap(g,txt,x,y,w,lh,max){txt=translatePlain(String(txt));const words=txt.split(' ');let line='',n=0;for(const wd of words){const t=line?line+' '+wd:wd;if(g.measureText(t).width>w&&line){g.fillText(line,x,y+n*lh);n++;line=wd;if(n>=max)return}else line=t}if(line&&n<max)g.fillText(line,x,y+n*lh)}
-function phoneDraw(){const g=PHONE.cv;if(!g)return;PHONE.hits=[];const hit=(zone,i,x,y,w,h)=>PHONE.hits.push({zone,i,x,y,w,h});const M=phoneModel(),retro=M===PHONE_MODELS.retro,ios=M===PHONE_MODELS.ios,W=120,H=232;g.setTransform(3,0,0,3,0,0);g.clearRect(0,0,W,H);g.imageSmoothingEnabled=true;g.textAlign='left';g.textBaseline='top';
+const PHF='system-ui,"Segoe UI",Arial,sans-serif';
+function phoneGlyph(g,k,x,y,s,bg){const cx=x+s/2,cy=y+s/2;g.save();g.fillStyle='#fff';g.strokeStyle='#fff';g.lineCap='round';g.lineJoin='round';
+ if(k==='tel'){g.translate(cx,cy);g.rotate(-Math.PI/4);const L=s*.36,r=s*.13;g.lineWidth=s*.12;g.beginPath();g.moveTo(-L+r*.6,-s*.04);g.quadraticCurveTo(0,-s*.2,L-r*.6,-s*.04);g.stroke();for(const sx of [-1,1]){g.beginPath();g.ellipse(sx*(L-r*.5),s*.02,r*.85,r*.62,sx*.35,0,7);g.fill()}} /* monofone */
+ else if(k==='msg'){const w=s*.6,h=s*.42,x0=cx-w/2,y0=cy-h/2;g.fillRect(x0,y0,w,h);g.strokeStyle=bg;g.lineWidth=s*.06;g.beginPath();g.moveTo(x0+1,y0+1);g.lineTo(cx,cy+h*.12);g.lineTo(x0+w-1,y0+1);g.stroke()}
+ else if(k==='map'){const w=s*.6,h=s*.5,x0=cx-w/2,y0=cy-h/2+s*.04;g.beginPath();g.moveTo(x0,y0+2);g.lineTo(x0+w/3,y0);g.lineTo(x0+w*2/3,y0+2);g.lineTo(x0+w,y0);g.lineTo(x0+w,y0+h-2);g.lineTo(x0+w*2/3,y0+h);g.lineTo(x0+w/3,y0+h-2);g.lineTo(x0,y0+h);g.closePath();g.fill();g.strokeStyle=bg;g.lineWidth=s*.04;g.beginPath();g.moveTo(x0+w/3,y0);g.lineTo(x0+w/3,y0+h-2);g.moveTo(x0+w*2/3,y0+2);g.lineTo(x0+w*2/3,y0+h);g.stroke();g.fillStyle='#ff3b3b';g.beginPath();g.arc(cx+s*.06,cy-s*.12,s*.11,0,7);g.fill();g.beginPath();g.moveTo(cx+s*.06-s*.08,cy-s*.08);g.lineTo(cx+s*.06,cy+s*.06);g.lineTo(cx+s*.06+s*.08,cy-s*.08);g.fill()}
+ else if(k==='pay'){g.font='900 '+(s*.62).toFixed(1)+'px '+PHF;g.textAlign='center';g.textBaseline='middle';g.fillText('$',cx,cy+s*.03)}
+ else if(k==='ctos'){g.strokeStyle='#5ef0ff';g.lineWidth=s*.07;g.beginPath();g.arc(cx,cy,s*.28,0,7);g.stroke();g.beginPath();g.arc(cx,cy,s*.15,0,7);g.stroke();g.fillStyle='#5ef0ff';g.beginPath();g.arc(cx,cy,s*.06,0,7);g.fill()}
+ else if(k==='cfg'){g.translate(cx,cy);for(let i=0;i<8;i++){g.rotate(Math.PI/4);g.fillRect(-s*.06,-s*.32,s*.12,s*.14)}g.beginPath();g.arc(0,0,s*.22,0,7);g.fill();g.fillStyle=bg;g.beginPath();g.arc(0,0,s*.09,0,7);g.fill()}
+ else if(k==='hang'){g.translate(cx,cy+s*.04);g.rotate(Math.PI);const L=s*.33,r=s*.19;g.lineWidth=s*.16;g.beginPath();g.moveTo(-L+r*.5,-s*.03);g.quadraticCurveTo(0,-s*.17,L-r*.5,-s*.03);g.stroke();for(const sx of [-1,1]){g.beginPath();g.ellipse(sx*(L-r*.45),s*.05,r*.8,r*.55,sx*.25,0,7);g.fill()}} /* monofone virado = desligar */
+ g.restore()}
+function phoneContactCol(c){return c.remote?'#ff7a1a':c.number==='190'?'#2f6cff':c.number==='192'?'#ff4a4a':c.number==='555'?'#f2c21a':c.mate!=null?'#c86bff':c.number==='300'?'#16b7a6':'#5f6b7a'}
+function phoneAvatar(g,x,y,r,col,txt){g.fillStyle=col;g.beginPath();g.arc(x,y,r,0,7);g.fill();g.fillStyle='#fff';g.textAlign='center';g.textBaseline='middle';g.font='800 '+(r*1.05).toFixed(1)+'px '+PHF;g.fillText(String(txt||'?').charAt(0),x,y+.4);g.textBaseline='top'}
+function phoneDraw(){const g=PHONE.cv;if(!g)return;PHONE.hits=[];const hit=(zone,i,x,y,w,h)=>PHONE.hits.push({zone,i,x,y,w,h});const M=phoneModel(),retro=M===PHONE_MODELS.retro,ios=M===PHONE_MODELS.ios,W=120,H=232,en=S.lang==='en';g.setTransform(3,0,0,3,0,0);g.clearRect(0,0,W,H);g.imageSmoothingEnabled=true;g.textAlign='left';g.textBaseline='top';
  const rr=(x,y,w,hh,r,col)=>{g.fillStyle=col;g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+hh,r);g.arcTo(x+w,y+hh,x,y+hh,r);g.arcTo(x,y+hh,x,y,r);g.arcTo(x,y,x+w,y,r);g.fill()};
+ const font=(px,w)=>{g.font=(w||'bold')+' '+px+'px '+PHF};
  rr(0,0,W,H,retro?10:16,'#000');rr(2,2,W-4,H-4,retro?9:14,M.edge);rr(4,4,W-8,H-8,retro?8:12,M.body);
- g.fillStyle='rgba(255,255,255,.14)';g.fillRect(8,6,W-16,1);g.fillStyle='rgba(0,0,0,.25)';g.fillRect(8,H-7,W-16,1);
- if(retro){g.fillStyle=M.edge;g.fillRect(84,0,10,6);g.fillStyle='#0a0f1e';g.fillRect(48,8,24,3)}else{g.fillStyle='#0a0a0e';g.fillRect(50,9,20,2);g.beginPath();g.arc(78,10,1.6,0,7);g.fill()}
- const sx=8,sy=16,sw=104,sh=112;rr(sx-1,sy-1,sw+2,sh+2,retro?2:6,'#000');rr(sx,sy,sw,sh,retro?2:5,M.scr);if(ios){g.fillStyle='#000';rr(44,sy,32,6,3,'#000')}
- g.fillStyle=M.txt;g.font='bold 8px system-ui,"Segoe UI",Arial,sans-serif';g.textBaseline='top';const hh=Math.floor(DN.tod/60)%24,mm=Math.floor(DN.tod%60);g.fillText(String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0'),sx+4,sy+3);
- if(PHONE.notif){for(let i=0;i<4;i++)g.fillRect(sx+sw-26+i*3,sy+9-i*2,2,2+i*2)}else{const ax=sx+sw-22,ay=sy+7.5;g.save();g.translate(ax,ay);g.rotate(Math.PI/4);g.beginPath();g.moveTo(0,-6);g.quadraticCurveTo(1.3,-6,1.3,-3.5);g.lineTo(1.3,-1);g.lineTo(6,1.6);g.lineTo(6,2.8);g.lineTo(1.3,1.6);g.lineTo(1.1,4.2);g.lineTo(2.6,5.4);g.lineTo(2.6,6.2);g.lineTo(0,5.4);g.lineTo(-2.6,6.2);g.lineTo(-2.6,5.4);g.lineTo(-1.1,4.2);g.lineTo(-1.3,1.6);g.lineTo(-6,2.8);g.lineTo(-6,1.6);g.lineTo(-1.3,-1);g.lineTo(-1.3,-3.5);g.quadraticCurveTo(-1.3,-6,0,-6);g.fill();g.restore()}g.fillRect(sx+sw-12,sy+4,8,5);const un=phoneUnread();if(un){g.fillStyle=M.acc;g.fillRect(sx+52,sy+4,9,6);g.fillStyle=M.scr;g.fillRect(sx+53,sy+5,7,1);g.fillStyle=M.txt;g.fillText(String(un),sx+63,sy+3)}
- const foc=(i)=>PHONE.zone==='scr'&&PHONE.si===i,cx=sx+sw/2;g.textAlign='left';
- if(PHONE.scr==='home'){g.textAlign='center';g.font='bold 16px system-ui,"Segoe UI",Arial,sans-serif';g.fillText(String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0'),cx,sy+18);
-  /* r66: tela inicial com 2 ícones quadrados — APPS e CONFIG */
-  const en=S.lang==='en';[[en?'APPS':'APPS',0],['CONFIG',1]].forEach(([t,i])=>{const w=38,x=sx+(sw/2-w-4)+i*(w+8),y=sy+40;hit('scr',i,x-2,y-2,w+4,w+16);const f=foc(i);
-   rr(x,y,w,w,7,f?M.acc:(retro?'#000':'rgba(255,255,255,.14)'));if(retro&&!f)rr(x+1,y+1,w-2,w-2,6,M.scr);g.fillStyle=f?(retro?M.scr:'#000'):M.txt;
-   if(i===0){for(let a=0;a<3;a++)for(let b=0;b<3;b++)g.fillRect(x+8+a*8,y+8+b*8,6,6)}else{g.font='bold 24px system-ui,"Segoe UI",Arial,sans-serif';g.fillText('⚙',x+w/2,y+w/2-1)}
-   if(i===0&&un){g.fillStyle='#ff4a4a';g.beginPath();g.arc(x+w-3,y+3,6,0,7);g.fill();g.fillStyle='#fff';g.font='bold 7px system-ui,"Segoe UI",Arial,sans-serif';g.fillText(String(un),x+w-3,y+6)}
-   g.fillStyle=M.txt;g.font='bold 7px system-ui,"Segoe UI",Arial,sans-serif';g.fillText(t,x+w/2,y+w+10)});
-  g.fillStyle=M.txt;g.globalAlpha=.7;g.font='bold 6px system-ui,"Segoe UI",Arial,sans-serif';g.fillText((PHONE.silent?'🔕 ':'')+'↑ TELA · NÚMEROS DISCAM',cx,sy+104);g.globalAlpha=1}
- else if(PHONE.scr==='apps'){g.textAlign='center';g.font='bold 9px system-ui,"Segoe UI",Arial,sans-serif';g.fillText('APPS',cx,sy+18);g.font='bold 8px system-ui,"Segoe UI",Arial,sans-serif';
-  const L={MSG:'✉ MENSAGENS'+(un?' ('+un+')':''),AGENDA:'☏ AGENDA',PAY:'$ PIXel',CTOS:'◉ ctOS'};phoneItems().forEach((k,i)=>{const y=sy+38+i*14;hit('scr',i,sx+4,y-3,sw-8,13);if(foc(i)){g.fillStyle=M.acc;g.fillRect(sx+6,y-3,sw-12,12);g.fillStyle=retro?M.scr:'#000'}else g.fillStyle=M.txt;g.fillText(L[k],cx,y)})}
- else if(PHONE.scr==='incoming'){g.textAlign='center';const C=CALL.cur;g.font='bold 7px system-ui,"Segoe UI",Arial,sans-serif';g.fillText(translatePlain('CHAMADA RECEBIDA'),cx,sy+22);g.font='bold 10px system-ui,"Segoe UI",Arial,sans-serif';g.fillText(C?C.num:'',cx,sy+40);
-  g.font='bold 7px system-ui,"Segoe UI",Arial,sans-serif';g.globalAlpha=.6+.4*Math.abs(Math.sin(simT*4));g.fillText('📞',cx,sy+56);g.globalAlpha=1;
-  [[S.lang==='en'?'ANSWER':'ATENDER',0],[S.lang==='en'?'DECLINE':'RECUSAR',1]].forEach(([t,i])=>{const x=sx+12+i*48;hit('scr',i,x-4,sy+66,44,17);if(foc(i)){g.fillStyle=i?'#ff5a5a':'#3ddc84';g.fillRect(x-4,sy+68,44,13);g.fillStyle='#000'}else g.fillStyle=i?'#ff7a7a':'#3ddc84';g.fillText(t,x+18,sy+71)})}
- else if(PHONE.scr==='agenda'){g.textAlign='center';g.font='bold 9px system-ui,"Segoe UI",Arial,sans-serif';g.fillText('☏ AGENDA',cx,sy+19);g.font='bold 7px system-ui,"Segoe UI",Arial,sans-serif';
-  const contacts=phoneContacts(),compact=contacts.length>4;
-  contacts.forEach((c,i)=>{const y=sy+(compact?30+i*14:35+i*17);hit('scr',i,sx+4,y-3,sw-8,compact?14:17);if(foc(i)){g.fillStyle=M.acc;g.fillRect(sx+5,y-3,sw-10,compact?13:15);g.fillStyle=retro?M.scr:'#000'}else g.fillStyle=M.txt;g.fillText(c.remote?'BOMBA REMOTA · '+REMOTE.list.length:c.name+' · '+c.number,cx,y)});
-  g.fillStyle=M.txt;g.globalAlpha=.7;g.font='bold 6px system-ui,"Segoe UI",Arial,sans-serif';g.fillText('SELECIONE PARA LIGAR',cx,sy+102);g.globalAlpha=1}
- else if(PHONE.scr==='dial'||PHONE.scr==='call'){g.textAlign='center';g.font='bold 8px system-ui,"Segoe UI",Arial,sans-serif';g.fillText(PHONE.scr==='call'?'CHAMANDO…':'DISCAR',cx,sy+20);g.font='bold 14px system-ui,"Segoe UI",Arial,sans-serif';g.fillText(PHONE.num||'_',cx,sy+44);g.font='bold 6.5px system-ui,"Segoe UI",Arial,sans-serif';g.globalAlpha=.7;g.fillText(PHONE.scr==='call'?(PHONE.num==='190'?'POLÍCIA':PHONE.num==='192'?'AMBULÂNCIA':PHONE.num==='555'?'TÁXI':PHONE.num==='771'?'CLAIRE':PHONE.num==='770'?'NATHAN':''):'LIGAR para chamar',cx,sy+72);g.globalAlpha=1}
- else if(PHONE.scr==='msgs'){g.font='bold 6.5px system-ui,"Segoe UI",Arial,sans-serif';if(!PHONE.msgs.length){g.textAlign='center';g.fillText('SEM MENSAGENS',cx,sy+50)}else{const st=clamp(PHONE.si-1,0,Math.max(0,PHONE.msgs.length-3));
-   for(let i=0;i<3&&st+i<PHONE.msgs.length;i++){const m=PHONE.msgs[st+i],y=sy+16+i*12;hit('scr',st+i,sx+3,y-2,sw-6,12);if(foc(st+i)){g.fillStyle=M.acc;g.fillRect(sx+3,y-2,sw-6,11)}g.fillStyle=foc(st+i)&&!retro?'#000':M.txt;g.fillStyle=m.kind==='mission'&&!foc(st+i)?'#ff7a3a':g.fillStyle;g.fillText((m.read?'  ':m.kind==='mission'?'! ':'• ')+translatePlain(m.txt).slice(0,20)+'…',sx+5,y)}
-   const m=PHONE.msgs[clamp(PHONE.si,0,PHONE.msgs.length-1)];g.fillStyle=M.txt;g.fillRect(sx+4,sy+53,sw-8,1);phoneWrap(g,m.txt,sx+5,sy+57,sw-10,9,6)}}
- else if(PHONE.scr==='xfer'){const o=CHAR.list[1-CHAR.cur];g.textAlign='center';g.font='bold 8px system-ui,"Segoe UI",Arial,sans-serif';g.fillText('$ PIXel',cx,sy+18);g.font='bold 6.5px system-ui,"Segoe UI",Arial,sans-serif';g.fillText('PARA '+o.name,cx,sy+32);g.font='bold 14px system-ui,"Segoe UI",Arial,sans-serif';g.fillText('$'+(PHONE.amt||'0'),cx,sy+50);g.font='bold 6.5px system-ui,"Segoe UI",Arial,sans-serif';g.globalAlpha=.75;g.fillText('SALDO $'+(PL.money||0),cx,sy+74);g.fillText('DIGITE · LIGAR ENVIA',cx,sy+86);g.fillText('APAGAR VOLTA',cx,sy+96);g.globalAlpha=1}
- else if(PHONE.scr==='mate'){g.textAlign='center';g.font='bold 8px system-ui,"Segoe UI",Arial,sans-serif';g.fillText('☏ '+duoName(1-CHAR.cur),cx,sy+18);
-  g.font='bold 7px system-ui,"Segoe UI",Arial,sans-serif';g.fillText(PROLOGUE.active&&PROLOGUE.stage==='sms'?'SMS PARA NATHAN?':'CHAMAR '+duoName(1-CHAR.cur),cx,sy+42);g.fillText(PROLOGUE.active&&PROLOGUE.stage==='sms'?'(sem nome)':'PARA CÁ?',cx,sy+53);
-  [['SIM',0],['NÃO',1]].forEach(([t,i])=>{const x=sx+20+i*44;hit('scr',i,x-4,sy+66,36,17);if(foc(i)){g.fillStyle=M.acc;g.fillRect(x-4,sy+68,36,13);g.fillStyle=retro?M.scr:'#000'}else g.fillStyle=M.txt;g.fillText(t,x+14,sy+71)})}
- else if(PHONE.scr==='ctos'){ctosDraw(g,M,sx,sy,sw,cx,hit,foc,retro)}
- else if(PHONE.scr==='perfil'){profDraw(g,M,sx,sy,sw,cx,hit,foc,retro)}
- else if(PHONE.scr==='cfg'){g.textAlign='center';g.font='bold 8px system-ui,"Segoe UI",Arial,sans-serif';g.fillText('⚙ CONFIG',cx,sy+18);const en=S.lang==='en',on=v=>v?'ON':'OFF';
-  const L={NOTIF:(en?'TIPS ':'DICAS ')+on(PHONE.notif),SILENT:(en?'SILENT ':'SILENCIOSO ')+on(PHONE.silent),FLASH:(en?'FLASHLIGHT ':'LANTERNA ')+on(PHONE.flash)};
-  g.font='bold 7.5px system-ui,"Segoe UI",Arial,sans-serif';phoneItems().forEach((k,i)=>{const y=sy+40+i*16;hit('scr',i,sx+4,y-4,sw-8,15);if(foc(i)){g.fillStyle=M.acc;g.fillRect(sx+6,y-4,sw-12,13);g.fillStyle=retro?M.scr:'#000'}else g.fillStyle=M.txt;g.fillText(L[k],cx,y)})}
- g.textAlign='center';g.textBaseline='middle';
- for(let i=0;i<15;i++){const r=Math.floor(i/3),c=i%3,x=11+c*34,y=136+r*18,w=30,hh2=15,f=PHONE.zone==='keys'&&PHONE.k===i;hit('keys',i,x-2,y-1,w+4,hh2+3);
-  if(retro){rr(x,y,w,hh2,6,'#000');rr(x+1,y+1,w-2,hh2-2,5,f?M.acc:M.key)}else{rr(x,y,w,hh2,4,f?M.acc:M.key);g.fillStyle='rgba(255,255,255,.08)';g.fillRect(x+2,y+1,w-4,1)}
-  const t=PHONE_KEYS[i];g.fillStyle=retro?'#1a1a1a':f?'#000':'#e8eef4';if(i===13)g.fillStyle=f?'#000':'#3ddc84';if(i===14)g.fillStyle=f?'#000':'#ff5a5a';g.font=(t.length>1?'bold 6.5px':'bold 9px')+' system-ui,"Segoe UI",Arial,sans-serif';g.fillText(t==='TELA'?'▲TELA':t,x+w/2,y+hh2/2+1)}}
-function phoneXfer(){const n=+PHONE.amt||0,o=CHAR.list[1-CHAR.cur];if(!n){toast('DIGITE O VALOR');clang(.1);return}if(n>(PL.money||0)){toast('SALDO INSUFICIENTE · $'+(PL.money||0));clang(.1);return}
- money(-n);o.cash=(o.cash||0)+n;o.pixIn=(o.pixIn||[]);o.pixIn.push({from:CHAR.list[CHAR.cur].name,n});PHONE.amt='';toast('PIXel · $'+n.toLocaleString(S.lang==='en'?'en-US':'pt-BR')+' PARA '+o.name);clang(.3);PHONE.scr='apps';PHONE.zone='scr';PHONE.si=2}
+ g.fillStyle='rgba(255,255,255,.14)';g.fillRect(10,5,W-20,1);
+ const sx=7,sy=retro?14:10,sw=106,sh=H-sy-(retro?16:10),cx=sx+sw/2;
+ rr(sx-1,sy-1,sw+2,sh+2,retro?3:9,'#000');
+ if(retro)rr(sx,sy,sw,sh,2,M.scr);else{const gr=g.createLinearGradient(0,sy,0,sy+sh);gr.addColorStop(0,M.scr);gr.addColorStop(1,ios?'#1a2540':'#14352a');g.fillStyle=gr;g.beginPath();g.moveTo(sx+8,sy);g.arcTo(sx+sw,sy,sx+sw,sy+sh,8);g.arcTo(sx+sw,sy+sh,sx,sy+sh,8);g.arcTo(sx,sy+sh,sx,sy,8);g.arcTo(sx,sy,sx+sw,sy,8);g.fill()}
+ if(retro){g.fillStyle=M.edge;g.fillRect(84,0,10,6);g.fillStyle='#0a0f1e';g.fillRect(48,7,24,3)}else if(ios)rr(cx-13,sy+2.5,26,7,3.5,'#000');else{g.fillStyle='#000';g.beginPath();g.arc(cx,sy+5.5,2.2,0,7);g.fill()}
+ /* barra de status */
+ g.fillStyle=M.txt;font(6.5);g.textBaseline='top';const hh=Math.floor(DN.tod/60)%24,mm=Math.floor(DN.tod%60),hm=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');g.fillText(hm,sx+6,sy+3);
+ if(PHONE.notif){for(let i=0;i<4;i++)g.fillRect(sx+sw-27+i*2.6,sy+8-i*1.5,1.8,1.5+i*1.5)}else{font(6);g.fillText('✈',sx+sw-27,sy+2.5)}
+ g.fillRect(sx+sw-14,sy+4,9,4.5);g.fillRect(sx+sw-5,sy+5.2,1,2);if(PHONE.silent){font(5.5);g.fillText('🔕',sx+sw-38,sy+3)}
+ const un=phoneUnread(),y0=sy+14,y1=sy+sh-15,foc=i=>PHONE.si===i;
+ const title=(t,col)=>{g.textAlign='center';g.fillStyle=col||M.txt;font(8.5,'800');g.fillText(t,cx,y0+2);g.fillStyle=M.txt;g.globalAlpha=.25;g.fillRect(sx+6,y0+13,sw-12,.6);g.globalAlpha=1};
+ const btn=(zone,i,x,y,w,h,t,col,f)=>{hit(zone,i,x,y,w,h);rr(x,y,w,h,h/2,col);if(f){g.strokeStyle='#fff';g.lineWidth=1.1;g.beginPath();g.moveTo(x+h/2,y-1.2);g.arcTo(x+w+1.2,y-1.2,x+w+1.2,y+h+1.2,h/2+1.2);g.arcTo(x+w+1.2,y+h+1.2,x-1.2,y+h+1.2,h/2+1.2);g.arcTo(x-1.2,y+h+1.2,x-1.2,y-1.2,h/2+1.2);g.arcTo(x-1.2,y-1.2,x+w+1.2,y-1.2,h/2+1.2);g.stroke()}g.fillStyle='#fff';g.textAlign='center';g.textBaseline='middle';font(6.5,'800');g.fillText(t,x+w/2,y+h/2+.3);g.textBaseline='top'};
+ const row=(i,y,h)=>{hit('scr',i,sx+3,y,sw-6,h);if(foc(i)){rr(sx+4,y,sw-8,h,4,M.acc);return true}return false};
+ if(PHONE.scr==='home'){g.textAlign='center';g.fillStyle=M.txt;font(22,'800');g.fillText(hm,cx,y0+6);font(6);g.globalAlpha=.75;g.fillText((en?'DAY ':'DIA ')+((DN.day|0)+1),cx,y0+31);g.globalAlpha=1;
+  const apps=phoneApps(),S2=24,cw=sw/3;apps.forEach((k,i)=>{const a=PHONE_APPS_ALL.find(q=>q.k===k),c=i%3,r=Math.floor(i/3),x=sx+cw*c+(cw-S2)/2,y=y0+46+r*40;hit('scr',i,x-5,y-3,S2+10,S2+15);
+   if(foc(i)){rr(x-2.2,y-2.2,S2+4.4,S2+4.4,8,retro?'#000':'rgba(255,255,255,.85)')}rr(x,y,S2,S2,6.5,a.c);g.fillStyle='rgba(255,255,255,.18)';g.fillRect(x+4,y+1.2,S2-8,.8);phoneGlyph(g,a.ic,x,y,S2,a.c);
+   if(k==='MSG'&&un){g.fillStyle='#ff3b3b';g.beginPath();g.arc(x+S2-1,y+1,5,0,7);g.fill();g.fillStyle='#fff';g.textAlign='center';g.textBaseline='middle';font(6,'800');g.fillText(String(un),x+S2-1,y+1.4);g.textBaseline='top'}
+   g.textAlign='center';g.fillStyle=M.txt;font(5.6,foc(i)?'900':'bold');g.fillText(en?a.en:a.pt,x+S2/2,y+S2+3.5)})}
+ else if(PHONE.scr==='agenda'){title(en?'CONTACTS':'AGENDA');const L=phoneContacts(),rh=17,vis=Math.max(1,Math.floor((y1-y0-18)/rh)),st=clamp(PHONE.si-vis+1,0,Math.max(0,L.length-vis));
+  for(let j=0;j<vis&&st+j<L.length;j++){const i=st+j,c=L[i],y=y0+17+j*rh,f=row(i,y,rh-1);phoneAvatar(g,sx+13,y+rh/2-.5,6,phoneContactCol(c),c.remote?'B':c.name);g.textAlign='left';g.fillStyle=f?'#000':M.txt;font(6.8,'800');g.fillText(c.remote?(en?'REMOTE BOMB':'BOMBA REMOTA'):c.name,sx+23,y+2.5);font(5.4);g.globalAlpha=.75;g.fillText(c.remote?String(REMOTE.list.length):c.number,sx+23,y+10);g.globalAlpha=1;
+   if(!c.remote){const gx=sx+sw-17,gy=y+rh/2-6.5;g.globalAlpha=f?1:.85;phoneGlyph(g,'tel',gx,gy,12,'#000');g.globalAlpha=1}}
+  if(L.length>vis){g.fillStyle=M.txt;g.globalAlpha=.35;const th=(y1-y0-18)*vis/L.length;g.fillRect(sx+sw-3,y0+17+(y1-y0-18-th)*st/Math.max(1,L.length-vis),1.5,th);g.globalAlpha=1}}
+ else if(PHONE.scr==='call'){const c=phoneContacts().find(q=>q.number===PHONE.num)||{name:PHONE.num,number:PHONE.num};g.textAlign='center';phoneAvatar(g,cx,y0+40,17,phoneContactCol(c),c.name);g.fillStyle=M.txt;font(9.5,'800');g.textBaseline='top';g.fillText(c.name,cx,y0+64);font(6.5);g.globalAlpha=.75;g.fillText(c.number,cx,y0+77);g.globalAlpha=.5+.5*Math.abs(Math.sin(simT*3));font(7,'800');g.fillText(en?'CALLING…':'CHAMANDO…',cx,y0+92);g.globalAlpha=1;
+  const bx=cx-12,by=y1-34;hit('hang',0,bx-3,by-3,30,30);g.fillStyle='#ff3b3b';g.beginPath();g.arc(cx,by+12,12,0,7);g.fill();phoneGlyph(g,'hang',cx-11,by+1,22,'#ff3b3b')}
+ else if(PHONE.scr==='msgs'){title(en?'MESSAGES':'MENSAGENS');if(!PHONE.msgs.length){g.textAlign='center';font(7);g.globalAlpha=.7;g.fillText(en?'NO MESSAGES':'SEM MENSAGENS',cx,y0+60);g.globalAlpha=1}else{const vis=4,st=clamp(PHONE.si-1,0,Math.max(0,PHONE.msgs.length-vis));
+   for(let j=0;j<vis&&st+j<PHONE.msgs.length;j++){const i=st+j,m=PHONE.msgs[i],y=y0+17+j*13,f=row(i,y,12);g.textAlign='left';g.fillStyle=f?'#000':m.kind==='mission'?'#ff8a3a':M.txt;font(5.8,m.read?'bold':'900');const tx=translatePlain(m.txt);g.fillText((m.read?'':m.kind==='mission'?'! ':'• ')+(tx.length>24?tx.slice(0,24)+'…':tx),sx+7,y+3)}
+   const m=PHONE.msgs[clamp(PHONE.si,0,PHONE.msgs.length-1)],by=y0+17+vis*13+5;rr(sx+5,by,sw-10,y1-by-2,6,retro?'rgba(0,0,0,.12)':'rgba(255,255,255,.1)');g.fillStyle=m.kind==='mission'?'#ff9a4a':M.txt;g.textAlign='left';font(6.2);phoneWrap(g,m.txt,sx+9,by+5,sw-18,8.5,Math.floor((y1-by-8)/8.5))}}
+ else if(PHONE.scr==='incoming'){const C=CALL.cur;g.textAlign='center';g.fillStyle=M.txt;font(6.5,'800');g.globalAlpha=.75;g.fillText(en?'INCOMING CALL':'CHAMADA RECEBIDA',cx,y0+8);g.globalAlpha=1;phoneAvatar(g,cx,y0+42,16,'#5f6b7a',C?String(C.num).replace(/[^0-9A-Za-z]/g,'')||'?':'?');g.fillStyle=M.txt;font(8.5,'800');g.fillText(C?C.num:'',cx,y0+64);
+  const pulse=.6+.4*Math.abs(Math.sin(simT*4));[[en?'ANSWER':'ATENDER','#27c45a',0],[en?'DECLINE':'RECUSAR','#ff3b3b',1]].forEach(([t,col,i])=>{const bx=sx+12+i*(sw-48),by=y1-40;hit('scr',i,bx-4,by-4,32,40);if(foc(i)){g.fillStyle='#fff';g.beginPath();g.arc(bx+12,by+12,14,0,7);g.fill()}g.globalAlpha=i?1:pulse;g.fillStyle=col;g.beginPath();g.arc(bx+12,by+12,12,0,7);g.fill();g.globalAlpha=1;phoneGlyph(g,i?'hang':'tel',bx+1,by+1,22,col);g.textAlign='center';g.fillStyle=M.txt;font(5.6,'800');g.fillText(t,bx+12,by+27)})}
+ else if(PHONE.scr==='xfer'){const o=CHAR.list[1-CHAR.cur];title('$ PIXel','#12d3be');g.textAlign='center';g.fillStyle=M.txt;font(6.5,'800');g.fillText((en?'TO ':'PARA ')+o.name,cx,y0+22);
+  const v=pixAmt(),ay=y0+40;if(foc(0))rr(sx+6,ay-3,sw-12,26,8,retro?'rgba(0,0,0,.15)':'rgba(255,255,255,.12)');hit('pix',-1,sx+4,ay-4,24,28);hit('pix',1,sx+sw-28,ay-4,24,28);hit('scr',0,sx+28,ay-4,sw-56,28);
+  font(11,'900');g.fillText('◀',sx+15,ay+4);g.fillText('▶',sx+sw-15,ay+4);font(13,'900');g.fillText('$'+v.toLocaleString(en?'en-US':'pt-BR'),cx,ay+3);
+  font(6);g.globalAlpha=.75;g.fillText((en?'BALANCE $':'SALDO $')+(PL.money||0).toLocaleString(en?'en-US':'pt-BR'),cx,ay+30);g.globalAlpha=1;
+  btn('scr',1,sx+18,ay+46,sw-36,15,en?'SEND':'ENVIAR',v>0&&v<=(PL.money||0)?'#12b3a2':'#56606c',foc(1))}
+ else if(PHONE.scr==='mate'){const nm=duoName(1-CHAR.cur);g.textAlign='center';phoneAvatar(g,cx,y0+30,14,'#c86bff',nm);g.fillStyle=M.txt;font(7.5,'800');const sms=PROLOGUE.active&&PROLOGUE.stage==='sms';g.fillText(sms?(en?'TEXT NATHAN?':'SMS PARA NATHAN?'):(en?'CALL ':'CHAMAR ')+nm,cx,y0+52);font(6.5);g.fillText(sms?(en?'(no name)':'(sem nome)'):(en?'OVER HERE?':'PARA CÁ?'),cx,y0+63);
+  btn('scr',0,sx+10,y0+82,sw/2-14,15,en?'YES':'SIM','#27c45a',foc(0));btn('scr',1,cx+4,y0+82,sw/2-14,15,en?'NO':'NÃO','#ff3b3b',foc(1))}
+ else if(PHONE.scr==='ctos'){g.fillStyle=M.txt;ctosDraw(g,M,sx,y0,sw,cx,hit,i=>PHONE.si===i,retro)}
+ else if(PHONE.scr==='perfil'){g.fillStyle=M.txt;profDraw(g,M,sx,y0,sw,cx,hit,i=>PHONE.si===i,retro)}
+ else if(PHONE.scr==='cfg'){title(en?'SETTINGS':'AJUSTES');const L={NOTIF:[en?'TIPS':'DICAS',PHONE.notif],SILENT:[en?'SILENT':'SILENCIOSO',PHONE.silent],FLASH:[en?'FLASHLIGHT':'LANTERNA',PHONE.flash]};
+  phoneItems().forEach((k,i)=>{const y=y0+18+i*18,f=row(i,y,16);g.textAlign='left';g.fillStyle=f?'#000':M.txt;font(7,'800');g.fillText(L[k][0],sx+9,y+4.5);const on=!!L[k][1],tx=sx+sw-26;rr(tx,y+4,17,9,4.5,on?'#27c45a':'rgba(127,127,127,.55)');g.fillStyle='#fff';g.beginPath();g.arc(on?tx+12.5:tx+4.5,y+8.5,3.4,0,7);g.fill()})}
+ /* barra de navegação: ◁ voltar · ○ início */
+ g.globalAlpha=.85;g.strokeStyle=M.txt;g.fillStyle=M.txt;g.lineWidth=1.1;const ny=sy+sh-8;hit('nav',0,sx,ny-6,sw/2,14);hit('nav',1,sx+sw/2,ny-6,sw/2,14);
+ g.beginPath();g.moveTo(cx-24,ny-3.2);g.lineTo(cx-28.5,ny);g.lineTo(cx-24,ny+3.2);g.closePath();g.stroke();g.beginPath();g.arc(cx+24,ny,3.3,0,7);g.stroke();g.globalAlpha=1}
+function phoneXfer(){const n=pixAmt(),o=CHAR.list[1-CHAR.cur];if(!n){toast(translatePlain('SEM DINHEIRO'));clang(.1);return}if(n>(PL.money||0)){toast('SALDO INSUFICIENTE · $'+(PL.money||0));clang(.1);return}
+ money(-n);o.cash=(o.cash||0)+n;o.pixIn=(o.pixIn||[]);o.pixIn.push({from:CHAR.list[CHAR.cur].name,n});toast('PIXel · $'+n.toLocaleString(S.lang==='en'?'en-US':'pt-BR')+' PARA '+o.name);clang(.3);phoneHome('PAY')}
 function phoneTone(ok){if(!AC||!S.sound)return;const t=AC.currentTime,seq=ok?[[880,0],[1320,.13]]:[[300,0],[220,.18],[160,.36]];for(const[f,d] of seq){const o=AC.createOscillator(),g=AC.createGain();o.type=ok?'sine':'square';o.frequency.value=f;g.gain.setValueAtTime(0,t+d);g.gain.linearRampToValueAtTime(ok?.09:.05,t+d+.01);g.gain.linearRampToValueAtTime(0,t+d+(ok?.12:.16));o.connect(g);g.connect(master);o.start(t+d);o.stop(t+d+.2)}}
 function phoneBusy(){if(!AC||!S.sound)return;const t=AC.currentTime;for(let k=0;k<4;k++)for(const f of [480,620]){const o=AC.createOscillator(),g=AC.createGain(),d=k*.5;o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(0,t+d);g.gain.linearRampToValueAtTime(.03,t+d+.02);g.gain.setValueAtTime(.03,t+d+.24);g.gain.linearRampToValueAtTime(0,t+d+.27);o.connect(g);g.connect(master);o.start(t+d);o.stop(t+d+.3)}}
 function phoneRing(){if(!AC||!S.sound)return;const t=AC.currentTime;for(const f of [440,480]){const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.035,t+.03);g.gain.setValueAtTime(.035,t+.42);g.gain.linearRampToValueAtTime(0,t+.46);o.connect(g);g.connect(master);o.start(t);o.stop(t+.5)}}

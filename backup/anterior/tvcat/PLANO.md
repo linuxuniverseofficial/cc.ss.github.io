@@ -157,3 +157,4 @@ skate do jogador, helicóptero, vortex/jet ski, gatos/pets, impérios, shopping,
 - **FÔLEGO** (`stamina`, v4 r36): correr cansa; borda branca embaçada; esgotado anda devagar (quadro `folego`).
 - **SORTE** (`luck`, v4): barra 🍀, trevo de 4 folhas, viés leve no cassino (quadros `sorte_trevo`, `sorte_mapa`, `sorte_synth`).
 - **ÔNIBUS E CARONA** (`bus`, v4): linha circular, rota com setas no mapa, passageiro e carona (quadros `onibus_ponto`, `onibus_mapa`, `carona`).
+- **METRÔ** (`metro`, v4): 3–5 entradas em esquinas, menu de destino ($3), viagem com fade (quadros `metro_boca`, `metro_menu`, `metro_noite`).

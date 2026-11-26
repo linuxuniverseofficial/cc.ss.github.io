@@ -501,8 +501,7 @@ function ctosSub(k){const en=S.lang==='en',t=(a,b)=>en?b:a;if(k==='PERFIL')retur
 function ctosAct(k){if(k==='PERFIL'){profOpen();if(PHONE.open)phoneDraw();return}if(k==='JAMMER'){const ok=jammerFire();if(ok&&PHONE.open)phoneToggle();else if(PHONE.open)phoneDraw()}}
 function ctosDraw(g,M,sx,sy,sw,cx,hit,foc,retro){g.textAlign='center';g.font='bold 9px system-ui,"Segoe UI",Arial,sans-serif';g.fillStyle='#5ef0ff';g.fillText('◉ ctOS',cx,sy+16);g.fillStyle=M.txt;
  ctosItems().forEach((k,i)=>{const y=sy+34+i*24;hit('scr',i,sx+4,y-2,sw-8,22);if(foc(i)){g.fillStyle=M.acc;g.fillRect(sx+6,y-2,sw-12,21);g.fillStyle=retro?M.scr:'#000'}else g.fillStyle=M.txt;
-  g.font='bold 8px system-ui,"Segoe UI",Arial,sans-serif';g.fillText(translatePlain(k),cx,y);g.font='bold 6px system-ui,"Segoe UI",Arial,sans-serif';g.fillText(ctosSub(k),cx,y+10)});
- g.fillStyle=M.txt;g.globalAlpha=.7;g.font='bold 6px system-ui,"Segoe UI",Arial,sans-serif';g.fillText(translatePlain('APAGAR · VOLTAR'),cx,sy+104);g.globalAlpha=1}
+  g.font='bold 8px system-ui,"Segoe UI",Arial,sans-serif';g.fillText(translatePlain(k),cx,y);g.font='bold 6px system-ui,"Segoe UI",Arial,sans-serif';g.fillText(ctosSub(k),cx,y+10)});} /* v4 r36: sem a dica 'APAGAR · VOLTAR' (o smartphone tem ◁ na barra de navegação) */
 function gunGive(w,n){if(w==='jammer'){ctosInstall();return 1}
  const equipped=GUN.has&&GUN.w===w;
  const current=equipped?GUN.ammo:(GUN.inv[w]?.ammo??0);
