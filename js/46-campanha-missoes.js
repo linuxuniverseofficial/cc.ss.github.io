@@ -80,7 +80,7 @@ function campCarsClear(keep){for(const k in CAMP.cars){const v=CAMP.cars[k];if(v
 function campCarGone(v){return !v||!vehicles.includes(v)||!v.alive||v.exploded}
 /* ---------- checkpoint e falha ---------- */
 function campSnap(){const cp=o=>o?JSON.parse(JSON.stringify(o)):null;if(GUN.has&&GUN.inv[GUN.w])GUN.inv[GUN.w].ammo=GUN.ammo;const c=PL.car;
- return{cur:CHAR.cur,money:PL.money||0,bank:BANKACC.bal||0,cash:CHAR.list.map(q=>q.cash||0),pal:cp(PLAYER_PAL),looks:CHAR.list.map(q=>cp(q.look)),inv:cp(GUN.inv),w:GUN.w,x:campMe().x,z:campMe().z,style:S.style,haze:!!city.haze,
+ return{cur:CHAR.cur,money:PL.money||0,bank:BANKACC.bal||0,luck:LUCK.v,cash:CHAR.list.map(q=>q.cash||0),pal:cp(PLAYER_PAL),looks:CHAR.list.map(q=>cp(q.look)),inv:cp(GUN.inv),w:GUN.w,x:campMe().x,z:campMe().z,style:S.style,haze:!!city.haze,
   car:c&&c.alive?{type:c.type,color:c.color,a:c.a,legal:!!c.legal,owned:!!c.owned,special:!!c.special,tag:c.campTag||null}:null,heli:PL.heli?{x:PL.heli.x,z:PL.heli.z,y:PL.heli.y,yaw:PL.heli.yaw||0}:null,vars:cp(campV()),tod:DN.tod,mask:!!MASK.have,card:!!LAB.card}}
 function campCheckpoint(st){CAMP.cp={stage:st.id,snap:campSnap()};if(CAMP.cpShown)toast('<span style="color:#7dff8a">CHECKPOINT</span>');CAMP.cpShown=true}
 function campFail(reason){if(!CAMP.id||CAMP.failing)return CAMP.failing;if(CAMP.st&&CAMP.st.onFail)try{if(CAMP.st.onFail(reason))return true}catch(e){console.error(e)}CAMP.failing=true;CAMP.failT=0;STORYFAIL.active=true;STORYFAIL.t=0;STORYFAIL.mission='camp';STORYFAIL.reason=reason;
@@ -100,7 +100,7 @@ function campRestore(){const cp=CAMP.cp,m=campM();if(!cp||!m){campAbort();return
  PL.dead=false;PL.deadT=0;PL.hp=100;PL.down=0;PL.rot=0;PL.vx=PL.vz=0;PL.jy=PL.jv=0;$('#ko').hidden=true;$('#ko').textContent='NOCAUTE';document.body.classList.remove('ko-grayscale');
  if(S0.cur!==CHAR.cur){CHAR.list[CHAR.cur].look={...PLAYER_PAL,pack:false};charEnter(S0.cur,null,[S0.x,S0.z])}
  PL.x=S0.x;PL.z=S0.z;PL.gy=groundY(PL.x,PL.z);PL.sp.visible=true;PL.sh.visible=true;
- CHAR.list.forEach((c,i)=>{c.cash=S0.cash[i];if(i!==CHAR.cur&&S0.looks[i])c.look=cpy(S0.looks[i])});PL.money=S0.money;if(S0.bank!=null)BANKACC.bal=S0.bank;Object.assign(PLAYER_PAL,cpy(S0.pal));CHAR.list[CHAR.cur].look={...PLAYER_PAL,pack:false};try{applyPlayerLook();charFaces()}catch(e){}
+ CHAR.list.forEach((c,i)=>{c.cash=S0.cash[i];if(i!==CHAR.cur&&S0.looks[i])c.look=cpy(S0.looks[i])});PL.money=S0.money;if(S0.bank!=null)BANKACC.bal=S0.bank;if(S0.luck!=null)LUCK.v=S0.luck;Object.assign(PLAYER_PAL,cpy(S0.pal));CHAR.list[CHAR.cur].look={...PLAYER_PAL,pack:false};try{applyPlayerLook();charFaces()}catch(e){}
  if(S0.inv&&Object.keys(S0.inv).length){GUN.inv=cpy(S0.inv);if(GUN.has){const w=GUN.inv[S0.w]?S0.w:Object.keys(GUN.inv)[0];try{gunSelect(w,true)}catch(e){}}}
  STORY.vars=cpy(S0.vars)||{};MASK.have=S0.mask;LAB.card=S0.card;
  let car=null;if(S0.heli){try{const h=heliAddPad(S0.heli.x,S0.heli.z,S0.heli.yaw,'campR'+Date.now());heliBoard(h);h.phase='fly';h.y=Math.max(S0.heli.y,30);h.yaw=S0.heli.yaw}catch(e){console.warn('[campanha] heli',e)}}
