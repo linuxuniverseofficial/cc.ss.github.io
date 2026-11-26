@@ -241,6 +241,8 @@ function c3Place(o){const sp=o.sp;if(!sp||!sp.isSprite)return;
  if(patio)lift=lying?.86:.22;else{lift=(top?.9:0)+((o.rot&&Math.abs(o.rot)>1&&!top)?.3:0)+(o.jy||0)*0}
  if(sitting)ly=ride==='moto'?-.12:-.33;if(lying)ly=patio?lift-.3+.12*sc:.15;
  _c3e.set(0,st.ang,0,'YXZ');if(lying){_c3e.set(o.rot<0&&!patio?Math.PI/2:-Math.PI/2,st.ang,0,'YXZ')}else if(Math.abs(o.rot||0)>.01)_c3e.set(0,st.ang,-(o.rot||0),'YXZ');
+ /* r53: jogador na moto inclina junto (rot = −roll·0,9) e acompanha o empino/frenagem da moto */
+ if(ride==='moto'&&o===PL&&rideV&&!lying)_c3e.x=-(rideV.pitch||0)*.8;
  _c3q.setFromEuler(_c3e);_c3v.set(0,-lift+ly,0);
  /* r52: deitado, a malha tem os pés na origem; centra o corpo (≈1,75 m) no colchão/toalha. Espreguiçadeira: cabeça no encosto (lado −frente), pés para +frente */
  if(lying){const hd=_c3e.x>0?1:-1,fa=st.ang,d=(patio?.9:-.85*hd)*sc;_c3v.x+=Math.sin(fa)*d;_c3v.z+=Math.cos(fa)*d}_c3s.set(sc,sc,sc);_c3a.compose(_c3v,_c3q,_c3s);
@@ -252,7 +254,7 @@ function c3Frame(){if(!C3_ON())return;try{C3.sunDir.copy(sun.position).sub(sun.t
 /* troca de modo: liga/desliga em todos os personagens já criados */
 function c3ApplyMode(){if(!C3_ON()){for(const st of [...C3.list]){if(st.o&&st.o.sp&&st.o.sp.userData.c3===st)c3Drop(st.o.sp);else{C3.list.delete(st);if(st.mesh.parent)st.mesh.parent.remove(st.mesh);st.mat.dispose()}}}const all=[PL,...peds];for(const o of all){if(!o||!o.sp)continue;if(!C3_ON())c3Drop(o.sp);else{try{c3Place(o)}catch(e){console.error(e)}}}}
 /* gancho: todo personagem posicionado por placeSprite ganha o boneco 3D (quando a opção está ligada) */
-placeSprite=(f=>function(o){const r=f.apply(this,arguments);if(o&&o.sp){try{const fr=renderer.info.render.frame;if(C3.lastF!==fr){C3.lastF=fr;c3Frame()}c3Place(o)}catch(e){if(!C3.err){C3.err=1;console.error(e)}}}return r})(placeSprite);
+placeSprite=(f=>function(o){const r=f.apply(this,arguments);if(o&&o.sp){try{const fr=renderer.info.render.frame;if(C3.lastF!==fr){C3.lastF=fr;c3Frame()}c3Place(o===PL_CAR_SPR?PL:o)}catch(e){if(!C3.err){C3.err=1;console.error(e)}}}return r})(placeSprite);
 /* arma na mão: no 3D o jogador vira para a mira e a arma vai para a mão direita (no 2D ela fica do lado do sprite) */
 const C3AIM={on:false,x:0,z:1};
 /* r45: em diálogo/cena (beijo no motel, conversas da campanha) a arma fica baixa na mão, sem a pose de mira.
