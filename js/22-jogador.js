@@ -300,7 +300,8 @@ function updatePlayer(dt){
   else{const f=clamp(((keys.KeyW||keys.ArrowUp)?1:0)-((keys.KeyS||keys.ArrowDown)?1:0)-PAD.ly,-1,1),s=clamp((keys.KeyD?1:0)-(keys.KeyA?1:0)+PAD.lx,-1,1);
    if(keys.ArrowLeft)PL.yaw+=dt*2.2;if(keys.ArrowRight)PL.yaw-=dt*2.2;
    const fx=-Math.sin(PL.yaw),fz=-Math.cos(PL.yaw),rx=Math.cos(PL.yaw),rz=-Math.sin(PL.yaw);mx=fx*f+rx*s;mz=fz*f+rz*s}
-  const l=Math.hypot(mx,mz);const pm=Math.hypot(PAD.lx,PAD.ly),spd=keys.ShiftLeft||keys.ShiftRight||(PAD.on&&PAD.run)?7.8:(pm>0&&pm<.5&&!(keys.KeyW||keys.KeyS||keys.KeyA||keys.KeyD||keys.ArrowUp||keys.ArrowDown))?4.3*Math.max(.45,pm*2):4.3;let spdM=maskOn()?3:1;if(spdM===1&&!PL.car){const wd=wadeDepth(PL.x,PL.z);if(wd>.05){spdM=1-.5*Math.min(1,wd/WADE_D);if(l&&Math.random()<dt*7)emit(PL.x,waterLevel(PL.x,PL.z)+.05,PL.z,(Math.random()-.5)*2,1+Math.random()*1.5,(Math.random()-.5)*2,.5,.3,.1,0xd8ecff,false,.7)}} /* v4 r29: no raso anda mais devagar e espirra água */ /* v78: Maskara = supervelocidade a pé */
+  const l=Math.hypot(mx,mz);const pm=Math.hypot(PAD.lx,PAD.ly),spd=(keys.ShiftLeft||keys.ShiftRight||(PAD.on&&PAD.run))&&!STAM.ex?7.8:(pm>0&&pm<.5&&!(keys.KeyW||keys.KeyS||keys.KeyA||keys.KeyD||keys.ArrowUp||keys.ArrowDown))?4.3*Math.max(.45,pm*2):4.3;let spdM=maskOn()?3:1;if(spdM===1&&!PL.car){const wd=wadeDepth(PL.x,PL.z);if(wd>.05){spdM=1-.5*Math.min(1,wd/WADE_D);if(l&&Math.random()<dt*7)emit(PL.x,waterLevel(PL.x,PL.z)+.05,PL.z,(Math.random()-.5)*2,1+Math.random()*1.5,(Math.random()-.5)*2,.5,.3,.1,0xd8ecff,false,.7)}} /* v4 r29: no raso anda mais devagar e espirra água */
+ if(spdM!==3){stamTick(dt,spd===7.8&&l>.1,l>.1);if(STAM.ex)spdM*=.72} /* v4 r36: fôlego */ /* v78: Maskara = supervelocidade a pé */
   const tx=l?mx/l*spd*spdM:0,tz=l?mz/l*spd*spdM:0;PL.vx+=(tx-PL.vx)*Math.min(1,dt*12);PL.vz+=(tz-PL.vz)*Math.min(1,dt*12);
   if(l){plFace(mx/l,mz/l);PL.anim+=dt*(spd>5?11:7)}else PL.anim=0;
   const bx=PL.x,bz=PL.z;PL.x+=PL.vx*dt;PL.z+=PL.vz*dt;circleVsWorld(PL,.4);shipPlayerVsContainers(PL,.38);
@@ -364,3 +365,23 @@ function addSkid(x0,z0,x1,z1,y){const dx=x1-x0,dz=z1-z0,l=Math.hypot(dx,dz);if(l
  skAge.fill(SKCLK.t,skI*6,skI*6+6);skGeo.attributes.aT.needsUpdate=true;skI=(skI+1)%SKMAX;skN=Math.min(SKMAX,skN+1);skGeo.attributes.position.needsUpdate=true;skGeo.setDrawRange(0,skN*6)}
 function clearSkids(){skI=0;skN=0;skGeo.setDrawRange(0,0);skAge.fill(-999);skGeo.attributes.aT.needsUpdate=true}
 
+
+/* v4 r36 · FÔLEGO: correr gasta (≈14 s de corrida contínua), esgotado = sem corrida até 35% e andar 28% mais lento.
+   Indicador: borda branca embaçada nas beiradas da tela (#fatigue), sem texto. Maskara não cansa. */
+const STAM={v:1,ex:false,el:null,a:-1,t:0};
+function stamTick(dt,run,moving){
+ if(run){STAM.v=Math.max(0,STAM.v-dt/14);if(STAM.v<=0)STAM.ex=true}
+ else STAM.v=Math.min(1,STAM.v+dt*(moving?.09:.2));
+ if(STAM.ex&&STAM.v>=.35)STAM.ex=false;stamFx(dt)}
+function stamIdle(dt){if(STAM.v<1||STAM.ex){STAM.v=Math.min(1,STAM.v+dt*.2);if(STAM.ex&&STAM.v>=.35)STAM.ex=false}stamFx(dt)}
+function stamFx(dt){STAM.t+=dt;
+ let a=STAM.v<.6?(.6-STAM.v)/.6:0;if(STAM.ex)a=Math.max(a,.75);
+ if(a>0)a*=.82+.18*Math.sin(STAM.t*(STAM.ex?5.5:3.5)); /* respiração */
+ a=Math.round(a*40)/40;if(a===STAM.a)return;STAM.a=a;
+ if(!STAM.el){const d=document.createElement('div');d.id='fatigue';document.body.appendChild(d);STAM.el=d;
+  const st=document.createElement('style');st.textContent='#fatigue{position:fixed;inset:0;pointer-events:none;z-index:6;opacity:0;display:none;'+
+   'background:radial-gradient(ellipse at center,rgba(255,255,255,0) 52%,rgba(255,255,255,.28) 78%,rgba(255,255,255,.62) 100%);'+
+   'backdrop-filter:blur(2.2px);-webkit-backdrop-filter:blur(2.2px);'+
+   '-webkit-mask-image:radial-gradient(ellipse at center,transparent 50%,#000 88%);mask-image:radial-gradient(ellipse at center,transparent 50%,#000 88%)}';
+  document.head.appendChild(st)}
+ STAM.el.style.display=a>0?'block':'none';STAM.el.style.opacity=a.toFixed(3)}

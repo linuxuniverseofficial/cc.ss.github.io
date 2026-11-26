@@ -354,7 +354,7 @@ function mudInject(sh){sh.vertexShader='varying vec3 vMudP;varying vec3 vMudN;\n
 const MUD_COL={dry:new THREE.Color('#7a5a36'),wet:new THREE.Color('#3e2a17'),idry:new THREE.Color('#4a4640'),iwet:new THREE.Color('#2a2724')};
 function dirtTick(dt){const c=PL.car;if(!c||!c.alive||c.t.boat||c.t.hover||c.type==='jetski')return;const sp=Math.hypot(c.vx||0,c.vz||0);c.grime=c.grime||0;
  const mud=c.mudG||0,rn=rainAt(c.x,c.z);c.mudWet=Math.max(0,Math.min(1,(c.mudWet||0)+((mud>.02&&sp>1)||rn>.2?dt*.6:-dt*.012)));
- if(sp>1&&!(c.airY>0)){const rural=isRural(c.x,c.z);let k=mud>.02?.0045:rural?.0007:0;if(k){if(rn>.2)k*=1.6;c.grime=Math.min(1,c.grime+k*sp*dt)}
+ if(sp>1&&!(c.airY>0)){const rural=isRural(c.x,c.z);let k=mud>.02?.0045:rural?.0007/3:0; /* v4 r36: terra 3× mais lenta (15 m/s → 100% em ~4,8 min) */if(k){if(rn>.2)k*=1.6;c.grime=Math.min(1,c.grime+k*sp*dt)}
   else if(rn>.3)c.grime=Math.max(0,c.grime-.004*dt)}
  if((c.grimeT=(c.grimeT||0)-dt)<=0){c.grimeT=.5;dirtApply(c)}}
 function mudWheels(c,on,f){if(!c.wheels)return;if(on&&!c.mudWheelMat){c.mudWheelMat=wheelMat.clone();c.mudWheelMat.userData.cached=false}
