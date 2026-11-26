@@ -197,7 +197,7 @@ function c3Place(o){const sp=o.sp;if(!sp||!sp.isSprite)return;
  /* sem lixo por quadro: a chave (string) só é refeita quando a paleta troca de objeto ou, no jogador (lojas mudam PLAYER_PAL no lugar), a cada ~0,4 s ou quando o sprite troca de textura */
  st.kT-=dt;if(!st.slot||pal!==st.pal||o===PL&&(st.kT<=0||sp.material.map!==st.map)){st.kT=.4;st.pal=pal;st.map=sp.material.map;st.mat.uniforms.uLong.value=pal.long?1:0;const k=c3Key(pal);if(k!==st.key){st.key=k;st.slot=null}}
  if(!st.slot||C3.slots.get(st.key)!==st.slot){st.slot=c3Slot(st.key,pal);const n=C3.AW/C3.T;st.mat.uniforms.uTile.value.set((st.slot.i%n)*C3.T/C3.AW,-Math.floor(st.slot.i/n)*C3.T/C3.AH)}else st.slot.last=now;
- if(st.rag&&st.rag.ok){if(o.state==='dead'){ragPlace(o,st);return}ragEnd(st)} /* v4 r28: corpo solto (ragdoll) */
+ if(st.rag&&st.rag.ok){if(o.state==='dead'||(o===PL&&PL.ragOn)){ragPlace(o,st);return}ragEnd(st)} /* v4 r28: corpo solto (ragdoll) */
  /* velocidade pelo deslocamento real (suaviza troca entre parado/andar/correr) */
  let spd=0;if(st.lx!==null&&dt>0){const dx=o.x-st.lx,dz=o.z-st.lz,d=Math.hypot(dx,dz);if(d<3){spd=d/dt;st.mvx=dx;st.mvz=dz}else{st.ang=null}}st.lx=o.x;st.lz=o.z;
  const k=1-Math.exp(-dt*7),patio=o.state==='patio'&&o.patioSpot,lying=patio?o.patioSpot.kind==='recline':Math.abs(o.rot||0)>1;let sitting=patio&&!lying;
@@ -325,7 +325,7 @@ const RAG={MAX:4,live:new Set(),
  rot:Array.from({length:11},()=>new THREE.Matrix4())};
 function ragOK(o,st){return !!(st&&st.mesh&&st.mesh.visible&&o&&o.sp&&o.sp.userData.c3===st)}
 /* começa: (vx,vz) = velocidade do corpo; up = pulo extra (m/s) */
-function ragStart(o,st,vx,vz,up){if(RAG.live.size>=RAG.MAX)return false;
+function ragStart(o,st,vx,vz,up,force){if(RAG.live.size>=RAG.MAX&&!force)return false;
  const sc=camMode==='top'&&!VIEW.orbit?1.5:1,a=st.ang||0,ca=Math.cos(a),sa=Math.sin(a),N=RAG.J.length;
  const r=st.rag||(st.rag={x:new Float32Array(N*3),px:new Float32Array(N*3),L:new Float32Array(RAG.RIG.length),Lm:new Float32Array(RAG.MIN.length),rm:Array.from({length:11},()=>new THREE.Matrix4())});
  r.ok=true;r.t=0;r.calm=0;r.frozen=false;r.sc=sc;r.acc=0;const gy=(o.gy!==undefined?o.gy:groundY(o.x,o.z));r.g=gy;
@@ -379,14 +379,27 @@ function ragTick(dt){if(!C3_ON()||!dt)return;
  /* largada: corpo 3D recém-morto */
  for(const p of peds){if(p.state!=='dead'){if(p._ragS)p._ragS=0;continue}if(p._ragS)continue;p._ragS=1;const sp=p.sp,st=sp&&sp.userData.c3;if(!ragOK(p,st))continue;
   const v=Math.hypot(p.vx||0,p.vz||0);if(ragStart(p,st,p.vx||0,p.vz||0,v>2?1.6+v*.28:0)){p.vx=p.vz=0}}
- for(const st of RAG.live){const o=st.o,r=st.rag;if(!r||!r.ok||!o||!o.sp||o.sp.userData.c3!==st||o.state!=='dead'){ragEnd(st);continue}
+ for(const st of RAG.live){const o=st.o,r=st.rag;if(!r||!r.ok||!o||!o.sp||o.sp.userData.c3!==st||(o===PL?!PL.ragOn:o.state!=='dead')){ragEnd(st);continue}
   r.t+=dt;r.acc=Math.min(r.acc+dt,.1);{const A=r.near||(r.near=[]);A.length=0;try{const q=query((r.x[0]+r.x[3])/2,(r.x[2]+r.x[5])/2,2.6*r.sc);for(let i=0;i<q.length;i++)A.push(q[i])}catch(e){}} /* query devolve um vetor compartilhado: copia */let mv=0;const h=1/60;while(r.acc>=h){mv=Math.max(mv,ragStep(st,h));r.acc-=h}
   r.calm=mv<.35?r.calm+dt:0;ragPose(st);
   /* o ped (sombra, espólio, colisão) segue o quadril */
-  o.x=(r.x[0]+r.x[3])/2;o.z=(r.x[2]+r.x[5])/2;{const g=groundY(o.x,o.z);if(isFinite(g)&&Math.abs(g-r.g)<1.2)r.g=g}
+  o.x=(r.x[0]+r.x[3])/2;o.z=(r.x[2]+r.x[5])/2;{const g=groundY(o.x,o.z);if(isFinite(g)&&Math.abs(g-r.g)<1.2)r.g=g}if(o===PL){PL.vx=PL.vz=0;PL.gy=r.g}
   if(r.t>3||r.t>1.1&&r.calm>.35){r.frozen=true;RAG.live.delete(st)}}}
 /* posiciona o boneco em ragdoll: as matrizes já estão em coordenadas de mundo → anula a matriz do sprite */
 function ragPlace(o,st){const sp=o.sp,s=sp.scale,p=sp.position,m=st.mesh.matrix;m.makeTranslation(-p.x,-p.y,-p.z);RAG.m2.makeScale(1/(s.x||1),1/(s.y||1),1/(s.z||1));m.premultiply(RAG.m2);
  if(sp.parent&&sp.parent!==scene){sp.parent.updateMatrixWorld();RAG.m2.copy(sp.parent.matrixWorld).invert();m.multiply(RAG.m2)}
  st.mesh.matrixWorldNeedsUpdate=true;const U=st.mat.uniforms;U.uBlink.value=1;U.uRagOn.value=1;if(st.gun)st.gun.visible=false;
  {const op=sp.material.opacity;if(op<.995){if(!st.mat.transparent){st.mat.transparent=true;st.mat.depthWrite=false}U.uAlpha.value=op}else if(st.mat.transparent){st.mat.transparent=false;st.mat.depthWrite=true;U.uAlpha.value=1}}}
+
+/* v4 r46 · BATIDA DE MOTO: o jogador sai voando com ragdoll (por cima do guidão: direção da moto × velocidade da batida). A ejeção é a que já existia (impact no js/20: moto do jogador batendo
+   a >8,5 m/s → enterExit + PL.down + dano); aqui só entra o corpo solto no 3D (mesmo sistema dos peds, sempre liberado para o
+   jogador: ragStart com force), câmera segue o quadril, e ao parar ele levanta no ponto do quadril. 2D/2.5D: queda de antes. */
+const PLRAG={pend:null};
+function plMotoThrow(vx,vz,v){if(PL.car||!C3_ON())return;PL.down=Math.max(PL.down,3.2);PLRAG.pend={vx,vz,up:Math.min(7,2+v*.18)};shake=Math.max(shake,.5)}
+function plCrashTick(dt){
+ if(PLRAG.pend){const pd=PLRAG.pend;PLRAG.pend=null;if(C3_ON()&&PL.sp&&!PL.car){try{c3Place(PL)}catch(e){}const st=PL.sp.userData.c3;
+   if(st&&ragOK(PL,st)){PL.ragOn=true;if(!ragStart(PL,st,pd.vx,pd.vz,pd.up,true))PL.ragOn=false;else{PL.vx=PL.vz=0}}}}
+ if(PL.ragOn){const st=PL.sp&&PL.sp.userData.c3,r=st&&st.rag;
+  /* parou: mais um instante no chão e levanta (o PL.down do js/22 conta e devolve o controle) */
+  if(r&&r.frozen&&!PL.dead&&PL.down>1.4)PL.down=1.4;
+  if((!PL.dead&&PL.down<=0)||PL.car||!C3_ON()){PL.ragOn=false;if(!PL.dead)PL.rot=0}}}
