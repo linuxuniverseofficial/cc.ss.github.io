@@ -68,11 +68,63 @@ function miscPreload(){if(PRELOAD.misc)return 0;PRELOAD.misc=true;const t0=perfo
  try{preCompileIn(scene,camera,meshes)}catch(e){console.warn('miscPreload',e)}
  PRELOAD.miscObjs=meshes;return PRELOAD.ms.misc=Math.round(performance.now()-t0)}
 
+/* ---------- palcos dos interiores (v4 r49) ----------
+   Dentro de um interior com palco (roomStageEnter) a neblina sai e as luzes pontuais/spot da rua ficam ocultas: cada
+   material visível lá dentro (paredes, atores, partículas, arma na mão) vira outra variante de programa → 8–10 programas
+   compilados na 1ª entrada no cassino (medido na r48: 48 ms no swiftshader, mais o casinoBuild). O renderer.compile do
+   three r128 compila TODOS os objetos da cena (até os invisíveis), então a compilação é feita numa cena temporária com só o
+   que o palco mantém: luzes ambiente/direcional/hemisférica, a raiz de cada interior, o jogador, alguns atores e as
+   partículas. Cassino/boate e banco (montados só na 1ª entrada) passam a ser montados no loading. */
+function stagePreload(){if(PRELOAD.stageCity===city)return 0;PRELOAD.stageCity=city;const t0=performance.now();
+ if(!city.haze){try{if(!CAS.grp&&city.casino)casinoBuild()}catch(e){console.warn('stagePreload cassino',e)}
+  try{if(!BANK.grp&&typeof bankBuild==='function'&&city.bankDoor&&SAFE.IN)bankBuild()}catch(e){console.warn('stagePreload banco',e)}}
+ const roots=[];for(const k of ['safe','ammo','shop','mall','casino','pawn','bank','jail','motel','lab']){let r=null;try{r=roomStageRoot(k)}catch(e){}if(r&&r.parent&&!roots.includes(r))roots.push(r)}
+ if(!roots.length)return PRELOAD.ms.stage=0;
+ const tmp=new THREE.Scene(),moved=[],take=o=>{if(!o||!o.parent||o.parent===tmp)return;moved.push([o,o.parent,o.parent.children.indexOf(o),o.visible]);tmp.add(o)};
+ for(const o of [...scene.children])if((o.isAmbientLight||o.isDirectionalLight||o.isHemisphereLight)&&o.visible)take(o);try{if(boomLight&&boomLight.parent===scene)take(boomLight)}catch(e){} /* o laço principal religa a luz da explosão a cada quadro, então ela conta lá dentro */
+ for(const r of roots){take(r);r.visible=true}
+ take(PL.sp);take(PL.sh);try{if(HELD&&HELD.g)take(HELD.g)}catch(e){}
+ /* arma/faca/taco na mão: o palco mantém o HELD.g visível, mas no loading ele ainda não existe → amostras de cada tipo (ficam guardadas: material descartado solta o programa) */
+ if(!PRELOAD.held){PRELOAD.held=[];for(const k of ['gun','smg','magnum','rpg','grenade','remote','jammer','knife','bat','flame']){try{const p=k==='flame'?{g:ammoShowcaseWeapon('flame')}:makePickup('__pre',0,-9999,0,{pickups:[]},k);const i=pickups.indexOf(p);if(i>=0)pickups.splice(i,1);try{removePickupGlow(p)}catch(e){}if(p.g){if(p.g.parent)p.g.parent.remove(p.g);p.g.position.set(0,-9999,0);p.g.traverse(o=>{if(o.isMesh)o.castShadow=false});PRELOAD.held.push(p.g)}}catch(e){}}}
+ for(const g of PRELOAD.held)tmp.add(g);try{take(PART_NORM_IM);take(PART_ADD_IM)}catch(e){}
+ let n=0;for(const q of peds){if(n>=6)break;if(q&&q.sp&&q.sp.parent===scene){take(q.sp);if(q.sh)take(q.sh);n++}}
+ try{const L=tmp.children.filter(o=>o.isLight&&(o.isDirectionalLight||o.isPointLight)),vis=L.map(o=>o.visible),D=L.filter(o=>o.isDirectionalLight),P=L.filter(o=>o.isPointLight);
+  /* o palco alterna sol (dia/noite) e luz da explosão: compila as 4 combinações */
+  for(const d of [1,0])for(const q of [1,0]){D.forEach(o=>o.visible=!!d);P.forEach(o=>o.visible=!!q);renderer.compile(tmp,camera)}
+  L.forEach((o,i)=>o.visible=vis[i])}catch(e){console.warn('stagePreload',e)}
+ finally{for(const g of PRELOAD.held||[])tmp.remove(g);for(let i=moved.length-1;i>=0;i--){const [o,par,idx,vis]=moved[i];tmp.remove(o);par.children.splice(Math.max(0,Math.min(idx,par.children.length)),0,o);o.parent=par;o.visible=vis}}
+ return PRELOAD.ms.stage=Math.round(performance.now()-t0)}
+
+/* ---------- boneco 3D × combinações de luz (v4 r49) ----------
+   O material do boneco PS1 (c3Material, ShaderMaterial com fog) só nasce quando o 1º personagem é posicionado, e a chave do
+   programa no three r128 inclui fog e a contagem de luzes (sol, pontuais, holofote, hemisférica). Na rua a contagem muda
+   (farol do jogador à noite, luz da explosão) e no palco dos interiores não há fog → 1–2 programas novos no meio do jogo.
+   Compila um boneco de amostra numa cena temporária com as luzes reais do mundo em todas as combinações. */
+function lightVariantsCompile(objs){const tmp=new THREE.Scene(),moved=[],L=scene.children.filter(o=>o.isLight&&!o.isAmbientLight);
+ for(const o of L)moved.push([o,scene.children.indexOf(o),o.visible]);for(const o of L)tmp.add(o);const back=[];for(const o of objs){back.push([o,o.parent]);tmp.add(o)}
+ const D=L.filter(o=>o.isDirectionalLight),P=L.filter(o=>o.isPointLight),SP=L.filter(o=>o.isSpotLight),H=L.filter(o=>o.isHemisphereLight);
+ try{for(const f of [scene.fog,null])for(let q=0;q<=P.length;q++)for(const sp of SP.length?[1,0]:[0]){ /* sol e hemisférica ficam sempre ligados (rua e palco) */
+   tmp.fog=f;D.forEach(o=>o.visible=true);H.forEach(o=>o.visible=true);P.forEach((o,i)=>o.visible=i<q);SP.forEach(o=>o.visible=!!sp);renderer.compile(tmp,camera)}}
+ catch(e){console.warn('lightVariantsCompile',e)}
+ finally{for(const [o,par] of back){tmp.remove(o);if(par)par.add(o)}for(const [o,idx,vis] of moved.sort((a,b)=>a[1]-b[1])){tmp.remove(o);scene.children.splice(Math.min(idx,scene.children.length),0,o);o.parent=scene;o.visible=vis}tmp.fog=null}}
+function c3LightPreload(){if(typeof C3_ON!=='function'||!C3_ON()||typeof c3Material!=='function')return 0;const t0=performance.now();
+ if(!PRELOAD.c3m){PRELOAD.c3m=new THREE.Mesh(c3Geo(),c3Material());PRELOAD.c3m.frustumCulled=false}
+ lightVariantsCompile([PRELOAD.c3m]);return PRELOAD.ms.c3=Math.round(performance.now()-t0)}
+/* ---------- pontes levadiças (v4 r49) ----------
+   O dbTick só monta as pontes no 1º quadro de jogo (depois do warmCityGPU) → a película molhada da pista (ShaderMaterial
+   '|boatBridge') e os materiais da pista compilavam no meio do jogo (1º passeio perto da ponte / 1ª chuva). Monta aqui do
+   mesmo jeito que o dbTick (mesma chave DB.key, então o 1º quadro só confere e não refaz) e compila com a película ligada. */
+function dbPreload(){if(!city.dbs||!city.dbs.length||typeof dbBuild!=='function')return 0;const t0=performance.now();
+ const k=S.seed+':'+S.style;if(DB.key!==k||DB.ref!==city.dbs){DB.key=k;DB.ref=city.dbs;for(const g of DB.groups)scene.remove(g);DB.groups=[];
+  for(const d of city.dbs){if(d.g){scene.add(d.g);DB.groups.push(d.g)}else try{dbBuild(d)}catch(e){console.error(e)}}}
+ const films=[];for(const d of city.dbs)for(const f of d.wetSurfaces||[])films.push([f,f.visible]);films.forEach(([f])=>f.visible=true);
+ try{lightVariantsCompile(DB.groups.slice())}finally{films.forEach(([f,v])=>f.visible=v)}
+ return PRELOAD.ms.db=Math.round(performance.now()-t0)}
 /* ---------- ganchos ---------- */
 /* fim do loading: chamado pelo warmCityGPU (e na troca de modo de personagem, que também chama o charPreload3D) */
 {const _cp=charPreload3D;charPreload3D=function(){const r=_cp.apply(this,arguments);
- try{pedBakePreload()}catch(e){console.error(e)}try{petPreload(true)}catch(e){console.error(e)}return r}}
+ try{pedBakePreload()}catch(e){console.error(e)}try{c3LightPreload()}catch(e){console.error(e)}try{petPreload(true)}catch(e){console.error(e)}return r}}
 {const _w=warmCityGPU;warmCityGPU=async function(){const r=await _w.apply(this,arguments);
  try{setLoadProgress(98,'PREPARANDO BICHOS, BARRO E ROUPAS…');await nextTimeFrame()}catch(e){}
- try{mudPreload();PRELOAD.ms.mudSamples=mudSamples()}catch(e){console.error(e)}try{miscPreload()}catch(e){console.error(e)}try{PRELOAD.ms.jobs=pedJobsDrain(IS_MOBILE?1500:4000)}catch(e){console.error(e)}
+ try{mudPreload();PRELOAD.ms.mudSamples=mudSamples()}catch(e){console.error(e)}try{miscPreload()}catch(e){console.error(e)}try{stagePreload()}catch(e){console.error(e)}try{dbPreload()}catch(e){console.error(e)}try{c3LightPreload()}catch(e){console.error(e)}try{PRELOAD.ms.jobs=pedJobsDrain(IS_MOBILE?1500:4000)}catch(e){console.error(e)}
  console.log('[pré-carga v4]',JSON.stringify(PRELOAD.ms));return r}}
