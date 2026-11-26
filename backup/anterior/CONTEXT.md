@@ -4,6 +4,14 @@ Documento de trabalho: mecânicas atuais, travas, delimitações das missões, r
 O histórico completo antigo (PixelCity v1–v301, v26–v78 e v79 r1–r24, ~690 KB) foi arquivado em `backup/CONTEXT.historico.md`: consultar por `grep` só quando precisar da origem de uma decisão.
 Regras de edição e funções comuns: `CLAUDE.md`. Em conflito vale: pedido atual do usuário > código > este documento.
 
+> ## ⚠️ REGRA OBRIGATÓRIA — PRÉ-CARGA (José, v4 r49)
+> **Toda novidade no jogo (objeto, efeito, material, shader, textura, personagem, veículo, interior, HUD com canvas) precisa estar pronta desde o loading.** Nada pode ser montado ou compilado na primeira vez que aparece em jogo — isso gera travadas (picos de 70–500 ms; a r46 achou atlas 2.5D dos cães/gatos montados na hora e shaders do barro, ped morrendo, folhas e paraquedas compilando no meio do jogo).
+> - **Shader/programa novo** (material novo, `onBeforeCompile`, `ShaderMaterial`, variação de `alphaTest`/`transparent`/`side`/`map`/instancing/cor por instância/`receiveShadow`): criar **guardião** no `js/56-precarga.js` (`preKeep`, compilado com `renderer.compile` no mesmo contexto/cena de quem usa) — o three r128 apaga o programa quando o último material que o usa leva `dispose`, então clone por objeto também precisa de guardião.
+> - **Atlas/textura de canvas** montados em jogo (sprites, roupas, bichos, placas, telas): gerar no `charPreload3D`/`warmCityGPU` (loading e troca de modo/mundo), nunca no 1º quadro em que aparecem.
+> - **Clone de material por objeto** (sujeira, queimado, cor): reaproveitar material/programa (`customProgramCacheKey` compartilhado) e pré-compilar uma amostra no loading.
+> - **Geometria/material por spawn**: cache/pool (nada de `new …Geometry` a cada spawn ou a cada dia sem `dispose`).
+> - **Conferir antes de entregar**: medir com o embrulho de `renderer.renderBufferDirect` (registra programa novo em `renderer.properties.get(mat).currentProgram`) andando pela área nova em 2.5D e 3D, Modern/Synthwave/Invertido — meta: **0 programas compilados no meio do jogo**. Scripts de referência da r46: `meas3.js`/`meas6.js` (picos e programas novos). Detalhes e regras em §2 (r46) e §8.
+
 ---
 
 ## 0. Como registrar mudanças
@@ -343,6 +351,8 @@ Estágios (`PROLOGUE`, Ctrl+Shift+F9 pula em debug): `dealer` → `driveFirst` (
 - **Janela nova com botões precisa funcionar no controle (v3 r28).** Ou entra no `padDialog` (navegação espacial `padNavFocus`, ○ fecha, ✕ clica; campo de texto → `padTextKey`/MINIKEY; cor → `padColorStep`), ou ganha um handler próprio no `padPoll` como `skUiPad`. Se o clique redesenha os botões (`innerHTML=''`), devolver o foco ao mesmo lugar. Antes da r28 a tela do online e a skate shop não navegavam no controle.
 
 ## 9. Registro recente (v79 r1–r49 → v1)
+
+- **v4 r49 · Regra obrigatória de pré-carga no topo do CONTEXT e no CLAUDE.md.** Pedido do José: "põe no topo do contexto que essa otimização é obrigatória sempre pra qualquer novidade no jogo" (a da r46: nada montado/compilado no meio do jogo). Só documentação (`CONTEXT.md`, `CLAUDE.md`); a varredura do que ainda falta roda em frente paralela (`frente-varredura`) e entra numa versão seguinte.
 
 - **v4 r48 · Banca de jornal e metrô envelhecidos.** Pedido do José: envelhecer as texturas da banca e do metrô para combinar com o resto da cidade (antes: banca com cores sólidas saturadas e revistas novinhas; metrô roxo liso). Feito em frente paralela (branch `frente-texturas`).
   - `js/03-texturas-malhas.js`: `ageH`/`ageN` (ruído determinístico por posição, sem `R()`), `ageColor` (tinta desbotada, sujeira subindo da base com altura irregular → ferrugem no metal, escorrido, manchas, lascas), `mbAgedQuad`/`mbAgedBox` (faces subdivididas com cor por vértice no mesmo lote, sem material/draw call novos), `ageWearTex` (textura de desgaste 256², `mulberry32` fixo).
