@@ -370,11 +370,11 @@ function clearSkids(){skI=0;skN=0;skGeo.setDrawRange(0,0);skAge.fill(-999);skGeo
    Indicador: borda branca embaçada nas beiradas da tela (#fatigue), sem texto. Maskara não cansa. */
 const STAM={v:1,ex:false,el:null,a:-1,t:0};
 function stamTick(dt,run,moving){
- if(run){STAM.v=Math.max(0,STAM.v-dt/14);if(STAM.v<=0)STAM.ex=true}
- else STAM.v=Math.min(1,STAM.v+dt*(moving?.09:.2));
+ if(run){STAM.v=Math.max(0,STAM.v-dt/10.5);if(STAM.v<=0)STAM.ex=true} /* v4 r41: 75% da corrida de antes (14 s) */
+ else STAM.v=Math.min(1,STAM.v+dt*(moving?.045:.1)); /* v4 r41: descanso 2× mais lento */
  if(STAM.ex&&STAM.v>=.35)STAM.ex=false;stamFx(dt)}
-function stamIdle(dt){if(STAM.v<1||STAM.ex){STAM.v=Math.min(1,STAM.v+dt*.2);if(STAM.ex&&STAM.v>=.35)STAM.ex=false}stamFx(dt)}
-function stamFx(dt){STAM.t+=dt;
+function stamIdle(dt){if(STAM.v<1||STAM.ex){STAM.v=Math.min(1,STAM.v+dt*.1);if(STAM.ex&&STAM.v>=.35)STAM.ex=false}stamFx(dt)}
+function stamFx(dt){STAM.t+=dt;stamBar(dt);
  let a=STAM.v<.6?(.6-STAM.v)/.6:0;if(STAM.ex)a=Math.max(a,.75);
  if(a>0)a*=.82+.18*Math.sin(STAM.t*(STAM.ex?5.5:3.5)); /* respiração */
  a=Math.round(a*40)/40;if(a===STAM.a)return;STAM.a=a;
@@ -385,3 +385,13 @@ function stamFx(dt){STAM.t+=dt;
    '-webkit-mask-image:radial-gradient(ellipse at center,transparent 50%,#000 88%);mask-image:radial-gradient(ellipse at center,transparent 50%,#000 88%)}';
   document.head.appendChild(st)}
  STAM.el.style.display=a>0?'block':'none';STAM.el.style.opacity=a.toFixed(3)}
+/* v4 r41 · barra branca de fôlego embaixo da sorte (#hpwrap): aparece enquanto o fôlego não está cheio e some 1,5 s depois de encher; com o mouse no minimapa aparece sempre */
+function stamBar(dt){let el=STAM.bar;if(!el){const w=document.getElementById('hpwrap');if(!w)return;
+  const st=document.createElement('style');st.textContent='#stam{display:flex;align-items:center;gap:5px;margin-top:3px;opacity:0;transition:opacity .4s;justify-content:flex-end}#stam.on,body:has(#mini:hover) #stam{opacity:1}#stam i{font-style:normal;font-size:10px;line-height:1;filter:drop-shadow(1px 1px 0 #000)}#stam b{position:relative;display:block;width:96px;height:4px;background:rgba(0,0,0,.55);border:1px solid rgba(0,0,0,.8)}#stam u{position:absolute;left:0;top:0;bottom:0;background:#fff;transition:background .3s}#stam.ex u{background:#ffb3b3}body.hide-gamehud #stam{display:none!important}body.touch #stam b{width:80px}';
+  document.head.appendChild(st);el=document.createElement('div');el.id='stam';el.innerHTML='<i>💨</i><b><u></u></b>';
+  const lk=document.getElementById('luck');if(lk&&lk.parentNode===w)lk.after(el);else w.appendChild(el);STAM.bar=el;STAM.hold=0}
+ if(!el.isConnected||(STAM.lk!==1)){const w=document.getElementById('hpwrap'),lk=document.getElementById('luck');if(lk&&lk.parentNode===w){if(lk.nextSibling!==el)lk.after(el);STAM.lk=1}else if(w&&!el.isConnected)w.appendChild(el)} /* fica sempre logo abaixo da sorte */
+ if(STAM.v<1)STAM.hold=1.5;else STAM.hold=Math.max(0,(STAM.hold||0)-dt);
+ const on=STAM.hold>0;if(el._on!==on){el._on=on;el.classList.toggle('on',on)}
+ if(el._ex!==STAM.ex){el._ex=STAM.ex;el.classList.toggle('ex',STAM.ex)}
+ const v=Math.round(STAM.v*100);if(el._v!==v){el._v=v;el.querySelector('u').style.width=v+'%'}}
