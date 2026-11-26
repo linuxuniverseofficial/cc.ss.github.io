@@ -2617,7 +2617,8 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
      const c0=S0.P(tt-.03,(d0+.05+d1-.1)/2),pu=S0.P(tt+.97,(d0+.05+d1-.1)/2),ux=pu[0]-c0[0],uz=pu[1]-c0[1],hw=(d1-.1-d0-.05)/2;
      for(const sg of[-1,1]){const nx=ux*sg,nz=uz*sg,rx=nz,rz=-nx,cx=c0[0]+nx*.05,cz=c0[1]+nz*.05;
       (ch.ads=ch.ads||[]).push({pts:[[cx-rx*hw,y0,cz-rz*hw],[cx+rx*hw,y0,cz+rz*hw],[cx+rx*hw,y1,cz+rz*hw],[cx-rx*hw,y1,cz-rz*hw]],tile})}}
-    addCol(...rect(S0,t-1.85,t+1.85,d1-.12,d1),'rock')}}
+    addCol(...rect(S0,t-1.85,t+1.85,d1-.12,d1),'rock');
+    {const g0=S0.P(t,0),gc=S0.P(t,(d0+d1)/2);(city.busStops||(city.busStops=[])).push({x:g0[0],z:g0[1],cx:gc[0],cz:gc[1],nx:S0.n[0],nz:S0.n[1],ri})} /* v4 r36: lista dos pontos para a linha de ônibus (js/52) */}}
   /* v78: banco de praça no pé dos prédios em ~40% dos quarteirões (gerador próprio: não muda a seed); de costas pro prédio, virado pra rua */
   {const br=mulberry32(((ri+1)*2246822519^(S.seed*40503+0x5be7c))>>>0);if(br()<.4){const S0=side(['n','s','w','e'][Math.floor(br()*4)]),t=8+br()*Math.max(0,S0.L-16),d0=2.75,d1=3.45,R0=rect(S0,t-1.15,t+1.15,d0-.15,d1+.1);
    if(S0.L>18&&free(...R0)){const wood=COL(night?'#4a3a5a':'#8a5a36'),metal=COL(night?'#2a2838':'#3a3a40');

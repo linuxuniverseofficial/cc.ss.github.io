@@ -155,3 +155,4 @@ skate do jogador, helicóptero, vortex/jet ski, gatos/pets, impérios, shopping,
 
 - **PRAIA E MAR** (`beach`, v4 r29): andar no raso; afoga com a água cobrindo a cabeça (quadro `praia_raso`).
 - **FÔLEGO** (`stamina`, v4 r36): correr cansa; borda branca embaçada; esgotado anda devagar (quadro `folego`).
+- **SORTE** (`luck`, v4): barra 🍀, trevo de 4 folhas, viés leve no cassino (quadros `sorte_trevo`, `sorte_mapa`, `sorte_synth`).

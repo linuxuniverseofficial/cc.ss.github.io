@@ -656,6 +656,7 @@ function v67Hud(dt){if(!GUN.has&&!PL.car&&played){$('#gun').hidden=false;hudTx('
  else if(duoMateNear()&&storyOK('duo')&&ctxAt(SAFE.mate,2.5))h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>CHAMAR '+duoName(1-CHAR.cur)+' PRA SAIR JUNTO';
  else if(duoPedNear()&&ctxAt(DUO.ped,2.5))h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>MANDAR '+duoName(1-CHAR.cur)+' PRA CASA';
  else if(dealNear()&&ctxAt(DEAL.clerk,2.5))h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>CONCESSIONÁRIA COASTAL · VER VEÍCULOS À VENDA';
+ else if(typeof rideHint==='function'&&rideHint()){h=RIDE.h;if(RIDE.an)ctxAt(RIDE.an,RIDE.an.h)} /* v4 r36: ônibus / carona (js/52) */
  else if(CTX.car&&PL.car){h=''}
  else if(PL.car&&washHint())h=washHint();
  else if(PL.inside==='shop'&&SHOP.rob>0&&!SHOP.alarm){const k=Math.min(1,SHOP.rob/3.2),n=12,f=Math.round(k*n);h=`<span style="color:#ff4a4a">ASSALTO</span> ${'█'.repeat(f)}${'░'.repeat(n-f)}`}
