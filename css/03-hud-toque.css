@@ -1,3 +1,4 @@
+@charset "UTF-8";
 /* Coastal Chaos · css/03-hud-toque.css — Interface automática, velocímetro, botões de toque, troca de personagem. Os arquivos css/ entram na ordem do número (a ordem importa na cascata). */
 /* v3 r2: interface automática. Minimapa sem uso (sem GPS/missão/polícia) recolhe no canto (origem por JS: miniRestOrigin);
    botões de toque somem 3 s após o último toque (touch-idle) ou ficam translúcidos (touch-fade). Botão de contexto (.hot) não apaga. */

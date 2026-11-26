@@ -1,3 +1,4 @@
+@charset "UTF-8";
 /* Coastal Chaos · css/05-fenda.css — travessia da Fenda (v2 r1). Fica no meio do <body> como no index antigo. */
 /* v2 r1 · travessia da Fenda: só transform/opacity → roda na thread de composição e continua lisa enquanto o JS gera a cidade */
 #riftFx{position:fixed;inset:0;z-index:10002;pointer-events:none;overflow:hidden;background:#000;contain:strict}

@@ -1,0 +1,6 @@
+# Coastal Chaos (v4 r51): servir texto em UTF-8.
+# Sem isto, alguns Apache entregam .css/.js como ISO-8859-1 e símbolos viram "â–¶", "ðŸŽ²" etc.
+AddDefaultCharset UTF-8
+<IfModule mod_mime.c>
+  AddCharset UTF-8 .html .css .js .json .txt .md
+</IfModule>
