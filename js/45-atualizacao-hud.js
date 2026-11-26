@@ -55,14 +55,14 @@ function update(dt){if(SKATE.ui)return;if(POOL.on){poolTick(dt);return}if(DICE.o
  clubDriveTick(dt);
  tommyTick(dt);
  parkingVisitorTick(dt);
- for(const c of vehicles){if(c.mode==='rail'){ensureDetail(c);if(c.g)syncCar(c,dt);continue}
+ CARB.n=0;for(const c of vehicles){if(c.mode==='rail'){ensureDetailB(c);if(c.g)syncCar(c,dt);continue}
   if(!c.t.boat&&!c.t.hover&&!(c.airY>0)&&!(c.rampY>0)&&!c.sunk&&inWater(c.x,c.z)){c.sunk=true;c.alive=false;c.hp=0;c.sinkT=0;c.thr=0;c.ai=null;for(let i=0;i<24;i++)emit(c.x,waterLevel(c.x,c.z)+.4,c.z,(Math.random()-.5)*6,2+Math.random()*5,(Math.random()-.5)*6,.9,.6,.2,0xd8ecff,false,.9);
    if(c===PL.car){PL.car=null;PL.lastCar=c;PL.x=c.x;PL.z=c.z;$('#speed').hidden=true;$('#carbar').hidden=true;killPlayer('AFOGADO')}}
   if(c.ovF){c.ovT=(c.ovT||0)+dt;if(c.ovT>.5&&c.alive){const o=c.ovW;setOnFire(c);c.fuse=.25;if(o&&o.alive){setOnFire(o);o.fuse=.3}}}else c.ovT=0;c.ovF=false;
   if(c.sunk){c.sinkT+=dt;c.vx*=.96;c.vz*=.96;c.w*=.95;c.sleep=false}
   if(!c.sleep&&!c.ai&&!c.sunk&&c!==PL.car){const sp=Math.hypot(c.vx,c.vz);if(sp<.08&&Math.abs(c.w)<.05){c.sleepT+=dt;if(c.sleepT>1){c.sleep=true;c.vx=c.vz=c.w=0;c.thr=0}}else c.sleepT=0}
   if(!c.alive&&!c.sunk)fireTick(c,dt);
-  ensureDetail(c);
+  ensureDetailB(c);
   if(c.g){const d2=(c.x-camera.position.x)**2+(c.z-camera.position.z)**2;c.g.visible=(c.bench&&BENCH.running||c===PL.car||d2<(camMode==='top'?220*220:360*360))&&!(TIMEJUMP.hide&&c===PL.car&&!TIMEJUMP.show)}
   if(c.sleep)continue;
   syncCar(c,dt);

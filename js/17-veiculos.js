@@ -631,6 +631,12 @@ function updateCloseCarDetails(dt){
  for(const e of bikes.slice(0,MOB_LITE?2:4))CLOSE_CAR_DETAILS.add(e.c);
 }
 function ensureDetail(c){const foc=BENCH.running&&BENCH.focus?BENCH.focus:(TVM.on?TVM.foc:(PL.car||PL)),d2=(c.x-foc.x)**2+(c.z-foc.z)**2,actNear=d2<(c.g?135*135:118*118);const want=(c.net&&d2<140*140)||c.bench||c.display||c.tempPark||c.parkFade||c.wreckFade||c.clubVisit||(TVM.on&&(EVT.cars.includes(c)||d2<140*140))||CLOSE_CAR_DETAILS.has(c)||(c.ambulance&&d2<160*160)||c.t.boat||c===PL.car||((!c.alive||c.chase||c.police||c.crim)&&(actNear||(c.burn||0)>0||c.onFire))||(c===PL.lastCar&&d2<80*80);if(want&&!c.g)buildCarMesh(c);else if(!want&&c.g)dropCarMesh(c)}
+/* v4 r50 · no máximo 2 carros ganham malha detalhada por quadro no laço do update (antes vários carros entrando no raio
+   de detalhe no mesmo quadro somavam 40–60 ms: carGeoBuild 2–19 ms cada na 1ª vez de tipo+cor); o resto espera o quadro
+   seguinte no LOD. Carro do jogador, polícia/perseguição, rede, vitrine/bench, estacionando e o último carro: sempre na hora. */
+const CARB={n:0,max:2};
+function ensureDetailB(c){if(!c.g&&CARB.n>=CARB.max&&!(c===PL.car||c===PL.lastCar||c.bench||c.display||c.net||c.parkFade||c.tempPark||c.police||c.chase||c.crim||c.clubVisit))return;
+ const had=!!c.g;ensureDetail(c);if(!had&&c.g)CARB.n++}
 const PARKVIS={t:8};
 function parkFadeStep(c,dt){if(!c.g)buildCarMesh(c);if(!c.g)return;if(!c.parkFade){attachCarWheelMeshes(c);c.parkFade={t:0,mats:[]};const clones=new Map();c.g.traverse(o=>{if(!o.material)return;const clone=m=>{if(!clones.has(m)){const shared=[carBodyMat,carLightMat,wheelMat,hubMat,burntMat].includes(m)||!!m.userData.carBody,n=shared?m.clone():m;if(shared)n.userData.parkFadeTemp=true;n.onBeforeCompile=m.onBeforeCompile;n.transparent=true;n.depthWrite=false;clones.set(m,n);c.parkFade.mats.push(n)}return clones.get(m)};o.material=Array.isArray(o.material)?o.material.map(clone):clone(o.material)})}
  c.parkFade.t+=dt;const alpha=Math.max(0,1-c.parkFade.t/1.1);for(const m of c.parkFade.mats)m.opacity=alpha;if(!alpha){removeVehicle(c);for(const m of c.parkFade.mats)if(m.userData.parkFadeTemp)m.dispose()}
