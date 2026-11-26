@@ -8,5 +8,5 @@ ibox=(f=>function(){let a=arguments;if(ZF.on){a=[...a];const v=zfBoxAdj(a.slice(
 buildSafehouse=zfWrap(buildSafehouse);ammoBuild=zfWrap(ammoBuild);buildShop=zfWrap(buildShop);buildMall=zfWrap(buildMall);casinoBuild=zfWrap(casinoBuild);buildPawn=zfWrap(buildPawn);
 bankBuild=zfWrap(bankBuild);buildJail=zfWrap(buildJail);motelRoomBuild=zfWrap(motelRoomBuild);labBuild=zfWrap(labBuild);houseBuild=zfWrap(houseBuild);empEnter=zfWrap(empEnter);buildChunk=zfWrap(buildChunk);gasVisual=zfWrap(gasVisual);
 /* v4 r28: ragdoll dos bonecos 3D (js/49) roda depois do quadro do mundo (inclui o palco dos interiores, que sai do update) */
-update=(f=>function(dt){const r=f.apply(this,arguments);try{ragTick(dt)}catch(e){console.error(e)}return r})(update);
+update=(f=>function(dt){const r=f.apply(this,arguments);try{plCrashTick(dt)}catch(e){console.error(e)}try{ragTick(dt)}catch(e){console.error(e)}return r})(update);
 __CC_CARGA.fim();

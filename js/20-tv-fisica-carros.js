@@ -437,7 +437,8 @@ function carVsCar(A,B){const dx=A.x-B.x,dz=A.z-B.z,rs=A.t.R+B.t.R;if(dx*dx+dz*dz
   if(-vn>4){for(const C of [A,B])if(C.ai){C.ai.stun=1.5+Math.random()}}
   if(-vn>3&&PL.car&&(A===PL.car||B===PL.car))policeWitness(A===PL.car?B:A)}}
 function impact(c,v,px,pz){if(v<3)return;if(ONLINE.on)netCrash(c,v); /* v3 r38: batidas do ranking (Lataria de Papel) */if(c===PL.car)rumble(clamp((v-3)/16,0,1),clamp((v-1)/11,.15,1),Math.min(420,110+v*14));
- if(c===PL.car&&c.type==='moto'&&v>8.5&&!PL.dead){const vx=c.vx,vz=c.vz;enterExit();PL.down=1.6;PL.rot=Math.PI/2;PL.vx=vx*.55;PL.vz=vz*.55;PL.hp-=armorHit(Math.round(v*1.6));thud(v);if(PL.hp<=0)killPlayer()}
+ if(c===PL.car&&c.type==='moto'&&v>8.5&&!PL.dead){const vx=c.vx,vz=c.vz,sp0=Math.max(v,Math.abs(c.fwd||0));enterExit();PL.down=1.6;PL.rot=Math.PI/2;PL.vx=vx*.55;PL.vz=vz*.55;PL.hp-=armorHit(Math.round(v*1.6));thud(v);if(PL.hp<=0)killPlayer();
+   try{plMotoThrow(Math.cos(c.a)*sp0*.75,Math.sin(c.a)*sp0*.75,sp0)}catch(e){}} /* v4 r46: no 3D o jogador sai voando em ragdoll (js/49) */
  if(v>6&&c.alive){c.hp-=(v-6)*3.2*(c===PL.car?.8:1)*CRASH_DMG;if(c.hp<=0)setOnFire(c)}
  carDent(c,v,px,pz);
  const n=Math.min(10,v|0);for(let i=0;i<n;i++)emit(px,.6,pz,(Math.random()-.5)*6,Math.random()*4+1,(Math.random()-.5)*6,.35,.25,.08,0xffb030,true,1);
@@ -477,7 +478,8 @@ function syncCar(c,dt){
   c.gy+=((c.sunk?c.sunkY:groundY(c.x,c.z))-c.gy)*Math.min(1,dt*(c.sunk?.7:10))}
  if(c.hopV||c.hopY>0){c.hopY=(c.hopY||0);c.hopV-=22*dt;c.hopY+=c.hopV*dt;if(c.hopY<0){c.hopY=0;c.hopV=c.hopV<-3?-c.hopV*.3:0}}
  const ca=Math.cos(c.a),sa=Math.sin(c.a);const lng=c.ax*ca+c.az*sa,lat=-c.ax*sa+c.az*ca;
- if(!c.t.boat)c.roll+=((c.type==='moto'?clamp(lat*.04,-.6,.6):clamp(-lat*.009,-.07,.07))-c.roll)*Math.min(1,dt*6);if(!c.t.boat)c.pitch+=((c.airY>0?clamp((c.airV||0)/Math.max(8,Math.abs(c.fwd))*.6,-.35,.35):c.rampY>0?.28:clamp(lng*.006,-.05,.05))-c.pitch)*Math.min(1,dt*6);
+ if(!c.t.boat)c.roll+=((c.type==='moto'?clamp(lat*.04,-.6,.6):clamp(-lat*.009,-.07,.07))-c.roll)*Math.min(1,dt*6);if(!c.t.boat){const br=c.airY>0&&c.air?.bridge; /* v4 r46: no salto da ponte o nariz segue a trajetória (sobe na saída, desce suave no ar) */
+  c.pitch+=((br?clamp(Math.atan2(c.airV||0,Math.max(8,Math.abs(c.fwd)))*.85,-.6,.7):c.airY>0?clamp((c.airV||0)/Math.max(8,Math.abs(c.fwd))*.6,-.35,.35):c.rampY>0?.28:clamp(lng*.006,-.05,.05))-c.pitch)*Math.min(1,dt*(br?2.6:6))}
  c.spin-=c.fwd*dt/c.t.wr;
  if(!c.g)return;
  if(c.rider)c.rider.visible=c!==PL.car&&(!!c.ai||c.mode==='rail'||c.chase);

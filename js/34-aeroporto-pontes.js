@@ -329,7 +329,7 @@ function shipTick(dt){if(!played)return;if(SHIPS.key!==S.seed+':'+S.style)shipIn
 // que sobem até 45°: sobe 5 s, aberta 60 s, desce 5 s, fechada 60 s. Procurado: todas sobem e ganham X vermelho no mapa;
 // nas guaritas suspensas FORA da calcada (alcance de interacao pela calcada) da para forcar a descida.
 // O transito para antes, em fila, sem tentar desviar.
-const DB_G=(P-RW)/6,DB_ANG=Math.PI/4,DB_WALL_ANG=DB_ANG*.955,DB_T={warning:5,rising:5,open:60,lowering:5,closed:60};
+const DB_G=(P-RW)/6,DB_ANG=40*Math.PI/180, /* v4 r46: abertura máxima 40° (antes 45°) */DB_WALL_ANG=DB_ANG*.955,DB_T={warning:5,rising:5,open:60,lowering:5,closed:60};
 function dbKey(q){return q[0]+':'+q[1]+':'+q[2]}
 // Reserva deterministica (mobile e normal) ANTES dos quarteiroes: um rio e uma
 // travessia dirigivel sao obrigatorios, mesmo que a seed sorteie ruas de mao unica.
@@ -401,22 +401,25 @@ function dbRampExit(x0,z0,x,z,vx,vz){
   if(from<-.05||from>Math.max(run,oldRun)+.05||to<=run||to>DB_G*2)continue;
   const speed=-side*(vx*d.ux+vz*d.uz);
   if(speed<=0)continue;
-  return {height:DB_G*Math.sin(d.ang),impulse:speed>5?rampImpulse(speed,Math.tan(d.ang)):0};
+  return {height:DB_G*Math.sin(d.ang),impulse:speed>5?dbLaunchVy(speed,d.ang):0,ang:d.ang};
  }
  return null;
 }
+/* v4 r46: subida da ponta herda a velocidade AO LONGO da folha: vy = v·sen(a)·0,7 + 0,6 (antes v·tan(a)·1,05+1,2 = 31 m de altura a 25 m/s) */
+function dbLaunchVy(v,a){return v*Math.sin(a)*.7+.6}
 function dbPlayerCarRamp(c){
  if(!c.alive||c.sunk||c.air||c.t.boat||c.wet)return;
  const j=dbRampExit(c.px,c.pz,c.x,c.z,c.vx,c.vz);
  if(!j)return;
  c.gy=0;c.rampY=0;c.airY=j.height;c.airV=j.impulse;
- c.air={bridge:true,t:0};
+ c.air={bridge:true,t:0};c.pitch=j.ang;if(c.susp)c.susp.p=0; /* v4 r46: sai com o nariz na inclinação da folha (sem tranco) */
+ if(c===PL.car)shake=Math.max(shake,.15);
 }
 function dbCar(c,dt){if(!city.dbs||!city.dbs.length||c.airY>0||c.t.boat)return;const h=dbAt(c.x,c.z);if(!h){c.dbOn=false;return}const d=h[0],s=h[1],a=d.ang;if(a<.01){c.dbOn=false;return}
  const dd=s<0?s+DB_G:DB_G-s,ext=DB_G*Math.cos(a),out=s<0?1:-1,ux=d.ux*out,uz=d.uz*out,v=c.vx*ux+c.vz*uz;
  if(dd<=ext){c.dbOn=true;const gk=9.81*Math.sin(a)*dt;c.vx-=ux*gk;c.vz-=uz*gk;c.sleep=false}
- else{if(c!==PL.car&&c.dbOn&&v>5){c.airY=Math.max(.3,ext*Math.tan(a));c.airV=v*Math.sin(a)+1;c.air={x0:c.x,z0:c.z,t:0};if(c===PL.car)shake=Math.max(shake,.3)}c.dbOn=false}}
-// Folha quase a 45 graus: colisao de parede em vez de rampa.
+ else{if(c!==PL.car&&c.dbOn&&v>5){c.airY=Math.max(.3,ext*Math.tan(a));c.airV=dbLaunchVy(v,a);c.air={x0:c.x,z0:c.z,t:0,bridge:true};c.pitch=a;if(c===PL.car)shake=Math.max(shake,.3)}c.dbOn=false}}
+// Folha quase toda aberta (40 graus desde a v4 r46): colisao de parede em vez de rampa.
 // Quem ficou sobre a folha durante a subida continua escorregando em
 // direcao a dobradica (nao e teleportado para o fim da ponte).
 function dbWallActor(o,prevX,prevZ,dt,margin){
