@@ -161,3 +161,4 @@ skate do jogador, helicóptero, vortex/jet ski, gatos/pets, impérios, shopping,
 - **CELULAR** (`phone`, v4 r36+): smartphone sem teclado; quadros `ph_home`, `ph_apps` (agenda), `ph_call` refeitos.
 - **CELULAR** (v4 r41): loja vende smartphone e TIJOLÃO de teclado; quadro `ph_key` (teclado) + `ph_home` (smartphone).
 - **ÔNIBUS E CARONA** (`bus`): + quadros `onibus_roca`, `onibus_rota_roca`, `onibus_sujo` (pontos na roça, rota maior, barro na terra).
+- **AVIÕES** (`planes`, v4 r45): aviões do aeroporto explodem (pátio para, no ar cai), 3 explosões, 3 estrelas, voltam em 2 min (quadros `aviao_boom`, `aviao_queda`).

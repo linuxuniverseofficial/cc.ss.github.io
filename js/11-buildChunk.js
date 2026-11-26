@@ -2039,7 +2039,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
     // jatos parados: 2 com finger, o 3º (se couber) com escada
     {const s0=Math.max(-16,hs+18.5),planes=[];for(let k=0;k<3;k++){const sc=s0+k*19;if(sc+7>Math.min(L/2-14,40))break;planes.push(sc)}
      const ACS=['#d62828','#2a6ad6','#1e8a4a','#f2a21a','#7a2a8a'],lc=a0+19.375,ry=ax?Math.PI/2:Math.PI;
-     planes.forEach((sc,k)=>{const mb=jetBodyMB(new MB(),COL(ACS[Math.floor(xr()*ACS.length)])),p=pt(sc,lc),M4b=new THREE.Matrix4().compose(new THREE.Vector3(p[0],1.44,p[1]),new THREE.Quaternion().setFromEuler(new THREE.Euler(0,ry,0)),new THREE.Vector3(.5,.5,.5));mbAddXf(det,mb,M4b);
+     planes.forEach((sc,k)=>{const jc=ACS[Math.floor(xr()*ACS.length)],p=pt(sc,lc); /* v4 r45: jato parado vira malha própria (AIRP.jets, js/34) para poder explodir; mesmo xr() = seed intacta */(city.air.jets=city.air.jets||{})[k]={x:p[0],z:p[1],ry,col:jc};
       col2(sc-.8,sc+.8,a0+12.2,a0+27.2);for(const zs of [-1,1])col2(sc+zs*2.9-.5,sc+zs*2.9+.5,lc-2.2,lc+.2);
       const finger=k<2&&sc-3>=-22&&sc-1.3<=22,tc=COL('#c9ccd2'),dl=COL('#1c2632');
       if(finger){rb(det,sc-3,sc-1.3,a0+9,a0+14.8,.95,2.75,tc);rb(det,sc-3.04,sc-1.26,a0+9,a0+14.8,2.75,2.85,steel);rb(det,sc-3.02,sc-1.28,a0+9.2,a0+14.6,1.75,2.25,dl);

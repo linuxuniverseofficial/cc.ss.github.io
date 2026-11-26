@@ -184,8 +184,9 @@ function airRolloutStep(P,L,dt){
  return P.v<=slow+.01;
 }
 function airTick2(dt){const A=city.air;if(!played||!A||S.style==='inverted'||city.haze){airSoundReset();return}const k=S.seed+':'+S.style+':'+city.worldNo;
- if(AIRP.key!==k){airSoundReset();AIRP.key=k;for(const o of [AIRP.parked,AIRP.p])if(o){scene.remove(o.g);disposeGroup(o.g)}AIRP.parked=null;AIRP.p=skyPlane(true);AIRP.p.g.scale.setScalar(.5);scene.add(AIRP.p.g);const hp=airPt(A.L/2-(A.compact?10:12),-A.Wd/2+(A.compact?13:19)); /* v78: heliponto saiu do estacionamento (lado da rua) pro pátio */if(!HELI.list.some(h=>h.id==='airport'))heliAddPad(hp[0],hp[1],A.ax?0:Math.PI/2,'airport');AIRP.landing=airLandingPlan(A);AIRP.takeoffRate=airTakeoffRate(A);AIRP.st='wait';AIRP.t=4;AIRP.next='to';AIRP.spoilerLift=0;AIRP.rollStartS=null}
+ if(AIRP.key!==k){airSoundReset();AIRP.key=k;for(const o of [AIRP.parked,AIRP.p])if(o){scene.remove(o.g);disposeGroup(o.g)}AIRP.parked=null;AIRP.p=skyPlane(true);AIRP.p.g.scale.setScalar(.5);scene.add(AIRP.p.g);const hp=airPt(A.L/2-(A.compact?10:12),-A.Wd/2+(A.compact?13:19)); /* v78: heliponto saiu do estacionamento (lado da rua) pro pátio */if(!HELI.list.some(h=>h.id==='airport'))heliAddPad(hp[0],hp[1],A.ax?0:Math.PI/2,'airport');airpJetsInit(A);AIRP.dead=null;AIRP.hp=null;AIRP.landing=airLandingPlan(A);AIRP.takeoffRate=airTakeoffRate(A);AIRP.st='wait';AIRP.t=4;AIRP.next='to';AIRP.spoilerLift=0;AIRP.rollStartS=null}
  const pc=PL.car||PL,near=STORYINTRO.active||(TVM.on&&TVM.kind==='airport')||Math.hypot(pc.x-A.cx,pc.z-A.cz)<700;const P=AIRP,G=P.p,L=A.L;
+ airpJetsTick(A,near,dt);if(airpDeadTick(P,G,A,dt,near))return; /* v4 r45: avião destruído */
  if(A.compact){ // Pista compacta: avião faz aproximações aéreas sem taxiamento fora do lote.
   if(P.st!=='flyby'&&P.st!=='wait'){P.st='wait';P.t=2}
   if(P.st==='wait'){G.g.visible=false;P.t-=dt;if(P.t<=0){P.st='flyby';P.s=-L/2-150;P.l=A.rl;P.y=52;P.th=0}}
@@ -840,3 +841,60 @@ function raceTick(dt){const R0=RACE,c=R0.car,drag=R0.kind==='drag';
  const pos=1+R0.riv.filter(v=>v.done||prog(v)>prog(c)).length,tm=Math.floor(R0.t/60)+':'+String(Math.floor(R0.t%60)).padStart(2,'0');
  sideHud((drag?'ARRANCADA · '+Math.max(0,Math.round(R0.L-prog(c)))+' m':'CORRIDA · CHECKPOINT '+Math.min(R0.i+1,R0.cps.length)+'/'+R0.cps.length)+' · '+tm+' · '+pos+'º');
  if(done){const place=1+R0.fin.length,prize=CHEAT.used?0:drag?(place===1?300:0):[400,150,50][place-1]||0;if(prize)money(prize,(drag?'ARRANCADA':'CORRIDA')+' · '+place+'º LUGAR · +$'+prize);else toast((drag?'ARRANCADA':'CORRIDA')+' · '+place+'º LUGAR'+(drag?' · perdeu':''));R0.end=4;for(const v of R0.riv)v.done=true}}
+
+/* ---------- v4 r45 · AVIÕES DO AEROPORTO EXPLODEM ----------
+   Qualquer avião do aeroporto (os jatos parados no pátio e o que taxia/decola/pousa) leva dano de tiro/foguete (alvo no sistema de
+   aeronaves, `aircraftTargets`) e de explosão no chão por perto (embrulho do `blastAt`). Destruído: fica todo preto (`burntMat`
+   compartilhado, sem compilar nada), 3 explosões seguidas (força de veículo = `blastAt`), fogo e fumaça. Taxiando/parado: para onde
+   está. No ar: perde sustentação, mantém o rumo, mergulha e explode no chão. Volta em 2 min de jogo (tempo real jogado): carcaça some e
+   o avião volta ao ciclo (pátio/decolagem/pouso). Explodir avião = 3 estrelas (fora do online). Só no aeroporto (o Invertido e a Point
+   Haze não têm). Os jatos parados eram parte do lote do chunk (js/11); agora são malhas próprias fora do city.group (removidas na troca). */
+const AIRP_HP=150,AIRP_RESPAWN=120,AIRPX=[];AIRP.jets=[];
+function airpJetsInit(A){for(const j of AIRP.jets){scene.remove(j.g);disposeGroup(j.g)}AIRP.jets=[];
+ for(const k in (A.jets||{})){const d=A.jets[k],g=new THREE.Group(),mb=jetBodyMB(new MB(),COL(d.col));g.add(mb.mesh(carBodyMat,true,false));
+  g.position.set(d.x,1.44,d.z);g.rotation.set(0,d.ry,0);g.scale.setScalar(.5);g.visible=false;scene.add(g);AIRP.jets.push({g,x:d.x,z:d.z,hp:AIRP_HP,dead:false,t:0})}}
+function airpJetsTick(A,near,dt){for(const j of AIRP.jets){j.g.visible=near;if(!j.dead)continue;j.t+=dt;airpBurnFx(j.g,j.t,near,dt);
+  if(j.t>=AIRP_RESPAWN){j.dead=false;j.hp=AIRP_HP;airpPaint(j.g,false)}}}
+function airpPaint(g,burnt){g.traverse(o=>{if(!o.isMesh)return;if(burnt){if(o.userData.airpMat===undefined){o.userData.airpMat=o.material;o.userData.airpVis=o.visible}
+  if(o.material&&o.material.blending===THREE.AdditiveBlending)o.visible=false;else o.material=burntMat}
+ else if(o.userData.airpMat!==undefined){o.material=o.userData.airpMat;o.visible=o.userData.airpVis;delete o.userData.airpMat;delete o.userData.airpVis}})}
+const AIRP_V=new THREE.Vector3();
+function airpBoomQueue(g,byP){/* 3 explosões seguidas: frente, meio, trás (eixo local x do jato), ~0,4 s entre elas */
+ for(let i=0;i<3;i++){AIRP_V.set((1-i)*8,0,0);g.localToWorld(AIRP_V);AIRPX.push({t:.05+i*.42,x:AIRP_V.x,z:AIRP_V.z,byP})}}
+function airpBurnFx(g,t,near,dt){if(!near||t>60)return;const p=g.position,k=t<25?1:.4;
+ if(Math.random()<dt*9*k)emit(p.x+(Math.random()-.5)*6,p.y+1,p.z+(Math.random()-.5)*6,0,1.5+Math.random()*1.5,0,.7,1.2,.25,Math.random()<.5?0xff5a14:0xffa02a,true,.85);
+ if(Math.random()<dt*5)emit(p.x,p.y+2.5,p.z,(Math.random()-.5),2.2,(Math.random()-.5),3.2,1.8,7,0x1e1a1c,false,.55)}
+function airpWanted(byP){if(byP&&!ONLINE.on){if(!POL.wanted)startWanted(true);if(POL.wanted)wantedUp(3)}}
+function airpKillJet(j,byP){if(j.dead)return;j.dead=true;j.t=0;airpPaint(j.g,true);airpBoomQueue(j.g,byP);airpWanted(byP)}
+function airpKillPlane(byP){const P=AIRP,G=P.p;if(!G||P.dead||P.st==='wait'||!G.g.visible)return;airSoundReset();airpPaint(G.g,true);if(G.bl)G.bl.visible=false;
+ const air=P.y>AIRY+1.5||['climb','turnOut','out','down','base','final','flyby'].includes(P.st);
+ P.deadT=0;P.byP=byP;airpWanted(byP);
+ if(air){P.dead='fall';P.vy=Math.min(P.vy||0,0);P.v=Math.max(P.v||30,30);airBurst(G.g.position.x,G.g.position.y,G.g.position.z)}
+ else{P.dead='stop';airpBoomQueue(G.g,byP)}}
+function airpWreckCol(on){const P=AIRP;if(P.col){for(const k of P.col.keys){const l=grid.get(k);if(l){const i=l.indexOf(P.col);if(i>=0)l.splice(i,1)}}const i=colliders.indexOf(P.col);if(i>=0)colliders.splice(i,1);P.col=null}
+ if(on&&P.p){const p=P.p.g.position,cc=curChunk;curChunk=null;try{P.col=addCol(p.x-4,p.z-4,p.x+4,p.z+4,'rock')}finally{curChunk=cc}}}
+function airpDeadTick(P,G,A,dt,near){
+ for(let i=AIRPX.length-1;i>=0;i--){const e=AIRPX[i];e.t-=dt;if(e.t<=0){AIRPX.splice(i,1);AIRP.inBoom=true;try{blastAt(e.x,e.z,null,e.byP)}finally{AIRP.inBoom=false}}}
+ if(!P.dead||!G)return false;P.deadT+=dt;const g=G.g;
+ if(P.dead==='fall'){P.vy=Math.max(-32,P.vy-9.8*dt);P.v*=Math.exp(-dt*.15);
+  if(A.compact&&P.st==='flyby'){P.s+=P.v*dt}else{P.s+=Math.cos(P.th)*P.v*dt;P.l+=Math.sin(P.th)*P.v*dt}
+  P.y+=P.vy*dt;P.pitch+=(-.45-P.pitch)*Math.min(1,dt*1.2);P.roll+=dt*.35;
+  const c=airPt(P.s,P.l),gy=groundY(c[0],c[1]);
+  if(P.y<=gy+AIRY){P.y=gy+AIRY*.7;P.dead='wreck';P.pitch=-.06;P.roll=.18;g.position.set(c[0],P.y,c[1]);g.rotation.order='YZX';g.rotation.set(P.roll,g.rotation.y,P.pitch);airpBoomQueue(g,P.byP);airpWreckCol(true)}
+  else if(Math.random()<dt*14)emit(g.position.x,g.position.y,g.position.z,(Math.random()-.5)*2,1,(Math.random()-.5)*2,1.6,1.2,4,0x2a2426,false,.6);
+  if(P.dead==='fall'){const hw=A.ax?P.th:Math.PI/2-P.th;g.position.set(c[0],P.y,c[1]);g.rotation.order='YZX';g.rotation.set(P.roll,A.compact?(A.ax?0:-Math.PI/2):-hw,P.pitch)}
+  g.visible=true}
+ else{if(P.dead==='stop'){P.v=0;P.vy=0}airpBurnFx(g,P.deadT,near,dt);g.visible=near||P.y>8}
+ if(P.deadT>=AIRP_RESPAWN){airpWreckCol(false);airpPaint(g,false);P.dead=null;P.hp=null;P.st='wait';P.t=4;P.next=Math.random()<.5?'to':'land';P.y=AIRY;P.vy=0;P.v=0;P.roll=0;P.pitch=0;g.visible=false}
+ return true}
+/* alvo de tiro/foguete: esfera no meio de cada avião do aeroporto */
+{const f0=aircraftTargets;aircraftTargets=function(){const T=f0.apply(this,arguments);if(!city.air||S.style==='inverted'||city.haze)return T;
+  const G=AIRP.p;if(G&&!AIRP.dead&&G.g.visible&&AIRP.st!=='wait'){const p=G.g.position;T.push({type:'airp',owner:AIRP,x:p.x,y:p.y+.8,z:p.z,r:4.5})}
+  for(const j of AIRP.jets)if(!j.dead&&j.g.visible)T.push({type:'airp',owner:j,x:j.x,y:2.3,z:j.z,r:4.5});return T}}
+{const f0=aircraftDamage;aircraftDamage=function(a,dmg,pt){if(!a||a.type!=='airp')return f0.apply(this,arguments);const o=a.owner;
+  if(o===AIRP){if(AIRP.dead)return;AIRP.hp=(AIRP.hp??AIRP_HP)-dmg;if(AIRP.hp>0){for(let i=0;i<5;i++)emit(pt.x,pt.y,pt.z,(Math.random()-.5)*2,Math.random()*2,(Math.random()-.5)*2,.2,.25,.06,0xffd17c,true,1);return}airpKillPlane(true)}
+  else{if(o.dead)return;o.hp-=dmg;if(o.hp>0){for(let i=0;i<5;i++)emit(pt.x,pt.y,pt.z,(Math.random()-.5)*2,Math.random()*2,(Math.random()-.5)*2,.2,.25,.06,0xffd17c,true,1);return}airpKillJet(o,true)}}}
+/* explosão no chão perto de um avião (granada, C4, carro explodindo, outro avião) derruba */
+{const f0=blastAt;blastAt=function(cx,cz,c,byP){f0.apply(this,arguments);try{if(!city.air||S.style==='inverted'||city.haze)return;
+  for(const j of AIRP.jets)if(!j.dead&&Math.hypot(j.x-cx,j.z-cz)<7)airpKillJet(j,!!byP);
+  const G=AIRP.p;if(G&&!AIRP.dead&&G.g.visible&&AIRP.st!=='wait'){const p=G.g.position;if(p.y<groundY(p.x,p.z)+8&&Math.hypot(p.x-cx,p.z-cz)<7)airpKillPlane(!!byP)}}catch(e){console.error(e)}}}
