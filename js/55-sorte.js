@@ -51,7 +51,7 @@ function cloverPlace(){cloverClear();if(!luckWorldOk())return;const day=DN.day||
   if(inWater(x,z))continue;const q=query(x,z,1.4);if(q&&q.some(o=>!o.dead&&x>=o.x0-.7&&x<=o.x1+.7&&z>=o.z0-.7&&z<=o.z1+.7))continue;if(LUCK.clov.some(c=>Math.hypot(c.x-x,c.z-z)<45))continue;
   const id=day+':'+LUCK.clov.length;if(LUCK.got.has(id)){LUCK.clov.push({id,x,z,taken:true,g:new THREE.Group(),ring:new THREE.Mesh()});continue}
   const y=groundY(x,z),g=new THREE.Mesh(cloverGeo(),cloverMat());g.scale.setScalar(1.6);g.position.set(x,y+.95,z);
-  const ring=new THREE.Mesh(new THREE.PlaneGeometry(2.2,2.2),new THREE.MeshBasicMaterial({map:glowTex,color:S.style==='synthwave'?0xff5fd8:S.style==='inverted'?0x7a3a3a:0x5aff7a,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,opacity:.75,polygonOffset:true,polygonOffsetFactor:-4,polygonOffsetUnits:-4}));
+  const ring=new THREE.Mesh(LUCK.ringGeo||(LUCK.ringGeo=new THREE.PlaneGeometry(2.2,2.2)), /* v4 pré-carga: geometria do anel compartilhada (antes 1 nova por trevo por dia, nunca descartada) */new THREE.MeshBasicMaterial({map:glowTex,color:S.style==='synthwave'?0xff5fd8:S.style==='inverted'?0x7a3a3a:0x5aff7a,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,opacity:.75,polygonOffset:true,polygonOffsetFactor:-4,polygonOffsetUnits:-4}));
   ring.rotation.x=-Math.PI/2;ring.position.set(x,y+.08,z);ring.renderOrder=2;scene.add(g,ring);LUCK.clov.push({id,x,z,y,g,ring,seen:false,taken:false})}}
 function cloverTick(dt){if(!LUCK.clov.length)return;const pc=PL.car||PL;for(const c of LUCK.clov){if(c.taken)continue;
   c.g.rotation.y+=dt*1.8;c.g.position.y=c.y+.95+Math.sin(simT*2.6+c.x)*.12;const d=Math.hypot(pc.x-c.x,pc.z-c.z);
