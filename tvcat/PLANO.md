@@ -154,3 +154,4 @@ skate do jogador, helicóptero, vortex/jet ski, gatos/pets, impérios, shopping,
 **v3 r58 — revisão do José (o que é técnico demais sai):** removidos EFEITOS VISUAIS, INTERFACE AUTOMÁTICA, REGISTRO E ESTATÍSTICAS, AEROPORTO e MOTEL MIRAGEM. CARRO SUJO entrou no POSTO E CONVENIÊNCIA (3 quadros: bomba, conveniência, `gas_wash` = lava-jato) e o navio de RIOS E MAR entrou em HELICÓPTERO, VORTEX E JET SKI (4 quadros; as outras imagens da água saíram). Legendas mais curtas em CLIMA, ONLINE, EMOJIS e CARROS. Total: 55 canais. Regra que fica: efeito puramente visual, comportamento automático da interface, estatística e cenário sem nada para fazer não ganham canal.
 
 - **PRAIA E MAR** (`beach`, v4 r29): andar no raso; afoga com a água cobrindo a cabeça (quadro `praia_raso`).
+- **SORTE** (`luck`, v4): barra 🍀, trevo de 4 folhas, viés leve no cassino (quadros `sorte_trevo`, `sorte_mapa`, `sorte_synth`).

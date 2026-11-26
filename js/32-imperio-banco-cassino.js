@@ -673,7 +673,7 @@ function roulRender(){const t=TABLE_GAME,el=$('#tgPlayer');el.replaceChildren();
  if(t.rlBet==='num'){const inp=document.createElement('input');inp.type='number';inp.min='0';inp.max='36';inp.className='rlNum';inp.value=String(t.rlPick);inp.setAttribute('aria-label',tgLocale('número da aposta','bet number'));inp.addEventListener('change',()=>{t.rlPick=clamp(Math.round(+inp.value||0),0,36);inp.value=String(t.rlPick)});board.append(inp)}
  el.append(board)}
 function roulSpin(){const t=TABLE_GAME;if(!t.open||t.phase==='spin')return;const bet=Number($('#tgBet').value)||50;if((PL.money||0)<bet){t.msg=tgLocale('DINHEIRO INSUFICIENTE','NOT ENOUGH MONEY');tableGameRender();return}
- t.bet=bet;t.wager=bet;gambleCharge(bet);t.phase='spin';t.msg=tgLocale('A bola está girando…','The ball is spinning…');const n=Math.floor(Math.random()*37),bt=t.rlBet,pk=t.rlPick;
+ t.bet=bet;t.wager=bet;gambleCharge(bet);t.phase='spin';t.msg=tgLocale('A bola está girando…','The ball is spinning…');const n=luckRoul(t.rlBet,t.rlPick),bt=t.rlBet,pk=t.rlPick;
  // animação: roda gira num sentido e a bola no outro; a bola desacelera, desce da pista para as casas, quica e para na casa sorteada
  tableGameRender();const A=t.rlA,w0=A.wa,b0=A.ba,dur=4600,st=Math.PI*2/37,idx=RL_ORDER.indexOf(n),wEnd=w0+Math.PI*2*(1.6+Math.random()*.8),bEnd=wEnd+idx*st-Math.PI*2*(4+Math.floor(Math.random()*2)),t0=performance.now();let lastPocket=-1;A.res=-1;
  const ease=x=>1-Math.pow(1-x,3);
