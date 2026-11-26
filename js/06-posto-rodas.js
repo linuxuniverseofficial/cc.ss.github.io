@@ -646,6 +646,7 @@ function v67Hud(dt){if(!GUN.has&&!PL.car&&played){$('#gun').hidden=false;hudTx('
  else if(wardNear()&&!WARD.open)h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>GUARDA-ROUPA · ROUPAS E ACESSÓRIOS';
  else if(empHint())h=empHint();
  else if(ctxAt(bankAtmNear(),1.9))h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>CONTA CORRENTE';
+ else if(typeof metroNear==='function'&&!METRO.open&&ctxAt(metroNear(),2.2))h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>METRÔ'; /* v4 · metrô (js/53) */
  else if(bankCounterNear())h=BANK.rob?'':(GUN.has||Object.keys(GUN.inv||{}).length?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd><span style="color:#ff4a4a">ANUNCIAR O ASSALTO</span>':'BANCO · você precisa de uma arma para assaltar');
  else if(!TABLE_GAME.open&&ctxAt(casinoTableNear(),1.9))h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>'+(casinoTableNear().kind==='dice'?"DADOS · LIAR'S DICE":casinoTableNear().kind==='pool'?'SINUCA · CASTIGADO':casinoTableNear().kind==='bj'?'BLACKJACK · 21':casinoTableNear().kind==='roul'?'ROLETA · 0 A 36':'VIDEOPÔQUER · JACKS OR BETTER');
  else if(slotNear()>=0&&!SLOT.open&&ctxAt(CAS.machines[slotNear()],2.3))h='<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd>CAÇA-NÍQUEL · $10 POR JOGADA';
