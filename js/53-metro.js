@@ -131,7 +131,7 @@ function metroPlace(){metroClear();if(!city.rects||!city.info||city.haze||!city.
     const x0=Math.min(...cs4.map(q=>q[0])),x1=Math.max(...cs4.map(q=>q[0])),z0=Math.min(...cs4.map(q=>q[1])),z1=Math.max(...cs4.map(q=>q[1]));
     /* boca livre na frente (onde o jogador para) */
     const mo=W(0,M.OZ0-.9),bx0=Math.min(x0,mo[0]-.6),bx1=Math.max(x1,mo[0]+.6),bz0=Math.min(z0,mo[1]-.6),bz1=Math.max(z1,mo[1]+.6);
-    let hit=null;for(const c of query(x,z,5)){if(c.dead)continue;if(c.x1>bx0-.35&&c.x0<bx1+.35&&c.z1>bz0-.35&&c.z0<bz1+.35){hit=c;break}}if(hit){rj('col:'+hit.kind);continue}
+    let hit=null;for(const c of query(x,z,5)){if(c.dead)continue;if(c.x1>bx0-.35&&c.x0<bx1+.35&&c.z1>bz0-.35&&c.z0<bz1+.35){hit=c;break}}if(!hit&&typeof busGhostHit==='function'&&busGhostHit(bx0,bz0,bx1,bz1,.35))hit={kind:'busGhost'};if(hit){rj('col:'+hit.kind);continue}
     let bad=false;for(const d of (city.doors&&city.doors.get(ri))||[])if(Math.hypot(d.x-x,d.z-z)<3.5||Math.hypot(d.ox-x,d.oz-z)<3.5){bad=true;break}if(bad){rj('porta');continue}
     for(const a of al)if(x>a[0]-3&&x<a[2]+3&&z>a[1]-3&&z<a[3]+3){bad=true;break}if(bad){rj('beco');continue}
     for(const g of gas)if(Math.hypot(g.x-x,g.z-z)<35){bad=true;break}if(bad){rj('posto');continue}

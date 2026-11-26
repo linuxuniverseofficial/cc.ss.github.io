@@ -19,6 +19,57 @@ const BUSL={stops:[],R:[],poly:[],arrows:[],day:-1,okey:'',t0:null,mins:0,lastTo
 const RIDE={c:null,kind:null,fp:false,dest:null,cap:15,t:0,h:'',an:null,refT:0};
 const BUS_FARE=3,BUS_COL='#3fd8ff',BUS_DWELL=7;const busT=(pt,en)=>S.lang==='en'?en:pt; /* rótulos curtos: tradução local (LANG_RE trocaria 'DESCER' dentro de outras frases) */
 
+/* ---------- v4 r41: menos pontos na cidade (os cortados viram "fantasmas") + pontos na roça ---------- */
+const BUS_CITY_KEEP=.9,BUS_CITY_GAP=100,BUS_RURAL_GAP=150;
+/* decidido no buildChunk (js/11) na hora de montar o abrigo: gerador próprio por quarteirão (não mexe no fr()/R()) + distância mínima */
+function busCityKeep(ri,g){const h=mulberry32(((ri+7)*0x2c1b3c6d^(S.seed>>>0)^0x0b05c17e)>>>0)();if(h>BUS_CITY_KEEP)return false;
+ for(const q of city.busStops||[])if(Math.hypot(q.x-g[0],q.z-g[1])<BUS_CITY_GAP)return false;return true}
+/* lugar de um abrigo cortado: banca/banco (free do js/11), caixa (js/51) e metrô (js/53) continuam desviando dele como antes */
+function busGhostHit(x0,z0,x1,z1,m){const G=city.busGhost;if(!G||!G.length)return false;for(const r of G)if(x1>r[0]-m&&x0<r[2]+m&&z1>r[1]-m&&z0<r[3]+m)return true;return false}
+/* pontos da roça: abrigo rústico de madeira na beira da estrada de terra, 3–6 conforme o tamanho da roça (gerador próprio, depois do generateCity) */
+const BUSR={list:[],mesh:null};
+function busRuralClear(){if(BUSR.mesh){if(BUSR.mesh.parent)BUSR.mesh.parent.remove(BUSR.mesh);BUSR.mesh.geometry.dispose();BUSR.mesh=null}BUSR.list.length=0}
+function busRuralPlace(){busRuralClear();if(!city.rects||!city.group||city.haze||S.style==='inverted'||ONLINE.on)return;
+ const N=city.N,rng=mulberry32(((S.seed>>>0)^0x6b75a11e)>>>0),cand=[];
+ for(let kx=0;kx<=N;kx++)for(let kz=0;kz<=N;kz++)for(let d=0;d<2;d++){const r1=rng(),r2=rng(),r3=rng(); /* sempre 3 sorteios por segmento */
+  if(!segExists(kx,kz,d))continue;const s=RW/2+14+r1*(SEG_END-RW/2-28),cx=kx*P+D[d][0]*s,cz=kz*P+D[d][1]*s;if(!isRural(cx,cz))continue;
+  cand.push({kx,kz,d,s,cx,cz,side:r2<.5?1:-1,k:r3})}
+ if(!cand.length)return;cand.sort((a,b)=>a.k-b.k);
+ const want=Math.max(3,Math.min(6,Math.round(cand.length/30))),out=BUSR.list,rj=BUSR.rj={};const no=k=>{rj[k]=(rj[k]||0)+1};
+ const HW=1.6,HD=.95; /* meia largura (ao longo da estrada) / meia profundidade do abrigo */
+ for(const c of cand){if(out.length>=want)break;
+  for(const sd of [c.side,-c.side]){const px=-D[c.d][1]*sd,pz=D[c.d][0]*sd; /* normal: do eixo para fora (lado sd) */
+   const off=RW/2+1.35+HD,x=c.cx+px*off,z=c.cz+pz*off,gx=c.cx+px*RW/2,gz=c.cz+pz*RW/2;
+   if(inWater(x,z)||inWater(gx,gz)){no('agua');continue}
+   const gy=groundY(x,z);let flat=true;for(const a of [-1,1])for(const b of [-1,1]){const qx=x+(c.d?b*HD:a*HW),qz=z+(c.d?a*HW:b*HD);if(Math.abs(groundY(qx,qz)-gy)>.08){flat=false}}if(!flat){no('flat');continue}
+   const hx=c.d?HD:HW,hz=c.d?HW:HD;let hit=false;for(const q of query(x,z,6)){if(q.dead)continue;if(q.x1>x-hx-.6&&q.x0<x+hx+.6&&q.z1>z-hz-.6&&q.z0<z+hz+.6){hit=true;break}}if(hit){no('col');continue}
+   let near=false;for(const q of city.busStops||[])if(Math.hypot(q.x-gx,q.z-gz)<BUS_RURAL_GAP){near=true;break}if(near){no('perto');continue}
+   const st={x,z,gy,hx,hz,nx:-px,nz:-pz,d:c.d,gx,gz};out.push(st);
+   (city.busStops||(city.busStops=[])).push({x:gx,z:gz,cx:x,cz:z,nx:-px,nz:-pz,ri:-1,rural:true}); /* nx/nz aponta para a rua (como os da cidade) */
+   break}}
+ if(!out.length)return;busRuralBuild()}
+function busRuralBuild(){const st=city.st||STYLES[S.style],syn=!!st.synth,mb=new MB();
+ const wood=COL(syn?'#3a2a4a':'#7a5534'),dark=COL(syn?'#22182e':'#4a3320'),roof=COL(syn?'#5a2a6a':'#6d7378'),seat=COL(syn?'#4a3a5a':'#8a6440'),pole=COL('#9aa0a8'),plate=COL(syn?'#ff3ad0':'#2a6ab0'),white=COL('#f2f2f2');
+ const k0=curChunk;
+ try{for(const s of BUSR.list){const{x,z,gy,nx,nz}=s,ax=Math.abs(nz),az=Math.abs(nx); /* t = eixo ao longo da estrada; u = do fundo (u=-) para a rua (u=+) */
+   const L=(t0,t1,u0,u1,y0,y1,col)=>{const ax0=x+(ax?t0:nx*u0),az0=z+(ax?nz*u0:t0),ax1=x+(ax?t1:nx*u1),az1=z+(ax?nz*u1:t1);mb.box(Math.min(ax0,ax1),gy+y0,Math.min(az0,az1),Math.max(ax0,ax1),gy+y1,Math.max(az0,az1),col)};
+   for(const t of [-1.5,1.5]){L(t-.08,t+.08,-.85,-.69,0,2.35,wood);L(t-.08,t+.08,.69,.85,0,2.15,wood);L(t-.06,t+.06,-.69,.69,1.98,2.1,dark)}   /* 4 esteios + travessas laterais */   /* 4 esteios (fundo mais alto: telhado caído para a rua) */
+   L(-1.78,1.78,-1.05,-.35,2.35,2.5,roof);L(-1.78,1.78,-.35,.35,2.25,2.4,roof);L(-1.78,1.78,.35,1.2,2.15,2.3,roof); /* telhado de zinco em 3 águas (cai para a rua), beiral na frente */
+   L(-1.78,1.78,1.12,1.2,1.98,2.15,dark);L(-1.78,1.78,-1.05,-.97,2.22,2.35,dark);                     /* testeira de madeira (frente e fundo) */
+   for(let k=0;k<5;k++){const y=.18+k*.42;L(-1.5,1.5,-.84,-.76,y,y+.34,k%2?wood:dark)}                  /* parede do fundo em tábuas */
+   L(-1.15,1.15,-.72,-.3,.48,.56,seat);for(const t of [-1,1])L(t-.05,t+.05,-.6,-.4,0,.48,dark);         /* banco */
+   {const t=1.85,u=.75;L(t-.05,t+.05,u-.05,u+.05,0,2.5,pole);L(t-.03,t+.03,u-.32,u+.32,2.05,2.5,plate);L(t-.035,t+.035,u-.24,u+.24,2.18,2.38,white)} /* placa de ônibus no poste */
+   const ck=chunkOf(x,z);curChunk=city.chunks.get(ck[0]+','+ck[1])||null;s.colR=addCol(x-s.hx,z-s.hz,x+s.hx,z+s.hz,'rock');s.colR.top=2.5}}
+ finally{curChunk=k0}
+ const m=mb.mesh(new THREE.MeshLambertMaterial({vertexColors:true}));if(!m)return;m.name='busRural';m.castShadow=true;m.receiveShadow=true;m.matrixAutoUpdate=false;m.updateMatrix();
+ BUSR.mesh=m;city.group.add(m);try{invalidateStaticShadows()}catch(e){}}
+
+/* v4 r41: ônibus de linha suja na estrada de terra e perde a sujeira no asfalto (não cabe no lava-jato). O do jogador ao volante vai pelo dirtTick (js/06). */
+function busDirt(dt){for(const c of BUSL.list){if(!c.alive||c===PL.car)continue;const lx=c.bdx,lz=c.bdz;c.bdx=c.x;c.bdz=c.z;if(lx===undefined||dt<=0)continue;
+  const sp=Math.hypot(c.x-lx,c.z-lz)/dt;if(sp<1||sp>60)continue;c.grime=c.grime||0;const g0=c.grime;
+  if(isRural(c.x,c.z))c.grime=Math.min(1,c.grime+.0007/3*sp*dt);else c.grime=Math.max(0,c.grime-dt*GRIME_SELF);
+  if(c.grime!==g0&&(c.bdT=(c.bdT||0)-dt)<=0){c.bdT=.5;dirtApply(c)}}}
+
 /* ---------- paradas ---------- */
 function busStopsBuild(){BUSL.stops.length=0;const L=city.busStops||[];
  for(const q of L){const alongX=Math.abs(q.nz)>.5,cands=[];
@@ -90,7 +141,7 @@ function busSpawn(){if(BUSL.list.length>=3)return;const R=BUSL.R,n=R.length,ctr=
  c.rail={kx:g.kx,kz:g.kz,d:g.d,li,s:bs,nd:R[(best+1)%n].d,turn:null,v:c.vmax*.4};c.busLine=true;c.npcId='busline';c.bl={i:best,dw:0,served:0,vmax:Math.min(c.vmax,11)};c.vmax=c.bl.vmax;
  BUSL.list.push(c);return c}
 function busTick(dt){if(!busActive()){if(BUSL.list.length)for(const c of BUSL.list.slice())if(!vehicles.includes(c)||!c.alive)busRetire(c);return}
- busClock();const ctr=PL.car||PL;
+ busClock();const ctr=PL.car||PL;try{busDirt(dt)}catch(e){console.error(e)}
  for(const c of BUSL.list.slice()){if(!vehicles.includes(c)||!c.alive||c===PL.car){if(c===PL.car&&c.mode==='rail')toPhys(c);busRetire(c);continue}
   if(RIDE.c!==c&&Math.hypot(c.x-ctr.x,c.z-ctr.z)>300){busRetire(c);removeVehicle(c)}}
  if((BUSL.spT-=dt)<=0){BUSL.spT=4;const near=BUSL.list.filter(c=>Math.hypot(c.x-ctr.x,c.z-ctr.z)<260).length;if(near<2&&!PL.inside)busSpawn()}
@@ -169,7 +220,7 @@ function busMapDraw(g,sc,lw,rot){if(!busMapOn())return;const pl=BUSL.poly;if(pl.
 {const f0=mapLegendItems;mapLegendItems=function(){const A=f0.apply(this,arguments);if(busMapOn())A.push(['busstop','PONTO DE ÔNIBUS',true]);return A}}
 
 /* ---------- ganchos de cidade, quadro e jogo novo ---------- */
-{const f0=generateCity;generateCity=async function(){city.busStops=[];for(const c of BUSL.list.slice())busRetire(c);BUSL.list.length=0;BUSL.R.length=0;BUSL.poly.length=0;BUSL.arrows.length=0;
-  const r=await f0.apply(this,arguments);try{busStopsBuild();BUSL.day=-1;BUSL.lastTod=null;if(BUSL.t0===null)BUSL.t0=DN.tod||0;BUSL.day=Math.floor((BUSL.t0+BUSL.mins)/1440);busRoute()}catch(e){console.error('[onibus]',e)}return r}}
+{const f0=generateCity;generateCity=async function(){city.busStops=[];city.busGhost=[];busRuralClear();for(const c of BUSL.list.slice())busRetire(c);BUSL.list.length=0;BUSL.R.length=0;BUSL.poly.length=0;BUSL.arrows.length=0;
+  const r=await f0.apply(this,arguments);try{try{busRuralPlace()}catch(e){console.error(e)}busStopsBuild();BUSL.day=-1;BUSL.lastTod=null;if(BUSL.t0===null)BUSL.t0=DN.tod||0;BUSL.day=Math.floor((BUSL.t0+BUSL.mins)/1440);busRoute()}catch(e){console.error('[onibus]',e)}return r}}
 {const f0=startGame;startGame=function(save){if(RIDE.c){RIDE.c=null;RIDE.kind=null}BUSL.mins=0;BUSL.t0=null;BUSL.lastTod=null;return f0.apply(this,arguments)}}
 {const f0=update;update=function(dt){const r=f0.apply(this,arguments);try{if(dt>0){busTick(dt);rideTick(dt)}}catch(e){console.error('[onibus]',e)}return r}}

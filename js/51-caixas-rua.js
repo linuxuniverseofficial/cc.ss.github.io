@@ -60,7 +60,7 @@ function atmPlace(){atmClear();if(!city.rects||!city.info||city.haze||!city.grou
     const hw=alongX?ATM_W:ATM_D,hd=alongX?ATM_D:ATM_W,gy=groundY(x,z);if(gy<.08||gy>.6){rj('gy');continue}
     let flat=true;for(const[a,b]of[[-1,-1],[1,-1],[1,1],[-1,1]])if(Math.abs(groundY(x+a*(hw+.3),z+b*(hd+.3))-gy)>.03){flat=false;break}if(!flat){rj('flat');continue}
     /* colisores (prédio, lixeira, banca, poste...) com 0,45 m de folga; a parede do prédio fica a ~0,45 m das costas */
-    let hit=false;for(const c of query(x,z,3)){if(c.dead)continue;if(c.x1>x-hw-.45&&c.x0<x+hw+.45&&c.z1>z-hd-.45&&c.z0<z+hd+.45){hit=true;break}}if(hit){rj('col');continue}
+    let hit=false;for(const c of query(x,z,3)){if(c.dead)continue;if(c.x1>x-hw-.45&&c.x0<x+hw+.45&&c.z1>z-hd-.45&&c.z0<z+hd+.45){hit=true;break}}if(!hit&&typeof busGhostHit==='function'&&busGhostHit(x-hw,z-hd,x+hw,z+hd,.45))hit=true;if(hit){rj('col');continue}
     /* portas (do prédio e da calçada), becos, banco, posto e outro caixa */
     let bad=false;for(const d of (city.doors&&city.doors.get(ri))||[])if(Math.hypot(d.x-x,d.z-z)<3||Math.hypot(d.ox-x,d.oz-z)<3){bad=true;break}if(bad){rj('porta');continue}
     for(const a of al)if(x>a[0]-2.5&&x<a[2]+2.5&&z>a[1]-2.5&&z<a[3]+2.5){bad=true;break}if(bad){rj('beco');continue}

@@ -2602,12 +2602,13 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
   // frame lateral: P(t,d) = ponto a t metros ao longo do lado e d metros da guia pra dentro; nx/nz aponta pra rua
   const side=f=>{const L=f==='n'||f==='s'?r[2]-r[0]:r[3]-r[1];return{L,P:(t,d)=>f==='n'?[r[0]+t,r[1]+d]:f==='s'?[r[2]-t,r[3]-d]:f==='w'?[r[0]+d,r[3]-t]:[r[2]-d,r[1]+t],n:f==='n'?[0,-1]:f==='s'?[0,1]:f==='w'?[-1,0]:[1,0],f}};
   const nrC=city.neonRoad&&city.neonRoad.ri===ri?city.neonRoad.cr:null; /* v78: boca da Neon Road não recebe abrigo/banca/caixa (corredor da rua + 2 m) */
-  const free=(x0,z0,x1,z1)=>{if(nrC&&x1>nrC[0]-2&&x0<nrC[2]+2&&z1>nrC[1]-2&&z0<nrC[3]+2)return false;for(const c of query((x0+x1)/2,(z0+z1)/2,Math.max(x1-x0,z1-z0)+1))if(!c.dead&&c.x1>x0-.3&&c.x0<x1+.3&&c.z1>z0-.3&&c.z0<z1+.3)return false;return true};
+  const free=(x0,z0,x1,z1)=>{if(nrC&&x1>nrC[0]-2&&x0<nrC[2]+2&&z1>nrC[1]-2&&z0<nrC[3]+2)return false;if(busGhostHit(x0,z0,x1,z1,.3))return false;for(const c of query((x0+x1)/2,(z0+z1)/2,Math.max(x1-x0,z1-z0)+1))if(!c.dead&&c.x1>x0-.3&&c.x0<x1+.3&&c.z1>z0-.3&&c.z0<z1+.3)return false;return true};
   const BX=(S0,t0,t1,d0,d1,y0,y1,col,mb=det)=>{const a=S0.P(t0,d0),b=S0.P(t1,d1);mb.box(Math.min(a[0],b[0]),y0,Math.min(a[1],b[1]),Math.max(a[0],b[0]),y1,Math.max(a[1],b[1]),col)};
   const rect=(S0,t0,t1,d0,d1)=>{const a=S0.P(t0,d0),b=S0.P(t1,d1);return[Math.min(a[0],b[0]),Math.min(a[1],b[1]),Math.max(a[0],b[0]),Math.max(a[1],b[1])]};
   // ponto de ônibus
   if(fr()<.5){const S0=side(pkF()),t=S0.L/2+(fr()-.5)*14,d0=2.25,d1=3.55,R0=rect(S0,t-1.9,t+1.9,d0-.2,d1+.1);
-   if(free(...R0)){const glass=COL('#5f8a98'),frame=COL('#3a3e48'),roof=COL('#2a6ab0'),seat=COL('#8a6a52');
+   if(free(...R0)&&!busCityKeep(ri,S0.P(t,0))){(city.busGhost||(city.busGhost=[])).push(rect(S0,t-1.85,t+1.85,d0-.15,d1+.05));fr()} /* v4 r41: ponto cortado na cidade — vira "fantasma" (ocupa o lugar para banca/banco/caixa/metrô não mudarem) */
+   else if(free(...R0)){const glass=COL('#5f8a98'),frame=COL('#3a3e48'),roof=COL('#2a6ab0'),seat=COL('#8a6a52');
     BX(S0,t-1.8,t+1.8,d0-.15,d1+.05,2.45,2.6,roof);BX(S0,t-1.8,t+1.8,d1-.06,d1,.3,2.45,glass);BX(S0,t-1.8,t+1.8,d1-.1,d1,.26,.32,frame);
     for(const tt of[t-1.75,t+1.75])BX(S0,tt-.05,tt+.05,d1-.12,d1,.26,2.45,frame);for(const tt of[t-1.75,t+1.75])BX(S0,tt-.05,tt+.05,d0-.1,d0,.26,2.45,frame);
     BX(S0,t-1.2,t+1.2,d1-.6,d1-.12,.5,.58,seat);for(const tt of[t-1.1,t+1.1])BX(S0,tt-.04,tt+.04,d1-.5,d1-.2,.26,.5,frame);
