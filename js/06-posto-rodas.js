@@ -352,10 +352,11 @@ function mudInject(sh){sh.vertexShader='varying vec3 vMudP;varying vec3 vMudN;\n
   vec3 mc=mix(uMudC1,uMudC2,uMud.y)*(.82+.36*n2);diffuseColor.rgb=mix(diffuseColor.rgb,mc,mudK*.96);}`)
   .replace('#include <roughnessmap_fragment>','#include <roughnessmap_fragment>\n roughnessFactor=mix(roughnessFactor,mix(.97,.3,uMud.y),mudK);')}
 const MUD_COL={dry:new THREE.Color('#7a5a36'),wet:new THREE.Color('#3e2a17'),idry:new THREE.Color('#4a4640'),iwet:new THREE.Color('#2a2724')};
+const GRIME_SELF=1/420; /* v4 r41: 100% → 0 em 7 min rodando no asfalto (só ônibus/caminhão, que não cabem no lava-jato) */
 function dirtTick(dt){const c=PL.car;if(!c||!c.alive||c.t.boat||c.t.hover||c.type==='jetski')return;const sp=Math.hypot(c.vx||0,c.vz||0);c.grime=c.grime||0;
  const mud=c.mudG||0,rn=rainAt(c.x,c.z);c.mudWet=Math.max(0,Math.min(1,(c.mudWet||0)+((mud>.02&&sp>1)||rn>.2?dt*.6:-dt*.012)));
  if(sp>1&&!(c.airY>0)){const rural=isRural(c.x,c.z);let k=mud>.02?.0045:rural?.0007/3:0; /* v4 r36: terra 3× mais lenta (15 m/s → 100% em ~4,8 min) */if(k){if(rn>.2)k*=1.6;c.grime=Math.min(1,c.grime+k*sp*dt)}
-  else if(rn>.3)c.grime=Math.max(0,c.grime-.004*dt)}
+  else{if(rn>.3)c.grime=Math.max(0,c.grime-.004*dt);if(!washable(c))c.grime=Math.max(0,c.grime-dt*GRIME_SELF)}} /* v4 r41: não lavável perde a sujeira andando no asfalto */
  if((c.grimeT=(c.grimeT||0)-dt)<=0){c.grimeT=.5;dirtApply(c)}}
 function mudWheels(c,on,f){if(!c.wheels)return;if(on&&!c.mudWheelMat){c.mudWheelMat=wheelMat.clone();c.mudWheelMat.userData.cached=false}
  if(on)c.mudWheelMat.color.set(0x151515).lerp(S.style==='inverted'?MUD_COL.idry:MUD_COL.dry,f);
@@ -409,7 +410,8 @@ function washPlace(st,v,spin,c){const w=st.wash,g=w.g;if(!g)return;const ud=g.us
  ud.piv.position.y=c?Math.min(w.y+2.3,w.y+c.t.H+.4):w.y+2.3;ud.top.rotation.y+=spin;
  /* o buildChunk congela as matrizes do chunk (matrixAutoUpdate=false): o pórtico se atualiza à mão */
  g.traverse(o=>o.updateMatrix());g.updateMatrixWorld(true)}
-function washFits(c){return c&&c.alive&&!c.t.boat&&!c.t.hover&&c.type!=='jetski'&&c.type!=='vortex'&&c.t.L<=6&&c.t.H<=2.6}
+function washable(c){return!!c&&!c.t.boat&&!c.t.hover&&c.type!=='jetski'&&c.type!=='vortex'&&c.t.L<=6&&c.t.H<=2.6} /* v4 r41: cabe no lava-jato (ônibus 11 m e caminhão 7,6 m não cabem: perdem a sujeira sozinhos no asfalto) */
+function washFits(c){return c&&c.alive&&washable(c)}
 function washInLane(st,c){const w=st.wash,o=st.F.pt(0,0),a=st.F.pt(1,0),b=st.F.pt(0,1);const dx=c.x-o[0],dz=c.z-o[1],u=dx*(a[0]-o[0])+dz*(a[1]-o[1]),v=dx*(b[0]-o[0])+dz*(b[1]-o[1]);
  return{u,v,ok:Math.abs(u-(w.u0+w.u1)/2)<1.1&&v>w.v0+1&&v<w.v1-1,near:u>w.u0-1&&u<w.u1+1&&v>w.v0-4&&v<w.v1+.5}}
 function washSnd(on){if(!AC)return;if(on&&!WASH.snd){const s=AC.createBufferSource();s.buffer=AC._noise;s.loop=true;const f=AC.createBiquadFilter();f.type='highpass';f.frequency.value=1800;const g=AC.createGain();g.gain.value=0;g.gain.linearRampToValueAtTime(.07,AC.currentTime+.4);s.connect(f);f.connect(g);g.connect(master);s.start();WASH.snd={s,g}}

@@ -160,3 +160,4 @@ skate do jogador, helicóptero, vortex/jet ski, gatos/pets, impérios, shopping,
 - **METRÔ** (`metro`, v4): 3–5 entradas em esquinas, menu de destino ($3), viagem com fade (quadros `metro_boca`, `metro_menu`, `metro_noite`).
 - **CELULAR** (`phone`, v4 r36+): smartphone sem teclado; quadros `ph_home`, `ph_apps` (agenda), `ph_call` refeitos.
 - **CELULAR** (v4 r41): loja vende smartphone e TIJOLÃO de teclado; quadro `ph_key` (teclado) + `ph_home` (smartphone).
+- **ÔNIBUS E CARONA** (`bus`): + quadros `onibus_roca`, `onibus_rota_roca`, `onibus_sujo` (pontos na roça, rota maior, barro na terra).
