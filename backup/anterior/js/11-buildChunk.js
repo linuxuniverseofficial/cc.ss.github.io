@@ -2417,7 +2417,9 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
    det.box(curb[0],.2,curb[1],curb[2],curbTop,curb[3],mur,{});
    addCol(...curb,'rock').low=curbTop;
    for(let t=t0l;t<sb;t+=24){if(t<sa)continue;const p=TU(s,t,o+.8);lamp(p[0],p[1],dI[0],dI[1])}
-   for(let t=sa+4;t<sb-2;t+=rr(9,16)){const p=TU(s,t,o+8);tree(p[0],p[1],.24,rr(.9,1.25),true)}
+   for(let t=sa+4;t<sb-2;t+=rr(9,16)){const p=TU(s,t,o+8),pl=mulberry32(((Math.round(p[0]*7)*2246822519)^(Math.round(p[1]*7)*374761393)^(S.seed+0x9a1))>>>0); /* v4 r55: ~60% com luzinhas no tronco (gerador próprio) */
+    if(!city.haze&&S.style!=='inverted'&&pl()<.6){PALM_LIGHTS.mb=night?neon:neonDN;PALM_LIGHTS.col=COL(night?(pl()<.5?'#ff7ad8':'#7fefff'):(pl()<.75?'#2ec8ff':'#ffe6a8'))}
+    try{tree(p[0],p[1],.24,rr(.9,1.25),true)}finally{PALM_LIGHTS.mb=null}}
    // beach kiosks (barracas)
    for(let t=sa+rr(12,30);t<sb-8;t+=rr(40,70)){const u=o+14.6,wd=COL(night?'#4a3448':'#8a5a36'),st1=COL(pick(['#e04a3a','#2a8ad6','#f2c21a','#3ab36a','#ff6fae'])),wh=COL('#f6f2ea');
     for(const[dt,du] of [[-1.5,-1.5],[1.35,-1.5],[-1.5,1.35],[1.35,1.35]])bx(t+dt,t+dt+.15,u+du,u+du+.15,.16,2.55,wd,det);
