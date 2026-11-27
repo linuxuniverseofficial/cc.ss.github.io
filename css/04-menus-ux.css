@@ -303,3 +303,45 @@ body.cutscene-paused #menu.in-game #monBtn{grid-column:1/-1!important}
 #menu:not(.in-game) #tvCatBtn{grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:40px;font-size:13px;letter-spacing:.08em;background:linear-gradient(180deg,#3a2f26,#211a14);border-color:#c9a26a;color:#f4ead8}
 #menu:not(.in-game) #tvCatBtn:hover,#menu:not(.in-game) #tvCatBtn:focus-visible{background:linear-gradient(180deg,#54443a,#2c231b)}
 #menu.in-game #tvCatBtn .tvc-blbl{display:none}
+
+/* Menu inicial em paisagem nos dispositivos de toque. */
+@media (pointer: coarse) and (orientation: landscape) {
+  #menu:not(.in-game) {
+    background: #100e1c;
+    padding: 0;
+    place-items: stretch;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  #menu:not(.in-game) > .card {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: none;
+    min-height: 100%;
+    max-height: none;
+    margin: 0;
+    border: 0;
+    outline: 0;
+    box-shadow: none;
+    background: transparent;
+    grid-template-rows: auto 1fr;
+    padding: max(14px, env(safe-area-inset-top)) max(3vw, env(safe-area-inset-right))
+             max(16px, env(safe-area-inset-bottom)) max(3vw, env(safe-area-inset-left));
+  }
+}
+
+#menu.in-game #exitGame, #exitGame[hidden] { display: none !important; }
+#menu:not(.in-game) .mfoot #exitGame {
+  grid-column: 1 / -1;
+  order: 7;
+  min-height: 44px;
+  margin: 0;
+  color: white;
+  border-color: #ed817a;
+  background: #912e35;
+}
+#menu:not(.in-game) .mfoot #exitGame:is(:hover, :focus-visible) { background: #ad3840; }
+
+@media (pointer: coarse) and (orientation: landscape) and (max-width: 700px) {
+  #menu:not(.in-game) > .card { column-gap: 12px; grid-template-columns: 1fr 1fr; }
+  #menu:not(.in-game) .seedrow { flex-wrap: wrap; }
+}

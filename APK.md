@@ -12,3 +12,5 @@
 1. Embuta os arquivos da revisão atual, incluindo HTML, CSS, JavaScript, bibliotecas e mídia local. Confira que `version.txt`, o identificador de build do jogo e o manifesto Android apontam para a revisão correta. Aumente o `versionCode`.
 2. Assine o APK com a mesma chave da série de teste se ele precisar atualizar a instalação anterior. Verifique a assinatura, o identificador do pacote, o ícone adaptativo e a integridade do APK.
 3. Em um aparelho real, instale ou atualize o APK. Confira o ícone, a abertura em tela cheia, a pausa e o seletor História/Livre. Gere uma cidade em modo avião e teste carregar e exportar um save. Registre separadamente qualquer etapa que só passou por verificação automatizada.
+
+O menu inicial do APK oferece **Sair do jogo** abaixo de Configurações e Monitor. A build usa `APKTOOL_JAR` (testado com Apktool 2.4.1) para incluir a ação nativa na ponte do r67. O botão aparece quando a ponte oferece `exitGame`.

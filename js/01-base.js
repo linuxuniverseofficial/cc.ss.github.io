@@ -6,6 +6,11 @@ var ONLINE={on:false,peers:new Map()}; /* v2 r5: declarado cedo (o módulo onlin
 const $=s=>document.querySelector(s);
 const ANDROID_APK=!!window.CoastalAndroid;
 if(ANDROID_APK)document.documentElement.classList.add('android-apk');
+if(typeof window.CoastalAndroid?.exitGame === 'function'){
+ const exitButton=document.getElementById('exitGame');
+ exitButton.hidden=false;
+ exitButton.addEventListener('click',()=>window.CoastalAndroid.exitGame());
+}
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 let R=Math.random; const R2=Math.random;
 const rr=(a,b)=>a+(b-a)*R(), ri=(a,b)=>Math.floor(rr(a,b+1)), pick=a=>a[Math.floor(R()*a.length)];

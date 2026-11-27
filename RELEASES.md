@@ -15,6 +15,7 @@ Carregue as variáveis a seguir no ambiente local. Use caminhos absolutos para o
 | Variável | Uso |
 | --- | --- |
 | `ANDROID_SDK_ROOT` | Pasta do SDK com `platforms/android-35` e `build-tools/35.0.1`. |
+| `APKTOOL_JAR` | Caminho do Apktool JAR (testado com 2.4.1) para montar a ponte de saída do APK. |
 | `ANDROID_KEYSTORE` | Keystore Android. Use o certificado anterior para atualizar uma instalação existente. |
 | `ANDROID_KEY_ALIAS` | Alias da chave no keystore. |
 | `ANDROID_KS_PASS` | Senha do keystore. O script lê do ambiente. |

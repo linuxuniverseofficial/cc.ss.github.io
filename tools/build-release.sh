@@ -57,8 +57,16 @@ with ZipFile(work / 'windows/game.zip', 'w', ZIP_DEFLATED) as bundle:
                 data = data.replace(anchor, bridge + anchor, 1)
             dest.write_bytes(data)
 with ZipFile(template) as source:
-    (android / 'classes.dex').write_bytes(source.read('classes.dex'))
+    with ZipFile(work / 'launcher.apk', 'w') as launcher:
+        launcher.writestr('classes.dex', source.read('classes.dex'))
 PY
+apktool=(java -jar "${APKTOOL_JAR:?Defina o caminho do apktool.jar}")
+"${apktool[@]}" d -r "$work/launcher.apk" -o "$work/launcher"
+bridge="$work/launcher/smali/io/github/linuxuniverseofficial/coastalchaos/"'GameActivity$1.smali'
+sed -i '/^\.super /a .implements Ljava/lang/Runnable;' "$bridge"
+cat tools/android-launcher/exit-methods.smali >> "$bridge"
+"${apktool[@]}" b "$work/launcher" -o "$work/launcher-updated.apk"
+unzip -p "$work/launcher-updated.apk" classes.dex > "$work/android/classes.dex"
 cp -R tools/android-launcher/res "$work/android/res"
 mkdir -p "$work/android/res/drawable-nodpi"
 cp appicons/icon-512.png "$work/android/res/drawable-nodpi/game_icon.png"
