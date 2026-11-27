@@ -85,6 +85,35 @@ function fxGlowPatch(mat,k){if(!mat||mat.userData.fxGlow)return mat;mat.userData
    if(fxK.y>.5){vec3 fxH=texture2D(emissiveMap,vUv,2.).rgb*.55+texture2D(emissiveMap,vUv,3.5).rgb*.45;float fxC=max(totalEmissiveRadiance.r,max(totalEmissiveRadiance.g,totalEmissiveRadiance.b));totalEmissiveRadiance+=emissive*fxH*fxGk*vec3(1.,.82,.6)*(1.-smoothstep(.15,.9,fxC));}
    #endif`)};
  mat.customProgramCacheKey=()=>key+'|fxGlow';mat.needsUpdate=true;return mat}
+/* v4 r53: PERSONALIDADE DAS LUZES POR PRÉDIO (janelas acesas). O número do prédio vem da UV (bldWin, js/03: v = 8·id + …).
+   Cada prédio sorteia um tom dominante (quente residencial, misto, LED branco, escritório fluorescente acendendo por andar, azulado),
+   quantas janelas ficam acesas (30–100% das que a textura acende) e o brilho. Sem textura nem uniform novo; mesmo programa da parede.
+   mode 0 = Sunset Shores/Point Haze, 1 = Synthwave (tons neon), 2 = Mundo Invertido (avermelhado, mais fraco). Prédio sem número (id 0, casas/marcos) = como antes.
+   Remover: tirar bldLitPatch(M.wall,…) no generateCity e em farMaterial (js/12). */
+const BLDLIT_GLSL=`#ifdef USE_EMISSIVEMAP
+ {float bI=floor(vUv.y*.125);vec2 bC=floor(vUv*8.);
+  float h1=fract(sin(bI*12.9898+3.1)*43758.5453),h2=fract(sin(bI*78.233+1.7)*43758.5453),h3=fract(sin(bI*39.425+.31)*43758.5453);
+  float tg=step(.5,bI),bD=mix(.55,mix(.3,1.,h2),tg),off=tg*step(.62,h1)*step(h1,.86);
+  float cH=fract(sin(dot(bC,vec2(12.9898,78.233)))*43758.5453),fH=fract(sin(bC.y*91.7+bI*7.31)*43758.5453);
+  float keep=step(mix(cH,fH*.85+cH*.15,off),bD);
+  vec3 te=totalEmissiveRadiance;float tl=max(te.r,max(te.g,te.b));vec3 tn=vec3(1.);float tm=0.;
+  #if BLDLIT_MODE==1
+   tn=h1<.3?vec3(1.,.42,.86):h1<.55?vec3(.42,.95,1.):h1<.8?vec3(.72,.55,1.):vec3(1.,.78,.5);tm=.45;
+  #else
+   if(h1<.32){tn=vec3(1.,.66,.3);tm=.85;}else if(h1<.45){tm=0.;}else if(h1<.62){tn=vec3(.88,.94,1.);tm=.7;}
+   else if(h1<.86){tn=h3<.5?vec3(.62,1.,.84):vec3(.7,.9,1.);tm=.85;}else{tn=vec3(.5,.76,1.);tm=.8;}
+   #if BLDLIT_MODE==2
+    tn=mix(tn,vec3(1.,.45,.38),.45);tm=max(tm,.4);
+   #endif
+  #endif
+  float br=mix(1.,mix(.62,1.05,h3),tg)*(BLDLIT_MODE==2?.8:1.);
+  totalEmissiveRadiance=mix(te,tl*tn,tm*tg)*keep*br;}
+ #endif
+ #include <aomap_fragment>`;
+function bldLitPatch(mat,mode){if(!mat||mat.userData.bldLit!=null)return mat;mode=mode|0;mat.userData.bldLit=mode;const old=mat.onBeforeCompile,key=(mat.customProgramCacheKey&&mat.customProgramCacheKey())||'';
+ mat.onBeforeCompile=function(sh){if(old)old.call(this,sh);if(sh.fragmentShader.indexOf('#include <aomap_fragment>')<0){console.warn('bldLitPatch: sem aomap_fragment');return}
+  sh.fragmentShader='#define BLDLIT_MODE '+mode+'\n'+sh.fragmentShader.replace('#include <aomap_fragment>',BLDLIT_GLSL)};
+ mat.customProgramCacheKey=()=>key+'|bldLit'+mode;mat.needsUpdate=true;return mat}
 /* v4 r6: REFLEXO DE DIA NAS JANELAS (SHFX fxK.z). Mesma lógica do reflexo da água/lataria: Fresnel com as cores do skyMat
    (top/hor/sunDir/night: uniforms compartilhados, acompanha dia, pôr do sol, noite e os outros mundos sem CPU) + silhueta de
    prédios "do outro lado da rua" (altura sorteada por azimute do raio refletido: anda com a câmera, dá a paralaxe de reflexo)

@@ -439,8 +439,9 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
    if(e0<BLDX.pe&&!(city.bxAl||[]).some(a=>a[0]<x1+3&&a[2]>x0-3&&a[1]<z1+3&&a[3]>z0-3)){const hw=(x1-x0)/2,hd=(z1-z0)/2,oval=e1<.5&&Math.max(hw,hd)/Math.min(hw,hd)>1.15,r=Math.min(hw,hd);
     let cx=(x0+x1)/2,cz=(z0+z1)/2;if(!oval&&opts.face){const f=opts.face;if(f==='n')cz=z0+r;else if(f==='s')cz=z1-r;else if(f==='w')cx=x0+r;else cx=x1-r}
     EX={cx,cz,rx:oval?hw:r,rz:oval?hd:r,oval}}}
+  const BW=bldWin(x0,z0); /* v4 r53: padrão/número do prédio nas janelas */
   (ch.bwc||(ch.bwc=[])).push({x0,z0,x1,z1,wc,ri:curRi});
-  ri(0,7);ri(0,7);if(fp.abandoned&&!opts.linkedL)wc.lerp(COL('#918777'),.32);if(EX){mbOval(facadeWalls,roofs,EX.cx,EX.cz,EX.rx,EX.rz,0,h,wc,rc,{win:[0,0]});(ch.bldx||(ch.bldx=[])).push(EX)}else facadeWalls.box(x0,0,z0,x1,h,z1,wc,{top:roofs,topCol:rc,win:[0,0],facadeGrid:true});
+  ri(0,7);ri(0,7);if(fp.abandoned&&!opts.linkedL)wc.lerp(COL('#918777'),.32);if(EX){mbOval(facadeWalls,roofs,EX.cx,EX.cz,EX.rx,EX.rz,0,h,wc,rc,{win:BW});(ch.bldx||(ch.bldx=[])).push(EX)}else facadeWalls.box(x0,0,z0,x1,h,z1,wc,{top:roofs,topCol:rc,win:BW,facadeGrid:true});
   if(EX){for(const q of bldxCols(EX,8))addCol(q[0],q[1],q[2],q[3],'bld').top=h}else addCol(x0,z0,x1,z1,'bld').top=h;
   /* r33 · pichação perto das esquinas, mais nas faces de beco (as que não dão pra rua) */
   if(!EX&&!opts.safe&&!opts.patio&&!city.haze&&h>3){const gr=mulberry32(((Math.round(x0*17)*2246822519)^(Math.round(z0*17)*3266489917)^(S.seed*13+0x6f1))>>>0),grr=(a,b)=>a+gr()*(b-a);
@@ -457,7 +458,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
   let tx0=x0,tz0=z0,tx1=x1,tz1=z1,th=h;
   const w=x1-x0,d=z1-z0;
   if(!opts.simple&&R()<.38&&w>12&&d>12&&!opts.para){const ins=rr(2,Math.min(w,d)*.25);tx0=x0+ins;tz0=z0+ins;tx1=x1-ins;tz1=z1-ins;const h2=Math.min(Math.round((h+rr(4,night?14:10))/3.2)*3.2,41.6,Number.isFinite(airCap)?Math.max(h,airCap-4.1):Infinity);
-   const wc2=wc.clone().multiplyScalar(rr(.92,1.05));ri(0,7);ri(0,7);if(EX){const E0=EX;EX={cx:E0.cx,cz:E0.cz,rx:Math.max(2,E0.rx-ins),rz:Math.max(2,E0.rz-ins),oval:E0.oval};mbOval(facadeWalls,roofs,EX.cx,EX.cz,EX.rx,EX.rz,h,h2,wc2,rc,{win:[0,0]});mbOvalRim(det,E0.cx,E0.cz,E0.rx,E0.rz,h,h+.6,.35,wc.clone().multiplyScalar(.8))}else{facadeWalls.box(tx0,h,tz0,tx1,h2,tz1,wc2,{top:roofs,topCol:rc,win:[0,0],facadeGrid:true});
+   const wc2=wc.clone().multiplyScalar(rr(.92,1.05));ri(0,7);ri(0,7);if(EX){const E0=EX;EX={cx:E0.cx,cz:E0.cz,rx:Math.max(2,E0.rx-ins),rz:Math.max(2,E0.rz-ins),oval:E0.oval};mbOval(facadeWalls,roofs,EX.cx,EX.cz,EX.rx,EX.rz,h,h2,wc2,rc,{win:BW});mbOvalRim(det,E0.cx,E0.cz,E0.rx,E0.rz,h,h+.6,.35,wc.clone().multiplyScalar(.8))}else{facadeWalls.box(tx0,h,tz0,tx1,h2,tz1,wc2,{top:roofs,topCol:rc,win:BW,facadeGrid:true});
    // parapet lower tier
    const pc=wc.clone().multiplyScalar(.8);
    det.box(x0,h,z0,x1,h+.6,z0+.35,pc);det.box(x0,h,z1-.35,x1,h+.6,z1,pc);det.box(x0,h,z0,x0+.35,h+.6,z1,pc);det.box(x1-.35,h,z0,x1,h+.6,z1,pc);}th=h2;

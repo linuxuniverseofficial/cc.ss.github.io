@@ -84,11 +84,11 @@ function windowTextures(night){const rnd=mulberry32((S.seed^0x643c19b7)>>>0),tex
    g.fillStyle=gr;g.fillRect(x,y,w,h);g.fillStyle='rgba(255,255,255,.18)';g.fillRect(x+2,y+2,4,h-4);
    if(rnd()<.3){g.fillStyle='#c9c4b8';g.fillRect(x,y,w,h*rnd()*.7)}
    g.fillStyle='#8f8b84';g.fillRect(x+w/2-1,y,2,h);
-   if(rnd()<.32){ge.globalAlpha=.55+rnd()*.4;ge.fillStyle=texPick(['#ffd9a0','#ffc78a','#fff0d0','#cfe4ff']);ge.fillRect(x,y,w,h);ge.globalAlpha=1}
+   if(rnd()<.62)winLitCell(ge,x,y,w,h,rnd,texPick); /* v4 r53: estilos variados; o shader (bldLitPatch) apaga/tinge por prédio */
   }else{
    g.fillStyle='rgba(0,0,0,.18)';g.fillRect(cx*32,cy*32+30,32,2);
    {const wx=cx*32+8,wy=cy*32+9,ww=16,wh=12;g.fillStyle='#0c0a14';g.fillRect(wx-1,wy-1,ww+2,wh+2);g.fillStyle='#16121f';g.fillRect(wx,wy,ww,wh);
-    if(rnd()<.10){const col=rnd()<.75?texPick(['#ffd9a0','#ffc38a','#ffe7c4']):texPick(['#ff8fd0','#8ff0ff']);const a=.45+rnd()*.4;
+    if(rnd()<.15){const col=rnd()<.75?texPick(['#ffd9a0','#ffc38a','#ffe7c4']):texPick(['#ff8fd0','#8ff0ff']);const a=.45+rnd()*.4;
      ge.globalAlpha=a;ge.fillStyle=col;ge.fillRect(wx,wy,ww,wh);ge.globalAlpha=1;g.fillStyle=col;g.globalAlpha=.5;g.fillRect(wx,wy,ww,wh);g.globalAlpha=1;
      if(rnd()<.4){g.fillStyle='#2a1f2a';g.fillRect(wx,wy,ww,wh*.45)}}}
   }}
@@ -231,6 +231,24 @@ for(const k of ['box','cbox']){const f=MB.prototype[k];MB.prototype[k]=function(
    Elegível (opts.exo): quarteirão sem becos internos do L, sem beco encostado (city.bxAl), sem L/casa segura/pátio/paraquedas/neon/Neon Road. */
 const BLDX={pc:.2,pe:.3,white:['#dcd9d1','#e4e1da','#d1cfc7'],sand:['#d4bc86','#cbb07a','#d9c391']};
 function bldxRng(x,z,salt){return mulberry32(((Math.round(x*11)*2246822519)^(Math.round(z*11)*374761393)^(S.seed*7+salt))>>>0)}
+/* v4 r53: janela acesa (layout de Sunset Shores/Point Haze/Invertido) com estilos variados, como numa cidade de verdade:
+   incandescente âmbar, fluorescente esverdeado/azulado, LED branco, spots redondos no teto, barra de LED, persiana, meia cortina, TV azulada e raros tons roxo/rosa.
+   O tom dominante e quantas acendem por prédio vêm do bldLitPatch (js/07). */
+function winLitCell(ge,x,y,w,h,rnd,pick){const r=rnd(),A=(a,c)=>{ge.globalAlpha=a;ge.fillStyle=c};
+ if(r<.26){A(.62+rnd()*.33,pick(['#ffd08a','#ffc070','#ffdca8','#ffb860']));ge.fillRect(x,y,w,h);A(.22,'#000');ge.fillRect(x,y,w,h*.18)}
+ else if(r<.44){A(.55+rnd()*.35,pick(['#dcfff2','#c4f2ff','#b8ffe0','#e8fff8']));ge.fillRect(x,y,w,h)}
+ else if(r<.56){A(.7+rnd()*.3,'#f4f7ff');ge.fillRect(x,y,w,h)}
+ else if(r<.68){const c=pick(['#fff4e0','#eef6ff','#ffffff']);A(.16,c);ge.fillRect(x,y,w,h);const n=rnd()<.5?1:2;
+  for(let i=0;i<n;i++){const cx=x+w*(n===1?.5:i?.72:.28),cy=y+5,gr=ge.createRadialGradient(cx,cy,0,cx,cy,7);gr.addColorStop(0,c);gr.addColorStop(.45,c);gr.addColorStop(1,'rgba(0,0,0,0)');ge.globalAlpha=1;ge.fillStyle=gr;ge.fillRect(x,y,w,h*.8)}}
+ else if(r<.76){A(.14,'#cfe4ff');ge.fillRect(x,y,w,h);A(.95,'#f2f8ff');ge.fillRect(x,y+Math.round(h*(.25+rnd()*.3)),w,3)}
+ else if(r<.86){const c=rnd()<.6?pick(['#ffd08a','#ffe0b0']):'#d8f6ff';for(let k=0;k<h;k+=3){A(k%6?.25:.85,c);ge.fillRect(x,y+k,w,2)}}
+ else if(r<.94){A(.7+rnd()*.25,pick(['#ffc880','#ffd9a0']));ge.fillRect(x,y+h*.45,w,h*.55);A(.2,'#ffc880');ge.fillRect(x,y,w,h*.45)}
+ else if(r<.98){A(.35+rnd()*.2,'#6f9dff');ge.fillRect(x,y,w,h)}
+ else{A(.5,pick(['#d98cff','#ff8fd0']));ge.fillRect(x,y,w,h)}
+ ge.globalAlpha=1}
+/* v4 r53: por prédio, deslocamento da textura de janelas em células (1/8) e número do prédio (1..15) na parte inteira de v (8·id).
+   A textura repete a cada 1, então só o padrão muda; o shader lê floor(v/8). Gerador próprio (bldxRng): não mexe na seed. */
+function bldWin(x,z){const r=bldxRng(x,z,0x51d);return[Math.floor(r()*8)/8,8*(1+Math.floor(r()*15))+Math.floor(r()*8)/8]}
 function bldxColor(r){const a=r(),k=r(),v=r();if(a>=BLDX.pc)return null;const L=a<BLDX.pc/2?BLDX.white:BLDX.sand;return COL(L[Math.floor(k*L.length)]).multiplyScalar(.95+v*.08)}
 function mbOvalN(rx,rz){const per=Math.PI*(3*(rx+rz)-Math.sqrt((3*rx+rz)*(rx+3*rz)));return Math.max(4,Math.floor(per/3.5))}
 function mbOval(mb,top,cx,cz,rx,rz,y0,y1,col,tc,o){o=o||{};const nb=mbOvalN(rx,rz),sub=2,n=nb*sub,W=o.win,P=k=>{const t=k/n*Math.PI*2;return[cx+Math.cos(t)*rx,cz+Math.sin(t)*rz]};
