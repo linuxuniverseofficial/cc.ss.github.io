@@ -166,8 +166,8 @@ const WINR={pct:{value:.3}}; /* fração de janelas com cômodo (v4 r9: .3); no 
 function winReflPatch(mat,night){if(!mat||mat.userData.winRefl)return mat;mat.userData.winRefl=true;const old=mat.onBeforeCompile,key=(mat.customProgramCacheKey&&mat.customProgramCacheKey())||'';
  const rect=night?new THREE.Vector4(8/32,11/32,24/32,23/32):new THREE.Vector4(5/32,7/32,27/32,25/32),mull=night?0:1/32;
  mat.onBeforeCompile=(sh,r)=>{if(old)old.call(mat,sh,r);const K=skyMat.uniforms;Object.assign(sh.uniforms,{fxK:SHFX.U.fxK,top:K.top,hor:K.hor,sunDir:K.sunDir,night:K.night,sunDim:K.sunDim,csSun:K.csSun,synth:K.synth,wK:WTR.U.wK,wrRect:{value:rect},wrMull:{value:mull},wrTm:SHFX.U.fxT,wrPct:WINR.pct,wrInv:{value:S.style==='inverted'?1:0}});
-  sh.vertexShader='varying vec3 vWrW;\n'+sh.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\n vWrW=(modelMatrix*vec4(transformed,1.)).xyz;');
-  const dec=(sh.fragmentShader.includes('uniform vec4 fxK;')?'':'uniform vec4 fxK;')+`uniform vec3 top,hor,sunDir;uniform float night,sunDim,csSun,synth,wrMull,wrTm,wrPct,wrInv;uniform vec4 wK,wrRect;varying vec3 vWrW;
+  sh.vertexShader='attribute float streetWindow;varying float vWrStreet;varying vec3 vWrW;\n'+sh.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\n vWrStreet=streetWindow;vWrW=(modelMatrix*vec4(transformed,1.)).xyz;');
+  const dec=(sh.fragmentShader.includes('uniform vec4 fxK;')?'':'uniform vec4 fxK;')+`uniform vec3 top,hor,sunDir;uniform float night,sunDim,csSun,synth,wrMull,wrTm,wrPct,wrInv;uniform vec4 wK,wrRect;varying float vWrStreet;varying vec3 vWrW;
  float wrHs(vec3 p){return fract(sin(dot(p,vec3(12.989,78.233,37.719)))*43758.55);}
  float wrBox(vec3 p,vec3 iv,vec3 b0,vec3 b1,out float f){vec3 t0=(b0-p)*iv,t1=(b1-p)*iv;vec3 tn=min(t0,t1),tf=max(t0,t1);
   float a=max(max(tn.x,tn.y),tn.z),b=min(min(tf.x,tf.y),tf.z);f=a==tn.y?1.:a==tn.z?.88:.72;return b>max(a,0.)?a:1e5;}
@@ -220,10 +220,10 @@ function winReflPatch(mat,night){if(!mat||mat.userData.winRefl)return mat;mat.us
     vec2 wrC=fract(vUv*8.);vec2 wrA=(wrC-wrRect.xy)/(wrRect.zw-wrRect.xy);vec2 wrE=fwidth(wrC)*1.5/(wrRect.zw-wrRect.xy);
     float wrIn=smoothstep(0.,wrE.x,wrA.x)*smoothstep(0.,wrE.x,1.-wrA.x)*smoothstep(0.,wrE.y,wrA.y)*smoothstep(0.,wrE.y,1.-wrA.y);
     if(wrMull>0.)wrIn*=smoothstep(wrMull,wrMull+fwidth(wrC.x)*1.5,abs(wrC.x-.5));
-    vec3 wrId=vec3(floor(vUv*8.),floor(dot(wrN,vWrW)*.37));float wrI=max(wrG,step(.04,wrL)*wrVt)*wrIn*(1.-smoothstep(90.,160.,wrDist))*step(wrHs(wrId+11.3),wrPct)*smoothstep(.22,.5,dot(-wrV,wrN)); /* v4 r60: limite de ângulo: some a partir de ~60° da frente (zero a ~77°) */
+    if(vWrStreet>.5){vec3 wrId=vec3(floor(vUv*8.),floor(dot(wrN,vWrW)*.37));float wrI=max(wrG,step(.04,wrL)*wrVt)*wrIn*(1.-smoothstep(90.,160.,wrDist))*step(wrHs(wrId+11.3),wrPct)*smoothstep(.22,.5,dot(-wrV,wrN)); /* v4 r60: limite de ângulo: some a partir de ~60° da frente (zero a ~77°) */
     if(wrI>.01){vec3 wrUp=vec3(0.,1.,0.);vec3 wrTg=normalize(cross(wrUp,-wrN));vec3 wrD=vec3(dot(wrV,wrTg),wrV.y,max(dot(wrV,-wrN),.02));wrD.xy*=.38*wrD.z*mix(.3,1.,smoothstep(4.,28.,wrDist));wrD.xy=clamp(wrD.xy,-.24*wrD.z,.24*wrD.z); /* v4 r60: inclinação máxima do raio (paredes do cômodo não esticam na diagonal) */ /* v4 r10: de perto desloca ainda menos */
      vec3 wrLamp=totalEmissiveRadiance*step(.04,wrL)*mix(1.,.5,synth);float wrAmb=mix(mix(.55,.025,night)*(.4+.6*sunDim),.1,wrInv); /* v4 r13: no Synthwave a janela acesa (1,25 + bloom forte) estourava em branco; no Invertido não há luz elétrica: TV desligada e só a penumbra vermelha de fora */
-     gl_FragColor.rgb=mix(gl_FragColor.rgb,wrRoom(wrA,wrD,wrId,wrLamp,wrAmb),wrI);}
+     gl_FragColor.rgb=mix(gl_FragColor.rgb,wrRoom(wrA,wrD,wrId,wrLamp,wrAmb),wrI);}}
     wrG*=1.-smoothstep(.04,.3,wrL);
     if(wrG>.01){vec3 wrR=reflect(wrV,wrN);float wrCs=clamp(dot(-wrV,wrN),0.,1.);
      float wrF=.1+.7*pow(1.-wrCs,3.);float u=wrR.y;
@@ -235,7 +235,7 @@ function winReflPatch(mat,night){if(!mat||mat.userData.winRefl)return mat;mat.us
      gl_FragColor.rgb=mix(gl_FragColor.rgb,wrS*mix(1.,.75,night),clamp(wrK,0.,.85))+vec3(1.,.93,.8)*wrSn*wrG;}}
    #endif
    #include <tonemapping_fragment>`)};
- mat.customProgramCacheKey=()=>key+'|winRefl4';mat.needsUpdate=true;return mat}
+ mat.customProgramCacheKey=()=>key+'|winRefl5';mat.needsUpdate=true;return mat}
 // neon (MeshBasic): núcleo mais branco no tubo, zumbido sutil e, à noite, brilho acima de 1 (o bloom pega quando ligado).
 /* v4 r13: steady=true (M.neonSt) = mesmo núcleo quente, sem zumbido nem falha (letreiros fixos: cruz e faixa do hospital) */
 function fxNeonPatch(mat,steady){if(!mat||mat.userData.fxNeon||!mat.isMeshBasicMaterial)return mat;mat.userData.fxNeon=true;const old=mat.onBeforeCompile,key=(mat.customProgramCacheKey&&mat.customProgramCacheKey())||'';
