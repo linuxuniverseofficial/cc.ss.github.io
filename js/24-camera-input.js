@@ -169,7 +169,7 @@ addEventListener('keydown',e=>{
  if(TABLE_GAME.open){if(e.code==='Escape'){e.preventDefault();tableGameClose()}else if(e.code==='Enter'&&document.activeElement===document.body){e.preventDefault();$('#tgDeal').click()}return}
  if(NEWS.open){if(['Escape','KeyE','KeyF','Enter','Space','Backspace'].includes(e.code)&&!e.repeat){e.preventDefault();newsClose()}return}
  if(SLOT.open){if(e.code==='Escape'){e.preventDefault();slotClose()}else if((e.code==='KeyE'||e.code==='Space')&&!e.repeat){e.preventDefault();slotPull()}return}
- if(MP.open){if(e.code==='Escape'||e.code==='Backspace'){e.preventDefault();modePickClose()}else if(e.code==='ArrowLeft'||e.code==='KeyA'||e.code==='ArrowRight'||e.code==='KeyD'){e.preventDefault();const L=['#mpStory','#mpFree','#mpOnline'],i=Math.max(0,L.findIndex(id=>document.activeElement===$(id))),d=(e.code==='ArrowLeft'||e.code==='KeyA')?-1:1;$(L[(i+d+L.length)%L.length]).focus()}return}
+ if(MP.open){if(e.code==='Escape'||e.code==='Backspace'){e.preventDefault();modePickClose()}else if(e.code==='ArrowLeft'||e.code==='KeyA'||e.code==='ArrowRight'||e.code==='KeyD'){e.preventDefault();const L=ANDROID_APK?['#mpStory','#mpFree']:['#mpStory','#mpFree','#mpOnline'],i=Math.max(0,L.findIndex(id=>document.activeElement===$(id))),d=(e.code==='ArrowLeft'||e.code==='KeyA')?-1:1;$(L[(i+d+L.length)%L.length]).focus()}return}
  if(DEAL.open){dealKey(e);return}
  if(WARD.open){if(e.code==='Escape'){e.preventDefault();closeWard(false)}return}
  if(TECH.open){if(e.code==='Escape'){e.preventDefault();closeTech()}return}

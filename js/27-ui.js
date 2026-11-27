@@ -33,10 +33,10 @@ function mpPaintOnline(cv0){mpPaint(cv0,{...PLAYER_PAL},'#1f5a3a');const t=docum
  const g=cv0.getContext('2d');g.fillStyle='#1f5a3a';g.fillRect(0,0,192,192);for(let y=0;y<192;y+=12){g.fillStyle='rgba(255,255,255,.04)';g.fillRect(0,y,192,6)}g.drawImage(t,0,0);
  const m3=S.sprite8===true||S.char3d===true,sz=m3?84:70,y=m3?92:84;g.font='900 '+sz+'px Segoe UI,Arial';g.textAlign='center';g.textBaseline='middle';g.lineWidth=sz*.12;g.strokeStyle='#000';g.strokeText('?',96,y);g.fillStyle='#fff';g.fillText('?',96,y)}
 function mpPaint(cv0,pal,bg){const g=cv0.getContext('2d');g.imageSmoothingEnabled=false;g.fillStyle=bg;g.fillRect(0,0,192,192);for(let y=0;y<192;y+=12){g.fillStyle='rgba(255,255,255,.04)';g.fillRect(0,y,192,6)}/* v78: 2D (pixel art) é o padrão; retrato 3D só com "Pedestres em 3D" */if(S.sprite8!==true&&S.char3d!==true){const at=makeAtlas({...pal,pack:false});g.drawImage(at,0,0,32,32,8,16,176,176);return}try{const P=charPortrait(pal);g.imageSmoothingEnabled=true;g.drawImage(P.open_closed,0,0,192,192)}catch(e){console.error(e);const at=makeAtlas({...pal,pack:false});g.drawImage(at,0,0,32,32,8,16,176,176)}}
-function modePick(go){MP.open=true;MP.go=go;$('#modePick').hidden=false;mpPaint($('#mpStory canvas'),JASON_LOOK0,'#2a3a6a');mpPaint($('#mpFree canvas'),LUCIA_PAL,'#6a2a4a');mpPaintOnline($('#mpOnline canvas')); /* v78: menu sempre com a roupa padrão (sem estampa); a roupa trocada vale no jogo/save/cenas */(modeSel==='free'?$('#mpFree'):$('#mpStory')).focus()}
+function modePick(go){MP.open=true;MP.go=go;$('#modePick').hidden=false;mpPaint($('#mpStory canvas'),JASON_LOOK0,'#2a3a6a');mpPaint($('#mpFree canvas'),LUCIA_PAL,'#6a2a4a');if(!ANDROID_APK)mpPaintOnline($('#mpOnline canvas')); /* v78: menu sempre com a roupa padrão (sem estampa); a roupa trocada vale no jogo/save/cenas */(modeSel==='free'?$('#mpFree'):$('#mpStory')).focus()}
 function modePickClose(){MP.open=false;$('#modePick').hidden=true;MP.go=null;try{$('#play').focus()}catch(e){}}
 for(const id of ['#mpStory','#mpFree','#mpOnline'])$(id).addEventListener('mouseenter',e=>e.currentTarget.focus());
-$('#mpOnline').addEventListener('click',()=>{MP.open=false;$('#modePick').hidden=true;MP.go=null;onJoinOpen()});
+$('#mpOnline').addEventListener('click',()=>{if(ANDROID_APK)return;MP.open=false;$('#modePick').hidden=true;MP.go=null;onJoinOpen()});
 for(const id of ['#mpStory','#mpFree'])$(id).addEventListener('click',e=>{const m=e.currentTarget.dataset.m,go=MP.go;modeSet(m);MP.open=false;$('#modePick').hidden=true;MP.go=null;if(go)go()});
 $('#modePick').addEventListener('click',e=>{if(e.target.id==='modePick')modePickClose()});
 $('#seedRnd').addEventListener('click',randomizeCitySeed);$('#seedPlay').addEventListener('click',generateCityFromSeed);
@@ -245,7 +245,7 @@ if(IS_MOBILE){ /* v3 r6: era MOB_LITE (desligado desde a r35) e o aviso de girar
  const portrait=matchMedia('(orientation: portrait)'),gate=$('#rotatePhone'),menuFull=$('#menuFullscreen');
  const syncOrientation=()=>{
   const vertical=portrait.matches;
-  const fullscreen=!!document.fullscreenElement||!!window.CoastalAndroid||matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches;
+  const fullscreen=!!document.fullscreenElement||ANDROID_APK||matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches;
   menuFull.hidden=fullscreen||!document.documentElement.requestFullscreen;
   // Mobile vertical: aviso obrigatorio, inclusive no menu e durante a partida.
   // Nao abre o menu automaticamente; ao voltar para paisagem retoma a tela anterior.
@@ -261,7 +261,7 @@ if(IS_MOBILE){ /* v3 r6: era MOB_LITE (desligado desde a r35) e o aviso de girar
  addEventListener('resize',syncOrientation);
  syncOrientation();
  async function requestLandscape(full){
-  try{if(full&&!window.CoastalAndroid&&!document.fullscreenElement&&document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen()}catch{fsSkip=true}
+  try{if(full&&!ANDROID_APK&&!document.fullscreenElement&&document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen()}catch{fsSkip=true}
   try{await screen.orientation?.lock?.('landscape')}catch{}
   syncOrientation();
  }

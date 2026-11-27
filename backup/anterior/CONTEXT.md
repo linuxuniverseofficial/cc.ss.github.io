@@ -364,6 +364,8 @@ Estágios (`PROLOGUE`, Ctrl+Shift+F9 pula em debug): `dealer` → `driveFirst` (
 
 ## 9. Registro recente (v79 r1–r49 → v1)
 
+- **v4 r66 · Pausa compacta no mobile.** O botão de tela cheia sai da grade de pausa; o painel termina na quarta linha, com Voltar ao menu inicial. O APK e o app web instalado reconhecem a tela cheia própria. O APK de teste usa ícone adaptativo com fundo escuro. Arquivos do jogo: `css/02-menus.css`, `css/04-menus-ux.css`, `js/27-ui.js`, `CONTEXT.md` e versão.
+
 - **v4 r65 · Geração da cidade corrigida.** Na r64, `MB.mesh` consultava o material sem verificar se ele existia. Carros instanciados e outros objetos reutilizam apenas a geometria com `mesh(null)`. A máscara de rua agora é criada apenas para materiais que habilitam reflexo de janela. Testado em Node com o Three.js do jogo: reprodução do erro da r64, execução de `buildInstancing` com geometria de teste e verificação da máscara de rua. Partida completa no navegador pendente. Arquivos: `js/03-texturas-malhas.js`, `CONTEXT.md` e versão.
 
 - **v4 r64 · Paralaxe dos cômodos só nas janelas de rua.** A malha de fachadas marca as faces externas com rua e o shader usa a marcação só para o cômodo. Becos, pátios e fundos preservam a reflexão do vidro. Os andares recuados herdam as faces elegíveis do lote. Vale para Sunset Shores, Synthwave e Mundo Invertido pelo mesmo shader. Validação em Node: geometria de esquina, beco, via ausente, água, fachadas curvas e máscara separada do reflexo. Validação visual pendente. Arquivos: `js/03-texturas-malhas.js`, `js/07-agua.js`, `js/11-buildChunk.js`, `CONTEXT.md` e versão.

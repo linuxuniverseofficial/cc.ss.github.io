@@ -50,7 +50,8 @@ body:has(#menu:not([hidden])) #areaHud,body:has(#cfg:not([hidden])) #areaHud{dis
 
 }
 /* pausa: CONTINUAR em destaque, ações em 2x2 e saída destrutiva separada */
-#menu.in-game #menuX{display:none!important}
+#menu.in-game :is(#menuX,#menuFullscreen){display:none!important}
+#menu.in-game>.card{width:min(440px,100%)}
 #menu.in-game .mfoot .btn{height:100%!important}
 #menu.in-game:has(#saveFile[hidden]) #cfgBtnMenu{grid-column:1/-1}
 #menu.in-game h1.mlogo{padding:0 6px!important}
@@ -143,7 +144,7 @@ body.cutscene-paused #menu.in-game #photoBtn{display:none!important}
 /* v3 r8: CONFIGURAÇÕES à esquerda e MONITOR à direita, igual ao menu inicial */
 #menu.in-game #monBtn{grid-column:2!important;grid-row:3!important}
 #menu.in-game #cfgBtnMenu,#menu.in-game:has(#saveFile[hidden]) #cfgBtnMenu{grid-column:1!important;grid-row:3!important}
-#menu.in-game .mfoot #backToStart{grid-row:4!important}
+#menu.in-game .mfoot #backToStart{grid-row:4!important;margin-top:0!important}
 body.cutscene-paused #menu.in-game .mfoot{grid-template-rows:58px 52px 52px 46px!important}
 body.cutscene-paused #menu.in-game #monBtn{grid-column:1/-1!important}
 @media (max-height:520px){#menu.in-game .mfoot,body.cutscene-paused #menu.in-game .mfoot{grid-template-rows:48px 44px 42px 38px!important}#menu.in-game .mfoot .pz-icons .btn{height:44px!important;font-size:19px!important}}

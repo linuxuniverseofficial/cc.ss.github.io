@@ -49,6 +49,8 @@ body:has(#menu:not([hidden])) #areaHud,body:has(#cfg:not([hidden])) #areaHud{dis
  #menu:not(.in-game) .mfoot #play{min-height:62px}
 
 }
+/* A atividade Android já abre em paisagem e tela cheia. */
+.android-apk :is(#fsBtn,#menuFullscreen,#landscapeBtn,#installApp,#mpOnline){display:none!important}
 /* pausa: CONTINUAR em destaque, ações em 2x2 e saída destrutiva separada */
 #menu.in-game :is(#menuX,#menuFullscreen){display:none!important}
 #menu.in-game>.card{width:min(440px,100%)}

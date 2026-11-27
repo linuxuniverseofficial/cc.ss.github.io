@@ -106,6 +106,8 @@ Os CSS entram na ordem do número (a cascata depende disso); `05-fenda.css` fica
 
 ## 1. Base técnica
 
+- O [guia de build Android](APK.md) define as verificações de ícone, tela cheia nativa e visibilidade do modo Online no APK.
+
 - `index.html` + `css/` + `js/` (mapa em §0b; até a r36 era tudo inline no `index.html`): three.js r128 local (`lib/`), HUD em DOM/CSS, Canvas 2D para atlas/texturas/mapas, Web Audio. PWA: `sw.js`, `manifest.webmanifest`, `appicons/` (não `icons/`: o Apache do Debian/php:apache tem `Alias /icons/` para os ícones dele e a pasta do jogo nunca é servida). Sem backend.
 - Unidades: `BS=60`, `RW=16`, `P=76`, `SW=4` (calçada), chunk = 2×2 quadras. A cidade vai de **0 a `city.ext`** nos dois eixos (X leste, Z sul): o **(0,0) é o canto noroeste**, não o centro. Rios em `RY=-3`; ver `SEA_Y`/`waterLevel` antes de mexer em alturas.
 - Tamanhos: 7×7 (Mobile) e 14×14 (Normal). Point Haze é ilha `N=3`.
@@ -363,6 +365,8 @@ Estágios (`PROLOGUE`, Ctrl+Shift+F9 pula em debug): `dealer` → `driveFirst` (
 - **Janela nova com botões precisa funcionar no controle (v3 r28).** Ou entra no `padDialog` (navegação espacial `padNavFocus`, ○ fecha, ✕ clica; campo de texto → `padTextKey`/MINIKEY; cor → `padColorStep`), ou ganha um handler próprio no `padPoll` como `skUiPad`. Se o clique redesenha os botões (`innerHTML=''`), devolver o foco ao mesmo lugar. Antes da r28 a tela do online e a skate shop não navegavam no controle.
 
 ## 9. Registro recente (v79 r1–r49 → v1)
+
+- **v4 r67 · Regras do APK.** O APK identifica a atividade Android, oculta controles de tela cheia e esconde o Online no seletor de modos, inclusive na navegação por teclado. O seletor centraliza História e Livre. Guia em `APK.md`, referenciado em `CLAUDE.md` e `CONTEXT.md`. Arquivos de jogo: `js/01-base.js`, `js/24-camera-input.js`, `js/27-ui.js`, `css/04-menus-ux.css` e versão.
 
 - **v4 r66 · Pausa compacta no mobile.** O botão de tela cheia sai da grade de pausa; o painel termina na quarta linha, com Voltar ao menu inicial. O APK e o app web instalado reconhecem a tela cheia própria. O APK de teste usa ícone adaptativo com fundo escuro. Arquivos do jogo: `css/02-menus.css`, `css/04-menus-ux.css`, `js/27-ui.js`, `CONTEXT.md` e versão.
 
