@@ -10,20 +10,18 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
 	"syscall"
 	"time"
 	"unsafe"
-
-	webview "github.com/jchv/go-webview2"
 )
 
-//go:embed game.zip
-var gameZip []byte
+//go:embed desktop.zip
+var desktopZip []byte
 
 const host = "127.0.0.1:28467"
 const gameURL = "http://" + host + "/"
@@ -37,13 +35,13 @@ func message(body string) {
 }
 
 func assets() (http.Handler, error) {
-	bundle, err := zip.NewReader(bytes.NewReader(gameZip), int64(len(gameZip)))
+	bundle, err := zip.NewReader(bytes.NewReader(desktopZip), int64(len(desktopZip)))
 	if err != nil {
 		return nil, err
 	}
 	files := make(map[string]*zip.File)
 	for _, f := range bundle.File {
-		name, ok := strings.CutPrefix(f.Name, "v77/")
+		name, ok := strings.CutPrefix(f.Name, "resources/app/game/")
 		if !ok || f.FileInfo().IsDir() {
 			continue
 		}
@@ -113,6 +111,9 @@ func openBrowser() error {
 func run() error {
 	browser := flag.Bool("browser", false, "Abre no navegador padrão")
 	flag.Parse()
+	if !*browser {
+		return launchDesktop()
+	}
 	handler, err := assets()
 	if err != nil {
 		return err
@@ -125,50 +126,62 @@ func run() error {
 	server := &http.Server{Handler: handler, ReadHeaderTimeout: 5 * time.Second}
 	defer server.Close()
 	go server.Serve(listener)
-	if *browser {
-		if err := openBrowser(); err != nil {
-			return err
-		}
-		message("O jogo está no navegador. Pressione F11 no Edge ou Chrome para tela cheia. Feche esta janela somente quando terminar de jogar.")
-		return nil
-	}
-	profile, err := os.UserCacheDir()
-	if err != nil {
+	if err := openBrowser(); err != nil {
 		return err
 	}
-	view := webview.NewWithOptions(webview.WebViewOptions{
-		DataPath: filepath.Join(profile, "CoastalChaos", "WebView2"), AutoFocus: true,
-		WindowOptions: webview.WindowOptions{Title: "Coastal Chaos: Sunset Shores", Width: 1280, Height: 720, Center: true},
-	})
-	if view == nil {
-		return fmt.Errorf("não foi possível iniciar o jogo. Instale o Microsoft Edge WebView2 Runtime ou execute com --browser")
-	}
-	defer view.Destroy()
-	window := uintptr(view.Window())
-	const styleIndex = ^uintptr(15)
-	type rect struct{ left, top, right, bottom int32 }
-	type monitorInfo struct {
-		size         uint32
-		bounds, work rect
-		flags        uint32
-	}
-	monitor, _, _ := user32.NewProc("MonitorFromWindow").Call(window, 2)
-	info := monitorInfo{size: uint32(unsafe.Sizeof(monitorInfo{}))}
-	ok, _, _ := user32.NewProc("GetMonitorInfoW").Call(monitor, uintptr(unsafe.Pointer(&info)))
-	if ok != 0 {
-		user32.NewProc("SetWindowLongPtrW").Call(window, styleIndex, 0x96000000)
-		r := info.bounds
-		user32.NewProc("SetWindowPos").Call(window, 0, uintptr(r.left), uintptr(r.top), uintptr(r.right-r.left), uintptr(r.bottom-r.top), 0x64)
-	} else {
-		user32.NewProc("ShowWindow").Call(window, 3)
-	}
-	view.Navigate(gameURL)
-	view.Run()
+	message("O jogo está no navegador. Feche esta janela quando terminar de jogar.")
 	return nil
 }
 
+func unpack(file *zip.File, root string) error {
+	name, err := filepath.Localize(file.Name)
+	if err != nil || !filepath.IsLocal(name) {
+		return fmt.Errorf("caminho inválido no pacote: %s", file.Name)
+	}
+	dest := filepath.Join(root, name)
+	if err := os.MkdirAll(filepath.Dir(dest), 0700); err != nil {
+		return err
+	}
+	src, err := file.Open()
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+	dst, err := os.Create(dest)
+	if err != nil {
+		return err
+	}
+	_, copyErr := io.Copy(dst, src)
+	closeErr := dst.Close()
+	if copyErr != nil {
+		return copyErr
+	}
+	return closeErr
+}
+
+func launchDesktop() error {
+	bundle, err := zip.NewReader(bytes.NewReader(desktopZip), int64(len(desktopZip)))
+	if err != nil {
+		return err
+	}
+	dir, err := os.MkdirTemp("", "CoastalChaos-*")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(dir)
+	for _, file := range bundle.File {
+		if !file.FileInfo().IsDir() {
+			if err := unpack(file, dir); err != nil {
+				return err
+			}
+		}
+	}
+	cmd := exec.Command(filepath.Join(dir, "electron.exe"))
+	cmd.Dir = dir
+	return cmd.Run()
+}
+
 func main() {
-	runtime.LockOSThread()
 	if err := run(); err != nil {
 		message(err.Error())
 	}

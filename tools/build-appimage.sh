@@ -18,7 +18,7 @@ echo "36b44cd0c3d355ee74557bea2353e4539f96e1a09733a52a052bd093134a6142  $zip" | 
 unzip -q "$zip" -d "$engine"
 find "$engine/locales" -name '*.pak' ! -name 'pt-BR.pak' ! -name 'en-US.pak' -delete
 cp -R appicons css js lib radios tvcat index.html locale_en_catalog.json peds.json version.txt manifest.webmanifest pwa.js LICENSE "$game/"
-cp tools/linux-launcher/{main.cjs,package.json} "$engine/resources/app/"
+cp tools/desktop/{main.cjs,preload.cjs,package.json} "$engine/resources/app/"
 install -m755 tools/linux-launcher/AppRun "$dir/AppRun"
 cp tools/linux-launcher/coastal-chaos.desktop "$dir/"
 cp appicons/icon-512.png "$dir/coastal-chaos.png"

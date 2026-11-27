@@ -88,7 +88,13 @@ PY
  --out "$work/$stem-android-debug.apk" "$work/android/aligned.apk"
 "$sdk/apksigner" verify --print-certs "$work/$stem-android-debug.apk"
 "$sdk/zipalign" -c 4 "$work/$stem-android-debug.apk"
-cp tools/windows-launcher/{main.go,go.mod,go.sum} "$work/windows/"
+win_engine=${ELECTRON_WINDOWS_ZIP:-$work/electron-windows.zip}
+if [[ ! -f "$win_engine" ]]; then
+ curl -fLsS --retry 2 https://github.com/electron/electron/releases/download/v45.5.0/electron-v45.5.0-win32-x64.zip -o "$win_engine"
+fi
+echo "20155c8b8aa5b1f575f3757bdf21490e0bac2f19a65a26ce9ba99bcf9f2c69bd  $win_engine" | sha256sum -c -
+python3 tools/windows-launcher/package.py "$win_engine" "$work/windows"
+cp tools/windows-launcher/{main.go,go.mod} "$work/windows/"
 (cd "$work/windows" && GOOS=windows GOARCH=amd64 CGO_ENABLED=0 "$go_bin" build \
  -trimpath -ldflags='-s -w -H windowsgui' -o "$work/$stem-windows-x64.exe" .)
 mv "$work/windows/game.zip" "$work/$stem.zip"
@@ -103,7 +109,7 @@ for file, prefix in [(bundle, 'v77/'), (root / (stem + '-android-debug.apk'), 'a
         assert z.testzip() is None, file
         assert z.read(prefix + 'version.txt').decode().strip() == tag, file
 exe = (root / (stem + '-windows-x64.exe')).read_bytes()
-assert exe[:2] == b'MZ' and bundle.read_bytes() in exe
+assert exe[:2] == b'MZ' and (root / 'windows/desktop.zip').read_bytes() in exe
 PY
 mv "$work/$stem.zip" "$work/$stem-android-debug.apk" "$work/$stem-windows-x64.exe" "$out/"
 printf 'Pacotes conferidos em %s\n' "$out"

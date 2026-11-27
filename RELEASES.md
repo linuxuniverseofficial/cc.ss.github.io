@@ -29,7 +29,7 @@ bash tools/build-release.sh ../entregas
 O script gera o ZIP web com a pasta `v77/`, o APK de teste e o EXE portátil Windows x64. Ele valida a integridade das versões e a assinatura do APK.
 
 - **Android.** O script reutiliza a atividade nativa comprovada do APK r67, fixada por SHA-256, recompila manifesto e ícone e inclui os arquivos da revisão atual. Para alterar a própria atividade nativa, será preciso preparar um novo launcher e atualizar a referência do template. A chave original da série r65–r67 deve ser recuperada de um backup privado para manter atualizações em cima desses APKs. Se estiver indisponível, use uma nova chave para instalações novas e informe que ela não atualiza as instalações assinadas com a anterior. Guarde a nova chave em local privado.
-- **Windows.** O fonte está em `tools/windows-launcher/`. O EXE abre em tela cheia com WebView2 e serve a build embutida apenas pelo loopback. Use `--browser` para abrir no navegador padrão e F11 no Edge ou Chrome. Teste num Windows x64 com WebView2 Runtime. O EXE de teste sai sem assinatura digital.
+- **Windows.** O EXE portátil inclui Electron e Chromium e abre em tela cheia. Na inicialização, extrai o runtime no diretório temporário do usuário e o remove ao sair. Os saves do Electron ficam no perfil do usuário. O build verifica o SHA-256 da distribuição oficial. Para reutilizar um download local, defina `ELECTRON_WINDOWS_ZIP`. A opção explícita `--browser` abre o navegador padrão. O EXE é distribuído sem assinatura digital. Quem migrar do launcher WebView2 da r68 deve exportar o save dentro do jogo e carregá-lo na r69.
 - **ZIP.** O pacote usa os arquivos rastreados no Git na pasta de trabalho. `online/data/`, chaves e arquivos locais fora do Git ficam fora.
 
 ## 3. Publicar no GitHub

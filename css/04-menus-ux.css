@@ -306,13 +306,13 @@ body.cutscene-paused #menu.in-game #monBtn{grid-column:1/-1!important}
 
 /* Menu inicial em paisagem nos dispositivos de toque. */
 @media (pointer: coarse) and (orientation: landscape) {
-  #menu:not(.in-game) {
+  html:not(.desktop-launcher) #menu:not(.in-game) {
     background: #100e1c;
     padding: 0;
     place-items: stretch;
     grid-template-columns: minmax(0, 1fr);
   }
-  #menu:not(.in-game) > .card {
+  html:not(.desktop-launcher) #menu:not(.in-game) > .card {
     box-sizing: border-box;
     width: 100%;
     max-width: none;
@@ -342,6 +342,6 @@ body.cutscene-paused #menu.in-game #monBtn{grid-column:1/-1!important}
 #menu:not(.in-game) .mfoot #exitGame:is(:hover, :focus-visible) { background: #ad3840; }
 
 @media (pointer: coarse) and (orientation: landscape) and (max-width: 700px) {
-  #menu:not(.in-game) > .card { column-gap: 12px; grid-template-columns: 1fr 1fr; }
-  #menu:not(.in-game) .seedrow { flex-wrap: wrap; }
+  html:not(.desktop-launcher) #menu:not(.in-game) > .card { column-gap: 12px; grid-template-columns: 1fr 1fr; }
+  html:not(.desktop-launcher) #menu:not(.in-game) .seedrow { flex-wrap: wrap; }
 }

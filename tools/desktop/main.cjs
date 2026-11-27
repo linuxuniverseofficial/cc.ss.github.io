@@ -24,7 +24,7 @@ app.whenReady().then(async () => {
     fullscreen: true,
     backgroundColor: '#100e1c',
     icon: path.join(root, 'appicons/icon-512.png'),
-    webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false }
+    webPreferences: { preload: path.join(__dirname, 'preload.cjs'), sandbox: true, contextIsolation: true, nodeIntegration: false }
   });
   window.removeMenu();
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
