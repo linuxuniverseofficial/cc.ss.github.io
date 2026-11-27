@@ -397,6 +397,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
   for(let k=0,t=0;k<nT&&t<nT*10;t++){const x=rr(x0+2.4,x1-2.4),z=rr(z0+2.4,z1-2.4),o=out(x,z);if(R()>.4+.6*o)continue;
    if(clusters.some(c=>Math.hypot(c[0]-x,c[1]-z)<c[2]+1.6)||pl.some(q=>(q[0]-x)**2+(q[1]-z)**2<30))continue;
    tree(x,z,.22,rr(.78,1.15),false,true,true);pl.push([x,z]);k++}};
+ let BLD_LAST=null; /* v4 r61: último prédio montado (cor da parede), para o letreiro do pátio */
  const coastPatio=(x0,z0,x1,z1,f,hotel,seed,bh)=>{
   const ns=f==='n'||f==='s',nx=f==='w'?-1:f==='e'?1:0,nz=f==='n'?-1:f==='s'?1:0,cx=(x0+x1)/2,cz=(z0+z1)/2,fx=ns?cx:f==='w'?x0:x1,fz=ns?(f==='n'?z0:z1):cz,ux=ns?1:0,uz=ns?0:1,rr2=mulberry32(seed),width=ns?x1-x0:z1-z0;
   if(width<8)return;ch.patio=ch.patio||[];const metal=COL('#ddd8cd'),cloth=COL(rr2()<.5?'#2c9ca4':'#e8bc66'),wood=COL('#735037');
@@ -414,6 +415,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
   /* v4 r19: estilo do letreiro (gerador próprio pela posição; o sorteio da cidade não muda). 0 clássico, 1 cursivo de neon, 2 marquise com lâmpadas, 3 ícone + texto, 4 bandeira em pé */
   const uA=fs+width*.2,uB=fs+width*.8,idx=hotel?seed%8:16+seed%8,scI=hotel?seed%8:8+seed%8,SS=worldSignStyle(cx,cz,0x51a,night?[10,25,20,20,25]:[30,25,20,15,10]),sr=SS.r,NCs=st.neon||['#ff3a6a','#2ad6ff','#ffd23a','#7aff5a','#ff8a2a'];
   let sty=SS.k;if(sty===4&&!(bh>=7.4))sty=1;const sc1=COL(NCs[Math.floor(sr()*NCs.length)]),sc2=COL(NCs[Math.floor(sr()*NCs.length)]);
+  {const B=BLD_LAST;if(sty!==4&&B&&Math.abs(B.x0-x0)<.01&&Math.abs(B.z0-z0)<.01)fbox(x0,z0,x1,z1,f,uA-.45,uB+.45,3.0,5.1,0,.035,det,B.wc)} /* v4 r61: parede lisa atrás do letreiro */
   if(sty===0)worldSignQuad(signs,f,x0,z0,x1,z1,uA,uB,3.45,4.65,.065,idx,false);
   else if(sty===1)wsScript(f,x0,z0,x1,z1,(uA+uB)/2,4.05,Math.min(uB-uA,6.8),.07,scI);
   else if(sty===2)wsMarquee(f,x0,z0,x1,z1,uA,uB,3.3,4.8,idx,sc1,sr);
@@ -481,7 +483,8 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
   }else if(tankRoll<.18&&(!Number.isFinite(airCap)||th+4<=airCap)){const ax=(tx0+tx1)/2,az=(tz0+tz1)/2;det.geo(GEO.cyl,mtx(ax,th+2.2,az,1.4,2.4,1.4),COL(night?'#2a2440':'#7a6a5a'));det.box(ax-.06,th,az-.06,ax+.06,th+4,az+.06,cDet)}
   {const ar=mulberry32(((Math.round(x0*13)*73856093)^(Math.round(z0*13)*19349663)^(S.seed*31+7))>>>0),arr=(a,b)=>a+ar()*(b-a);
   const ext=[];if(curI){if(z0<curI[1]+2.6)ext.push('n');if(z1>curI[3]-2.6)ext.push('s');if(x0<curI[0]+2.6)ext.push('w');if(x1>curI[2]-2.6)ext.push('e')} /* v4 r56: 1,5 → 2,6 m (os prédios ficam a 1,9 m da borda do quarteirão: 80% ficavam sem fachada externa e sem frisos/varandas/ar) */else if(opts.face)ext.push(opts.face);if(opts.nrf&&!ext.includes(opts.nrf))ext.push(opts.nrf); /* v78 Neon Road: fachada/porta para a rua nova */
-  const FL=f=>(f==='n'||f==='s')?[x0,x1-x0]:[z0,z1-z0];
+  const FL=f=>(f==='n'||f==='s')?[x0,x1-x0]:[z0,z1-z0];BLD_LAST={x0,z0,x1,z1,wc};
+  if(opts.patio&&opts.face){const[fs0,fl0]=FL(opts.face);rsvAdd(opts.face,fs0+fl0*.2-.3,fs0+fl0*.8+.3,3,5.1);for(const t of[.3,.7])rsvAdd(opts.face,fs0+fl0*t-.5,fs0+fl0*t+.5,3,7.4)} /* v4 r61: faixa do letreiro do pátio (coastPatio) reservada antes das varandas e do ar */
   ar();const abandoned=fp.abandoned,nf=fp.floors;let doorInfo=null;
   /* v78 · outdoor no telhado: ~1 em 4 prédios com fachada pra rua; armação no lote sem sombra, face no atlas do chunk */
   {const br=mulberry32(((Math.round(x0*7)*2654435761)^(Math.round(z0*7)*40503)^(S.seed*17+3))>>>0),f=opts.face||ext[0];
