@@ -151,7 +151,7 @@ function polCap(){const l=POL.level||1;return l>=3?3:l>=2?2:1} // v78: nível 3 
 function wantedUp(lv){if(!POL.wanted)return;if(lv>(POL.level||1)){POL.level=Math.min(3,lv);POL.lvT=0;POL.boomW=0;toast('<span style="color:#ffd200">'+'★'.repeat(POL.level)+'</span> NÍVEL '+POL.level+'<br><small style="font-size:11px;color:#fff">'+(POL.level===2?'mais uma viatura na perseguição':'helicóptero da polícia no ar · ele atira!')+'</small>');const pc=PL.car||PL;const ps=vehicles.filter(c=>policeTrafficCar(c)&&!c.chase&&!c.blitz&&c!==PL.car).sort((a,b)=>Math.hypot(a.x-pc.x,a.z-pc.z)-Math.hypot(b.x-pc.x,b.z-pc.z));for(const c of ps.slice(0,polCap()-vehicles.filter(c=>c.chase&&c.alive&&!c.target&&!c.loan).length))if(Math.hypot(c.x-pc.x,c.z-pc.z)<200)startChase(c)}}
 function polTgt(){return PL.inside==='mall'&&MALL.out?MALL.out:(PL.car||PL)}
 function startChase(c){if(c.mode==='rail')toPhys(c);c.chase=true;if(c.police||c.polBoat){c.lightsOff=false;c.sirenOn=true;c.stationParked=false}c.ai=null;c.sleep=false;c.hand=false;c.path=null;c.pathT=0;c.stuckT=0;c.revT=0}
-function registerKill(p,byPlayer){if(byPlayer&&p&&p.gangT!==undefined&&!p.raid){const t=GANG.T.find(t=>t.g===p.gangT&&t.peds.includes(p));if(t){t.byPl++;t.hot=true}}if(!byPlayer||(p&&(p.demo||p.gang||p.tommy!==undefined||p.scnBad)))return;
+function registerKill(p,byPlayer){if(byPlayer&&p&&p.gangT!==undefined&&!p.raid){const t=GANG.T.find(t=>t.g===p.gangT&&t.peds.includes(p));if(t){t.byPl++}}if(!byPlayer||(p&&(p.demo||p.gang||p.tommy!==undefined||p.scnBad)))return;
  if(p.x9){x9Silenced();return}
  if(p.cop){if(!POL.wanted)startWanted(true)}
  else if(PL.inside&&PL.inside!=='jail'){if(!POL.wanted){startWanted(true);toast('<span style="color:#ff4a4a">ASSASSINATO EM LOCAL FECHADO</span>')}}

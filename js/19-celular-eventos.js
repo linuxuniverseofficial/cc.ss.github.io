@@ -943,14 +943,60 @@ const GANG={day:-1,T:[],raid:null,raidT:120};
 const GANG_DEF=[{k:'Y',nm:'AMARELA',col:'#f2d21a',rgb:'242,210,26',pal:{shirt:'#f2d21a',stripe:'#1b1b1b',cap:'#f2d21a',capDark:'#b89a10'}},{k:'G',nm:'VERDE',col:'#2fcf4a',rgb:'47,207,74',pal:{shirt:'#2fcf4a',stripe:'#0f3a18',cap:'#2fcf4a',capDark:'#1a8a30'}}];
 const GANG_WPN=['pistol','smg','bat','pistol','smg','fist'];
 function gangOK(){try{return played&&S.style==='modern'&&!city.haze&&!ONLINE.on&&!profInMission()&&!PROLOGUE.cut&&!TIMEJUMP.busy&&!INVERT.switching&&!HAZE.switching}catch(e){return false}}
-function gangPick(day){const out=[];const sites=(city.catSpots||[]).filter(a=>a&&a.r&&!a.residential&&Math.max(a.r[2]-a.r[0],a.r[3]-a.r[1])>=8);if(!sites.length)return out;
+function gangPick(day){const out=[];const sites=(city.catSpots||[]).filter(a=>a&&a.r&&!a.residential&&Math.min(a.r[2]-a.r[0],a.r[3]-a.r[1])>.72&&Math.max(a.r[2]-a.r[0],a.r[3]-a.r[1])>=8);if(!sites.length)return out;
  const R0=mulberry32(((S.seed^0x6a4e7f13)+day*7919)>>>0),avoid=[city.safe,city.hosp,city.polDoor,city.casino&&city.casino.clubDoor,city.bank].filter(Boolean);
  for(let g=0;g<2;g++){for(let k=0;k<40;k++){const a=sites[Math.floor(R0()*sites.length)],x=(a.r[0]+a.r[2])/2,z=(a.r[1]+a.r[3])/2;if(isRural(x,z)||inWater(x,z))continue;
    if(brInBlock(x,z,20)||avoid.some(o=>Math.hypot((o.x??0)-x,(o.z??0)-z)<80))continue;if(out.some(o=>Math.hypot(o.x-x,o.z-z)<240))continue;
-   const kx=Math.floor(x/P),kz=Math.floor(z/P);out.push({g,x,z,kx,kz,left:6,byPl:0,clear:false,peds:[],hot:false});break}}return out}
+   const kx=Math.floor(x/P),kz=Math.floor(z/P);out.push({g,x,z,kx,kz,alley:a.r,left:6,byPl:0,clear:false,peds:[],hot:false});break}}return out}
 function gangDespawn(t){for(const q of t.peds)if(peds.includes(q))removePed(q);t.peds=[];t.hot=false}
-function gangSpawn(t){const D0=GANG_DEF[t.g];for(let k=0;k<t.left;k++){const a=k/t.left*6.283,px=t.x+Math.cos(a)*2.2,pz=t.z+Math.sin(a)*2.2,o={x:px,z:pz};circleVsWorld(o,.35);
-  const q=spawnPed(null,{x:o.x,z:o.z,vx:0,vz:0,pal:{...GANG_PAL,glasses:null,...D0.pal}});if(!q)continue;q.state='clerk';q.fixed=true;q.at={x:o.x,z:o.z};q.gang=true;q.gangT=t.g;q.hp=4;q.wpn=GANG_WPN[k%6];q.shootT=1+Math.random();q.hitT=0;q.shootAcc=q.wpn==='smg'?.18:.22;q.mx=t.x-o.x;q.mz=t.z-o.z;t.peds.push(q)}}
+// Interseção contínua com a grade do mundo: paredes finas também bloqueiam.
+function gangObstacle(from,to,radius=0){
+ const dx=to.x-from.x,dz=to.z-from.z,dy=(to.y??0)-(from.y??0);
+ let first=Infinity;
+ for(const b of query((from.x+to.x)/2,(from.z+to.z)/2,Math.max(Math.abs(dx),Math.abs(dz))/2+radius)){
+  if(b.dead||(b.lhBase&&LH.up)||(!radius&&(b.kind==='pole'||b.kind==='tree')))continue;
+  if(Math.max(from.x,to.x)<b.x0-radius||Math.min(from.x,to.x)>b.x1+radius||
+     Math.max(from.z,to.z)<b.z0-radius||Math.min(from.z,to.z)>b.z1+radius)continue;
+  const axes=[[from.x,dx,b.x0-radius,b.x1+radius],[from.z,dz,b.z0-radius,b.z1+radius]];
+  if(!radius){const top=b.kind==='bld'?(b.top??roofTop(b)):(b.bin?.height??b.low??2.4);axes.push([from.y,dy,-.5,top+.12])}
+  let enter=0,exit=1;
+  for(const [start,delta,lo,hi] of axes){
+   if(!delta){if(start<lo||start>hi){exit=-1;break}continue}
+   const a=(lo-start)/delta,c=(hi-start)/delta;
+   enter=Math.max(enter,Math.min(a,c));exit=Math.min(exit,Math.max(a,c));
+   if(enter>exit)break;
+  }
+  if(enter<=exit)first=Math.min(first,enter);
+ }
+ return first;
+}
+function gangEye(q,height=1.3){return{x:q.x,y:(q.gy??groundY(q.x,q.z))+(q.airY??q.jy??0)+height,z:q.z}}
+function gangSees(q,target){return gangObstacle(gangEye(q),gangEye(target,1.2))===Infinity}
+function gangNearAlley(r,f){
+ return Math.hypot(f.x-clamp(f.x,r[0],r[2]),f.z-clamp(f.z,r[1],r[3]))<=6;
+}
+function gangMove(q,r,dx,dz,step){
+ const d=Math.hypot(dx,dz);if(!d)return;
+ const x=q.at.x,z=q.at.z;
+ // Se a diagonal estiver bloqueada, tenta avançar ao longo da parede.
+ for(const [ux,uz] of [[dx/d,dz/d],[dx/d,0],[0,dz/d]]){
+  const end={x:clamp(x+ux*step,r[0]+.36,r[2]-.36),z:clamp(z+uz*step,r[1]+.36,r[3]-.36)};
+  if(Math.hypot(end.x-x,end.z-z)<1e-6||gangObstacle(q.at,end,.35)!==Infinity)continue;
+  q.at.x=end.x;q.at.z=end.z;return;
+ }
+}
+function gangSpawnPoint(r,fraction,side,population){
+ const along=r[2]-r[0]<r[3]-r[1];
+ for(const off of [0,.08,-.08,.16,-.16,.24,-.24]){
+  const u=clamp(fraction+off,.04,.96),v=clamp(.5+side,.1,.9);
+  const o={x:r[0]+.36+(r[2]-r[0]-.72)*(along?v:u),z:r[1]+.36+(r[3]-r[1]-.72)*(along?u:v)};
+  if(gangObstacle(o,o,.35)===Infinity&&population.every(q=>Math.hypot(q.x-o.x,q.z-o.z)>.7))return o;
+ }
+ return null;
+}
+function gangSpawn(t){const D0=GANG_DEF[t.g];for(let k=0;k<t.left;k++){
+  const o=gangSpawnPoint(t.alley,(k+.5)/t.left,k%2?.2:-.2,t.peds);if(!o)continue;
+  const q=spawnPed(null,{x:o.x,z:o.z,vx:0,vz:0,pal:{...GANG_PAL,glasses:null,...D0.pal}});if(!q)continue;q.state='clerk';q.fixed=true;q.at={x:o.x,z:o.z};q.gy=groundY(o.x,o.z);q.gang=true;q.gangT=t.g;q.hp=4;q.wpn=GANG_WPN[k%6];q.shootT=1+Math.random();q.hitT=0;q.shootAcc=q.wpn==='smg'?.18:.22;q.mx=t.x-o.x;q.mz=t.z-o.z;t.peds.push(q)}}
 function gangAlive(t){return t.peds.filter(q=>peds.includes(q)&&q.state!=='dead'&&q.hp>0)}
 function gangReset(){for(const t of GANG.T)gangDespawn(t);gangRaidEnd();GANG.T=[];GANG.day=-1}
 function gangRaidEnd(){const r=GANG.raid;if(!r)return;for(const q of r.peds)if(peds.includes(q)&&q.state!=='dead'){if(q.state!=='dead')removePed(q)}GANG.raid=null}
@@ -961,20 +1007,28 @@ function gangTick(dt){
  for(const t of GANG.T){if(t.clear)continue;const d=Math.hypot(f.x-t.x,f.z-t.z);
   if(!t.peds.length){if(d<110&&!PL.inside)gangSpawn(t);continue}
   if(d>230||PL.inside){t.left=gangAlive(t).length;gangDespawn(t);continue}
-  const alive=gangAlive(t);if(!t.hot&&(alive.length<t.peds.length&&alive.length<t.left||alive.some(q=>q.state!=='clerk')))t.hot=true;t.left=alive.length;
+  const alive=gangAlive(t);t.left=alive.length;
   if(!alive.length){const D0=GANG_DEF[t.g];t.clear=true;gangDespawn(t);if(t.byPl>0)money(500,'<span style="color:'+D0.col+'">'+translatePlain('BECO APAZIGUADO')+'</span> · +$500');else toast(translatePlain('A OUTRA GANGUE LIMPOU O BECO'));continue}
-  if(!t.hot&&d<30&&!PL.dead){t.hot=true;const q=alive[0];say(q,['Tá perdido, playboy?','Esse beco é nosso!','Pega ele!'],1.8)}
-  if(t.hot)empGangTick({gang:alive},dt);else for(const q of alive){q.vx=q.vz=0}}
+  const targets=!PL.dead&&gangNearAlley(t.alley,f)?alive.filter(q=>!hostileHold(q)&&Math.hypot(q.x-f.x,q.z-f.z)<30&&gangSees(q,f)):[];
+  if(targets.length&&!t.hot)say(targets[0],['Tá perdido, playboy?','Esse beco é nosso!','Pega ele!'],1.8);
+  t.hot=targets.length>0;
+  if(t.hot)empGangTick({gang:targets,alley:t.alley},dt)}
  /* guerra: 3 de uma gangue vão atacar o beco da outra (você por perto, os dois becos ativos) */
  const R=GANG.raid;if(!R){GANG.raidT-=dt;if(GANG.raidT<=0){GANG.raidT=150+Math.random()*120;const A=GANG.T.filter(t=>!t.clear);if(A.length===2){const def=A.find(t=>t.peds.length&&!t.hot);if(def){const att=A.find(t=>t!==def),D0=GANG_DEF[att.g];
-   const ang=Math.random()*6.283,sx=def.x+Math.cos(ang)*55,sz=def.z+Math.sin(ang)*55,r={att,def,peds:[],t:0,fx:def.x,fz:def.z,shot:1};
-   for(let k=0;k<3;k++){const o={x:sx+(k-1)*1.6,z:sz};circleVsWorld(o,.35);const q=spawnPed(null,{x:o.x,z:o.z,vx:0,vz:0,pal:{...GANG_PAL,glasses:null,...D0.pal}});if(!q)continue;q.gang=true;q.gangT=att.g;q.raid=true;q.hp=4;q.fixed=true;r.peds.push(q)}
+   const r={att,def,peds:[],t:0,shot:1},end=Math.random()<.5?.07:.93;
+   for(let k=0;k<3;k++){const o=gangSpawnPoint(def.alley,end,(k-1)*.27,[...def.peds,...r.peds]);if(!o)continue;
+    const q=spawnPed(null,{x:o.x,z:o.z,vx:0,vz:0,pal:{...GANG_PAL,glasses:null,...D0.pal}});if(!q)continue;
+    q.gang=true;q.gangT=att.g;q.raid=true;q.hp=4;q.fixed=true;q.state='clerk';q.at=o;q.gy=groundY(o.x,o.z);r.peds.push(q)}
    if(r.peds.length){GANG.raid=r;say(r.peds[0],['Bora tomar o beco deles!','Hoje o beco é nosso!'],2)}}}}return}
  R.t+=dt;const ra=R.peds.filter(q=>peds.includes(q)&&q.state!=='dead'&&q.hp>0),da=gangAlive(R.def);
  if(!ra.length||!da.length||R.t>60||R.def.clear||!R.def.peds.length){gangRaidEnd();return}
- for(const q of ra){const tg=da[0],dd=Math.hypot(tg.x-q.x,tg.z-q.z);if(dd>11)pedevRun(q,tg.x,tg.z,3.6);else{q.vx=q.vz=0;q.state='flee';q.timer=2;q.mx=tg.x-q.x;q.mz=tg.z-q.z}}
- if(!R.def.hot)for(const q of da){const n=ra[0];q.mx=n.x-q.x;q.mz=n.z-q.z}
- R.shot-=dt;if(R.shot<=0&&Math.hypot(ra[0].x-da[0].x,ra[0].z-da[0].z)<16){R.shot=.5+Math.random()*.4;const fromA=Math.random()<.5,sh=fromA?ra[Math.floor(Math.random()*ra.length)]:da[Math.floor(Math.random()*da.length)],tl=fromA?da:ra,tg=tl[Math.floor(Math.random()*tl.length)];
+ for(const q of ra){if(hostileHold(q))continue;const tg=da[0],dx=tg.x-q.x,dz=tg.z-q.z,dd=Math.hypot(dx,dz);
+  q.mx=dx;q.mz=dz;if(dd>11)gangMove(q,R.def.alley,dx,dz,Math.min(dd-11,3.6*dt))}
+ R.shot-=dt;if(R.shot<=0){
+  R.shot=.5+Math.random()*.4;
+  const fromA=Math.random()<.5,shooters=fromA?ra:da,tl=fromA?da:ra,sh=shooters[Math.floor(Math.random()*shooters.length)];
+  const tg=tl.find(q=>Math.hypot(q.x-sh.x,q.z-sh.z)<16&&gangObstacle({x:sh.x,y:sh.gy+1.2,z:sh.z},{x:q.x,y:q.gy+1,z:q.z})===Infinity);
+  if(sh.state==='down'||!tg)return;
   try{pedevGun(sh,tg,PL.car||PL)}catch(e){}if(Math.random()<.3){tg.hp-=4;if(tg.hp<=0){try{bloodHit(tg.x,1.1,tg.z,new THREE.Vector3(tg.x-sh.x,0,tg.z-sh.z).normalize())}catch(e){}killPed(tg)}}}}
 function gangMap(g,sc){if(!gangOK())return;for(const t of GANG.T){if(t.clear)continue;const D0=GANG_DEF[t.g],x0=t.kx*P+RW/2+MOFF,z0=t.kz*P+RW/2+MOFF,w=P-RW;
  g.save();g.fillStyle='rgba('+D0.rgb+',.28)';g.fillRect(x0,z0,w,w);g.strokeStyle='rgba('+D0.rgb+',.85)';g.lineWidth=Math.max(2/sc,1.5);g.strokeRect(x0,z0,w,w);g.restore()}}

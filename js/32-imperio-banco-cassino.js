@@ -51,9 +51,13 @@ function empGangTick(e,dt){for(const q of e.gang){if(!peds.includes(q)||hostileH
   if(q.doorOutZ!==undefined){q.doorWait-=dt;if(q.doorWait>0)continue;
    q.at.z=Math.min(q.doorOutZ,q.at.z+4.6*dt);q.x=q.at.x;q.z=q.at.z;
    if(q.at.z<q.doorOutZ-.04)continue;q.doorOutZ=undefined}
-  const dx=PL.x-q.x,dz=PL.z-q.z,d=Math.hypot(dx,dz)||1;q.mx=dx;q.mz=dz;if(PL.dead||PL.car&&q.wpn!=='smg'&&q.wpn!=='pistol')continue;
-  if(q.wpn==='bat'||q.wpn==='fist'){if(d>1.2){const v=Math.min(d-1.1,3.6*dt);q.at.x+=dx/d*v;q.at.z+=dz/d*v}else{q.hitT-=dt;if(q.hitT<=0){q.hitT=q.wpn==='bat'?1.1:.8;if(!CHEAT.hp&&!PL.car){PL.hp-=armorHit(q.wpn==='bat'?11:6);punchSnd&&punchSnd();rumble(.3,.6,120);if(PL.hp<=0){killPlayer('ESPANCADO PELA GANGUE');return}}}}}
-  else{const want=q.wpn==='smg'?9:12;if(d>want+2){const v=Math.min(d-want,3*dt);q.at.x+=dx/d*v;q.at.z+=dz/d*v}q.shootT-=dt;if(q.shootT<=0&&d<40){if(typeof c3Fire==='function')c3Fire(q,PL.x,PL.z);q.shootT=q.wpn==='smg'?.45+Math.random()*.3:1.1+Math.random()*.7;const hit=Math.random()<(q.shootAcc??(q.wpn==='smg'?.22:.28)),o=new THREE.Vector3(q.x,1.3,q.z),e2=new THREE.Vector3(PL.x+(hit?0:(Math.random()-.5)*3),1.2,PL.z+(hit?0:(Math.random()-.5)*3));tracer(o,e2,0xffb070);gunSound(.7,.9);
+  const target=e.alley?(PL.car||PL):PL,dx=target.x-q.x,dz=target.z-q.z,d=Math.hypot(dx,dz)||1;q.mx=dx;q.mz=dz;if(PL.dead||PL.car&&q.wpn!=='smg'&&q.wpn!=='pistol')continue;
+  if(q.wpn==='bat'||q.wpn==='fist'){if(d>1.2){const v=Math.min(d-1.1,3.6*dt);if(e.alley)gangMove(q,e.alley,dx,dz,v);else{q.at.x+=dx/d*v;q.at.z+=dz/d*v}}else{q.hitT-=dt;if(q.hitT<=0){q.hitT=q.wpn==='bat'?1.1:.8;if(!CHEAT.hp&&!PL.car){PL.hp-=armorHit(q.wpn==='bat'?11:6);punchSnd&&punchSnd();rumble(.3,.6,120);if(PL.hp<=0){killPlayer('ESPANCADO PELA GANGUE');return}}}}}
+  else{const want=q.wpn==='smg'?9:12;if(d>want+2){const v=Math.min(d-want,3*dt);if(e.alley)gangMove(q,e.alley,dx,dz,v);else{q.at.x+=dx/d*v;q.at.z+=dz/d*v}}q.shootT-=dt;if(q.shootT<=0&&d<40){if(typeof c3Fire==='function')c3Fire(q,target.x,target.z);q.shootT=q.wpn==='smg'?.45+Math.random()*.3:1.1+Math.random()*.7;let hit=Math.random()<(q.shootAcc??(q.wpn==='smg'?.22:.28));
+   const eye=e.alley?gangEye(q):{x:q.x,y:1.3,z:q.z},aim=e.alley?gangEye(target,1.2):{x:PL.x,y:1.2,z:PL.z};
+   const o=new THREE.Vector3(eye.x,eye.y,eye.z),e2=new THREE.Vector3(aim.x+(hit?0:(Math.random()-.5)*3),aim.y,aim.z+(hit?0:(Math.random()-.5)*3));
+   if(e.alley){const wall=gangObstacle(o,e2);if(wall!==Infinity){e2.lerp(o,1-wall);hit=false}}
+   tracer(o,e2,0xffb070);gunSound(.7,.9);
    if(hit){if(PL.car&&PL.car.alive){PL.car.hp-=5;if(PL.car.hp<=0)setOnFire(PL.car)}else if(!CHEAT.hp){PL.hp-=armorHit(q.wpn==='smg'?5:7);rumble(.3,.6,120);if(PL.hp<=0){killPlayer('ABATIDO PELA GANGUE');return}}}}}}}
 function empNear(){if(PL.inside||PL.dead)return null;let b=null,bd=2.2;for(const e of EMP.sites){const d=Math.hypot(PL.x-e.x,PL.z-e.z);if(d<bd){bd=d;b=e}}return b}
 function empHint(){if(PL.car)return '';if(PL.inside==='emp'){const g=empGoodNear();return g?'<kbd>E</kbd><kbd>F</kbd><kbd>→</kbd><span style="color:#ff8a1a">QUEBRAR '+EMP_INFO[EMP.cur.id].good+'</span>':''}const e=empNear();if(!e)return '';const I=EMP_INFO[e.id];
@@ -344,7 +348,7 @@ function bankTick(dt){if(PL.inside==='bank')bankClockTick();const d=bankDoor();i
   for(const q of R0.cops){if(!peds.includes(q))continue;if(q.state==='dead'||q.hp<=0){if(!q.counted){q.counted=true;R0.killed++}continue}if(hostileHold(q))continue;
    const gx=q.goal.x-q.at.x,gz=q.goal.z-q.at.z,gl=Math.hypot(gx,gz);if(gl>.2){q.at.x+=gx/gl*Math.min(gl,3.2*dt);q.at.z+=gz/gl*Math.min(gl,3.2*dt)}
    const dx=PL.x-q.x,dz=PL.z-q.z,dd=Math.hypot(dx,dz)||1;q.mx=dx;q.mz=dz;q.shootT-=dt;
-   if(q.shootT<=0){if(typeof c3Fire==='function')c3Fire(q,PL.x,PL.z);q.shootT=1+Math.random()*.8;const hit=Math.random()<.32,o=new THREE.Vector3(q.x,1.3,q.z),e=new THREE.Vector3(PL.x+(hit?0:(Math.random()-.5)*2.6),hit?1.1:1.4,PL.z+(hit?0:(Math.random()-.5)*2.6));tracer(o,e,0xff9a7a);gunSound(.7,.85);
+   if(q.shootT<=0){if(typeof c3Fire==='function')c3Fire(q,target.x,target.z);q.shootT=1+Math.random()*.8;const hit=Math.random()<.32,o=new THREE.Vector3(q.x,1.3,q.z),e=new THREE.Vector3(PL.x+(hit?0:(Math.random()-.5)*2.6),hit?1.1:1.4,PL.z+(hit?0:(Math.random()-.5)*2.6));tracer(o,e,0xff9a7a);gunSound(.7,.85);
     if(hit&&!CHEAT.hp){PL.hp-=armorHit(7);rumble(.3,.6,120);bloodHit(PL.x,1.1,PL.z,new THREE.Vector3(dx,0,dz).normalize().negate());if(PL.hp<=0){killPlayer('ABATIDO NO BANCO');return}}}}
   if(!R0.done&&R0.killed>=R0.total){R0.done=true;BANK.closedUntil=gameMin()+1440;if(BANK.vault)BANK.vault.rotation.z=1.2;const pay=CHEAT.used?0:1000;if(pay)money(pay,'<span style="color:#5aff6a">COFRE ABERTO · +$1.000</span>');else toast('COFRE ABERTO · SEM PAGAMENTO (CHEAT)');toast('SAIA DO BANCO E DESPISTE A POLÍCIA')}
   sideHud(R0.done?'<span style="color:#5aff6a">DINHEIRO NA MÃO</span> · fuja!':'<span style="color:#ff4a4a">ASSALTO</span> · policiais '+R0.killed+'/'+R0.total)}
