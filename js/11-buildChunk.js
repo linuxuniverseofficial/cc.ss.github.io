@@ -523,8 +523,13 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
    const band=fp.family==='deco'||fp.family==='office'?0:old?(r1<.35?1:r1<.7?2:0):down?(r1<.3?2:r1<.6?3:0):(r1<.25?1:r1<.5?2:r1<.7?3:0);
    const corn=old?(r2<.5?1:r2<.8?2:0):down?(r2<.25?2:0):(r2<.3?1:r2<.55?2:0);
    const acP=BW[2]===2||BW[2]===4?0:(old?.15:down?.035:.085)*(fp.family==='office'?.3:1); /* r57: sem ar-condicionado em faixa de vidro/pele de vidro */
-   const fe=h>9.5&&!EX&&r4<(old?.62:down?.1:.3);const sides=ext.filter(q=>q!==opts.face);
-   return{fr,band,corn,acP,fe,feF:fe?(sides.length?sides[Math.floor(r3*sides.length)]:opts.face):null,met:COL(night?'#2a2830':old&&r3<.5?'#4a3428':'#34312f')}})();
+   /* v4 r60: fachada colada num beco (city.bxAl, até 3 m, sobreposição ≥ 2,5 m) recebe a escada de incêndio com mais chance */
+   let alF=null,alO=2.5;for(const a of city.bxAl||[]){const ox=Math.min(a[2],x1)-Math.max(a[0],x0),oz=Math.min(a[3],z1)-Math.max(a[1],z0);
+    if(ox>alO&&a[3]>z0-3&&a[3]<z0+.6){alF='n';alO=ox}if(ox>alO&&a[1]<z1+3&&a[1]>z1-.6){alF='s';alO=ox}if(oz>alO&&a[2]>x0-3&&a[2]<x0+.6){alF='w';alO=oz}if(oz>alO&&a[0]<x1+3&&a[0]>x1-.6){alF='e';alO=oz}}
+   if(!alF&&city._alQ)for(const l of city._alLines||[]){if(l.along){const oz=Math.min(l.hi,z1)-Math.max(l.lo,z0);if(oz>alO&&Math.abs(l.pos-x0)<3.4){alF='w';alO=oz}if(oz>alO&&Math.abs(l.pos-x1)<3.4){alF='e';alO=oz}}
+    else{const ox=Math.min(l.hi,x1)-Math.max(l.lo,x0);if(ox>alO&&Math.abs(l.pos-z0)<3.4){alF='n';alO=ox}if(ox>alO&&Math.abs(l.pos-z1)<3.4){alF='s';alO=ox}}} /* quarteirão em L: beco ainda não confirmado → fila (city._alQ) */
+   const fe=h>9.5&&!EX&&r4<(alF?(old?.85:down?.3:.6):(old?.31:down?.05:.15));const sides=ext.filter(q=>q!==opts.face);
+   return{fr,band,corn,acP,fe,feF:fe?(alF||(sides.length?sides[Math.floor(r3*sides.length)]:opts.face)):null,alF,met:COL(night?'#2a2830':old&&r3<.5?'#4a3428':'#34312f')}})();
   for(const f of EX?[]:ext){const[fs,flen]=FL(f),bays=facadeBays(fs,flen);
    // A continuous base and a single cornice frame the facade, without random mid-window stripes.
    fbox(x0,z0,x1,z1,f,fs,fs+flen,.25,.56,0,.07,lodNear,trim);
@@ -567,15 +572,18 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
      for(let k=1;k<nf&&n<14;k++)for(let i=0;i<bays.length&&n<14;i++){const q=fr();if(q>=RLV.acP)continue;const b=bays[i],u=b.u+(fr()-.5)*.5;
       if(isFE&&u>feU0-.6)continue;if(fp.family==='residential'&&i===last&&k%2)continue;if(fp.family==='residential'&&f===opts.face&&k<5&&(i===1||i===bays.length-2||i===0||i===last))continue;
       const y=k*3.2+.39;fbox(x0,z0,x1,z1,f,u-.36,u+.36,y,y+.38,.02,.34,lodNear,acC);fbox(x0,z0,x1,z1,f,u-.25,u+.25,y+.09,y+.27,.34,.355,lodNear,trim);n++}}
-    if(isFE&&feU1-feU0>2){const M=RLV.met,a=feU0,b2=feU1,top=Math.min(nf-1,Math.floor((h-1.2)/3.2));
+}
+  }
+  /* v4 r60: escada de incêndio fora do laço das fachadas de rua (a do beco não está em ext) */
+  const feDraw=f=>{const[fs,flen]=FL(f),feU0=fs+flen-3.6,feU1=fs+flen-.4;if(feU1-feU0>2){const M=RLV.met,a=feU0,b2=feU1,top=Math.min(nf-1,Math.floor((h-1.2)/3.2));
      for(let k=1;k<=top;k++){const y=k*3.2;
       fbox(x0,z0,x1,z1,f,a,b2,y-.06,y+.02,.03,1.0,lodNear,M);
       fbox(x0,z0,x1,z1,f,a,b2,y+.9,y+.96,.94,1.0,lodNear,M);
       for(const t of [a,(a+b2)/2,b2-.05])fbox(x0,z0,x1,z1,f,t,t+.05,y+.02,y+.9,.94,1.0,lodNear,M);
       for(const t of [a,b2-.05])fbox(x0,z0,x1,z1,f,t,t+.05,y+.9,y+.96,.03,.94,lodNear,M);
       if(k<top){const L=b2-a-.6,st=L/5;for(let i=0;i<5;i++){const s0=k%2?a+.3+i*st:b2-.3-(i+1)*st;fbox(x0,z0,x1,z1,f,s0,s0+st,y+.64*(i+1)-.05,y+.64*(i+1),.5,.92,lodNear,M)}}}
-     fbox(x0,z0,x1,z1,f,b2-.75,b2-.7,1.3,3.2,.55,.6,lodNear,M);fbox(x0,z0,x1,z1,f,b2-.35,b2-.3,1.3,3.2,.55,.6,lodNear,M);for(let y=1.45;y<3.2;y+=.35)fbox(x0,z0,x1,z1,f,b2-.72,b2-.33,y,y+.04,.55,.6,lodNear,M)}}
-  }
+     fbox(x0,z0,x1,z1,f,b2-.75,b2-.7,1.3,3.2,.55,.6,lodNear,M);fbox(x0,z0,x1,z1,f,b2-.35,b2-.3,1.3,3.2,.55,.6,lodNear,M);for(let y=1.45;y<3.2;y+=.35)fbox(x0,z0,x1,z1,f,b2-.72,b2-.33,y,y+.04,.55,.6,lodNear,M)}};
+  if(RLV.feF){if(city._alQ&&RLV.alF&&!(city.bxAl||[]).some(a=>a[0]<x1+3&&a[2]>x0-3&&a[1]<z1+3&&a[3]>z0-3))city._alQ.push({x0,z0,x1,z1,f:RLV.alF,draw:()=>feDraw(RLV.alF)});else feDraw(RLV.feF)}
   /* v78 · toldos listrados nas lojas do térreo (fachada principal, fora da porta); sorteio próprio, 2 degraus por listra */
   if(!EX&&!abandoned&&!opts.patio&&!opts.safe&&!opts.simple&&!opts.tour&&opts.face&&!opts.linkedL){const tr=mulberry32(((Math.round(x0*5)*73856093)^(Math.round(z0*5)*83492791)^(S.seed*13+11))>>>0);
    if(tr()<(fp.family==='residential'?.3:.55)){const f=opts.face,[fs,flen]=FL(f),bays=facadeBays(fs,flen),PAL=[['#d8202a','#f4f0e6'],['#1e7a46','#f4f0e6'],['#1e5aa8','#f4f0e6'],['#f2a21a','#5a3422'],['#7a2a6a','#f2d6a0'],['#2a9ab0','#f4f0e6'],['#c83a3a','#f2c21a']],nA=Math.min(3,1+Math.floor(tr()*3));
@@ -2296,7 +2304,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
     for(let x=1;x<nx;x++)urbanPending.push({along:true,pos:ix0+x*dx,lo:iz0+8,hi:iz1-8});
     for(let z=1;z<nz;z++)urbanPending.push({along:false,pos:iz0+z*dz,lo:ix0+8,hi:ix1-8});
     city.urbanLBlocks=city.urbanLBlocks||new Set();city.urbanLBlocks.add(ri);
-   }else if(NRb){const h=NRb.tw/2;if(NRb.ax==='x'){split(ix0,iz0,ix1,NRb.c-h,0);split(ix0,NRb.c+h,ix1,iz1,0)}else{split(ix0,iz0,NRb.c-h,iz1,0);split(NRb.c+h,iz0,ix1,iz1,0)}}else split(ix0,iz0,ix1,iz1,0);curI=[ix0,iz0,ix1,iz1];
+   }else if(NRb){const h=NRb.tw/2;if(NRb.ax==='x'){split(ix0,iz0,ix1,NRb.c-h,0);split(ix0,NRb.c+h,ix1,iz1,0)}else{split(ix0,iz0,NRb.c-h,iz1,0);split(NRb.c+h,iz0,ix1,iz1,0)}}else split(ix0,iz0,ix1,iz1,0);curI=[ix0,iz0,ix1,iz1];city._alLines=urbanPending.length?urbanPending:null;city._alQ=urbanPending.length?[]:null; /* v4 r60: escadas de incêndio esperando o beco */
    const faceOfLot=(x0,z0,x1,z1)=>{const edgeTol=urbanPending.length?3.0:1,mx=(x0+x1)/2,mz=(z0+z1)/2,oo=SW+7.4;
     // Esquina de quadra perto da água: tentar TODAS as faces com rua real,
     // não abandonar uma casa só porque a primeira face toca uma via fechada.
@@ -2389,6 +2397,8 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
      const q=spans[k];alley(q[0],q[1],q[2],q[3],{interior:true});
     }
     city.urbanAlleyCount=(city.urbanAlleyCount||0)+Math.min(6,spans.length);
+    /* v4 r60: desenha só as escadas cuja fachada encosta num beco confirmado (sem beco → sem escada) */
+    if(city._alQ){const AL=spans.slice(0,6);for(const q of city._alQ){const ok=AL.some(a=>{const ox=Math.min(a[2],q.x1)-Math.max(a[0],q.x0),oz=Math.min(a[3],q.z1)-Math.max(a[1],q.z0);return q.f==='n'?ox>2.5&&Math.abs(a[3]-q.z0)<3.4:q.f==='s'?ox>2.5&&Math.abs(a[1]-q.z1)<3.4:q.f==='w'?oz>2.5&&Math.abs(a[2]-q.x0)<3.4:oz>2.5&&Math.abs(a[0]-q.x1)<3.4});if(ok)q.draw()}city._alQ=null;city._alLines=null}
    }
   }
   if(info.casino||info.club){parkingGroundAdd(ix0,iz0,ix1,iz1);city.parkingLots.push({ri,tag:'entertainment-yard',x0:ix0,z0:iz0,x1:ix1,z1:iz1,slots:[],access:info.club?null:parkingAccess(ix0,iz0,ix1,iz1)});}

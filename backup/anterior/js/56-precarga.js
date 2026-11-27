@@ -64,6 +64,8 @@ function miscPreload(){if(PRELOAD.misc)return 0;PRELOAD.misc=true;const t0=perfo
  const cols=new Float32Array(geo.attributes.position.count*3).fill(1);geo.setAttribute('color',new THREE.BufferAttribute(cols,3));
  const m1=new THREE.Mesh(geo,lm);m1.position.set(0,-500,0);m1.receiveShadow=false;meshes.push(m1);
  const m2=new THREE.InstancedMesh(geo,li,1);m2.setColorAt(0,new THREE.Color(1,1,1)); /* as folhas usam cor por instância (USE_INSTANCING_COLOR) */m2.position.set(0,-500,0);m2.receiveShadow=false;m2.frustumCulled=false;meshes.push(m2);
+ /* v4 r58: neon do tuning (carNeonMesh), agora também no trânsito: mesmo material, sem instância */
+ {const nm=new THREE.Mesh(new THREE.PlaneGeometry(1,1),preKeep(new THREE.MeshBasicMaterial({map:glowTex,color:0xff2ad4,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,opacity:1})));nm.position.set(0,-500,0);nm.renderOrder=3;meshes.push(nm)}
  for(const m of meshes)m.frustumCulled=false;
  try{preCompileIn(scene,camera,meshes)}catch(e){console.warn('miscPreload',e)}
  PRELOAD.miscObjs=meshes;return PRELOAD.ms.misc=Math.round(performance.now()-t0)}

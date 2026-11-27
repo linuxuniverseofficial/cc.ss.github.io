@@ -130,3 +130,8 @@ function dbPreload(){if(!city.dbs||!city.dbs.length||typeof dbBuild!=='function'
  try{setLoadProgress(98,'PREPARANDO BICHOS, BARRO E ROUPAS…');await nextTimeFrame()}catch(e){}
  try{mudPreload();PRELOAD.ms.mudSamples=mudSamples()}catch(e){console.error(e)}try{miscPreload()}catch(e){console.error(e)}try{stagePreload()}catch(e){console.error(e)}try{dbPreload()}catch(e){console.error(e)}try{c3LightPreload()}catch(e){console.error(e)}try{PRELOAD.ms.jobs=pedJobsDrain(IS_MOBILE?1500:4000)}catch(e){console.error(e)}
  console.log('[pré-carga v4]',JSON.stringify(PRELOAD.ms));return r}}
+/* ---------- poças / asfalto molhado (v4 r60) ----------
+   As 2 malhas do WET (rua e calçada) nascem invisíveis e só compilavam na 1ª chuva (pico no meio do jogo). Depois de cada buildWet
+   (no generateCity) são compiladas numa cena temporária (só elas, mesma neblina). */
+buildWet=(f=>function(){const r=f.apply(this,arguments);try{if(typeof WET!=='undefined'&&WET.mesh){const ms=[WET.mesh,WET.mesh2].filter(Boolean),vis=ms.map(m=>m.visible),tmp=new THREE.Scene();tmp.fog=scene.fog;
+ ms.forEach(m=>{m.visible=true;tmp.add(m)});try{renderer.compile(tmp,camera)}finally{ms.forEach((m,i)=>{m.visible=vis[i];scene.add(m)})}}}catch(e){console.warn('wetPreload',e)}return r})(buildWet);

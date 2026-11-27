@@ -220,8 +220,8 @@ function winReflPatch(mat,night){if(!mat||mat.userData.winRefl)return mat;mat.us
     vec2 wrC=fract(vUv*8.);vec2 wrA=(wrC-wrRect.xy)/(wrRect.zw-wrRect.xy);vec2 wrE=fwidth(wrC)*1.5/(wrRect.zw-wrRect.xy);
     float wrIn=smoothstep(0.,wrE.x,wrA.x)*smoothstep(0.,wrE.x,1.-wrA.x)*smoothstep(0.,wrE.y,wrA.y)*smoothstep(0.,wrE.y,1.-wrA.y);
     if(wrMull>0.)wrIn*=smoothstep(wrMull,wrMull+fwidth(wrC.x)*1.5,abs(wrC.x-.5));
-    vec3 wrId=vec3(floor(vUv*8.),floor(dot(wrN,vWrW)*.37));float wrI=max(wrG,step(.04,wrL)*wrVt)*wrIn*(1.-smoothstep(90.,160.,wrDist))*step(wrHs(wrId+11.3),wrPct);
-    if(wrI>.01){vec3 wrUp=vec3(0.,1.,0.);vec3 wrTg=normalize(cross(wrUp,-wrN));vec3 wrD=vec3(dot(wrV,wrTg),wrV.y,max(dot(wrV,-wrN),.02));wrD.xy*=.38*wrD.z*mix(.3,1.,smoothstep(4.,28.,wrDist)); /* v4 r10: de perto desloca ainda menos */
+    vec3 wrId=vec3(floor(vUv*8.),floor(dot(wrN,vWrW)*.37));float wrI=max(wrG,step(.04,wrL)*wrVt)*wrIn*(1.-smoothstep(90.,160.,wrDist))*step(wrHs(wrId+11.3),wrPct)*smoothstep(.22,.5,dot(-wrV,wrN)); /* v4 r60: limite de ângulo: some a partir de ~60° da frente (zero a ~77°) */
+    if(wrI>.01){vec3 wrUp=vec3(0.,1.,0.);vec3 wrTg=normalize(cross(wrUp,-wrN));vec3 wrD=vec3(dot(wrV,wrTg),wrV.y,max(dot(wrV,-wrN),.02));wrD.xy*=.38*wrD.z*mix(.3,1.,smoothstep(4.,28.,wrDist));wrD.xy=clamp(wrD.xy,-.24*wrD.z,.24*wrD.z); /* v4 r60: inclinação máxima do raio (paredes do cômodo não esticam na diagonal) */ /* v4 r10: de perto desloca ainda menos */
      vec3 wrLamp=totalEmissiveRadiance*step(.04,wrL)*mix(1.,.5,synth);float wrAmb=mix(mix(.55,.025,night)*(.4+.6*sunDim),.1,wrInv); /* v4 r13: no Synthwave a janela acesa (1,25 + bloom forte) estourava em branco; no Invertido não há luz elétrica: TV desligada e só a penumbra vermelha de fora */
      gl_FragColor.rgb=mix(gl_FragColor.rgb,wrRoom(wrA,wrD,wrId,wrLamp,wrAmb),wrI);}
     wrG*=1.-smoothstep(.04,.3,wrL);
