@@ -196,7 +196,7 @@ function skTRange(){const B=BEACH;return[Math.max(B.t0,0)+10,Math.min(B.t1,city.
 function pedSkSpawn(pc){const B=BEACH,o=RW/2,pt=B.s<2?pc.x:pc.z,TR=skTRange();if(TR[1]-TR[0]<30)return null;for(let k=0;k<6;k++){const t=clamp(pt+(Math.random()<.5?-1:1)*(55+Math.random()*95),TR[0]+4,TR[1]-4),u=o+1.8+Math.random()*2.4,q0=B.TU(t,u);
   if(Math.hypot(q0[0]-pc.x,q0[1]-pc.z)<45||!skLaneFree(q0[0],q0[1],null))continue;
   const q=spawnLying(q0[0],q0[1]);q.state='bskate';q.rot=0;q.fixed=true;q.bt=t;q.bu=u;q.bU=u;q.bdir=Math.random()<.5?1:-1;q.spd=3.6+Math.random()*2.2;q.sv=q.spd*.6;q.fin=0;q.sp.material.opacity=0;q.sh.material.opacity=0;
-  q.skLook={deck:SK_DECK[Math.floor(Math.random()*SK_DECK.length)],wheel:SK_WHEEL[Math.floor(Math.random()*SK_WHEEL.length)],print:SK_PRINT[Math.floor(Math.random()*(SK_PRINT.length-1))]};if(q.skLook.print==='EMOJI')q.skLook.emo=[SK_EMO_RND[Math.floor(Math.random()*SK_EMO_RND.length)]];q.skb=skBoard(q.skLook);scene.add(q.skb);q.gy=groundY(q.x,q.z);q.jy=SK_UP;BEACH.skaters.push(q);return q}return null}
+  q.skLook={deck:SK_DECK[Math.floor(Math.random()*SK_DECK.length)],wheel:SK_WHEEL[Math.floor(Math.random()*SK_WHEEL.length)],print:SK_PRINT[Math.floor(Math.random()*(SK_PRINT.length-1))]};if(q.skLook.print==='EMOJI')q.skLook.emo=[SK_EMO_RND[Math.floor(Math.random()*SK_EMO_RND.length)]];q.skb=skBoard(q.skLook);scene.add(q.skb);q.gy=groundY(q.x,q.z);q.jy=skRideHeight();BEACH.skaters.push(q);return q}return null}
 function pedSkTick(p,dt){const B=BEACH,o=RW/2,lo=o+1.5,hi=o+4.4,ah=B.TU(p.bt+p.bdir*1.7,p.bU);
  if(!skLaneFree(ah[0],ah[1],p)){let ok=false;for(const du of [-1,1,-2,2]){const u=clamp(p.bU+du*.9,lo,hi);if(Math.abs(u-p.bU)<.1)continue;const a2=B.TU(p.bt+p.bdir*1.7,u),a3=B.TU(p.bt,u);if(skLaneFree(a2[0],a2[1],p)&&skLaneFree(a3[0],a3[1],p)){p.bU=u;ok=true;break}}
   if(!ok){p.sv=Math.max(0,p.sv-9*dt);if(p.sv<.4){p.bdir*=-1;p.sv=.8;p.flips=(p.flips||0)+1}}}
@@ -204,8 +204,8 @@ function pedSkTick(p,dt){const B=BEACH,o=RW/2,lo=o+1.5,hi=o+4.4,ah=B.TU(p.bt+p.b
  const TR=skTRange();if((p.bt<TR[0]&&p.bdir<0)||(p.bt>TR[1]&&p.bdir>0)){p.bdir*=-1;p.sv=.8}
  if(p.flips>3){removePed(p);return true} /* preso entre dois bloqueios: some em vez de ficar tremendo */
  const du=p.bU-p.bu,st=Math.sign(du)*Math.min(Math.abs(du),1.6*dt);p.bu+=st;p.bt+=p.bdir*p.sv*dt;
- const q=B.TU(p.bt,p.bu),q2=B.TU(p.bt+p.bdir,p.bu),tx=q2[0]-q[0],tz=q2[1]-q[1];p.mx=-tz;p.mz=tx; /* de lado na prancha: o sprite olha pra direita do movimento */p.vx=tx*p.sv;p.vz=tz*p.sv;p.x=q[0];p.z=q[1];p.gy=groundY(p.x,p.z);p.jy=SK_UP;p.anim=0;
- if(p.skb){const vis=!PL.inside&&(p.fin===undefined||p.fin>.3);p.skb.visible=vis;p.skb.position.set(p.x,p.gy,p.z);p.skb.rotation.set(0,-Math.atan2(tz,tx),0);const side=(B.TU(p.bt,p.bu+1)[0]-q[0])*tz-(B.TU(p.bt,p.bu+1)[1]-q[1])*tx;p.skb.rotateX(clamp(dt>0?st/dt/1.6:0,-1,1)*.15*Math.sign(side||1))}}
+ const q=B.TU(p.bt,p.bu),q2=B.TU(p.bt+p.bdir,p.bu),tx=q2[0]-q[0],tz=q2[1]-q[1];p.mx=-tz;p.mz=tx; /* de lado na prancha: o sprite olha pra direita do movimento */p.vx=tx*p.sv;p.vz=tz*p.sv;p.x=q[0];p.z=q[1];p.gy=groundY(p.x,p.z);p.jy=skRideHeight();p.anim=0;
+ if(p.skb){skScaleBoard(p.skb);const vis=!PL.inside&&(p.fin===undefined||p.fin>.3);p.skb.visible=vis;p.skb.position.set(p.x,p.gy,p.z);p.skb.rotation.set(0,-Math.atan2(tz,tx),0);const side=(B.TU(p.bt,p.bu+1)[0]-q[0])*tz-(B.TU(p.bt,p.bu+1)[1]-q[1])*tx;p.skb.rotateX(clamp(dt>0?st/dt/1.6:0,-1,1)*.15*Math.sign(side||1))}}
 function pedSkDrop(p){const L=p.skLook,g=p.skb;p.skb=null;p.jy=0;skDisposeG(g);if(!L||!peds.includes(p)||p.state==='bskate')return;
  const loose=SKATE.items.filter(it=>!skInGarage(it)).length;if(loose>=6)return;const a=Math.random()*6.283,o={x:p.x+Math.cos(a)*1.1,z:p.z+Math.sin(a)*1.1};circleVsWorld(o,.3);if(inWater(o.x,o.z))return;skAdd(o.x,o.z,Math.random()*6.283,L,true)}
 function knockPedDown(p,dx,dz){if(p&&p.net){netHitPed(p,30,'car');return}if(p&&p.prof&&p.prof.loot)dropRoadCash(p);

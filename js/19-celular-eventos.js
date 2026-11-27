@@ -894,7 +894,7 @@ function scnTick(dt){
     if(!e.ok&&dP<75){e.ph=1;e.t=0;p.rot=(R2()<.5?1:-1)*Math.PI/2;p.jy=0;try{thud(.4)}catch(err){}scnSay(p,['Ai, meu joelho!','Ai, ai...','Droga!'],1.6);
      const b=scnAt(e.S,e.u+e.dir*2.6,e.lat+.2),o={x:b[0],z:b[1]};circleVsWorld(o,.3);skDisposeG(e.board);e.board=null;e.item=(SKATE.items.filter(it=>!skInGarage(it)).length<6)?skAdd(o.x,o.z,Math.atan2(tz,tx),e.look,false):null;return}
     if(R2()<.5)scnSay(p,['Uhuul!','Cravou!','Isso aí!'],1.2)}
-   p.jy=SK_UP+hop;if(e.board){e.board.visible=!PL.inside;e.board.position.set(p.x,p.gy+hop,p.z);e.board.rotation.set(0,-Math.atan2(tz,tx),0);if(roll)e.board.rotateX(roll)}
+   p.jy=skRideHeight()+hop;if(e.board){skScaleBoard(e.board);e.board.visible=!PL.inside;e.board.position.set(p.x,p.gy+hop,p.z);e.board.rotation.set(0,-Math.atan2(tz,tx),0);if(roll)e.board.rotateX(roll)}
    if(Math.abs(e.u)>17&&e.u*e.dir>0){const vis=scnInView(p.x,p.z)&&dP<90;if(vis){p.jy=0;skDisposeG(e.board);e.board=null;scnWalk(p)}else removePed(p);scnEnd(false)}
    return}
   if(e.ph===1){p.vx=p.vz=0;p.timer=99;if(T>1.8){e.ph=2;p.rot=0;p.jy=0}return}

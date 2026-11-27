@@ -162,7 +162,14 @@ function casPedsClear(){for(const q of [POOL.cashier,POOL.npc])if(q&&peds.includ
    Deixado na garagem de casa fica salvo. Na oficina dá pra trocar cores/estampa; o shopping (2º piso) tem a SKATE SHOP. */
 var SKATE={items:[],ride:null,g:null,tex:new Map(),near:null,ui:null,seeded:{},tuneLock:false,taught:false};
 const SK_DECK=['#e8282a','#1e6ad6','#2ab36a','#f2c21a','#ff4fa0','#7a4ad6','#1a1a1e','#f4f2ea','#ff8a1a','#2ac8c8'],SK_WHEEL=['#f4f2ea','#f2c21a','#e8282a','#2ac8c8','#1a1a1e','#ff4fa0'],SK_PRINT=['LISA','CHAMAS','LISTRAS','ESTRELAS','XADREZ','RAIO','PALMEIRA','OLHO','EMOJI','TEXTO'],SK_EMO=3,SK_EMO_RND=['😎','🔥','💀','⚡','🌴','👽','🍕','🌈','👾','🦈','🤘','💯'];
-const SK_SCL=[1.69,2.25,2.25],SK_PRICE=120,SK_TUNE=40,SK_UP=.145,SK_VMAX=38,SK_TOP=31.6,SK_TRADE=50,SK_TXT=6;
+const SK_SCL=[1.69,2.25,2.25],SK_PRICE=120,SK_TUNE=40,SK_VMAX=38,SK_TOP=31.6,SK_TRADE=50,SK_TXT=6;
+// A prancha usa a mesma geometria e estampa nos três modos de personagem.
+function skModelScale(){return S.char3d === true ? 0.60 : 1}
+function skRideHeight(){return .145*skModelScale()}
+function skScaleBoard(g){
+ const scale=skModelScale();
+ g.scale.set(SK_SCL[0]*scale,SK_SCL[1]*scale,SK_SCL[2]*scale);
+}
 function skTxtClean(t){return [...String(t||'').toUpperCase()].filter(shirtGlyphOk).slice(0,SK_TXT).join('')}
 function skLookDefault(){return{deck:'#e8282a',wheel:'#f4f2ea',print:'RAIO'}}
 function skLookOk(L){return !!L&&SK_DECK.includes(L.deck)&&SK_WHEEL.includes(L.wheel)&&SK_PRINT.includes(L.print)&&(L.text==null||(typeof L.text==='string'&&skTxtClean(L.text)===L.text))&&(L.emo==null||(Array.isArray(L.emo)&&L.emo.length<=SK_EMO&&L.emo.every(emoOk)))}
@@ -187,7 +194,7 @@ function skBoard(L){const g=new THREE.Group(),d=COL(L.deck),top=new THREE.MeshLa
  for(const s of[-1,1]){const kick=new THREE.Mesh(new THREE.BoxGeometry(.13,.022,.21),[side,side,top,side,side,side]);kick.position.set(s*.37,.1,0);kick.rotation.z=s*.3;g.add(kick);
   const nose=new THREE.Mesh(new THREE.CylinderGeometry(.105,.105,.022,12,1,false,0,Math.PI),side);nose.position.set(s*.43,.118,0);nose.rotation.y=s>0?0:Math.PI;nose.rotation.z=s*.3;g.add(nose);
   const tr=new THREE.Mesh(new THREE.BoxGeometry(.05,.03,.17),grey);tr.position.set(s*.22,.058,0);g.add(tr);for(const z of[-1,1]){const w=new THREE.Mesh(new THREE.CylinderGeometry(.027,.027,.032,12),wh);w.rotation.x=Math.PI/2;w.position.set(s*.22,.028,z*.1);g.add(w)}}
- g.scale.set(SK_SCL[0],SK_SCL[1],SK_SCL[2]);g.position.set(0,-9999,0); /* v79r18: 3× maior e comprimento a 75% (2,25× no comprimento, 3× na largura e na altura) */
+ skScaleBoard(g);g.position.set(0,-9999,0);
  g.traverse(o=>{if(o.isMesh)o.castShadow=true});g.userData.skate=true;return g}
 function skDisposeG(g){if(!g)return;if(g.parent)g.parent.remove(g);g.traverse(o=>{if(o.isMesh)o.geometry.dispose()})}
 function skAdd(x,z,a,look,quiet){const it={x,z,a,look:{...look},seed:S.seed,style:S.style,g:skBoard(look)};it.g.position.set(x,groundY(x,z)+.005,z);it.g.rotation.y=-a;scene.add(it.g);SKATE.items.push(it);if(!quiet)try{clang(.08)}catch(e){}return it}
@@ -233,7 +240,7 @@ function skMove(dt){const R=SKATE.ride;let thr=((keys.KeyW||keys.ArrowUp)?1:0)-(
  const bx=PL.x,bz=PL.z,ex=PL.vx*dt,ez=PL.vz*dt;PL.x+=ex;PL.z+=ez;circleVsWorld(PL,.4);shipPlayerVsContainers(PL,.38);
  if(!air&&!PL.inside){
   const j=dbRampExit(bx,bz,PL.x,PL.z,PL.vx,PL.vz);
-  if(j){R.dbFlight=true;PL.gy=SK_UP;PL.jy=j.height;PL.jv=j.impulse}
+  if(j){R.dbFlight=true;PL.gy=skRideHeight();PL.jy=j.height;PL.jv=j.impulse}
  }
  bumpBeachSkater(bx,bz);
  const want=Math.hypot(ex,ez),got=Math.hypot(PL.x-bx,PL.z-bz);
@@ -250,15 +257,15 @@ function skFlipTick(R,air,dt){const TAU=Math.PI*2;
  if(!R.air)return;R.air=false;const f=R.flip||0,rem=((f%TAU)+TAU)%TAU,bad=R.fv>0||(rem>.3&&rem<TAU-.3);R.fv=0;R.flip=0;R.trick=false;
  if(bad){toast(translatePlain('PRANCHA TORTA NO POUSO · CAIU'));skCrash();return}
  const n=Math.round(f/TAU);if(n>=1){toast(n===1?'KICKFLIP!':n===2?'DOUBLE KICKFLIP!':'KICKFLIP ×'+n+'!');try{clang(.18)}catch(e){}}}
-function skTick(dt){const vis=!PL.inside;for(const it of SKATE.items){const on=vis&&it.seed===S.seed&&it.style===S.style;if(it.g.visible!==on)it.g.visible=on;if(on&&!it.g.parent)scene.add(it.g)}
+function skTick(dt){const vis=!PL.inside;for(const it of SKATE.items){skScaleBoard(it.g);const on=vis&&it.seed===S.seed&&it.style===S.style;if(it.g.visible!==on)it.g.visible=on;if(on&&!it.g.parent)scene.add(it.g)}
  const wk=S.seed+'|'+S.style;if(!SKATE.seeded[wk]&&played&&S.style!=='inverted'&&!city.haze&&city.safe&&city.safe.slots&&city.safe.slots[0]){SKATE.seeded[wk]=true;if(!SKATE.items.some(it=>it.seed===S.seed&&it.style===S.style))skGaragePlace(skLookDefault())} /* skate de boas-vindas na garagem de casa */
  const R=SKATE.ride;if(R&&typeof CHAR!=='undefined'&&R.who!==CHAR.cur){skDisposeG(SKATE.g);SKATE.g=null;SKATE.ride=null;skAdd(R.dry.x,R.dry.z,R.a,R.look,true)} /* trocou de personagem: o skate fica onde o outro estava */
  else if(R&&PL.down>0&&!PL.dead){skDismount(true)} /* atropelado/derrubado: o skate sai do pé */
  else if(R){if(PL.car||PL.dead||PL.inside||PARA.active||PL.heli||TVM.on||PL.taxi){skDisposeG(SKATE.g);SKATE.g=null;SKATE.ride=null;
    const f=PL.inside&&DOOR.from&&DOOR.from.seed===S.seed?DOOR.from:PL.inside==='mall'&&MALL.out?MALL.out:PL.inside==='shop'&&SHOP.st&&SHOP.st.out?SHOP.st.out:null;
    if(PL.dead&&city.safe)skGaragePlace(R.look);else if(f)skDrop(R,f.x+(f.nx||0)*1.2,f.z+(f.nz||0)*1.2,R.a);else if(PL.inside&&city.safe)skGaragePlace(R.look);else skDrop(R,PL.x+.8,PL.z,R.a)} /* v79r40: morreu = o skate vai direto pra garagem */
-  else if(SKATE.g){if(!SKATE.g.parent)scene.add(SKATE.g);const G=SKATE.g,fl=R.flip||0;G.position.set(PL.x,PL.gy-SK_UP+Math.max(0,PL.jy),PL.z);G.rotation.set(0,-R.a,0);G.rotateX(R.lean);if(PL.jy>.03)G.rotateZ(clamp(PL.jv*.06,-.2,.35));
-   if(fl){G.rotateX(fl);const h=.09*SK_SCL[1],v=new THREE.Vector3(0,h,0).applyQuaternion(G.quaternion);G.position.x-=v.x;G.position.z-=v.z;G.position.y+=h-v.y-.12*Math.abs(Math.sin(fl/2))}}} /* v79r39: gira em torno do meio da prancha e desce um pouco pra passar sob os pés */
+  else if(SKATE.g){if(!SKATE.g.parent)scene.add(SKATE.g);const G=SKATE.g,fl=R.flip||0;skScaleBoard(G);G.position.set(PL.x,PL.gy-skRideHeight()+Math.max(0,PL.jy),PL.z);G.rotation.set(0,-R.a,0);G.rotateX(R.lean);if(PL.jy>.03)G.rotateZ(clamp(PL.jv*.06,-.2,.35));
+   if(fl){G.rotateX(fl);const h=.09*G.scale.y,v=new THREE.Vector3(0,h,0).applyQuaternion(G.quaternion);G.position.x-=v.x;G.position.z-=v.z;G.position.y+=h-v.y-.12*skModelScale()*Math.abs(Math.sin(fl/2))}}} /* v79r39: gira em torno do meio da prancha e desce um pouco pra passar sob os pés */
  SKATE.near=skNear();
  /* oficina: andar de skate até a vaga da oficina abre a customização */
  const ts=city.tuneSpot;if(ts){const d=Math.hypot(PL.x-ts.x,PL.z-ts.z);if(d>4.5)SKATE.tuneLock=false;if(SKATE.ride&&!SKATE.ui&&!SKATE.tuneLock&&d<3.2){SKATE.tuneLock=true;if(storyOK('tune'))skUiOpen('tune');else storyLocked('OFICINA FECHADA')}}}

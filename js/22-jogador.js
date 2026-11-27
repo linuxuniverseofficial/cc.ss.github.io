@@ -312,7 +312,7 @@ function updatePlayer(dt){
   for(const c of carsNearTmp(PL.x,PL.z,8)){if(c===PL.car)continue;const dx=PL.x-c.x,dz=PL.z-c.z,ca=Math.cos(c.a),sa=Math.sin(c.a),lx=dx*ca+dz*sa,lz=-dx*sa+dz*ca;if(Math.abs(lx)<c.t.L/2-.1&&Math.abs(lz)<c.t.W/2-.05&&PL.jy>c.t.H-.5)fl=Math.max(fl,c.t.H*.95)}
   const bridgeFlight=SKATE.ride?.dbFlight;
   if(bridgeFlight&&PL.jv<=0&&!inWater(PL.x,PL.z))fl=Math.max(fl,groundY(PL.x,PL.z));
-  if(PL.jy<=fl){if(bridgeFlight){SKATE.ride.dbFlight=false;PL.gy=fl+SK_UP;fl=0}PL.jy=fl;if(PL.jv<0){if(fl>0&&PL.jv<-4)thud(3);PL.jv=0}}}
+  if(PL.jy<=fl){if(bridgeFlight){SKATE.ride.dbFlight=false;PL.gy=fl+skRideHeight();fl=0}PL.jy=fl;if(PL.jv<0){if(fl>0&&PL.jv<-4)thud(3);PL.jv=0}}}
  if(!PL.dead){const h=circleVsCars(PL,.4,true);if(h&&h.v>4.2&&!h.front){PL.vx=h.nx*3.5;PL.vz=h.nz*3.5}
   else if(h&&h.v>4.2&&maskSafe()){PL.down=2.4;PL.maskKO=true;PL.vx=h.pvx*.8+h.nx*4;PL.vz=h.pvz*.8+h.nz*4;PL.rot=Math.PI/2;thud(h.v);if(h.c.ai&&h.v>6)h.c.ai.stun=1.2;$('#ko').textContent=translatePlain('OLHA MÃE, FUI ATROPELADO! HA HA!');$('#ko').hidden=false} /* v78: Maskara atropelada não se machuca: cai, ri e levanta */
   else if(h&&h.v>4.2){const dmg=Math.round((h.v-3)*4.5);PL.hp-=armorHit(dmg);rumble(.8,.8,300);PL.down=1.4;PL.vx=h.pvx*.8+h.nx*4;PL.vz=h.pvz*.8+h.nz*4;PL.rot=Math.PI/2;thud(h.v);
@@ -321,7 +321,7 @@ function updatePlayer(dt){
  const es=maskOn()?null:estuaryAt(PL.x,PL.z,true);if(es&&!PL.car&&!PL.dead){const pk=(1-es.edge)*5*clamp((es.bank-1.2)/1.6,0,1)*clamp(es.sl/.2,0,1)*dt;PL.x+=es.dx*pk;PL.z+=es.dz*pk;if(es.wet&&drownAt(PL.x,PL.z))drown()} /* v3 r27: escorrega só nas margens altas (perto da ponte, como antes); na corneta rasa perto do mar, não */if(!worldPlGy(dt)){let sy=shipAt(PL.x,PL.z)?shipSupportY(PL.x,PL.z,PL.gy+PL.jy):groundY(PL.x,PL.z);{ /* v79r2: Maskara correndo na água passa POR BAIXO das pontes — segue no nível da água, ignora a mureta baixa e some sob a laje (balão 1x por passagem) */
   const mk=maskOn()&&!PL.car&&!PL.inside,wet=mk&&inWater(PL.x,PL.z),dk=(m)=>(city.decks||[]).some(r=>PL.x>r[0]-m&&PL.x<r[2]+m&&PL.z>r[1]-m&&PL.z<r[3]+m);
   PL.ubr=mk&&!wet&&PL.gy<-1&&dk(1.2);PL.ubrIn=PL.ubr&&dk(-.3);if(PL.ubrIn&&!PL.ubrSaid){PL.ubrSaid=true;think(PL,'Gostoso esse concreto todo',2.6)}if(!PL.ubr&&!dk(3))PL.ubrSaid=false;
-  if(wet||PL.ubr)sy=waterLevel(PL.x,PL.z)+.02} /* v78: só fora de interiores (o lab fica em coordenada de mar) */ /* v78: Maskara corre por cima de rio e mar */if(SKATE.ride)sy=SKATE.ride.dbFlight?SK_UP:sy+SK_UP;PL.gy+=(sy-PL.gy)*Math.min(1,dt*10)}
+  if(wet||PL.ubr)sy=waterLevel(PL.x,PL.z)+.02} /* v78: só fora de interiores (o lab fica em coordenada de mar) */ /* v78: Maskara corre por cima de rio e mar */if(SKATE.ride)sy=SKATE.ride.dbFlight?skRideHeight():sy+skRideHeight();PL.gy+=(sy-PL.gy)*Math.min(1,dt*10)}
  const moving=Math.hypot(PL.vx,PL.vz)>.5&&PL.down<=0;const ph=Math.floor(PL.anim)%4;const fr=PL.jy>.05?1:moving?(ph===1?1:ph===3?2:0):0;
  setFrame(PL.tex,pickDir(PL.face[0],PL.face[1],PL.x,PL.z),fr);
  placeSprite(PL);const vis=(camMode!=='fps'||VIEW.tp)&&!PL.ubrIn&&!(typeof PHOTO!=='undefined'&&PHOTO.hidePl);PL.sp.visible=vis;PL.sh.visible=vis;
