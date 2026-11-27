@@ -480,7 +480,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
    det.geo(GEO.cyl,mtx(ax,base+1.19,az,.64,.10,.64),COL(night?'#424058':'#607f98'));
   }else if(tankRoll<.18&&(!Number.isFinite(airCap)||th+4<=airCap)){const ax=(tx0+tx1)/2,az=(tz0+tz1)/2;det.geo(GEO.cyl,mtx(ax,th+2.2,az,1.4,2.4,1.4),COL(night?'#2a2440':'#7a6a5a'));det.box(ax-.06,th,az-.06,ax+.06,th+4,az+.06,cDet)}
   {const ar=mulberry32(((Math.round(x0*13)*73856093)^(Math.round(z0*13)*19349663)^(S.seed*31+7))>>>0),arr=(a,b)=>a+ar()*(b-a);
-  const ext=[];if(curI){if(z0<curI[1]+1.5)ext.push('n');if(z1>curI[3]-1.5)ext.push('s');if(x0<curI[0]+1.5)ext.push('w');if(x1>curI[2]-1.5)ext.push('e')}else if(opts.face)ext.push(opts.face);if(opts.nrf&&!ext.includes(opts.nrf))ext.push(opts.nrf); /* v78 Neon Road: fachada/porta para a rua nova */
+  const ext=[];if(curI){if(z0<curI[1]+2.6)ext.push('n');if(z1>curI[3]-2.6)ext.push('s');if(x0<curI[0]+2.6)ext.push('w');if(x1>curI[2]-2.6)ext.push('e')} /* v4 r56: 1,5 → 2,6 m (os prédios ficam a 1,9 m da borda do quarteirão: 80% ficavam sem fachada externa e sem frisos/varandas/ar) */else if(opts.face)ext.push(opts.face);if(opts.nrf&&!ext.includes(opts.nrf))ext.push(opts.nrf); /* v78 Neon Road: fachada/porta para a rua nova */
   const FL=f=>(f==='n'||f==='s')?[x0,x1-x0]:[z0,z1-z0];
   ar();const abandoned=fp.abandoned,nf=fp.floors;let doorInfo=null;
   /* v78 · outdoor no telhado: ~1 em 4 prédios com fachada pra rua; armação no lote sem sombra, face no atlas do chunk */
@@ -515,6 +515,16 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
     else{const dp=f==='n'?[u,z0-.35]:f==='s'?[u,z1+.35]:f==='w'?[x0-.35,u]:[x1+.35,u];if(opts.safe)setSafeDoor(dp[0],dp[1],f);else regDoor(dp[0],dp[1],f,u,false)}
    }
   }
+  /* v4 r56 · RELEVO DAS FACHADAS variado por prédio e por bairro (gerador próprio por posição, não mexe no R).
+     Bairro (área de ~150 m): antigo (mais escada de incêndio, ar-condicionado e faixas, cornija pesada), centro (menos), misto.
+     Por prédio: faixas entre andares (todo andar / a cada 2 / a cada 3 / nenhuma), cornija (simples / pesada / dupla),
+     ar-condicionado espalhado irregular nas janelas, escada de incêndio (plataforma, grade e degraus) numa lateral. */
+  const RLV=(()=>{const fr=bldxRng(x0,z0,0xfac),r1=fr(),r2=fr(),r3=fr(),r4=fr(),hood=bldxRng(Math.floor((x0+(S.seed%97))/150),Math.floor((z0+(S.seed%89))/150),0xb41)(),old=hood<.4,down=hood>.75;
+   const band=fp.family==='deco'||fp.family==='office'?0:old?(r1<.35?1:r1<.7?2:0):down?(r1<.3?2:r1<.6?3:0):(r1<.25?1:r1<.5?2:r1<.7?3:0);
+   const corn=old?(r2<.5?1:r2<.8?2:0):down?(r2<.25?2:0):(r2<.3?1:r2<.55?2:0);
+   const acP=(old?.15:down?.035:.085)*(fp.family==='office'?.3:1);
+   const fe=h>9.5&&!EX&&r4<(old?.62:down?.1:.3);const sides=ext.filter(q=>q!==opts.face);
+   return{fr,band,corn,acP,fe,feF:fe?(sides.length?sides[Math.floor(r3*sides.length)]:opts.face):null,met:COL(night?'#2a2830':old&&r3<.5?'#4a3428':'#34312f')}})();
   for(const f of EX?[]:ext){const[fs,flen]=FL(f),bays=facadeBays(fs,flen);
    // A continuous base and a single cornice frame the facade, without random mid-window stripes.
    fbox(x0,z0,x1,z1,f,fs,fs+flen,.25,.56,0,.07,lodNear,trim);
@@ -537,7 +547,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
      fbox(x0,z0,x1,z1,f,u-half,u+half,y+.92,y+.98,.87,.93,lodNear,rail);
      for(const t of [u-half+.07,u,u+half-.07])fbox(x0,z0,x1,z1,f,t-.025,t+.025,y+.14,y+.92,.87,.93,lodNear,rail);
      for(const t of [u-half+.03,u+half-.03])fbox(x0,z0,x1,z1,f,t-.025,t+.025,y+.92,y+.98,.04,.90,lodNear,rail);
-     if(ar()<.21){const d=.48,px=f==='n'?u:f==='s'?u:f==='w'?x0-d:x1+d,pz=f==='n'?z0-d:f==='s'?z1+d:u,py=y+.14,mx=f==='n'?0:f==='s'?0:f==='w'?-1:1,mz=f==='n'?-1:f==='s'?1:0;const q=spawnBalconyPed(px,pz,py,mx,mz);if(q)ch.peds.push(q)}
+     if(ar()<.05&&(ch.balcN||0)<2){ch.balcN=(ch.balcN||0)+1;/* v4 r56: varandas aparecem em muito mais prédios; limite de pessoas (CPU) */const d=.48,px=f==='n'?u:f==='s'?u:f==='w'?x0-d:x1+d,pz=f==='n'?z0-d:f==='s'?z1+d:u,py=y+.14,mx=f==='n'?0:f==='s'?0:f==='w'?-1:1,mz=f==='n'?-1:f==='s'?1:0;const q=spawnBalconyPed(px,pz,py,mx,mz);if(q)ch.peds.push(q)}
     }
    }
    // AC units share one vertical service bay and sit on the sill line, not random window centers.
@@ -548,6 +558,23 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
     const u=fs+.35;fbox(x0,z0,x1,z1,f,u,u+.12,.58,h-.40,.002,.018,lodNear,stain);
     for(let k=2;k<nf;k+=3)fbox(x0,z0,x1,z1,f,fs+.26,fs+flen-.26,k*3.2-.16,k*3.2-.09,.002,.015,lodNear,stain);
    }
+   /* v4 r56: faixas, cornija, ar-condicionado e escada de incêndio (RLV) */
+   {const fr=RLV.fr,isFE=f===RLV.feF,feU0=fs+flen-3.6,feU1=fs+flen-.4;
+    if(RLV.band)for(let k=1;k<nf;k++)if(k%RLV.band===0)fbox(x0,z0,x1,z1,f,fs+.1,fs+flen-.1,k*3.2-.1,k*3.2+.04,0,.075,lodNear,k%2?trim:lightTrim);
+    if(RLV.corn===1){fbox(x0,z0,x1,z1,f,fs-.12,fs+flen+.12,h-.62,h-.3,0,.2,lodNear,trim);fbox(x0,z0,x1,z1,f,fs-.18,fs+flen+.18,h-.1,h+.06,0,.27,lodNear,lightTrim)}
+    else if(RLV.corn===2)fbox(x0,z0,x1,z1,f,fs,fs+flen,h-.95,h-.82,0,.09,lodNear,lightTrim);
+    if(!abandoned&&RLV.acP>0&&bays.length>1){const acC=COL(night?'#9690a1':'#c8c6bf'),last=bays.length-1;let n=0;
+     for(let k=1;k<nf&&n<14;k++)for(let i=0;i<bays.length&&n<14;i++){const q=fr();if(q>=RLV.acP)continue;const b=bays[i],u=b.u+(fr()-.5)*.5;
+      if(isFE&&u>feU0-.6)continue;if(fp.family==='residential'&&i===last&&k%2)continue;if(fp.family==='residential'&&f===opts.face&&k<5&&(i===1||i===bays.length-2||i===0||i===last))continue;
+      const y=k*3.2+.39;fbox(x0,z0,x1,z1,f,u-.36,u+.36,y,y+.38,.02,.34,lodNear,acC);fbox(x0,z0,x1,z1,f,u-.25,u+.25,y+.09,y+.27,.34,.355,lodNear,trim);n++}}
+    if(isFE&&feU1-feU0>2){const M=RLV.met,a=feU0,b2=feU1,top=Math.min(nf-1,Math.floor((h-1.2)/3.2));
+     for(let k=1;k<=top;k++){const y=k*3.2;
+      fbox(x0,z0,x1,z1,f,a,b2,y-.06,y+.02,.03,1.0,lodNear,M);
+      fbox(x0,z0,x1,z1,f,a,b2,y+.9,y+.96,.94,1.0,lodNear,M);
+      for(const t of [a,(a+b2)/2,b2-.05])fbox(x0,z0,x1,z1,f,t,t+.05,y+.02,y+.9,.94,1.0,lodNear,M);
+      for(const t of [a,b2-.05])fbox(x0,z0,x1,z1,f,t,t+.05,y+.9,y+.96,.03,.94,lodNear,M);
+      if(k<top){const L=b2-a-.6,st=L/5;for(let i=0;i<5;i++){const s0=k%2?a+.3+i*st:b2-.3-(i+1)*st;fbox(x0,z0,x1,z1,f,s0,s0+st,y+.64*(i+1)-.05,y+.64*(i+1),.5,.92,lodNear,M)}}}
+     fbox(x0,z0,x1,z1,f,b2-.75,b2-.7,1.3,3.2,.55,.6,lodNear,M);fbox(x0,z0,x1,z1,f,b2-.35,b2-.3,1.3,3.2,.55,.6,lodNear,M);for(let y=1.45;y<3.2;y+=.35)fbox(x0,z0,x1,z1,f,b2-.72,b2-.33,y,y+.04,.55,.6,lodNear,M)}}
   }
   /* v78 · toldos listrados nas lojas do térreo (fachada principal, fora da porta); sorteio próprio, 2 degraus por listra */
   if(!EX&&!abandoned&&!opts.patio&&!opts.safe&&!opts.simple&&!opts.tour&&opts.face&&!opts.linkedL){const tr=mulberry32(((Math.round(x0*5)*73856093)^(Math.round(z0*5)*83492791)^(S.seed*13+11))>>>0);

@@ -439,7 +439,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
    if(e0<BLDX.pe&&!(city.bxAl||[]).some(a=>a[0]<x1+3&&a[2]>x0-3&&a[1]<z1+3&&a[3]>z0-3)){const hw=(x1-x0)/2,hd=(z1-z0)/2,oval=e1<.5&&Math.max(hw,hd)/Math.min(hw,hd)>1.15,r=Math.min(hw,hd);
     let cx=(x0+x1)/2,cz=(z0+z1)/2;if(!oval&&opts.face){const f=opts.face;if(f==='n')cz=z0+r;else if(f==='s')cz=z1-r;else if(f==='w')cx=x0+r;else cx=x1-r}
     EX={cx,cz,rx:oval?hw:r,rz:oval?hd:r,oval}}}
-  const BW=bldWin(x0,z0); /* v4 r53: padrão/número do prédio nas janelas */
+  const BW=bldWin(x0,z0,fp.family); /* v4 r53: padrão/número do prédio nas janelas */
   (ch.bwc||(ch.bwc=[])).push({x0,z0,x1,z1,wc,ri:curRi});
   ri(0,7);ri(0,7);if(fp.abandoned&&!opts.linkedL)wc.lerp(COL('#918777'),.32);if(EX){mbOval(facadeWalls,roofs,EX.cx,EX.cz,EX.rx,EX.rz,0,h,wc,rc,{win:BW});(ch.bldx||(ch.bldx=[])).push(EX)}else facadeWalls.box(x0,0,z0,x1,h,z1,wc,{top:roofs,topCol:rc,win:BW,facadeGrid:true});
   if(EX){for(const q of bldxCols(EX,8))addCol(q[0],q[1],q[2],q[3],'bld').top=h}else addCol(x0,z0,x1,z1,'bld').top=h;
@@ -519,10 +519,10 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
      Bairro (área de ~150 m): antigo (mais escada de incêndio, ar-condicionado e faixas, cornija pesada), centro (menos), misto.
      Por prédio: faixas entre andares (todo andar / a cada 2 / a cada 3 / nenhuma), cornija (simples / pesada / dupla),
      ar-condicionado espalhado irregular nas janelas, escada de incêndio (plataforma, grade e degraus) numa lateral. */
-  const RLV=(()=>{const fr=bldxRng(x0,z0,0xfac),r1=fr(),r2=fr(),r3=fr(),r4=fr(),hood=bldxRng(Math.floor((x0+(S.seed%97))/150),Math.floor((z0+(S.seed%89))/150),0xb41)(),old=hood<.4,down=hood>.75;
+  const RLV=(()=>{const fr=bldxRng(x0,z0,0xfac),r1=fr(),r2=fr(),r3=fr(),r4=fr(),hood=bldHood(x0,z0),old=hood<.4,down=hood>.75;
    const band=fp.family==='deco'||fp.family==='office'?0:old?(r1<.35?1:r1<.7?2:0):down?(r1<.3?2:r1<.6?3:0):(r1<.25?1:r1<.5?2:r1<.7?3:0);
    const corn=old?(r2<.5?1:r2<.8?2:0):down?(r2<.25?2:0):(r2<.3?1:r2<.55?2:0);
-   const acP=(old?.15:down?.035:.085)*(fp.family==='office'?.3:1);
+   const acP=BW[2]===2||BW[2]===4?0:(old?.15:down?.035:.085)*(fp.family==='office'?.3:1); /* r57: sem ar-condicionado em faixa de vidro/pele de vidro */
    const fe=h>9.5&&!EX&&r4<(old?.62:down?.1:.3);const sides=ext.filter(q=>q!==opts.face);
    return{fr,band,corn,acP,fe,feF:fe?(sides.length?sides[Math.floor(r3*sides.length)]:opts.face):null,met:COL(night?'#2a2830':old&&r3<.5?'#4a3428':'#34312f')}})();
   for(const f of EX?[]:ext){const[fs,flen]=FL(f),bays=facadeBays(fs,flen);

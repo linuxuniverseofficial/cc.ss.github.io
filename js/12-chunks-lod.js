@@ -41,6 +41,7 @@ function farMaterial(src){
   if(src.userData.isoFade)isoFadeMaterial(m);
   if(src.userData.bridgeVisual)bridgeVisualMaterial(m);
   if(src.userData.bldLit!=null)bldLitPatch(m,src.userData.bldLit); /* v4 r53: longe igual ao perto */
+  if(src.userData.fwAtlas)facadeAtlasPatch(m); /* v4 r57 */
   m.color.copy(src.color);m.emissive.copy(src.emissive);m.emissiveIntensity=src.emissiveIntensity;
   FAR_MATERIALS.set(src,m);FAR_MATERIAL_PAIRS.push({src,m});if(city.mats)city.mats.push(m)
  }

@@ -114,6 +114,40 @@ function bldLitPatch(mat,mode){if(!mat||mat.userData.bldLit!=null)return mat;mod
  mat.onBeforeCompile=function(sh){if(old)old.call(this,sh);if(sh.fragmentShader.indexOf('#include <aomap_fragment>')<0){console.warn('bldLitPatch: sem aomap_fragment');return}
   sh.fragmentShader='#define BLDLIT_MODE '+mode+'\n'+sh.fragmentShader.replace('#include <aomap_fragment>',BLDLIT_GLSL)};
  mat.customProgramCacheKey=()=>key+'|bldLit'+mode;mat.needsUpdate=true;return mat}
+/* v4 r57: TIPOS DE FACHADA (atlas de 8 faixas, windowTextures js/03). Faixa = tipo do prédio, lido do número na UV
+   (floor(v/8) = id; tipo = (id−1) mod 6; id 0 = faixa 0, como antes). Troca as leituras da textura (map/emissiveMap: three, SURF,
+   brilho pintado, reflexo) por fwTex (textureGrad com as derivadas da UV sem o fract → sem costura de mipmap a cada 8 andares)
+   e ajusta o retângulo do vidro dos cômodos (wrRoom) por tipo. Aplicado por ÚLTIMO (depois de todos os remendos da parede).
+   Remover: tirar facadeAtlasPatch no generateCity e no farMaterial; bldWin volta a sortear sem tipo. */
+function fwRectGLSL(){const R=FW_PANES.map(P=>{if(!P)return null;let x0=32,y0=32,x1=0,y1=0;for(const[x,y,w,h] of P){x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x+w);y1=Math.max(y1,y+h)}return[x0/32,(32-y1)/32,x1/32,(32-y0)/32]});
+ const f=v=>v.toFixed(5);let g='fwRect=wrRect;fwMull=wrMull;';for(let L=1;L<=5;L++){const r=R[L];g+=`if(abs(fwL-${L}.)<.5){fwRect=vec4(${r.map(f).join(',')});fwMull=${L===5?'.0625':'0.'};}`}return g}
+function facadeAtlasPatch(mat){if(!mat||mat.userData.fwAtlas)return mat;mat.userData.fwAtlas=true;const old=mat.onBeforeCompile,key=(mat.customProgramCacheKey&&mat.customProgramCacheKey())||'';
+ mat.onBeforeCompile=function(sh){if(old)old.call(this,sh);let F=sh.fragmentShader;if(F.indexOf('void main() {')<0){console.warn('facadeAtlasPatch: sem main');return}
+  const wr=F.indexOf('uniform vec4 wK,wrRect;')>=0;
+  const pre=`float fwL;${wr?'vec4 fwRect;float fwMull;':''}
+vec2 fwUV(vec2 uv){return vec2(uv.x,(7.-fwL+fract(uv.y))*.125);}
+vec4 fwTex(sampler2D t,vec2 uv){
+#if __VERSION__>=300
+ return textureGrad(t,fwUV(uv),dFdx(uv)*vec2(1.,.125),dFdy(uv)*vec2(1.,.125));
+#else
+ return texture2D(t,fwUV(uv));
+#endif
+}
+vec4 fwTexB(sampler2D t,vec2 uv,float b){
+#if __VERSION__>=300
+ float k=exp2(b);return textureGrad(t,fwUV(uv),dFdx(uv)*vec2(1.,.125)*k,dFdy(uv)*vec2(1.,.125)*k);
+#else
+ return texture2D(t,fwUV(uv),b);
+#endif
+}
+`;
+  F=F.replace('#include <map_fragment>',THREE.ShaderChunk.map_fragment).replace('#include <emissivemap_fragment>',THREE.ShaderChunk.emissivemap_fragment); /* os #include só são expandidos depois do onBeforeCompile */
+  F=F.split('texture2D( map, vUv )').join('fwTex( map, vUv )').split('texture2D( emissiveMap, vUv )').join('fwTex( emissiveMap, vUv )')
+   .split('texture2D(map,vUv)').join('fwTex(map,vUv)').split('texture2D(emissiveMap,vUv,2.)').join('fwTexB(emissiveMap,vUv,2.)').split('texture2D(emissiveMap,vUv,3.5)').join('fwTexB(emissiveMap,vUv,3.5)');
+  if(wr)F=F.split('wrRect.').join('fwRect.').split('if(wrMull>0.)wrIn*=smoothstep(wrMull,wrMull+').join('if(fwMull>0.)wrIn*=smoothstep(fwMull,fwMull+');
+  F=F.replace('void main() {',pre+'void main() {\n {float fwI=floor(vUv.y*.125);fwL=fwI<.5?0.:mod(fwI-1.,6.);'+(wr?fwRectGLSL():'')+'}');
+  sh.fragmentShader=F};
+ mat.customProgramCacheKey=()=>key+'|fwAtlas';mat.needsUpdate=true;return mat}
 /* v4 r6: REFLEXO DE DIA NAS JANELAS (SHFX fxK.z). Mesma lógica do reflexo da água/lataria: Fresnel com as cores do skyMat
    (top/hor/sunDir/night: uniforms compartilhados, acompanha dia, pôr do sol, noite e os outros mundos sem CPU) + silhueta de
    prédios "do outro lado da rua" (altura sorteada por azimute do raio refletido: anda com a câmera, dá a paralaxe de reflexo)
