@@ -1,5 +1,11 @@
 # Como gerar e publicar uma release
 
+## Chromium obrigatório no Windows e no Linux
+
+Em toda release, empacote o Chromium via Electron dentro do EXE e do AppImage, junto com os avisos de licença. A abertura padrão deve funcionar sem baixar o motor e sem exigir WebView2 ou um navegador instalado. Ao atualizar o Electron, atualize a versão e o SHA-256 da distribuição oficial nos dois scripts de build.
+
+Antes de publicar, confira o motor dentro de cada artefato final e abra o jogo pelo launcher padrão. Use `tools/build-release.sh` para o EXE e `tools/build-appimage.sh` para o AppImage.
+
 ## 1. Preparar a revisão
 
 - Atualize a revisão com `sh tools/nova-build.sh rNN` quando houver uma nova build do jogo. Para só publicar uma build existente, use a revisão atual.
