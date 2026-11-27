@@ -588,3 +588,27 @@ function pedObsBuild(){PEDOBS.city=city;const B=PEDOBS.b;B.length=0;const add=(x
  if(typeof ATMQ!=='undefined')for(const a of ATMQ.list||[])add(a.x-a.hw,a.z-a.hd,a.x+a.hw,a.z+a.hd)}
 function pedBlockAt(x,z){if(PEDOBS.city!==city||PEDOBS.n!==((typeof METRO!=='undefined'?METRO.list.length:0)+(typeof ATMQ!=='undefined'?ATMQ.list.length:0))){pedObsBuild();PEDOBS.n=(typeof METRO!=='undefined'?METRO.list.length:0)+(typeof ATMQ!=='undefined'?ATMQ.list.length:0)}
  const B=PEDOBS.b;for(let i=0;i<B.length;i+=4)if(x>B[i]&&x<B[i+2]&&z>B[i+1]&&z<B[i+3])return true;return false}
+/* v4 r58 · NEON EMBAIXO DO CARRO (underglow). De vez em quando um carro do trânsito comum da cidade (fora da roça) nasce com neon
+   de cor aleatória: ~3% de dia, ~13% à noite (sorteado ao nascer, makeRailCar). Só Sunset Shores e Synthwave.
+   Desenho: brilho no asfalto (glowTex, aditivo) + barra de neon sob a carroceria, ambos InstancedMesh globais com cor por instância
+   (1 material cada, sempre na cena com instâncias zeradas → compilam no loading). Até UG.N carros mais perto da câmera (≤ 170 m).
+   Fica fora do city.group de propósito (vale em qualquer cidade); carro sem c.ug não aparece. */
+const UG={N:24,cols:['#ff2ad4','#2af0ff','#7a3cff','#39ff6a','#ff3a3a','#ffd23a','#2a6aff','#ff7a1a'].map(h=>new THREE.Color(h)),
+ types:new Set(['sedan','sports','hatch','conv','suv','pickup','taxi']),m:new THREE.Matrix4(),q:new THREE.Quaternion(),e:new THREE.Euler(),v:new THREE.Vector3(),s:new THREE.Vector3(),c:new THREE.Color(),list:[]};
+{const g=new THREE.PlaneGeometry(1,1);g.rotateX(-Math.PI/2);
+ UG.glowMat=new THREE.MeshBasicMaterial({map:glowTex,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});
+ UG.glow=new THREE.InstancedMesh(g,UG.glowMat,UG.N);UG.barMat=new THREE.MeshBasicMaterial({});UG.bar=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),UG.barMat,UG.N);
+ for(const im of [UG.glow,UG.bar]){im.frustumCulled=false;im.renderOrder=2;for(let i=0;i<UG.N;i++){im.setMatrixAt(i,ZM);im.setColorAt(i,UG.cols[i%UG.cols.length])}im.instanceMatrix.setUsage(THREE.DynamicDrawUsage);scene.add(im)}
+ UG.glow.userData.cached=UG.bar.userData.cached=true}
+function ugRoll(c,type,x,z){if(city.haze||(S.style!=='modern'&&S.style!=='synthwave')||!UG.types.has(type)||isRural(x,z))return;
+ const n=S.style==='synthwave'?1:(DN.nightF||0);if(Math.random()<.03+.10*n)c.ug=UG.cols[Math.floor(Math.random()*UG.cols.length)]}
+makeRailCar=(f=>function(kx,kz,d,li,s,forceType){const c=f.apply(this,arguments);try{if(c&&!forceType)ugRoll(c,c.type,c.x,c.z)}catch(e){}return c})(makeRailCar);
+function ugTick(){const L=UG.list;L.length=0;const cx=camera.position.x,cz=camera.position.z;
+ if(!PL.inside)for(const c of vehicles){if(!c.ug||!c.alive||c.exploded)continue;const d=Math.abs(c.x-cx)+Math.abs(c.z-cz);if(d<240){c._ugd=d;L.push(c)}}
+ if(L.length>UG.N)L.sort((a,b)=>a._ugd-b._ugd);const n=Math.min(L.length,UG.N),k=S.style==='synthwave'?1.6:.6+1.0*(DN.nightF||0);
+ for(let i=0;i<UG.N;i++){if(i>=n){UG.glow.setMatrixAt(i,ZM);UG.bar.setMatrixAt(i,ZM);continue}const c=L[i],t=c.t,y=(c.gy||0)+(c.rampY||0)+(c.airY||0);
+  UG.e.set(0,-c.a,0);UG.q.setFromEuler(UG.e);
+  UG.v.set(c.x,y+.045,c.z);UG.s.set(t.L*1.7,1,t.W*2.6);UG.m.compose(UG.v,UG.q,UG.s);UG.glow.setMatrixAt(i,UG.m);UG.c.copy(c.ug).multiplyScalar(k);UG.glow.setColorAt(i,UG.c);
+  UG.v.set(c.x,y+.2,c.z);UG.s.set(t.L*.78,.05,t.W*.86);UG.m.compose(UG.v,UG.q,UG.s);UG.bar.setMatrixAt(i,UG.m);UG.bar.setColorAt(i,c.ug)}
+ UG.glow.instanceMatrix.needsUpdate=UG.bar.instanceMatrix.needsUpdate=true;UG.glow.instanceColor.needsUpdate=UG.bar.instanceColor.needsUpdate=true}
+myTick=(f=>function(dt){f.apply(this,arguments);try{ugTick()}catch(e){if(!UG.err){UG.err=1;console.error(e)}}})(myTick);
