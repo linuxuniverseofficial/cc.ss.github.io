@@ -4,6 +4,23 @@
 /* ================= LAMPS, CABLES, TREES (breakable) ================= */
 const ZM=new THREE.Matrix4().makeScale(0,0,0);
 const fallers=[];const LAMP_ON=COL('#ffc070'),LAMP_OFF=COL('#5c584f');
+/* v4 r55: Sunset Shores/Point Haze = vapor de sódio (laranja); raros postes azuis (LED com defeito, ~4%) só na cidade; ~30% dos postes
+   da periferia (roça e indústria) dão piscadas curtas. Sorteio por posição (gerador próprio, não mexe na seed). l.kd: 0 normal, 1 azul, 2 pisca. */
+const LAMP_SOD=COL('#ff9a44'),LAMP_BLUE=COL('#7a86ff'),LAMP_DIM=COL('#7a5434'),LAMP_GW=new THREE.Color(1,1,1),LAMP_GB=new THREE.Color(.3,.78,4.2),
+ LAMP_LSOD=COL(0xff9a50),LAMP_LOLD=COL(0xffc477),LAMP_LBLUE=COL(0x6f86ff);
+function lampSodium(){return S.style==='modern'||!!city.haze}
+function lampKind(l){if(l.kd!=null)return l.kd;let k=0;if(S.style==='modern'&&!city.haze){const r=mulberry32(((Math.round(l.x*7)*73856093)^(Math.round(l.z*7)*19349663)^(S.seed*3+0x1a7))>>>0),a=r(),b=r();
+  const rural=isRural(l.x,l.z),ri=rectNear(l.x,l.z),ind=ri>=0&&city.info[ri]&&city.info[ri].kind==='industrial';if(!rural&&a<.045)k=1;else if((rural||ind)&&b<.3)k=2}
+ return l.kd=k}
+function lampOnCol(l){return lampKind(l)===1?LAMP_BLUE:lampSodium()?LAMP_SOD:LAMP_ON}
+/* piscada: só postes acesos a até 140 m; rajadas de 2–6 apagões de 40–160 ms a cada 1,5–8,5 s */
+function lampFlickTick(dt){const p=PL.car||PL;if(!p||!city.chunks)return;
+ for(const ch of city.chunks.values()){const IM=ch.lampIM,F=ch.lampFlk;if(!IM||!F||!F.length)continue;let chg=false;
+  for(const l of F){const on=l.on&&!l.broken&&S.lampLighting!==false;if(!on||Math.abs(l.x-p.x)>140||Math.abs(l.z-p.z)>140){if(l.fo&&l.on&&!l.broken){l.fo=false;IM.head.setColorAt(l.i,lampOnCol(l));IM.glow.setMatrixAt(l.i,S.lampLighting!==false?lampGlowM(l):ZM);chg=true}continue}
+   l.ft=(l.ft==null?Math.random()*6:l.ft)-dt;if(l.ft>0)continue;
+   if(l.fb>0){l.fb--;l.fo=!l.fo;l.ft=.04+Math.random()*.12}else{l.fo=false;l.fb=2*(1+Math.floor(Math.random()*3));l.ft=1.5+Math.random()*7}
+   IM.head.setColorAt(l.i,l.fo?LAMP_DIM:lampOnCol(l));IM.glow.setMatrixAt(l.i,l.fo?ZM:lampGlowM(l));chg=true}
+  if(chg){IM.head.instanceColor.needsUpdate=true;IM.glow.instanceMatrix.needsUpdate=true}}}
 const deadHeadMat=new THREE.MeshStandardMaterial({color:0x34303a,roughness:.6});
 // Iluminacao real de postes em ate tres quarteiroes do jogador.
 // Um conjunto reutilizavel maior evita que so tres postes parecam acender ao aproximar.
@@ -14,7 +31,7 @@ const nearLampLights=Array.from({length:NEAR_LAMP_COUNT},()=>{
 });
 let nearLampTimer=0;
 function updateNearbyLampLights(dt){
- nearLampTimer-=dt;
+ nearLampTimer-=dt;try{if(dt>0)lampFlickTick(dt)}catch(e){}
  const p=PL.car||PL;
  if(!running||!p||PL.inside||DN.nightF<.32||S.lampLighting===false){
   for(const slot of nearLampLights){slot.light.intensity=0;slot.lamp=null}
@@ -50,7 +67,7 @@ function updateNearbyLampLights(dt){
   const dist=Math.hypot(l.x-p.x,l.z-p.z);
   const fade=Math.max(0,Math.min(1,(NEAR_LAMP_RADIUS-dist)/(P*.65)));
   light.position.set(l.x+l.dx*1.6,5.65,l.z+l.dz*1.6);
-  light.intensity=1.65*fade;light.visible=true;
+  light.color.copy(lampKind(l)===1?LAMP_LBLUE:lampSodium()?LAMP_LSOD:LAMP_LOLD);light.intensity=1.65*fade*(l.fo?.2:1);light.visible=true;
  }
  carLampSync();
 }
@@ -66,7 +83,7 @@ function lampGlowM(l){
 function buildChunkLamps(ch){const M=city.M,n=ch.lamps.length;if(!n)return;const night=city.st.night;
  const pole=new THREE.InstancedMesh(M.poleGeo,M.pole,n),head=new THREE.InstancedMesh(M.headGeo,M.head,n),glow=new THREE.InstancedMesh(M.glowGeo,M.lglow,n);
  pole.castShadow=true;pole.receiveShadow=true;glow.renderOrder=2;
- ch.lamps.forEach((l,i)=>{l.i=i;const m=mtx(l.x,.2,l.z,1,1,1,0,Math.atan2(-l.dz,l.dx),0);pole.setMatrixAt(i,m);head.setMatrixAt(i,m);l.on=Math.max(DN.nightF,LAMPF)>l.th&&!jammerBlocked(l.x,l.z);head.setColorAt(i,l.on?LAMP_ON:LAMP_OFF);glow.setMatrixAt(i,l.on&&S.lampLighting!==false?lampGlowM(l):ZM)});
+ ch.lamps.forEach((l,i)=>{l.i=i;const m=mtx(l.x,.2,l.z,1,1,1,0,Math.atan2(-l.dz,l.dx),0);pole.setMatrixAt(i,m);head.setMatrixAt(i,m);l.on=Math.max(DN.nightF,LAMPF)>l.th&&!jammerBlocked(l.x,l.z);head.setColorAt(i,l.on?lampOnCol(l):LAMP_OFF);glow.setColorAt(i,lampKind(l)===1?LAMP_GB:LAMP_GW);glow.setMatrixAt(i,l.on&&S.lampLighting!==false?lampGlowM(l):ZM);l.fo=false;if(l.kd===2)(ch.lampFlk||(ch.lampFlk=[])).push(l)});
  for(const m of [pole,head,glow]){m.frustumCulled=false;ch.group.add(m)}ch.lampIM={pole,head,glow}}
 function cablePts(ax,ay,az,bx,by,bz,sag,arr,off){for(let k=0;k<10;k++){for(const[t,oo] of [[k/10,0],[(k+1)/10,3]]){arr[off+oo]=ax+(bx-ax)*t;arr[off+oo+1]=ay+(by-ay)*t-sag*4*t*(1-t);arr[off+oo+2]=az+(bz-az)*t}off+=6}}
 // Fiação por região: campo 1, cidade 2, distrito industrial 3.

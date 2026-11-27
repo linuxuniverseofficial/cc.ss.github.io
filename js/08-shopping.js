@@ -484,11 +484,15 @@ function palmStick(mb,top,a,tilt,l,s,col,droop){let x=top.x,y=top.y,z=top.z,ang=
  for(let i=0;i<n;i++){const nx=x+ca*Math.cos(ang)*st,ny=y+Math.sin(ang)*st,nz=z+sa*Math.cos(ang)*st;wseg(mb,x,y,z,nx,ny,nz,(.035-.009*i)*s,col,PALM_GEO.trunk);
   if(i>0){for(const sd of[-1,1]){const pa=a+sd*1.25,q=st*.55;wseg(mb,nx,ny,nz,nx+Math.cos(pa)*q,ny-q*.45,nz+Math.sin(pa)*q,.012*s,col,PALM_GEO.trunk)}}
   x=nx;y=ny;z=nz;ang-=droop}}
+/* v4 r55: luzinhas no tronco (coqueiros da orla). Quem monta liga PALM_LIGHTS.mb (lote neonDN: acende ao anoitecer) só durante a chamada. */
+const PALM_LIGHTS={mb:null,col:null};
 function palmBuild(mb,x,y0,z,s,night,rnd,opt){opt=opt||{};const inv=S.style==='inverted',r=()=>rnd?rnd():Math.random(),h=(opt.h||(5+r()*3))*s,la=r()*Math.PI*2,lean=(opt.lean!=null?opt.lean:.10+r()*.16)*h;
  const seg=6,pts=[];for(let i=0;i<=seg;i++){const t=i/seg,b=t*t;pts.push(new THREE.Vector3(x+Math.cos(la)*lean*b,y0+h*t,z+Math.sin(la)*lean*b))}
  const tA=COL(night?'#3a2a35':'#7a5a3e'),tB=COL(night?'#2c2029':'#5f4530'),up=new THREE.Vector3(0,1,0),q=new THREE.Quaternion(),m=new THREE.Matrix4(),sc=new THREE.Vector3();
  const iC=COL('#1e1a1c'),iC2=COL('#2a2224');
  for(let i=0;i<seg;i++){const a=pts[i],b=pts[i+1],d=b.clone().sub(a),len=d.length(),rad=(.24-.09*i/seg)*s*(inv?.42:1);q.setFromUnitVectors(up,d.normalize());sc.set(rad,len*1.04,rad);m.compose(a.clone().add(b).multiplyScalar(.5),q,sc);mb.geo(PALM_GEO.trunk,m,inv?(i%2?iC2:iC):i%2?tB:tA)}
+ if(PALM_LIGHTS.mb&&!inv){const L=PALM_LIGHTS.mb,c0=PALM_LIGHTS.col,c1=c0.clone().multiplyScalar(.62),N=46,ph=(x*3.7+z*1.3)%6.283;for(let k=0;k<N;k++){const t=.06+.84*k/N,f=t*seg,i=Math.min(seg-1,Math.floor(f)),u=f-i,A=pts[i],B=pts[i+1],rad=(.24-.09*t)*s+.03,an=ph+k*2.39,d=.032*s;
+  const px=A.x+(B.x-A.x)*u+Math.cos(an)*rad,py=A.y+(B.y-A.y)*u,pz=A.z+(B.z-A.z)*u+Math.sin(an)*rad;L.box(px-d,py-d,pz-d,px+d,py+d,pz+d,k%3?c0:c1)}}
  const top=pts[seg],G=night?['#1f5a4a','#1b4a52','#2a6a4c','#22605a']:['#3f8a3a','#4f9a40','#2f7a3a','#5aa048'];
  {const r1=r(),r2=r();mb.geo(GEO.ico,mtx(top.x,top.y-.05*s,top.z,.26*s*(inv?.5:1),.22*s*(inv?.6:1),.26*s*(inv?.5:1),r1,r2,0),inv?iC:tA)}
  for(let k=0;k<3;k++){const a=la+k*2.1+.4,r1=r(),r2=r();if(!inv)mb.geo(GEO.ico,mtx(top.x+Math.cos(a)*.2*s,top.y-.22*s,top.z+Math.sin(a)*.2*s,.13*s,.15*s,.13*s,r1,r2,0),COL(night?'#4a3a2a':'#6a4a22'))}

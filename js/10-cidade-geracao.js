@@ -418,7 +418,7 @@ async function generateCity(){
  M.glow=jammerBasicMaterial(new THREE.MeshBasicMaterial({map:glowTex,vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-4,polygonOffsetUnits:-4}));
  M.pole=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.6,metalness:.3});
  M.head=new THREE.MeshBasicMaterial({vertexColors:true});
- M.lglowBase=shade(st.lamp||'#ffc070',night?.5:.42);
+ M.lglowBase=shade(st.lamp||(S.style==='modern'||city.haze?'#ff9440':'#ffc070'),night?.5:S.style==='modern'||city.haze?.52:.42); /* v4 r55: sódio */
  M.lglow=new THREE.MeshBasicMaterial({map:glowTex,color:M.lglowBase.clone(),transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,polygonOffset:true,polygonOffsetFactor:0,polygonOffsetUnits:-2});/* v78: factor -4 (proporcional a inclinacao) fazia o halo (y .075) vazar por cima da calcada (y .2) em camera obliqua = dente no pe do poste. 7,5 cm sobre o asfalto ja bastam contra z-fight. */
  M.tl=new THREE.MeshBasicMaterial({color:0xffffff,side:THREE.DoubleSide});
  M.water=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.16,metalness:.3,emissive:S.style==='inverted'?0x000000:night?0x08061a:0x061a26,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});
