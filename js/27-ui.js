@@ -245,13 +245,13 @@ if(IS_MOBILE){ /* v3 r6: era MOB_LITE (desligado desde a r35) e o aviso de girar
  const portrait=matchMedia('(orientation: portrait)'),gate=$('#rotatePhone'),menuFull=$('#menuFullscreen');
  const syncOrientation=()=>{
   const vertical=portrait.matches;
-  /* v3 r8: botão some só com tela cheia de verdade (Chrome deitado ainda mostra a barra de endereço) */
-  menuFull.hidden=!!document.fullscreenElement||!document.documentElement.requestFullscreen;
+  const fullscreen=!!document.fullscreenElement||!!window.CoastalAndroid||matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches;
+  menuFull.hidden=fullscreen||!document.documentElement.requestFullscreen;
   // Mobile vertical: aviso obrigatorio, inclusive no menu e durante a partida.
   // Nao abre o menu automaticamente; ao voltar para paisagem retoma a tela anterior.
   /* v3 r8: deitado sem tela cheia de verdade (Chrome ainda mostra a barra) = mesma tela, só com o botão.
      Não aparece sem a API (iPhone), instalado como app, ou depois de um pedido recusado (fsSkip). */
-  const needFs=!vertical&&!fsSkip&&!document.fullscreenElement&&!!document.documentElement.requestFullscreen&&!matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches;
+  const needFs=!vertical&&!fsSkip&&!fullscreen&&!!document.documentElement.requestFullscreen;
   gate.classList.toggle('fs-only',needFs);
   gate.hidden=!(vertical||needFs);
   if(vertical||needFs){for(const k in keys)keys[k]=false;GUN.firing=false}
@@ -261,7 +261,7 @@ if(IS_MOBILE){ /* v3 r6: era MOB_LITE (desligado desde a r35) e o aviso de girar
  addEventListener('resize',syncOrientation);
  syncOrientation();
  async function requestLandscape(full){
-  try{if(full&&!document.fullscreenElement&&document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen()}catch{fsSkip=true}
+  try{if(full&&!window.CoastalAndroid&&!document.fullscreenElement&&document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen()}catch{fsSkip=true}
   try{await screen.orientation?.lock?.('landscape')}catch{}
   syncOrientation();
  }

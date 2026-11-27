@@ -161,7 +161,6 @@ body.touch #money{top:calc(14px + env(safe-area-inset-top,0px));left:calc(160px 
    Não reorganizar o rodapé do menu inicial. */
 #menu.in-game .mfoot>.row:last-child{justify-content:flex-start}
 #menu.in-game #monBtn{order:-2;margin-right:0}
-#menu.in-game #menuFullscreen{order:-1}
 #menu.in-game .mfoot>.row:last-child>label[for="loadFile"]{margin-left:auto}
 /* v186: menu inicial sem comandos e benchmark; monitor ao lado de configuracoes. */
 #menu:not(.in-game) > .card{gap:13px;padding:17px 22px}
