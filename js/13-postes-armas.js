@@ -74,11 +74,21 @@ function updateNearbyLampLights(dt){
 // Halo rente ao asfalto, com pequena folga para evitar z-fighting.
 let LAMPF=0;
 function lampGlowM(l){
- // Halo restrito ao lado da rua: nao atravessa a guia elevada da calcada.
- // O eixo comprido acompanha a via; o eixo curto aponta para o asfalto.
- const cx=l.x+l.dx*4.1,cz=l.z+l.dz*4.1;
- const ang=Math.atan2(l.dx,l.dz);
- return mtx(cx,.075,cz,7.2,1,12.5,0,ang,0);
+ const curb=l.curbOffset??.8;
+ return mtx(l.x+l.dx*curb,0,l.z+l.dz*curb,1,1,1,0,Math.atan2(l.dx,l.dz),0);
+}
+// Z local aponta para a rua. As três faixas compartilham o mesmo halo na guia.
+function lampGlowGeometry(){
+ const mb=new MB(),white=COL('#ffffff'),back=-4.5,front=9,half=4.6;
+ const strip=(z0,y0,z1,y1,nY,nZ)=>{
+  const v0=(z0-back)/(front-back),v1=(z1-back)/(front-back);
+  mb.quad([-half,y0,z0],[-half,y1,z1],[half,y1,z1],[half,y0,z0],0,nY,nZ,[0,0,1,1],white);
+  mb.u.splice(mb.u.length-8,8,0,v0,0,v1,1,v1,1,v0);
+ };
+ strip(back,.205,0,.205,1,0);
+ strip(0,.205,0,.025,0,1);
+ strip(0,.025,front,.025,1,0);
+ return mb.mesh(null).geometry;
 }
 function buildChunkLamps(ch){const M=city.M,n=ch.lamps.length;if(!n)return;const night=city.st.night;
  const pole=new THREE.InstancedMesh(M.poleGeo,M.pole,n),head=new THREE.InstancedMesh(M.headGeo,M.head,n),glow=new THREE.InstancedMesh(M.glowGeo,M.lglow,n);
@@ -848,10 +858,29 @@ function aircraftDamage(a,dmg,pt){
   obj.state='falling';obj.fvx=0;obj.fvz=0;obj.fvy=0;obj.spin=1+Math.random()*2;
  }
 }
-function rayHit(o,d,maxD,ignoreCar,cop){
+function animalShotHit(o,d,limit){
+ const scale=camMode==='top'&&!VIEW.orbit?1.5:1;
+ let nearest=null;
+ for(const a of ANIM.list){
+  if(a.dead||!a.sp.visible)continue;
+  const dog=a.kind==='dog',half=(dog?.68:.37)*scale,width=(dog?.24:.14)*scale,height=(dog?.94:.47)*scale;
+  const dx=o.x-a.x,dz=o.z-a.z,len=Math.hypot(a.mx,a.mz)||1;
+  const fx=a.mx/len,fz=a.mz/len;
+  const base=groundY(a.x,a.z)+(a.y||0);
+  const origin=new THREE.Vector3(dx*fz-dz*fx,o.y-base,dx*fx+dz*fz);
+  const direction=new THREE.Vector3(d.x*fz-d.z*fx,d.y,d.x*fx+d.z*fz);
+  const bounds=new THREE.Box3(new THREE.Vector3(-width,0,-half),new THREE.Vector3(width,height,half));
+  const point=new THREE.Ray(origin,direction).intersectBox(bounds,new THREE.Vector3());
+  if(!point)continue;
+  const distance=point.distanceTo(origin);
+  if(distance<limit){limit=distance;nearest={animal:a,pt:o.clone().addScaledVector(d,distance)}}
+ }
+ return nearest;
+}
+function rayHit(o,d,maxD,ignoreCar,cop,animals=false){
  // Hit dos helicopteros/avioes precisa considerar Y; somente buscar entre
  // os alvos aereos uma vez por raio, sem multiplicar custo por passo.
- const air=cop?null:aircraftRayHit(o,d,maxD),reach=air?air.dist:maxD;
+ const air=cop?null:aircraftRayHit(o,d,maxD),animal=animals?animalShotHit(o,d,air?air.dist:maxD):null,reach=animal?o.distanceTo(animal.pt):air?air.dist:maxD;
  for(let s=.25;s<reach;s+=.45){const x=o.x+d.x*s,y=o.y+d.y*s,z=o.z+d.z*s;
   if(y<.05)return{pt:new THREE.Vector3(x,.05,z)};
   // Sacadas ficam altas e ligeiramente para fora da fachada. Testar antes do colisor
@@ -868,7 +897,7 @@ function rayHit(o,d,maxD,ignoreCar,cop){
   for(const c of carsNear(x,z,5)){if(c===ignoreCar)continue;const dx=x-c.x,dz=z-c.z,ca=Math.cos(c.a),sa=Math.sin(c.a),lx=dx*ca+dz*sa,lz=-dx*sa+dz*ca;if(Math.abs(lx)<c.t.L/2&&Math.abs(lz)<c.t.W/2){const cabin=!cop&&trafficCabinHit(c,lx,lz,y);if(cabin||y<c.gy+c.t.H+.2)return{pt:new THREE.Vector3(x,y,z),car:c,cabin}}}
   for(const p of peds){if(p.state==='dead'||p===cop)continue;if(cop&&p.cop)continue;if(Math.abs(p.x-x)<.45&&Math.abs(p.z-z)<.45&&y>=(p.gy||0)+(p.jy||0)-.05&&y<=(p.gy||0)+(p.jy||0)+2.0)return{pt:new THREE.Vector3(x,y,z),ped:p}}
   if(cop&&!PL.car&&!PL.dead&&Math.abs(PL.x-x)<.55&&Math.abs(PL.z-z)<.55&&y<2.1)return{pt:new THREE.Vector3(x,y,z),player:true}}
- return air||{pt:new THREE.Vector3(o.x+d.x*maxD,o.y+d.y*maxD,o.z+d.z*maxD)}}
+ return animal||air||{pt:new THREE.Vector3(o.x+d.x*maxD,o.y+d.y*maxD,o.z+d.z*maxD)}}
 const mouseNDC=new THREE.Vector2(),_ray=new THREE.Raycaster();
 function playerShoot(useFace){if(PL.heli){GUN.firing=false;return}if(!GUN.has||PL.dead||menuOpen||GUN.cd>0)return;
  if(PL.car&&!vehicleWeaponAllowed(GUN.w)){GUN.firing=false;GUN.cd=.5;toast('ARMA INDISPONÍVEL NESTE ASSENTO');return}if(GUN.w==='jammer'){GUN.cd=.8;GUN.firing=false;if(GUN.ammo<=0&&!CHEAT.ammo){toast('SEM JAMMERS');return}if(jammerFire()&&!CHEAT.ammo){GUN.ammo=Math.max(0,GUN.ammo-1);if(GUN.inv.jammer)GUN.inv.jammer.ammo=GUN.ammo}return}if((GUN.w==='grenade'&&(PL.car||PL.heli||PL.inside))||(GUN.w==='remote'&&(PL.car||PL.heli))){GUN.firing=false;toast(GUN.w==='grenade'?'GRANADA · ARREMESSE A PÉ':'BOMBA PROGRAMADA · PLANTE A PÉ');GUN.cd=.8;return}const W=WPN[GUN.w];GUN.cd=W.cd*(1-.10*ammoUpgrade(GUN.w,'rate'));GUN.kickAt=performance.now();
@@ -882,7 +911,7 @@ function playerShoot(useFace){if(PL.heli){GUN.firing=false;return}if(!GUN.has||P
    // Alvo = primeiro objeto real ao longo do raio da camera no mundo 3D.
    // Inclui fachadas, telhados, pedestres e aeronaves; nao achata Y a zero.
    _ray.setFromCamera(mouseNDC,camera);
-   const r=_ray.ray,h=rayHit(r.origin,r.direction,320,PL.car||netRideCar(),null);
+   const r=_ray.ray,h=rayHit(r.origin,r.direction,320,PL.car||netRideCar(),null,true);
    d.copy(h.pt).sub(o);
    if(d.lengthSq()<.01)d.set(PL.face[0],0,PL.face[1]);
   }
@@ -896,10 +925,11 @@ function playerShoot(useFace){if(PL.heli){GUN.firing=false;return}if(!GUN.has||P
  if(GUN.w==='grenade'){throwGrenade(d);GUN.firing=false;return}
  if(GUN.w==='remote'){remotePlant(d);GUN.firing=false;return}
  if(GUN.w==='rpg'){const s0=PL.car?o.clone().addScaledVector(d,1):(camMode==='top'?new THREE.Vector3(src.x+d.x*1.2,by+.2,src.z+d.z*1.2):o.clone().addScaledVector(d,.8));fireRocket(s0,d);return}
- const h=rayHit(o,d,d.y>.12?260:105,PL.car||netRideCar(),null);if(h.air){aircraftDamage(h.air,W.dmg*(1+.10*ammoUpgrade(GUN.w,'damage')),h.pt);tracer(o,h.pt);gunSound(1,1,GUN.w);return}try{empGoodsHit(h.pt,GUN.w==='magnum'?3:1)}catch(e){}gasShot(h.pt,GUN.w);labTankPoke(h.pt,.4,h.ped);if(PL.inside==='shop'&&SHOP.cashier)SHOP.rob=Math.max(SHOP.rob,2.6);const mz=new THREE.Vector3(src.x+d.x*1,by,src.z+d.z*1);
+ const h=rayHit(o,d,d.y>.12?260:105,PL.car||netRideCar(),null,true);if(h.air){aircraftDamage(h.air,W.dmg*(1+.10*ammoUpgrade(GUN.w,'damage')),h.pt);tracer(o,h.pt);gunSound(1,1,GUN.w);return}try{empGoodsHit(h.pt,GUN.w==='magnum'?3:1)}catch(e){}gasShot(h.pt,GUN.w);labTankPoke(h.pt,.4,h.ped);if(PL.inside==='shop'&&SHOP.cashier)SHOP.rob=Math.max(SHOP.rob,2.6);const mz=new THREE.Vector3(src.x+d.x*1,by,src.z+d.z*1);
  let tr0=camMode==='top'?mz:o;if(PL.car){const c=PL.car,ca=Math.cos(c.a),sa=Math.sin(c.a),side=(-sa*d.x+ca*d.z)>=0?1:-1;tr0=new THREE.Vector3(c.x-sa*side*(c.t.W/2+.15)+d.x*.6,c.gy+1.15,c.z+ca*side*(c.t.W/2+.15)+d.z*.6);emit(tr0.x,tr0.y,tr0.z,d.x*3,.4,d.z*3,.08,.6,.1,0xffd070,true,1)}
  tracer(tr0,h.pt);emit(mz.x,mz.y,mz.z,d.x*3,.5,d.z*3,.08,.6,.1,0xffd070,true,1);for(let i=0;i<5;i++)emit(h.pt.x,h.pt.y,h.pt.z,(Math.random()-.5)*4,Math.random()*3,(Math.random()-.5)*4,.25,.2,.05,0xffc060,true,1);
  gunSound(GUN.w==='smg'?.7:GUN.w==='magnum'?1.25:1,GUN.w==='smg'?1.15:GUN.w==='magnum'?.82:1,GUN.w);
+ if(h.animal){h.animal.dead=true;h.animal.deadT=0;h.animal.shot=true;bloodHit(h.pt.x,h.pt.y,h.pt.z,d)}
  if(h.ped&&h.ped.state!=='dead')bloodHit(h.pt.x,Math.max(.6,h.pt.y),h.pt.z,d);
  if(h.car&&h.car.net){if(h.car!==netRideCar())netHit(h.car.net,W.dmg*(1+.10*ammoUpgrade(GUN.w,'damage')),true,GUN.w)}
  else if(h.car){const c=h.car;if(h.cabin)trafficCabinFlee(c);if(c.mode==='rail')toPhys(c);if(c.type==='moto'&&c!==PL.car&&c.hasRider!==false&&(c.ai||c.chase))motoThrow(c,d);c.hp-=W.dmg*(1+.10*ammoUpgrade(GUN.w,'damage'));c.sleep=false;if(c.hp<=0&&c.alive)setOnFire(c);if(policeTrafficCar(c))startWanted();if(c.ai)c.ai.stun=.8}

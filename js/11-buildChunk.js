@@ -358,7 +358,7 @@ function buildChunk(ci,cj){const key=ci+','+cj;if(city.chunks.has(key))return;if
    nrSign(roadSignPlane(ch.group,roadSignMaterial('guide',tg.slice(0,2).map(t=>[t.name,arrow(t.pos)])),sp[0],(pB+pT)/2,sp[1],3.6,1.35,nW[0],nW[1]))}
   const ts=city.tuneSpot,nearT=(x,z,m)=>ts&&Math.hypot(x-ts.x,z-ts.z)<m,uA=ua+SW+2.5,uB=ub-SW-2.5,lampsAt=[];
   for(let u=uA+5,k=0;u<uB;u+=17,k++){if(u>ta-4&&u<tb+4)continue;const s2=k%2?1:-1,p=Wp(u,c+s2*(aw/2+.45));if(nearT(p[0],p[1],9.5))continue;const d=Wp(0,-s2); /* entrada da oficina livre para o carro */
-   const l={x:p[0],z:p[1],dx:d[0],dz:d[1],broken:false,th:.3+q()*.4,ch};ch.lamps.push(l);l.col=addCol(p[0]-.18,p[1]-.18,p[0]+.18,p[1]+.18,'pole');l.col.lamp=l;lampsAt.push(p)}
+   const l={x:p[0],z:p[1],dx:d[0],dz:d[1],curbOffset:.45,broken:false,th:.3+q()*.4,ch};ch.lamps.push(l);l.col=addCol(p[0]-.18,p[1]-.18,p[0]+.18,p[1]+.18,'pole');l.col.lamp=l;lampsAt.push(p)}
   /* coqueiros FIXOS (referência): 1 junto ao túnel do lado da placa verde + 2 nas esquinas do começo da rua */
   const palmsAt=[],palmAt=(u,sdv)=>{let uu=u;for(let k=0;k<3;k++){const p=Wp(uu,c+sdv*(h-1.05));if(!lampsAt.some(a=>Math.hypot(a[0]-p[0],a[1]-p[1])<2.4)&&!nearT(p[0],p[1],9.5)){tree(p[0],p[1],.2,qr(1.05,1.25),true);palmsAt.push(p);return}uu+=(u<(ua+ub)/2?1:-1)*2.2}};
   palmAt(inner+sg*6.8,NR.rightV) /* v78: mais longe do túnel (sentido do banco) pra não tampar a placa verde */;{const uF=NR.end===0?ub:ua,dF=NR.end===0?-1:1;palmAt(uF+dF*6.5,-1);palmAt(uF+dF*6.5,1)}
