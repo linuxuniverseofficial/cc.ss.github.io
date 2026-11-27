@@ -252,7 +252,7 @@ const EU2=new THREE.Euler(0,0,0,'YXZ');
    Frente = +x (como o carParts). Proporções por família; null = usa a geometria normal. */
 const INST_BOX={sedan:[.55,-.3,.2],taxi:[.55,-.3,.2],police:[.55,-.3,.2],wagon:[.55,-.42,.2],hatch:[.55,-.38,.18],crossover:[.55,-.34,.2],suv:[.55,-.4,.2],mini:[.55,-.4,.2],
  sports:[.58,-.26,.1],super:[.6,-.22,.1],roadster:[.62,-.2,.04],conv:[.62,-.2,.04],pickup:[.55,-.05,.3],van:[.5,-.47,.36],bus:[.42,-.48,.46],truck:'truck'};
-function instBoxGeo(k){const f=INST_BOX[k],t=VT[k];if(!f)return null;const m=new MB(),L=t.L/2,W=t.W/2,H=t.H,y0=t.wr*.95,wh=COL('#ffffff'),gl=COL('#1c2530');
+function instBoxGeo(k){const f=INST_BOX[k],t=VT[k];if(!f)return null;const m=new MB(),L=t.L/2,W=t.W/2,H=t.H,y0=t.wr*.95,wh=COL('#ffffff'),gl=COL('#1c2530');m.carGlassColor=gl;
  if(f==='truck'){const cx=L-1.9;m.box(cx,y0,-W,L,H*.42,W,wh);m.box(cx+.2,H*.42,-W+.06,L-.15,H*.8,W-.06,gl,{topCol:wh});m.box(-L,y0,-W,cx-.1,H,W,wh)}
  else{const [lo,c0,c1]=f;m.box(-L,y0,-W,L,H*lo,W,wh);
   if(k==='roadster'||k==='conv')m.box(-L*.1,H*lo,-W+.12,L*c1+.15,H*.88,W-.12,gl);

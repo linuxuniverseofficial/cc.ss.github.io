@@ -865,7 +865,7 @@ function rayHit(o,d,maxD,ignoreCar,cop){
    const top=b.kind==='bld'?(b.top??roofTop(b)):(b.low??2.4);
    if(y>=-.5&&y<=top+.12)return{pt:new THREE.Vector3(x,y,z),wall:b}
   }
-  for(const c of carsNear(x,z,5)){if(c===ignoreCar)continue;const dx=x-c.x,dz=z-c.z,ca=Math.cos(c.a),sa=Math.sin(c.a),lx=dx*ca+dz*sa,lz=-dx*sa+dz*ca;if(Math.abs(lx)<c.t.L/2&&Math.abs(lz)<c.t.W/2&&y<c.gy+c.t.H+.2)return{pt:new THREE.Vector3(x,y,z),car:c}}
+  for(const c of carsNear(x,z,5)){if(c===ignoreCar)continue;const dx=x-c.x,dz=z-c.z,ca=Math.cos(c.a),sa=Math.sin(c.a),lx=dx*ca+dz*sa,lz=-dx*sa+dz*ca;if(Math.abs(lx)<c.t.L/2&&Math.abs(lz)<c.t.W/2){const cabin=!cop&&trafficCabinHit(c,lx,lz,y);if(cabin||y<c.gy+c.t.H+.2)return{pt:new THREE.Vector3(x,y,z),car:c,cabin}}}
   for(const p of peds){if(p.state==='dead'||p===cop)continue;if(cop&&p.cop)continue;if(Math.abs(p.x-x)<.45&&Math.abs(p.z-z)<.45&&y>=(p.gy||0)+(p.jy||0)-.05&&y<=(p.gy||0)+(p.jy||0)+2.0)return{pt:new THREE.Vector3(x,y,z),ped:p}}
   if(cop&&!PL.car&&!PL.dead&&Math.abs(PL.x-x)<.55&&Math.abs(PL.z-z)<.55&&y<2.1)return{pt:new THREE.Vector3(x,y,z),player:true}}
  return air||{pt:new THREE.Vector3(o.x+d.x*maxD,o.y+d.y*maxD,o.z+d.z*maxD)}}
@@ -902,7 +902,7 @@ function playerShoot(useFace){if(PL.heli){GUN.firing=false;return}if(!GUN.has||P
  gunSound(GUN.w==='smg'?.7:GUN.w==='magnum'?1.25:1,GUN.w==='smg'?1.15:GUN.w==='magnum'?.82:1,GUN.w);
  if(h.ped&&h.ped.state!=='dead')bloodHit(h.pt.x,Math.max(.6,h.pt.y),h.pt.z,d);
  if(h.car&&h.car.net){if(h.car!==netRideCar())netHit(h.car.net,W.dmg*(1+.10*ammoUpgrade(GUN.w,'damage')),true,GUN.w)}
- else if(h.car){const c=h.car;if(c.mode==='rail')toPhys(c);if(c.type==='moto'&&c!==PL.car&&c.hasRider!==false&&(c.ai||c.chase))motoThrow(c,d);c.hp-=W.dmg*(1+.10*ammoUpgrade(GUN.w,'damage'));c.sleep=false;if(c.hp<=0&&c.alive)setOnFire(c);if(policeTrafficCar(c))startWanted();if(c.ai)c.ai.stun=.8}
+ else if(h.car){const c=h.car;if(h.cabin)trafficCabinFlee(c);if(c.mode==='rail')toPhys(c);if(c.type==='moto'&&c!==PL.car&&c.hasRider!==false&&(c.ai||c.chase))motoThrow(c,d);c.hp-=W.dmg*(1+.10*ammoUpgrade(GUN.w,'damage'));c.sleep=false;if(c.hp<=0&&c.alive)setOnFire(c);if(policeTrafficCar(c))startWanted();if(c.ai)c.ai.stun=.8}
  if(h.ped&&h.ped.state!=='dead'&&h.ped.net){const q=h.ped,head=h.pt.y-((q.gy||0)+(q.jy||0))>1.42;if(head)toast('TIRO NA CABEÇA');netHitPed(q,head||GUN.w==='magnum'?100:20*(1+.10*ammoUpgrade(GUN.w,'damage')),GUN.w)}
  else if(h.ped&&h.ped.state!=='dead'){const q=h.ped,head=h.pt.y-((q.gy||0)+(q.jy||0))>1.42&&q.state!=='down'&&q.state!=='lie',dmg=head||GUN.w==='magnum'?(q.tommy!==undefined?3:99):.61*(1+.10*ammoUpgrade(GUN.w,'damage'));if(q.hp===undefined)q.hp=3;q.hp-=dmg;if(q.cop)startWanted();
   if(head)toast('TIRO NA CABEÇA');if(q.hp<=0){killPed(q);registerKill(q,true)}else if(!q.cop&&!q.demo&&!q.gang&&!q.balcony&&q.tommy===undefined){const dx=q.x-src.x,dz=q.z-src.z,l=Math.hypot(dx,dz)||1;q.strip=null;q.fixed=false;q.state='flee';q.timer=5+R2()*3;q.vx=dx/l*4.8;q.vz=dz/l*4.8;q.rot=0;dropUmbrella(q);ouch(q.x,q.z,q.pitch);if(Math.random()<.45)say(q,SAY.hurt,2)}}

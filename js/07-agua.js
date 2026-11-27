@@ -163,6 +163,14 @@ vec4 fwTexB(sampler2D t,vec2 uv,float b){
    night = layout da textura noturna (Synthwave): janela menor e sem o caixilho do meio.
    Remover de vez: tirar winReflPatch(M.wall,night) no generateCity (ver CONTEXT §2b). */
 const WINR={pct:{value:.3}}; /* fração de janelas com cômodo (v4 r9: .3); no console WINR.pct.value=1 mostra em todas (teste) */
+const WINDOW_REFLECTION_GLSL=`if(wrG>.01){vec3 wrR=reflect(wrV,wrN);float wrCs=clamp(dot(-wrV,wrN),0.,1.);
+     float wrF=.1+.7*pow(1.-wrCs,3.);float u=wrR.y;
+     vec3 wrS=u>0.?mix(hor,top,pow(u,.55)):mix(hor*.7,hor*.24+vec3(.04),smoothstep(0.,.4,-u));
+     float az=atan(wrR.z,wrR.x)*9.;float wrH=fract(sin(floor(az)*12.989+floor(vWrW.x/48.)*3.7+floor(vWrW.z/48.)*7.3)*43758.55);
+     float wrB=step(u,.04+wrH*wrH*.32)*step(-.02,u)*step(.25,wrH);wrS=mix(wrS,hor*mix(.42,.3,wrH)+top*.06,wrB*.85);
+     vec3 wrSd=normalize(sunDir);float wrSn=pow(max(dot(wrR,wrSd),0.),220.)*2.4*smoothstep(-.03,.08,wrSd.y)*sunDim*(1.-.85*csSun)*(1.-night)*(1.-wK.y)*(1.-wrB);
+     float wrK=wrF*wrG*mix(1.,mix(.3,.6,synth),night)*(1.-smoothstep(260.,420.,wrDist)*.5);
+     gl_FragColor.rgb=mix(gl_FragColor.rgb,wrS*mix(1.,.75,night),clamp(wrK,0.,.85))+vec3(1.,.93,.8)*wrSn*wrG;}`;
 function winReflPatch(mat,night){if(!mat||mat.userData.winRefl)return mat;mat.userData.winRefl=true;const old=mat.onBeforeCompile,key=(mat.customProgramCacheKey&&mat.customProgramCacheKey())||'';
  const rect=night?new THREE.Vector4(8/32,11/32,24/32,23/32):new THREE.Vector4(5/32,7/32,27/32,25/32),mull=night?0:1/32;
  mat.onBeforeCompile=(sh,r)=>{if(old)old.call(mat,sh,r);const K=skyMat.uniforms;Object.assign(sh.uniforms,{fxK:SHFX.U.fxK,top:K.top,hor:K.hor,sunDir:K.sunDir,night:K.night,sunDim:K.sunDim,csSun:K.csSun,synth:K.synth,wK:WTR.U.wK,wrRect:{value:rect},wrMull:{value:mull},wrTm:SHFX.U.fxT,wrPct:WINR.pct,wrInv:{value:S.style==='inverted'?1:0}});
@@ -225,14 +233,7 @@ function winReflPatch(mat,night){if(!mat||mat.userData.winRefl)return mat;mat.us
      vec3 wrLamp=totalEmissiveRadiance*step(.04,wrL)*mix(1.,.5,synth);float wrAmb=mix(mix(.55,.025,night)*(.4+.6*sunDim),.1,wrInv); /* v4 r13: no Synthwave a janela acesa (1,25 + bloom forte) estourava em branco; no Invertido não há luz elétrica: TV desligada e só a penumbra vermelha de fora */
      gl_FragColor.rgb=mix(gl_FragColor.rgb,wrRoom(wrA,wrD,wrId,wrLamp,wrAmb),wrI);}}
     wrG*=1.-smoothstep(.04,.3,wrL);
-    if(wrG>.01){vec3 wrR=reflect(wrV,wrN);float wrCs=clamp(dot(-wrV,wrN),0.,1.);
-     float wrF=.1+.7*pow(1.-wrCs,3.);float u=wrR.y;
-     vec3 wrS=u>0.?mix(hor,top,pow(u,.55)):mix(hor*.7,hor*.24+vec3(.04),smoothstep(0.,.4,-u));
-     float az=atan(wrR.z,wrR.x)*9.;float wrH=fract(sin(floor(az)*12.989+floor(vWrW.x/48.)*3.7+floor(vWrW.z/48.)*7.3)*43758.55);
-     float wrB=step(u,.04+wrH*wrH*.32)*step(-.02,u)*step(.25,wrH);wrS=mix(wrS,hor*mix(.42,.3,wrH)+top*.06,wrB*.85);
-     vec3 wrSd=normalize(sunDir);float wrSn=pow(max(dot(wrR,wrSd),0.),220.)*2.4*smoothstep(-.03,.08,wrSd.y)*sunDim*(1.-.85*csSun)*(1.-night)*(1.-wK.y)*(1.-wrB);
-     float wrK=wrF*wrG*mix(1.,mix(.3,.6,synth),night)*(1.-smoothstep(260.,420.,wrDist)*.5);
-     gl_FragColor.rgb=mix(gl_FragColor.rgb,wrS*mix(1.,.75,night),clamp(wrK,0.,.85))+vec3(1.,.93,.8)*wrSn*wrG;}}
+    ${WINDOW_REFLECTION_GLSL}}
    #endif
    #include <tonemapping_fragment>`)};
  mat.customProgramCacheKey=()=>key+'|winRefl5';mat.needsUpdate=true;return mat}

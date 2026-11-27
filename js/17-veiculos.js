@@ -52,9 +52,9 @@ function randomType0(st,x,z){const r=R2();
    coordenadas de mundo; mesma atenuacao do PointLight (decay 2, alcance 14) e mesmo difuso Lambert. So os pixels de carro pagam. */
 const CAR_LAMP={p:{value:[0,1,2,3].map(()=>new THREE.Vector3())},c:{value:[0,1,2,3].map(()=>new THREE.Color(0,0,0))}};
 function carLampSync(){for(let i=0;i<4;i++){const s=nearLampLights[i],l=s&&s.light;if(l&&l.intensity>0){CAR_LAMP.p.value[i].copy(l.position);CAR_LAMP.c.value[i].copy(l.color).multiplyScalar(l.intensity)}else CAR_LAMP.c.value[i].setRGB(0,0,0)}}
-function carLampInject(sh){sh.uniforms.cLP=CAR_LAMP.p;sh.uniforms.cLC=CAR_LAMP.c;{const K=skyMat.uniforms;sh.uniforms.fxK=SHFX.U.fxK;sh.uniforms.cBurnt={value:0};sh.uniforms.top=K.top;sh.uniforms.hor=K.hor;sh.uniforms.sunDir=K.sunDir;sh.uniforms.night=K.night;sh.uniforms.sunDim=K.sunDim;sh.uniforms.csSun=K.csSun}
- sh.vertexShader='varying vec3 vCWp;\n'+sh.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\n vCWp=(modelMatrix*vec4(transformed,1.0)).xyz;');
- sh.fragmentShader='uniform vec3 cLP[4];uniform vec3 cLC[4];varying vec3 vCWp;uniform vec4 fxK;uniform float cBurnt,night,sunDim,csSun;uniform vec3 top,hor,sunDir;\n'+sh.fragmentShader.replace('#include <tonemapping_fragment>',CAR_SKY_GLSL+'\n#include <tonemapping_fragment>').replace('#include <lights_fragment_end>','#include <lights_fragment_end>\n {vec3 cN=inverseTransformDirection(geometry.normal,viewMatrix);for(int i=0;i<4;i++){if(cLC[i].r+cLC[i].g+cLC[i].b<=0.0)continue;vec3 lv=cLP[i]-vCWp;float d=length(lv);float at=pow(saturate(1.0-d/14.0),2.0);float nl=saturate(dot(cN,lv/max(d,.001)));reflectedLight.directDiffuse+=cLC[i]*(at*nl)*material.diffuseColor;}}')}
+function carLampInject(sh){sh.uniforms.cLP=CAR_LAMP.p;sh.uniforms.cLC=CAR_LAMP.c;{const K=skyMat.uniforms;sh.uniforms.fxK=SHFX.U.fxK;sh.uniforms.cBurnt={value:0};sh.uniforms.top=K.top;sh.uniforms.hor=K.hor;sh.uniforms.sunDir=K.sunDir;sh.uniforms.night=K.night;sh.uniforms.sunDim=K.sunDim;sh.uniforms.csSun=K.csSun;sh.uniforms.synth=K.synth;sh.uniforms.wK=WTR.U.wK}
+ sh.vertexShader='varying float vCarGlass;varying vec3 vCWp;\n'+sh.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\n vCarGlass=float(uv.x==-8.);vec4 carPos=vec4(transformed,1.);\n#ifdef USE_INSTANCING\n carPos=instanceMatrix*carPos;\n#endif\n vCWp=(modelMatrix*carPos).xyz;');
+ sh.fragmentShader='varying float vCarGlass;uniform vec4 wK;uniform float synth;uniform vec3 cLP[4];uniform vec3 cLC[4];varying vec3 vCWp;uniform vec4 fxK;uniform float cBurnt,night,sunDim,csSun;uniform vec3 top,hor,sunDir;\n'+sh.fragmentShader.replace('#include <tonemapping_fragment>',CAR_SKY_GLSL+CAR_GLASS_GLSL+'\n#include <tonemapping_fragment>').replace('#include <lights_fragment_end>','#include <lights_fragment_end>\n {vec3 cN=inverseTransformDirection(geometry.normal,viewMatrix);for(int i=0;i<4;i++){if(cLC[i].r+cLC[i].g+cLC[i].b<=0.0)continue;vec3 lv=cLP[i]-vCWp;float d=length(lv);float at=pow(saturate(1.0-d/14.0),2.0);float nl=saturate(dot(cN,lv/max(d,.001)));reflectedLight.directDiffuse+=cLC[i]*(at*nl)*material.diffuseColor;}}')}
 /* v3 r25: reflexo do céu na lataria (SHFX fxK.w): Fresnel com as cores do skyMat (top/hor, compartilhadas: acompanha
    dia, pôr do sol, noite e outros mundos sem CPU), abaixo do horizonte reflete "chão" escuro (a linha do horizonte na porta),
    e um brilho pequeno do sol. Carcaça queimada (cBurnt) fica sem. */
@@ -64,6 +64,12 @@ const CAR_SKY_GLSL=`if(fxK.w>.5&&cBurnt<.5){vec3 cV=normalize(vCWp-cameraPositio
  cSk+=hor*.22*(1.-smoothstep(0.,.07,abs(cU-.015)))*(1.-night);
  vec3 cSd=normalize(sunDir);float cS=pow(max(dot(cR,cSd),0.),260.)*2.*smoothstep(-.03,.08,cSd.y)*sunDim*(1.-.85*csSun)*(1.-night);
  gl_FragColor.rgb=mix(gl_FragColor.rgb,cSk*mix(1.,.65,night),cF*mix(.6,.35,night))+vec3(1.,.93,.8)*cS;}`;
+const CAR_GLASS_GLSL=`if(vCarGlass>.5 && fxK.z>.5 && cBurnt<.5){
+ vec3 wrW=vCWp,wrV=normalize(wrW-cameraPosition),wrN=normalize(inverseTransformDirection(normal,viewMatrix));
+ if(dot(wrN,wrV)>0.)wrN=-wrN;
+ vec3 vWrW=wrW;float wrDist=length(wrW-cameraPosition),wrG=1.;
+ ${WINDOW_REFLECTION_GLSL}
+}`;
 const carBodyMat=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.42,metalness:.18});
 carBodyMat.onBeforeCompile=carLampInject;carBodyMat.customProgramCacheKey=()=>'carLamp';
 const carLightMat=new THREE.MeshBasicMaterial({vertexColors:true});
@@ -155,6 +161,7 @@ const CARG={sph:new THREE.SphereGeometry(1,12,8).toNonIndexed(),mid:new THREE.Sp
 function carParts(type,colHex,st,body,li,cargoHex,riderMB,detail=false){
  const t=VT[type],L=t.L,W=t.W,hw=W/2;
  const col=COL(colHex),dark=COL('#1c1c20'),glass=COL(st.synth?'#151a2a':'#1e2836'),hl=COL('#fff4cc'),tl=COL('#ff1a2a');
+ if(!t.boat&&!t.hover)body.carGlassColor=glass;
  const lights=(fy0,fy1,inset,w)=>{li.box(L/2-.04,fy0,-hw+inset,L/2+.03,fy1,-hw+inset+w,hl);li.box(L/2-.04,fy0,hw-inset-w,L/2+.03,fy1,hw-inset,hl);
   li.box(-L/2-.03,fy0,-hw+inset,-L/2+.04,fy1,-hw+inset+w,tl);li.box(-L/2-.03,fy0,hw-inset-w,-L/2+.04,fy1,hw-inset,tl)};
  if(type==='boat'){const wh=COL('#f2f2ee'),blk=COL('#1c1c22'),gl=COL(st.synth?'#151a2a':'#2a3a4a'),deck=COL('#c8a878'),bot=COL('#26303c'),chr=COL('#c4c8ce'),cush=COL('#e8e2d4');

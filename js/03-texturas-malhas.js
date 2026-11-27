@@ -199,7 +199,8 @@ class MB{constructor(indexed=true){this.p=[];this.n=[];this.u=[];this.c=[];this.
    if(ax>=0){const u=(ax+1)%3,w=(ax+2)%3,sg=ax===0?Math.sign(nx):ax===1?Math.sign(ny):Math.sign(nz);
     const off=zfFix(ax,sg,a[ax],Math.min(a[u],b[u],c[u],d[u]),Math.max(a[u],b[u],c[u],d[u]),Math.min(a[w],b[w],c[w],d[w]),Math.max(a[w],b[w],c[w],d[w]),col,ZF.box>0);
     if(off){a=a.slice();b=b.slice();c=c.slice();d=d.slice();a[ax]+=off;b[ax]+=off;c[ax]+=off;d[ax]+=off}}}
-  const P=this.p,[u0,v0,u1,v1]=uv;
+  // A carroceria usa cores por vértice. U=-8 identifica exclusivamente as faces de vidro.
+  const P=this.p,[u0,v0,u1,v1]=col===this.carGlassColor&&col?[-8,0,-8,1]:uv;
   if(streetWindow){const first=P.length/3,count=this.idx?(c[0]===d[0]&&c[1]===d[1]&&c[2]===d[2]||b[0]===c[0]&&b[1]===c[1]&&b[2]===c[2]?3:4):6;
    (this.streetWindowRanges||(this.streetWindowRanges=[])).push([first,first+count])}
   if(this.idx){const b0=P.length/3,cdSame=c[0]===d[0]&&c[1]===d[1]&&c[2]===d[2],bcSame=!cdSame&&b[0]===c[0]&&b[1]===c[1]&&b[2]===c[2];
