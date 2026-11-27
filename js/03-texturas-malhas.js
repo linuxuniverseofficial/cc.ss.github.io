@@ -256,7 +256,7 @@ class MB{constructor(indexed=true){this.p=[];this.n=[];this.u=[];this.c=[];this.
  mesh(mat,cast=true,recv=true){if(!this.p.length)return null;mbCheck(this);const g=new THREE.BufferGeometry();
   g.setAttribute('position',new THREE.Float32BufferAttribute(this.p,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(this.n,3));
   g.setAttribute('uv',new THREE.Float32BufferAttribute(this.u,2));g.setAttribute('color',new THREE.Float32BufferAttribute(this.c,3));
-  if(mat.userData.winRefl){
+  if(mat?.userData?.winRefl){
    const street=new Uint8Array(this.p.length/3);
    for(const [first,end] of this.streetWindowRanges||[])street.fill(1,first,end);
    g.setAttribute('streetWindow',new THREE.BufferAttribute(street,1));

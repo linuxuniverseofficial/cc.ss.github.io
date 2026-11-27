@@ -150,6 +150,8 @@ Os CSS entram na ordem do número (a cascata depende disso); `05-fenda.css` fica
 
 ---
 
+- A paralaxe de cômodos é restrita às faces com frente para rua. Janelas de beco, pátio e fundo usam o mesmo reflexo do vidro.
+
 ## 2b. Registro de efeitos de shader (desde as nuvens) — para tirar se pesar
 
 Pedido do José (r25): todo efeito de shader novo entra nesta tabela, com onde mora e como desligar/remover. Se ele disser que pesou, é por aqui que se tira.
@@ -361,6 +363,8 @@ Estágios (`PROLOGUE`, Ctrl+Shift+F9 pula em debug): `dealer` → `driveFirst` (
 - **Janela nova com botões precisa funcionar no controle (v3 r28).** Ou entra no `padDialog` (navegação espacial `padNavFocus`, ○ fecha, ✕ clica; campo de texto → `padTextKey`/MINIKEY; cor → `padColorStep`), ou ganha um handler próprio no `padPoll` como `skUiPad`. Se o clique redesenha os botões (`innerHTML=''`), devolver o foco ao mesmo lugar. Antes da r28 a tela do online e a skate shop não navegavam no controle.
 
 ## 9. Registro recente (v79 r1–r49 → v1)
+
+- **v4 r64 · Paralaxe dos cômodos só nas janelas de rua.** A malha de fachadas marca as faces externas com rua e o shader usa a marcação só para o cômodo. Becos, pátios e fundos preservam a reflexão do vidro. Os andares recuados herdam as faces elegíveis do lote. Vale para Sunset Shores, Synthwave e Mundo Invertido pelo mesmo shader. Validação em Node: geometria de esquina, beco, via ausente, água, fachadas curvas e máscara separada do reflexo. Validação visual pendente. Arquivos: `js/03-texturas-malhas.js`, `js/07-agua.js`, `js/11-buildChunk.js`, `CONTEXT.md` e versão.
 
 - **v4 r63 · Gangues dos becos respeitam paredes.** A ativação por distância ignorava oclusão, a perseguição deslocava a âncora direto para o jogador e o tiro aplicava dano sem colisão. Agora cada membro só reage com linha de visão e jogador a até 6 m da área do beco, anda dentro do corredor e tem o tiro bloqueado pelo primeiro obstáculo. As incursões rivais partem das pontas do beco e também exigem visão para disparar. Testado em Node: posição inicial, parede fina, movimento, limite do corredor, linha de visão, traçante, dano e jogador em veículo protegido. Validação visual pendente, Chromium indisponível no ambiente. Arquivos: `js/14-clima-policia.js`, `js/19-celular-eventos.js`, `js/32-imperio-banco-cassino.js`, `js/48-tvcat.js`, `CONTEXT.md` e versão.
 

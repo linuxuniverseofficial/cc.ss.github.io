@@ -195,11 +195,13 @@ function zfPost(P,p0,plain,idx,i0){ // anti z-fight depois de girar/mover: quads
 /* dev r2.3: trava de consistência — p/n/c/u precisam ter o MESMO número de vértices. Código que grava por deslocamento fixo (ex.: 6 vértices por quad) desalinha tudo que vem depois no lote. Corta o excedente e avisa uma vez. */
 let MB_WARN=0;function mbCheck(m){const n=m.p.length/3;if(m.n.length===n*3&&m.c.length===n*3&&m.u.length===n*2)return;if(MB_WARN++<3)console.warn('MB desalinhado',{p:n,n:m.n.length/3,c:m.c.length/3,u:m.u.length/2},new Error().stack);m.n.length=Math.min(m.n.length,n*3);m.c.length=Math.min(m.c.length,n*3);m.u.length=Math.min(m.u.length,n*2)}
 class MB{constructor(indexed=true){this.p=[];this.n=[];this.u=[];this.c=[];this.idx=indexed===false?null:[];this.ab=0}
- quad(a,b,c,d,nx,ny,nz,uv,col){if(ZF.on&&col&&!this._nz){const ax=Math.abs(nx)>.999?0:Math.abs(ny)>.999?1:Math.abs(nz)>.999?2:-1;
+ quad(a,b,c,d,nx,ny,nz,uv,col,streetWindow=false){if(ZF.on&&col&&!this._nz){const ax=Math.abs(nx)>.999?0:Math.abs(ny)>.999?1:Math.abs(nz)>.999?2:-1;
    if(ax>=0){const u=(ax+1)%3,w=(ax+2)%3,sg=ax===0?Math.sign(nx):ax===1?Math.sign(ny):Math.sign(nz);
     const off=zfFix(ax,sg,a[ax],Math.min(a[u],b[u],c[u],d[u]),Math.max(a[u],b[u],c[u],d[u]),Math.min(a[w],b[w],c[w],d[w]),Math.max(a[w],b[w],c[w],d[w]),col,ZF.box>0);
     if(off){a=a.slice();b=b.slice();c=c.slice();d=d.slice();a[ax]+=off;b[ax]+=off;c[ax]+=off;d[ax]+=off}}}
   const P=this.p,[u0,v0,u1,v1]=uv;
+  if(streetWindow){const first=P.length/3,count=this.idx?(c[0]===d[0]&&c[1]===d[1]&&c[2]===d[2]||b[0]===c[0]&&b[1]===c[1]&&b[2]===c[2]?3:4):6;
+   (this.streetWindowRanges||(this.streetWindowRanges=[])).push([first,first+count])}
   if(this.idx){const b0=P.length/3,cdSame=c[0]===d[0]&&c[1]===d[1]&&c[2]===d[2],bcSame=!cdSame&&b[0]===c[0]&&b[1]===c[1]&&b[2]===c[2];
    if(cdSame){P.push(a[0],a[1],a[2],b[0],b[1],b[2],c[0],c[1],c[2]);for(let i=0;i<3;i++){this.n.push(nx,ny,nz);this.c.push(col.r,col.g,col.b)}this.u.push(u0,v0,u1,v0,u1,v1);this.idx.push(b0,b0+1,b0+2)}
    else if(bcSame){P.push(a[0],a[1],a[2],b[0],b[1],b[2],d[0],d[1],d[2]);for(let i=0;i<3;i++){this.n.push(nx,ny,nz);this.c.push(col.r,col.g,col.b)}this.u.push(u0,v0,u1,v0,u0,v1);this.idx.push(b0,b0+1,b0+2)}
@@ -213,10 +215,10 @@ class MB{constructor(indexed=true){this.p=[];this.n=[];this.u=[];this.c=[];this.
   const uv=(len)=>W?[W[0],y0/25.6+W[1],W[0]+(o.facadeGrid?Math.max(1,Math.floor(len/3.5))/8:len/28),y1/25.6+W[1]]:[0,0,1,1];
   if(o.bottom||(this.ab&&o.bottom!==false&&y0>.5&&y1-y0>.04&&y0<36))this.quad([x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1],0,-1,0,[0,0,1,1],o.bottom||this.ab!==1?col:col.clone().multiplyScalar(1.4));
   if(!o.noTop)top.quad([x0,y1,z1],[x1,y1,z1],[x1,y1,z0],[x0,y1,z0],0,1,0,[0,0,1,1],tc);
-  this.quad([x1,y0,z1],[x1,y0,z0],[x1,y1,z0],[x1,y1,z1],1,0,0,uv(z1-z0),col);
-  this.quad([x0,y0,z0],[x0,y0,z1],[x0,y1,z1],[x0,y1,z0],-1,0,0,uv(z1-z0),col);
-  this.quad([x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1],0,0,1,uv(x1-x0),col);
-  this.quad([x1,y0,z0],[x0,y0,z0],[x0,y1,z0],[x1,y1,z0],0,0,-1,uv(x1-x0),col)}
+  this.quad([x1,y0,z1],[x1,y0,z0],[x1,y1,z0],[x1,y1,z1],1,0,0,uv(z1-z0),col,o.streetFaces?.includes('e'));
+  this.quad([x0,y0,z0],[x0,y0,z1],[x0,y1,z1],[x0,y1,z0],-1,0,0,uv(z1-z0),col,o.streetFaces?.includes('w'));
+  this.quad([x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1],0,0,1,uv(x1-x0),col,o.streetFaces?.includes('s'));
+  this.quad([x1,y0,z0],[x0,y0,z0],[x0,y1,z0],[x1,y1,z0],0,0,-1,uv(x1-x0),col,o.streetFaces?.includes('n'))}
  rslab(x0,z0,x1,z1,y0,y1,col,rs){const pts=[],C=[[x1,z1,-1,-1],[x1,z0,-1,1],[x0,z0,1,1],[x0,z1,1,-1]];
   for(let i=0;i<4;i++){const[cx,cz,ix,iz]=C[i],r=rs?rs[i]:0;if(!r){pts.push([cx,cz]);continue}const ox=cx+ix*r,oz=cz+iz*r,tm=Math.atan2(-iz,-ix),n=7;
    for(let k=0;k<=n;k++){const t=tm+Math.PI/4-k*(Math.PI/2)/n;pts.push([ox+Math.cos(t)*r,oz+Math.sin(t)*r])}}
@@ -254,6 +256,11 @@ class MB{constructor(indexed=true){this.p=[];this.n=[];this.u=[];this.c=[];this.
  mesh(mat,cast=true,recv=true){if(!this.p.length)return null;mbCheck(this);const g=new THREE.BufferGeometry();
   g.setAttribute('position',new THREE.Float32BufferAttribute(this.p,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(this.n,3));
   g.setAttribute('uv',new THREE.Float32BufferAttribute(this.u,2));g.setAttribute('color',new THREE.Float32BufferAttribute(this.c,3));
+  if(mat.userData.winRefl){
+   const street=new Uint8Array(this.p.length/3);
+   for(const [first,end] of this.streetWindowRanges||[])street.fill(1,first,end);
+   g.setAttribute('streetWindow',new THREE.BufferAttribute(street,1));
+  }
   if(this.idx)g.setIndex(this.idx);
   g.computeBoundingSphere();const m=new THREE.Mesh(g,mat);m.castShadow=cast;m.receiveShadow=recv;return m}}
 for(const k of ['box','cbox']){const f=MB.prototype[k];MB.prototype[k]=function(){let a=arguments;if(ZF.on&&k==='box'){a=[...a];const v=zfBoxAdj(a.slice(0,6));for(let i=0;i<6;i++)a[i]=v[i]}ZF.box++;try{return f.apply(this,a)}finally{ZF.box--}}} // anti z-fight: faces de caixa fechada recuam (zfFix)
@@ -293,7 +300,7 @@ function mbOval(mb,top,cx,cz,rx,rz,y0,y1,col,tc,o){o=o||{};const nb=mbOvalN(rx,r
  const nz0=top&&top._nz;if(top)top._nz=true;
  for(let k=0;k<n;k++){const a=P(k+1),b=P(k);let nx=-(b[1]-a[1]),nzz=b[0]-a[0];const L=Math.hypot(nx,nzz)||1;nx/=L;nzz/=L;
   const uv=W?[W[0]+(n-k-1)/(8*sub),y0/25.6+W[1],W[0]+(n-k)/(8*sub),y1/25.6+W[1]]:[0,0,1,1];
-  mb.quad([a[0],y0,a[1]],[b[0],y0,b[1]],[b[0],y1,b[1]],[a[0],y1,a[1]],nx,0,nzz,uv,col);
+  mb.quad([a[0],y0,a[1]],[b[0],y0,b[1]],[b[0],y1,b[1]],[a[0],y1,a[1]],nx,0,nzz,uv,col,o.streetFaces?.includes(Math.abs(nx)>Math.abs(nzz)?(nx>0?'e':'w'):(nzz>0?'s':'n')));
   if(top)top.quad([cx,y1,cz],[a[0],y1,a[1]],[b[0],y1,b[1]],[b[0],y1,b[1]],0,1,0,[0,0,1,1],tc||col)}
  if(top)top._nz=nz0}
 function mbOvalRim(mb,cx,cz,rx,rz,y0,y1,t,col){const n=mbOvalN(rx,rz)*2,P=(k,e)=>{const a=k/n*Math.PI*2;return[cx+Math.cos(a)*(rx-e),cz+Math.sin(a)*(rz-e)]};const nz0=mb._nz;mb._nz=true;
