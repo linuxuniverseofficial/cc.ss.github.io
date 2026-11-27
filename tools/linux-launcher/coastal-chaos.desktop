@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Coastal Chaos: Sunset Shores
+Exec=AppRun
+Icon=coastal-chaos
+Categories=Game;
+Terminal=false

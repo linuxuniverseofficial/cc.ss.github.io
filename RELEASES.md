@@ -54,3 +54,9 @@ gh release view "$tag" --repo "$repo" --json url,tagName,isDraft,assets
 ```
 
 Se a release já existir e faltar um download, use `gh release upload "$tag" CAMINHO_DO_ARQUIVO --repo "$repo"`. Preserve os arquivos que já estão publicados. Na conferência final, procure os três nomes, tamanho correto, estado `uploaded` e `isDraft: false`. Entregue o link da release e informe quais testes em aparelhos reais ficaram pendentes.
+
+## AppImage para Linux x86_64
+
+Execute `bash tools/build-appimage.sh ../entregas` na revisão do jogo. O script usa Bash, curl, unzip e appimagetool x86_64. Defina `APPIMAGETOOL` para indicar o executável e, opcionalmente, `APPIMAGE_RUNTIME` para usar uma cópia local do runtime Type 2. O pacote inclui Electron com Chromium, os avisos de licença do fornecedor e os dados do jogo. O launcher abre em tela cheia e usa uma origem local estável para os saves.
+
+Teste o menu e a geração da cidade antes de anexar o arquivo à release com `gh release upload v4-rNN ../entregas/coastal-chaos-v4-rNN-linux-x86_64.AppImage`. Para jogar, dê permissão de execução ao arquivo e abra-o. Em sistemas sem FUSE, use a opção `--appimage-extract-and-run`.

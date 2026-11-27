@@ -1,6 +1,6 @@
 # Coastal Chaos: Sunset Shores — guia rápido para edições
 
-**Antes de gerar ou publicar uma build** — leia o [guia de publicação](RELEASES.md) para APK, EXE Windows e ZIP.
+**Antes de gerar ou publicar uma build** — leia o [guia de publicação](RELEASES.md) para APK, EXE Windows, AppImage Linux e ZIP.
 
 Jogo = `index.html` (só o HTML) + `css/*.css` + `js/*.js` (three r128; desde a **v3 r37** o antigo `<script>` de 3 MB foi dividido por assunto). **Mapa dos arquivos: `CONTEXT.md` §0b** — achar uma função: `grep -n "function nome(" js/*.js`. Editar só o arquivo afetado. `CONTEXT.md` = contexto enxuto (mecânicas atuais, travas, delimitações da missão 1, regras de render, bugs que já existiram, registro recente): **ler antes de mexer**. O histórico antigo completo (~690 KB) está em `backup/CONTEXT.historico.md`: só `grep`, nunca ler inteiro. `README.md`/`ITCHIO.txt` são textos para jogador, não especificação.
 
