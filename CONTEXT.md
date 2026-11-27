@@ -1,5 +1,7 @@
 # Coastal Chaos: Sunset Shores — CONTEXTO
 
+**Builds e GitHub Releases** — siga o [guia de publicação](RELEASES.md) para gerar, validar e publicar o APK, o EXE Windows e o ZIP da revisão.
+
 Documento de trabalho: mecânicas atuais, travas, delimitações das missões, regras de render e bugs que já existiram (para não voltarem).
 O histórico completo antigo (PixelCity v1–v301, v26–v78 e v79 r1–r24, ~690 KB) foi arquivado em `backup/CONTEXT.historico.md`: consultar por `grep` só quando precisar da origem de uma decisão.
 Regras de edição e funções comuns: `CLAUDE.md`. Em conflito vale: pedido atual do usuário > código > este documento.
