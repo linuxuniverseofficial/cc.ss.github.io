@@ -13,6 +13,7 @@ function aqWaveTex(){if(AQ.waveTex)return AQ.waveTex;const N=256,c=cv(N,N),g=c.g
  const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;return AQ.waveTex=t}
 function aqMats(M,night){M.bed=new THREE.MeshStandardMaterial({map:aqBedTex(),vertexColors:true,roughness:1,metalness:0});
  const wt=aqWaveTex();M.wave=new THREE.MeshBasicMaterial({map:wt,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:night?.25:.42,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});
+ M.wave.visible=aqWaveOn();
  M.water.transparent=true;M.water.opacity=night?.82:.72;M.water.depthWrite=true;waterPatch(M.water,'river');causticPatch(M.bed,RY)}
 /* v3 r24: ÁGUA NOVA (WTR). Mar e rios ganham, no próprio MeshStandardMaterial (onBeforeCompile, nenhum draw call novo):
    ondas em camadas (normal por soma de ondas direcionais em coordenadas de mundo + marulho indo para a praia no mar),
@@ -22,7 +23,12 @@ function aqMats(M,night){M.bed=new THREE.MeshStandardMaterial({map:aqBedTex(),ve
    Qualidade: S.waterQ 0 BAIXO (2 ondas, sem cáusticas) · 1 MÉDIO (4 ondas, cáusticas 3 passos) · 2 ALTO (7 ondas, cáusticas 5 passos, crista turquesa).
    Ondas pequenas somem com a distância (sem chiado/moiré). Tempestade/chuva deixa o mar mais agitado (wK.x). */
 const WTR={U:{wT:{value:0},wQ:{value:new THREE.Vector4(4,3,0,1)},wK:{value:new THREE.Vector4(1,0,0,0)}},k0:-1,k1:-1};
-function waterQApply(){const q=S.waterQ;WTR.U.wQ.value.set(q===0?2:q===2?7:4,q===0?0:q===2?5:3,q===2?1:0,1)}
+function waterQApply(){const q=S.waterQ;WTR.U.wQ.value.set(q===0?2:q===2?7:4,q===0?0:q===2?5:3,q===2?1:0,1);aqWaveVis()}
+/* v4 r73 (José): as linhas brancas desenhadas por cima da água (aqWaveTex: M.wave dos rios/piscinas/canais e a camada do mar/Point Haze)
+   só aparecem com a água no BAIXO (S.waterQ 0, preset LOW), para a água não ficar lisa; no MÉDIO/ALTO as ondas do shader já fazem o papel.
+   Só material.visible: o programa continua compilado no loading (renderer.compile ignora o visible do material), nada recompila na troca. */
+function aqWaveOn(){return (S.waterQ|0)===0}
+function aqWaveVis(){const on=aqWaveOn(),M=typeof city!=='undefined'&&city&&city.M;if(M&&M.wave)M.wave.visible=on;if(AQ.seaWaveMat)AQ.seaWaveMat.visible=on}
 function waterTick(dt){const U=WTR.U;U.wT.value=simT;const st=typeof WX!=='undefined'?Math.max(WX.f||0,WX.stormAmt||0):0,k=1+st*1.2;if(Math.abs(k-WTR.k0)>.005){WTR.k0=k;U.wK.value.x=k}
  const inv=S.style==='inverted'?1:0;if(inv!==WTR.k1){WTR.k1=inv;U.wK.value.y=inv}}
 const WTR_GLSL=`uniform float wT;uniform vec4 wQ,wK;uniform vec3 top,hor,sunDir;uniform float night,sunDim,csSun,synth;uniform vec4 moonD;uniform vec3 wSw;varying vec3 vWw;
@@ -481,7 +487,7 @@ function aqSea(grp,night){const E=city.ext,c=city.coast;
  if(city.haze){hazeShore(grp);const W=5000,deep=new THREE.Color('#1e3438');
   const deepP=new THREE.Mesh(new THREE.PlaneGeometry(W,W),new THREE.MeshBasicMaterial({color:deep}));deepP.rotation.x=-Math.PI/2;deepP.position.set(E/2,SEABED.floor-.06,E/2);grp.add(deepP);seaWrecks(grp,night);
   const wt=aqWaveTex().clone();wt.needsUpdate=true;wt.repeat.set(1,1);const wm=new THREE.MeshBasicMaterial({map:wt,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:.3});
-  const wv=new THREE.Mesh(seaSurfaceGeo(.02),wm);wv.renderOrder=2;grp.add(wv);AQ.seaWave=wt;AQ.inl=[0,1];wtrSwell(.5);return}
+  wm.visible=aqWaveOn();AQ.seaWaveMat=wm;const wv=new THREE.Mesh(seaSurfaceGeo(.02),wm);wv.renderOrder=2;grp.add(wv);AQ.seaWave=wt;AQ.inl=[0,1];wtrSwell(.5);return}
  // fundo do mar: faixa de areia com pedras e algas que afunda e escurece até o azul profundo
  /* v3 r31: linhas em u = plataforma a cada 3 m, talude a cada 1,5 m, fundo a cada 12 m; cor escurece com a PROFUNDIDADE (a luz entra pouco) */
  const T0=-1600,T1=E+1600,U0=SHORE+2,Sb=SEABED,uT=U0+Sb.shelf,us=[];for(let u=U0;u<uT-4;u+=3)us.push(u);for(let u=uT-4;u<uT+Sb.slope+4;u+=1.5)us.push(u);for(let u=uT+Sb.slope+4;u<SHORE+170;u+=12)us.push(u);us.push(SHORE+170);
@@ -494,7 +500,7 @@ function aqSea(grp,night){const E=city.ext,c=city.coast;
  const W=5000,ps=c===0?[E/2,-SHORE-W/2]:c===1?[E/2,E+SHORE+W/2]:c===2?[-SHORE-W/2,E/2]:[E+SHORE+W/2,E/2];
  const deepP=new THREE.Mesh(new THREE.PlaneGeometry(W,W),new THREE.MeshBasicMaterial({color:deep}));deepP.rotation.x=-Math.PI/2;deepP.position.set(ps[0],SEABED.floor-.06,ps[1]);grp.add(deepP);seaWrecks(grp,night); /* v3 r31: plano fundo no piso novo + carcaças */
  const wt=aqWaveTex().clone();wt.needsUpdate=true;wt.repeat.set(1,1);const wm=new THREE.MeshBasicMaterial({map:wt,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:night?.22:.38});
- const wv=new THREE.Mesh(seaSurfaceGeo(.02),wm);coastWalls(grp,night);wv.renderOrder=2;grp.add(wv);AQ.seaWave=wt;AQ.inl=c===0?[0,1]:c===1?[0,-1]:c===2?[1,0]:[-1,0];wtrSwell(1)}
+ wm.visible=aqWaveOn();AQ.seaWaveMat=wm;const wv=new THREE.Mesh(seaSurfaceGeo(.02),wm);coastWalls(grp,night);wv.renderOrder=2;grp.add(wv);AQ.seaWave=wt;AQ.inl=c===0?[0,1]:c===1?[0,-1]:c===2?[1,0]:[-1,0];wtrSwell(1)}
 /* v3 r31 · carcaças de lanchas no fundo: posições sorteadas por gerador próprio da seed (não mexe no R()), deitadas/afundadas no piso,
    escuras e enferrujadas; um único lote (1 draw call), dentro do grupo da cidade (some na troca de mundo). */
 function seaWrecks(grp,night){const E=city.ext,c=city.coast,r=mulberry32((S.seed^0x5eab0a7)>>>0),mb=new MB(),Sb=SEABED,u0=SHORE+2+Sb.shelf+Sb.slope+14,W=new THREE.Matrix4(),L=new THREE.Matrix4(),Mx=new THREE.Matrix4();
